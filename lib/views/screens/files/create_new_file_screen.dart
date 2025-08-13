@@ -210,10 +210,16 @@ class _CreateNewFileScreenState extends State<CreateNewFileScreen> {
                         builder: (BuildContext context) {
                           return const Padding(
                             padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
-                            child: AIAgentChatScreen(),
+                            child: AIAgentChatScreen(
+                              generateNew: true,
+                            ),
                           );
                         },
-                      );
+                      ).then((text) {
+                        if (text != null) {
+                          quillEditorController.setText(text);
+                        }
+                      });
                     },
                     text: "Draft with AI",
                     icon: Icons.drafts_rounded,

@@ -3,7 +3,8 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 class HtmlReader extends StatelessWidget {
   final String html;
-  const HtmlReader({super.key, required this.html});
+  final TextStyle? textStyle;
+  const HtmlReader({super.key, required this.html, this.textStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class HtmlReader extends StatelessWidget {
       renderMode: RenderMode.column,
 
       // set the default styling for text
-      textStyle: TextStyle(fontSize: 14),
+      textStyle: textStyle ?? TextStyle(fontSize: 14),
     );
   }
 }

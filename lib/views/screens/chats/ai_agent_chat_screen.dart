@@ -3,6 +3,8 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/views/widgets/chips/custom_app_chip.dart';
+import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -11,22 +13,25 @@ import 'package:uuid/uuid.dart';
 class AIAgentChatScreen extends StatefulWidget {
   final int? fileId;
   final String? file;
-  const AIAgentChatScreen({super.key, this.fileId, this.file});
+  final bool generateNew;
+  const AIAgentChatScreen(
+      {super.key, this.fileId, this.file, this.generateNew = false});
 
   @override
-  _AIAgentChatScreenState createState() => _AIAgentChatScreenState();
+  State<AIAgentChatScreen> createState() => _AIAgentChatScreenState();
 }
 
 class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
   final TextEditingController promptController = TextEditingController();
-  final types.User _currentUser = types.User(id: "user_1");
-  final types.User _chatPartner = types.User(id: "assistant");
+  final types.User _currentUser = const types.User(id: "user_1");
+  final types.User _chatPartner = const types.User(id: "assistant");
 
   final List<types.Message> _messages = [];
-  final Uuid _uuid = Uuid();
+  final Uuid _uuid = const Uuid();
 
   late final AIAgent _aiAgent;
   late final Stream<List<ChatMessage>> _aiStream;
+  bool loading = false;
 
   @override
   void initState() {
@@ -39,12 +44,15 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
       _messages
         ..clear()
         ..addAll(
-          history.reversed.map((msg) => types.TextMessage(
-                author: msg.role == 'user' ? _currentUser : _chatPartner,
-                createdAt: DateTime.now().millisecondsSinceEpoch,
-                id: _uuid.v4(),
-                text: msg.content,
-              )),
+          history.reversed.map(
+            (msg) => types.TextMessage(
+              author: msg.role == ChatRole.user ? _currentUser : _chatPartner,
+              createdAt: DateTime.now().millisecondsSinceEpoch,
+              id: _uuid.v4(),
+              text: msg.content,
+              metadata: {'canAccept': !msg.isError},
+            ),
+          ),
         );
       setState(() {});
     });
@@ -55,9 +63,14 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
     if (text.isEmpty) return;
 
     promptController.clear();
+    setState(() {
+      loading = true;
+    });
 
     // Send message & get AI streaming response
-    _aiAgent.sendMessageStream(text, widget.file).listen((partialResponse) {
+    _aiAgent
+        .sendMessageStream(text, widget.file ?? '')
+        .listen((partialResponse) {
       // Update last assistant message while typing
       if (_messages.isNotEmpty &&
           _messages.first.author.id == _chatPartner.id) {
@@ -77,7 +90,9 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
           ),
         );
       }
-      setState(() {});
+      setState(() {
+        loading = false;
+      });
     });
   }
 
@@ -114,7 +129,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
             Expanded(
               child: _messages.isEmpty
                   ? AppText.bodySmall(widget.file == null
-                      ? "Ask AI to assist you"
+                      ? "Ask AI to assist you in generating a report"
                       : "Hi, I have info about the file ask me anything about it")
                   : ListView.builder(
                       reverse: true,
@@ -135,11 +150,28 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                   : AppColors.secondaryDark.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(
-                              message.text,
-                              style: TextStyle(
-                                color: isUser ? Colors.white : Colors.black87,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                HtmlReader(
+                                  html: message.text,
+                                  textStyle: TextStyle(
+                                    color:
+                                        isUser ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                if (!isUser && message.metadata?['canAccept'])
+                                  CustomAppChip(
+                                    label: "Accept this response",
+                                    padding: const EdgeInsets.all(0),
+                                    minWidth: 40,
+                                    chipColor: AppColors.white,
+                                    borderColor: AppColors.primaryDark,
+                                    onTap: () {
+                                      RouteHelper.pop(message.text);
+                                    },
+                                  ),
+                              ],
                             ),
                           ),
                         );
@@ -152,14 +184,11 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
               hintText: "Enter your prompt",
               showLabel: false,
               maxLines: 4,
-              onFieldSubmitted: (_) {
-                _handleSendPressed();
-              },
             ),
             const SizedBox(height: 16),
             AppSolidButton(
-              onPressed: _handleSendPressed,
-              text: "Generate Response",
+              onPressed: loading ? null : _handleSendPressed,
+              text: loading ? "Generating Response" : "Generate Response",
               width: double.infinity,
               backgroundColor: AppColors.secondary,
               fontSize: 18,
