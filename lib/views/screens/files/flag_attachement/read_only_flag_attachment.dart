@@ -1,9 +1,11 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/pdf_viewer.dart';
 import 'package:flutter/material.dart';
 
 class ReadOnlyFlagAttachmentList extends StatelessWidget {
-  final List<Map<String, String?>> data;
+  final List<FileAttachmentModel> data;
   final Widget header;
 
   const ReadOnlyFlagAttachmentList(
@@ -22,8 +24,7 @@ class ReadOnlyFlagAttachmentList extends StatelessWidget {
         collapsedIconColor: AppColors.secondaryDark,
         children: data.map((item) {
           return ReadOnlyFlagAttachmentRow(
-            flagType: item["flagType"] ?? "",
-            attachmentName: item["attachmentName"],
+            attachment: item,
           );
         }).toList(),
       ),
@@ -32,13 +33,11 @@ class ReadOnlyFlagAttachmentList extends StatelessWidget {
 }
 
 class ReadOnlyFlagAttachmentRow extends StatelessWidget {
-  final String flagType;
-  final String? attachmentName;
+  final FileAttachmentModel attachment;
 
   const ReadOnlyFlagAttachmentRow({
     super.key,
-    required this.flagType,
-    this.attachmentName,
+    required this.attachment,
   });
 
   @override
@@ -67,7 +66,7 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
                     color: AppColors.white,
                   ),
                   child: AppText.bodyLarge(
-                    flagType,
+                    attachment.flagTitle ?? '',
                     color: AppColors.secondaryLight,
                   ),
                 ),
@@ -80,7 +79,7 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText.labelLarge(
-                  "Attachment",
+                  "Attachment/View",
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -94,21 +93,50 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: AppColors.white,
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.picture_as_pdf,
-                        color: AppColors.secondaryDark,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: AppText.bodyLarge(
-                          attachmentName ?? "No Attachment",
-                          color: AppColors.secondaryLight,
-                          overflow: TextOverflow.ellipsis,
+                  child: InkWell(
+                    onTap: attachment.attachmentFlag == null
+                        ? null
+                        : () {
+                            showModalBottomSheet(
+                              context: context,
+                              constraints: BoxConstraints(
+                                  maxHeight:
+                                      MediaQuery.sizeOf(context).height * 0.9),
+                              showDragHandle: false,
+                              isScrollControlled: true,
+                              backgroundColor: AppColors.background,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
+                                ),
+                              ),
+                              builder: (BuildContext context) {
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                  child:
+                                      PdfViewer(url: attachment.attachmentFlag),
+                                );
+                              },
+                            );
+                          },
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.picture_as_pdf,
+                          color: AppColors.secondaryDark,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: AppText.bodyLarge(
+                            attachment.flagAttach ?? "No Attachment",
+                            color: AppColors.secondaryLight,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

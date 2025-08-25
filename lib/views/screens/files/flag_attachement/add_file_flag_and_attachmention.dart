@@ -1,26 +1,38 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-class AddFlagAndAttachment extends StatefulWidget {
+class AddFlagAndAttachment extends ConsumerStatefulWidget {
   final VoidCallback? onDelete;
-  const AddFlagAndAttachment({super.key, this.onDelete});
+  final FlagAndAttachmentModel model;
+  const AddFlagAndAttachment({super.key, this.onDelete, required this.model});
 
   @override
-  State<AddFlagAndAttachment> createState() => _AddFlagAndAttachmentState();
+  ConsumerState<AddFlagAndAttachment> createState() =>
+      _AddFlagAndAttachmentState();
 }
 
-class _AddFlagAndAttachmentState extends State<AddFlagAndAttachment> {
-  String? selectedSection;
-  String? forwardTo;
-  String? flagType;
-  XFile? attachment;
+class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
+  FlagAndAttachmentModel get m => widget.model;
+
+  final Widget fieldLoader = Container(
+    width: 12,
+    height: 12,
+    margin: const EdgeInsets.only(right: 8),
+    child: const CircularProgressIndicator(
+      strokeWidth: 2,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(filesController);
     return Column(
       children: [
         if (widget.onDelete != null)
@@ -43,79 +55,37 @@ class _AddFlagAndAttachmentState extends State<AddFlagAndAttachment> {
               ],
             ),
           ),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: AppDropDownField(
-                items: ['Section A', 'Section B', 'Section C'],
+            Container(
+              child: AppDropDownField<FlagModel>(
+                items: m.usedFlags == null
+                    ? state.flags
+                    : state.flags
+                        .where((e) => !m.usedFlags!
+                            .any((f) => f.id != null && f.id == e.id))
+                        .toList(),
                 onChanged: (item) {
                   setState(() {
-                    selectedSection = item;
-                  });
-                },
-                labelText: "File Type",
-                hintText: "Select file type",
-                itemBuilder: (item) {
-                  return AppText.titleMedium(item ?? '');
-                },
-                validator: (item) {
-                  if (selectedSection == null || item == null || item.isEmpty) {
-                    return 'Please select a value';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppDropDownField(
-                items: ['Person A', 'Person B', 'Person C'],
-                onChanged: (item) {
-                  setState(() {
-                    forwardTo = item;
-                  });
-                },
-                labelText: "Forward to",
-                hintText: "Forward this file to",
-                itemBuilder: (item) {
-                  return AppText.titleMedium(item ?? '');
-                },
-                validator: (item) {
-                  if (forwardTo == null || item == null || item.isEmpty) {
-                    return 'Please select a value';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: AppDropDownField(
-                items: ['A', 'B', 'C', 'D', 'E', 'F'],
-                onChanged: (item) {
-                  setState(() {
-                    forwardTo = item;
+                    m.flagType = item;
                   });
                 },
                 labelText: "Flag Type",
                 hintText: "Select flag type",
+                prefix: state.loadingFlag ? fieldLoader : null,
                 itemBuilder: (item) {
-                  return AppText.titleMedium(item ?? '');
+                  return AppText.titleMedium(item?.title ?? '');
                 },
-                validator: (item) {
-                  if (forwardTo == null || item == null || item.isEmpty) {
-                    return 'Please select a value';
-                  }
-                  return null;
-                },
+                // validator: (item) {
+                //   if (m.flagType == null || item == null) {
+                //     return 'Please select a value';
+                //   }
+                //   return null;
+                // },
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            const SizedBox(height: 12),
+            Container(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -127,7 +97,7 @@ class _AddFlagAndAttachmentState extends State<AddFlagAndAttachment> {
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () async {
-                      attachment = await FilePickerService().pickPdf();
+                      m.attachment = await FilePickerService().pickPdf();
                       setState(() {});
                     },
                     child: Container(
@@ -146,7 +116,7 @@ class _AddFlagAndAttachmentState extends State<AddFlagAndAttachment> {
                           ),
                           const SizedBox(width: 8),
                           AppText.bodyLarge(
-                            attachment?.name ?? "Attach File",
+                            m.attachment?.name ?? "Attach File",
                             color: AppColors.secondaryLight,
                           ),
                         ],
@@ -161,4 +131,16 @@ class _AddFlagAndAttachmentState extends State<AddFlagAndAttachment> {
       ],
     );
   }
+}
+
+class FlagAndAttachmentModel {
+  FlagModel? flagType;
+  XFile? attachment;
+  List<FlagModel>? usedFlags;
+
+  FlagAndAttachmentModel({
+    this.flagType,
+    this.attachment,
+    this.usedFlags,
+  });
 }

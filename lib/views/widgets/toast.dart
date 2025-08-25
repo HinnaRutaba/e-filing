@@ -43,7 +43,7 @@ class Toast {
         elevation: 4,
         child: const Icon(
           Icons.check_circle_outline,
-          color: AppColors.white,
+          color: AppColors.primary,
         ),
       ),
       autoCloseDuration: const Duration(seconds: 5),
@@ -66,7 +66,7 @@ class Toast {
       margin: const EdgeInsets.all(16),
       icon: const Icon(
         Icons.warning_amber_rounded,
-        color: AppColors.white,
+        color: AppColors.error,
       ),
       autoCloseDuration: const Duration(seconds: 5),
       backgroundColor: AppColors.error.withOpacity(0.9),

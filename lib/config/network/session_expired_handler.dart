@@ -4,9 +4,11 @@ import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SessionExpiredHandler {
   static final SessionExpiredHandler _instance =
@@ -53,10 +55,10 @@ class SessionExpiredHandler {
                     const SizedBox(height: 24),
                     AppSolidButton(
                       onPressed: () {
-                        // ProviderScope.containerOf(context)
-                        //     .read(authController)
-                        //     .logout();
-                        showingSessionExpiredDialog = false; // Close the dialog
+                        ProviderScope.containerOf(context)
+                            .read(authController)
+                            .logout();
+                        showingSessionExpiredDialog = false;
                       },
                       text: "OK",
                       width: double.infinity,

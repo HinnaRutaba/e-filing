@@ -9,6 +9,7 @@ class AppSolidButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final Color backgroundColor;
   final double? fontSize;
+  final IconData? icon;
   const AppSolidButton({
     super.key,
     required this.onPressed,
@@ -18,6 +19,7 @@ class AppSolidButton extends StatelessWidget {
     this.padding,
     this.backgroundColor = AppColors.primary,
     this.fontSize,
+    this.icon,
   });
 
   @override
@@ -25,7 +27,7 @@ class AppSolidButton extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           padding: padding,
@@ -33,7 +35,14 @@ class AppSolidButton extends StatelessWidget {
           side: BorderSide(color: backgroundColor),
           elevation: 3,
         ),
-        child: Text(
+        icon: icon != null
+            ? Icon(
+                icon,
+                color: AppColors.white,
+                size: fontSize != null ? fontSize! + 3 : 15,
+              )
+            : const SizedBox.shrink(),
+        label: Text(
           text,
           style: TextStyle(
             fontSize: fontSize ?? 20,

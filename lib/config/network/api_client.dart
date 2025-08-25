@@ -64,6 +64,20 @@ class DioClient {
             }
           }
 
+          if (response.statusCode! >= 300 &&
+              response.data is Map &&
+              response.data.containsKey("message")) {
+            handler.reject(
+              DioException(
+                requestOptions: response.requestOptions,
+                response: response,
+                error: response.data["message"] ?? "Something went wrong",
+                message: response.data["message"] ?? "Something went wrong",
+              ),
+            );
+            return;
+          }
+
           handler.next(response);
         },
         onError: (error, handler) async {

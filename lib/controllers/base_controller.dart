@@ -7,7 +7,7 @@ class BaseControllerState<T> extends StateNotifier<T> {
   late final localStorage = ref.read(localStorageController);
 
   // UserModel get user {
-  //   UserModel? u = ref.read(authRepo).fetchCurrentUser();
+  //   UserModel? u = ref.read(authRepo).fetchCurrentUserDetails();
   //   if (u == null) {
   //     ref.read(authRepo).signOut();
   //   }

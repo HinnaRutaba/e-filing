@@ -16,6 +16,7 @@ class AppDropDownField<T> extends StatelessWidget {
   final Widget? prefix;
   final Color? fillColor;
   final bool isMandatory;
+  final EdgeInsets? padding;
 
   const AppDropDownField({
     super.key,
@@ -32,6 +33,7 @@ class AppDropDownField<T> extends StatelessWidget {
     this.prefix,
     this.fillColor,
     this.isMandatory = false,
+    this.padding,
   });
 
   @override
@@ -56,6 +58,7 @@ class AppDropDownField<T> extends StatelessWidget {
           const SizedBox(height: 8),
         ],
         DropdownButtonFormField<T>(
+          padding: padding,
           hint: Text(
             hintText,
             style: TextStyle(
@@ -74,7 +77,7 @@ class AppDropDownField<T> extends StatelessWidget {
             focusedBorder: border,
             enabledBorder: border,
             disabledBorder: border,
-            prefixIcon: prefix,
+            prefix: prefix,
             hintStyle: TextStyle(
               color: enabled
                   ? AppColors.primaryDark.withOpacity(0.6)

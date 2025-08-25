@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:efiling_balochistan/constants/keys.dart';
+import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:openai_dart/openai_dart.dart';
 
 enum ChatRole { user, assistant }
@@ -10,25 +11,85 @@ class ChatMessage {
   final ChatRole role;
   final String content;
   final bool isError;
+  final bool toShow;
 
   ChatMessage({
     required this.role,
     required this.content,
     this.isError = false,
+    this.toShow = true,
   });
 }
 
 class AIAgent {
+  static final AIAgent _instance = AIAgent._internal();
+
+  factory AIAgent() {
+    return _instance;
+  }
+
+  AIAgent._internal();
+
   final client = OpenAIClient(apiKey: Keys.openAIKey);
   static const aiModel = 'gpt-4o-mini';
 
   final List<ChatMessage> _messageHistory = [];
   final _messageController = StreamController<List<ChatMessage>>.broadcast();
 
-  static String reportContext(String fileStr) =>
+  List<ChatMessage> get messageHistory => _messageHistory;
+  static const String _reportFormat = '''Subject: {{subject}}
+
+{{program_code}}
+FILE NO: {{file_number}}
+
+SUBJECT: {{short_subject}}
+
+{{introduction_paragraph}}
+
+The {{system_name}} aims to {{system_purpose}}. Key features of the system include:
+
+- {{feature_1_title}}: {{feature_1_description}}
+- {{feature_2_title}}: {{feature_2_description}}
+- {{feature_3_title}}: {{feature_3_description}}
+- {{feature_4_title}}: {{feature_4_description}}
+
+{{further_details_paragraph}}
+
+{{request_paragraph}}
+
+Submitted for approval and further directions please.
+
+{{submitted_by_name}}
+({{submitted_by_designation}})
+{{submitted_date}}
+{{submitted_by_department}}
+{{submitted_by_code}}
+{{forwarder_comment}}
+
+''';
+
+  static String reportContext(Map<String, dynamic> file) =>
       'You are a helpful assistant that helps user to answer questions about the file.'
-      'See the file text in three backticks, you Only answer questions regarding that file ```$fileStr```'
-      'If user tries to ask any other question, reply with "Sorry, I can only answer questions related to the provided file."';
+      'See the file param in three backticks, you Only answer questions regarding that file ```$file```'
+      'The file is formatted in a Json/Map with two two keys, details as following:'
+      '1. ${FileDetailsSchema.fileContent} - this contains a List of Json/Map which contains all info about the file content, who sent it who received it at what date etc'
+      '2.  ${FileDetailsSchema.attachments} - this contains List of Flags linked to the file. Each Flag has a url and a title'
+      'You must be able to answer question about collective content of individual file content and flags'
+      'If there is a typo in the message make sure to ignore it and answer the question correctly.'
+      'Only answer questions related to the file provided above.';
+  //'If user tries to ask any other question that you know exactly are not typos, reply with "Sorry, I can only answer questions related to the provided file."';
+
+  static String generateReportContext =
+      '''You are a helpful assistant that generates a clear, official, file for the government user.
+
+  You must:
+  - Read the user’s message carefully.
+  - ALWAYS write the file content following this format: $_reportFormat.
+  - Fill in the required details using the user’s message.
+  - feature list can be less or more than what's defined in the template. Get them from user's message
+  - Make sure to write content in paragraphs for clarity.
+  - Must write output in HTML with using only HTML tags — do not wrap the response in backticks.
+  - Use official, professional English''';
 
   Stream<List<ChatMessage>> get messagesStream => _messageController.stream;
 
@@ -38,22 +99,25 @@ class AIAgent {
   }
 
   /// Add a message to history
-  void _addMessage(ChatRole role, String content, {bool error = false}) {
+  void _addMessage(ChatRole role, String content,
+      {bool error = false, bool toShow = true}) {
     _messageHistory.add(
       ChatMessage(
         role: role,
         content: content,
         isError: error,
+        toShow: toShow,
       ),
     );
     _notifyListeners();
   }
 
-  Future<void> sendMessage(String userMessage, String fileStr) async {
+  Future<void> sendMessage(
+      String userMessage, Map<String, dynamic> fileStr) async {
     try {
       _addMessage(ChatRole.user, userMessage);
 
-      _addMessage(ChatRole.assistant, "Thinking...");
+      _addMessage(ChatRole.assistant, "Reading file...");
 
       final res = await client.createChatCompletion(
         request: CreateChatCompletionRequest(
@@ -74,8 +138,8 @@ class AIAgent {
 
       final aiResponse = res.choices.first.message.content ?? '';
       log(aiResponse);
-      _messageHistory.removeWhere(
-          (m) => m.role == ChatRole.assistant && m.content == "Thinking...");
+      _messageHistory.removeWhere((m) =>
+          m.role == ChatRole.assistant && m.content == "Reading file...");
       if (aiResponse.isEmpty) {
         _addMessage(
           ChatRole.assistant,
@@ -97,22 +161,28 @@ class AIAgent {
     }
   }
 
-  Stream<String> sendMessageStream(String userMessage, String? fileStr) async* {
-    _addMessage(ChatRole.user, userMessage);
+  Stream<String> sendMessageStream(
+      String userMessage, Map<String, dynamic>? fileStr,
+      {bool sendAsUserMessage = true}) async* {
+    _addMessage(ChatRole.user, userMessage, toShow: sendAsUserMessage);
 
     try {
+      String systemMessage = '';
       if (fileStr == null || fileStr.isEmpty) {
-        yield "No report found for this file. Please upload a report first.";
+        systemMessage = generateReportContext;
+        //yield "No report found for this file. Please upload a report first.";
+      } else {
+        systemMessage = reportContext(fileStr);
       }
 
-      _addMessage(ChatRole.assistant, "Thinking...", error: true);
-      yield "Thinking...";
+      _addMessage(ChatRole.assistant, "Reading file...", error: true);
+      yield "Reading file...";
 
       final stream = client.createChatCompletionStream(
         request: CreateChatCompletionRequest(
           model: const ChatCompletionModel.modelId(aiModel),
           messages: [
-            ChatCompletionMessage.system(content: reportContext(fileStr!)),
+            ChatCompletionMessage.system(content: systemMessage),
             for (final m in _messageHistory)
               m.role == ChatRole.user
                   ? ChatCompletionMessage.user(
@@ -134,8 +204,8 @@ class AIAgent {
       }
 
       final fullResponse = buffer.toString();
-      _messageHistory.removeWhere(
-          (m) => m.role == ChatRole.assistant && m.content == "Thinking...");
+      _messageHistory.removeWhere((m) =>
+          m.role == ChatRole.assistant && m.content == "Reading file...");
       _addMessage(ChatRole.assistant, fullResponse);
     } catch (e, s) {
       log("AI AGENT STREAM ERROR____${e}_____$s");
@@ -150,5 +220,9 @@ class AIAgent {
   /// Dispose the stream controller
   void dispose() {
     _messageController.close();
+  }
+
+  void resetMessages() {
+    _messageHistory.clear();
   }
 }

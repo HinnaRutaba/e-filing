@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,8 @@ enum FileType {
 
 class FileCard extends StatelessWidget {
   final FileType fileType;
-  const FileCard({super.key, required this.fileType});
+  final FileModel? data;
+  const FileCard({super.key, required this.fileType, this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class FileCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          RouteHelper.push(Routes.fileDetails(1));
+          RouteHelper.push(Routes.fileDetails(data?.fileId), extra: fileType);
         },
         child: Container(
           decoration: BoxDecoration(
@@ -62,9 +64,26 @@ class FileCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: AppText.labelLarge(
-                              "S.No: 00000",
+                              data?.barcode ?? '',
                               color: AppColors.primaryDark,
                               fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Visibility(
+                            visible: data?.tag != null,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50),
+                                color: data?.tag?.color,
+                              ),
+                              margin: const EdgeInsets.only(right: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: AppText.labelLarge(
+                                data?.tag?.title ?? '',
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           Container(
@@ -74,7 +93,7 @@ class FileCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             child: AppText.labelLarge(
-                              "Status",
+                              data?.status?.label ?? '',
                               color: AppColors.white,
                               fontWeight: FontWeight.w600,
                             ),
@@ -87,9 +106,12 @@ class FileCard extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          Expanded(
-                            child: AppText.titleLarge("File Type"),
-                          ),
+                          data?.fileType != null
+                              ? Expanded(
+                                  child:
+                                      AppText.titleLarge(data?.fileType ?? ''),
+                                )
+                              : const SizedBox(height: 4),
                           if (fileType == FileType.forwarded)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
@@ -118,76 +140,86 @@ class FileCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      AppText.bodySmall("Subject of the file will go here"),
+                      AppText.bodySmall(data?.subject ?? '---'),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(
-                            child: infoTile(title: "Sender", value: "John Doe"),
-                          ),
-                          if (!(fileType == FileType.pending ||
-                              fileType == FileType.actionRequired)) ...[
+                          if (data?.sender != null)
+                            Expanded(
+                              child: infoTile(
+                                title: "Sender",
+                                value: data?.sender ?? "N/A",
+                              ),
+                            ),
+                          if (data?.receiver != null) ...[
                             const SizedBox(width: 16),
                             Expanded(
                               child: infoTile(
-                                  title: "Receiver", value: "Jane Smith"),
+                                  title: "Receiver",
+                                  value: data?.receiver ?? '---'),
                             ),
                           ],
                           const SizedBox(width: 16),
                           Expanded(
-                            child: infoTile(
-                              title: fileType == FileType.pending ||
-                                      fileType == FileType.actionRequired
-                                  ? "Received on"
-                                  : fileType == FileType.my
-                                      ? "Created on"
-                                      : fileType == FileType.archived
-                                          ? "Archived on"
-                                          : "Date",
-                              value: DateTimeHelper.datFormatSlashShort(
-                                  DateTime.now()),
-                              icon: Icons.calendar_month,
-                            ),
+                            child: fileType == FileType.pending ||
+                                    fileType == FileType.actionRequired
+                                ? infoTile(
+                                    title: "Received on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                        data?.receivedAt),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : fileType == FileType.archived
+                                    ? infoTile(
+                                        title: "Archived on",
+                                        value:
+                                            DateTimeHelper.datFormatSlashShort(
+                                                data?.createdAt),
+                                        icon: Icons.calendar_month,
+                                      )
+                                    : infoTile(
+                                        title: "Created on",
+                                        value:
+                                            DateTimeHelper.datFormatSlashShort(
+                                                data?.createdAt),
+                                        icon: Icons.calendar_month,
+                                      ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
+                if (data?.referenceNo != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                      color: AppColors.secondaryLight.withOpacity(0.15),
                     ),
-                    color: AppColors.secondaryLight.withOpacity(0.15),
+                    padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.receipt_long,
+                          color: AppColors.secondary,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        AppText.titleMedium(
+                          data?.referenceNo ?? "Reference No. Not Available",
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        )
+                      ],
+                    ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.receipt_long,
-                        color: AppColors.secondary,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 8),
-                      AppText.bodyMedium(
-                        "Reference No: ",
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
-                      ),
-                      AppText.titleMedium(
-                        "345345",
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      )
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

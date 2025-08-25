@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -12,7 +13,7 @@ import 'package:uuid/uuid.dart';
 
 class AIAgentChatScreen extends StatefulWidget {
   final int? fileId;
-  final String? file;
+  final FileDetailsModel? file;
   final bool generateNew;
   const AIAgentChatScreen(
       {super.key, this.fileId, this.file, this.generateNew = false});
@@ -29,15 +30,36 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
   final List<types.Message> _messages = [];
   final Uuid _uuid = const Uuid();
 
-  late final AIAgent _aiAgent;
+  final AIAgent _aiAgent = AIAgent();
   late final Stream<List<ChatMessage>> _aiStream;
   bool loading = false;
+
+  types.TextMessage parseTextMessage(ChatMessage msg) {
+    return types.TextMessage(
+      author: msg.role == ChatRole.user ? _currentUser : _chatPartner,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      id: _uuid.v4(),
+      text: msg.content,
+      metadata: {
+        'canAccept': !msg.isError,
+        'toShow': msg.toShow,
+        'isError': msg.isError
+      },
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    _aiAgent = AIAgent();
     _aiStream = _aiAgent.messagesStream;
+
+    if (_aiAgent.messageHistory.isNotEmpty) {
+      _messages.addAll(
+        _aiAgent.messageHistory.reversed
+            .map((msg) => parseTextMessage(msg))
+            .toList(),
+      );
+    }
 
     // Listen to AI Agent's message history and update chat UI
     _aiStream.listen((history) {
@@ -45,21 +67,26 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
         ..clear()
         ..addAll(
           history.reversed.map(
-            (msg) => types.TextMessage(
-              author: msg.role == ChatRole.user ? _currentUser : _chatPartner,
-              createdAt: DateTime.now().millisecondsSinceEpoch,
-              id: _uuid.v4(),
-              text: msg.content,
-              metadata: {'canAccept': !msg.isError},
-            ),
+            (msg) => parseTextMessage(msg),
           ),
         );
-      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
     });
+
+    if (widget.file != null && _messages.isEmpty) {
+      _handleSendPressed(
+        "Summarise the file in 150 characters  or less and in next line say 'Ask me anything about this file'",
+        sendAsUserMessage: false,
+      );
+    }
   }
 
-  void _handleSendPressed() {
-    final text = promptController.text.trim();
+  void _handleSendPressed(String text, {bool sendAsUserMessage = true}) {
+    //final text = promptController.text.trim();
     if (text.isEmpty) return;
 
     promptController.clear();
@@ -69,7 +96,8 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
 
     // Send message & get AI streaming response
     _aiAgent
-        .sendMessageStream(text, widget.file ?? '')
+        .sendMessageStream(text, widget.file?.toContentJson(),
+            sendAsUserMessage: sendAsUserMessage)
         .listen((partialResponse) {
       // Update last assistant message while typing
       if (_messages.isNotEmpty &&
@@ -98,7 +126,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
 
   @override
   void dispose() {
-    _aiAgent.dispose();
+    //_aiAgent.dispose();
     promptController.dispose();
     super.dispose();
   }
@@ -137,44 +165,52 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                       itemBuilder: (context, index) {
                         final message = _messages[index] as types.TextMessage;
                         final isUser = message.author.id == _currentUser.id;
-                        return Align(
-                          alignment: isUser
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isUser
-                                  ? AppColors.secondary
-                                  : AppColors.secondaryDark.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                HtmlReader(
-                                  html: message.text,
-                                  textStyle: TextStyle(
-                                    color:
-                                        isUser ? Colors.white : Colors.black87,
+                        return message.metadata?['toShow'] != true
+                            ? const SizedBox.shrink()
+                            : Align(
+                                alignment: isUser
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isUser
+                                        ? AppColors.secondary
+                                        : AppColors.secondaryDark
+                                            .withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      HtmlReader(
+                                        html: message.text,
+                                        textStyle: TextStyle(
+                                          color: isUser
+                                              ? Colors.white
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                      if (!isUser &&
+                                          widget.generateNew &&
+                                          message.metadata?['canAccept'])
+                                        CustomAppChip(
+                                          label: "Accept this response",
+                                          padding: const EdgeInsets.all(0),
+                                          minWidth: 40,
+                                          chipColor: AppColors.white,
+                                          borderColor: AppColors.primaryDark,
+                                          onTap: () {
+                                            RouteHelper.pop(message.text);
+                                          },
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (!isUser && message.metadata?['canAccept'])
-                                  CustomAppChip(
-                                    label: "Accept this response",
-                                    padding: const EdgeInsets.all(0),
-                                    minWidth: 40,
-                                    chipColor: AppColors.white,
-                                    borderColor: AppColors.primaryDark,
-                                    onTap: () {
-                                      RouteHelper.pop(message.text);
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
+                              );
                       },
                     ),
             ),
@@ -187,9 +223,13 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
             ),
             const SizedBox(height: 16),
             AppSolidButton(
-              onPressed: loading ? null : _handleSendPressed,
+              onPressed: loading
+                  ? null
+                  : () {
+                      _handleSendPressed(promptController.text);
+                    },
               text: loading ? "Generating Response" : "Generate Response",
-              width: double.infinity,
+              width: 500,
               backgroundColor: AppColors.secondary,
               fontSize: 18,
               padding: const EdgeInsets.all(16),

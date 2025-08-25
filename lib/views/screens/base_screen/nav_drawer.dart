@@ -2,15 +2,17 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NavDrawer extends StatelessWidget {
+class NavDrawer extends ConsumerWidget {
   const NavDrawer({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final List<DrawerMenu> menus = [
       DrawerMenu(
         title: "Dashboard",
@@ -116,7 +118,9 @@ class NavDrawer extends StatelessWidget {
           )),
           const SizedBox(height: 16),
           AppTextLinkButton(
-            onPressed: () {},
+            onPressed: () {
+              ref.read(authController).logout();
+            },
             text: "Sign Out",
             icon: Icons.logout,
             color: AppColors.error,

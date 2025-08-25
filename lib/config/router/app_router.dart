@@ -1,9 +1,11 @@
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/archived_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/create_new_file_screen.dart';
+import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/file_details_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/forwarded_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/my_files_screen.dart';
@@ -17,6 +19,7 @@ import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:go_transitions/go_transitions.dart';
 
@@ -59,6 +62,7 @@ class AppRouter {
           fileId:
               int.tryParse(state.pathParameters[PathParams.fileId] ?? '-1') ??
                   -1,
+          fileType: state.extra as FileType,
         ),
       ),
       redirect: (context, state) {
@@ -162,27 +166,27 @@ class AppRouter {
     initialLocation: Routes.splash,
     routes: _routes,
     redirect: (BuildContext context, GoRouterState state) async {
-      // if (state.uri.path == Routes.splash) {
-      //   return null;
-      // }
-      // final bool isOnBoardingRoute = state.uri.path == Routes.login ||
-      //     //state.uri.path == Routes.resetPassword ||
-      //     state.uri.path == Routes.onboarding;
-      // final bool isSignedIn = await ProviderScope.containerOf(context)
-      //     .read(authController)
-      //     .isLoggedIn();
-      //
-      // if (!isSignedIn) {
-      //   if (isOnBoardingRoute) {
-      //     return null;
-      //   }
-      //   return Routes.login;
-      // } else {
-      //   if (isOnBoardingRoute) {
-      //     return Routes.home;
-      //   }
-      //   return null;
-      // }
+      if (state.uri.path == Routes.splash) {
+        return null;
+      }
+      final bool isOnBoardingRoute = state.uri.path == Routes.login;
+      //|| state.uri.path == Routes.resetPassword ||
+      //state.uri.path == Routes.onboarding;
+      final bool isSignedIn = await ProviderScope.containerOf(context)
+          .read(authController)
+          .isLoggedIn();
+
+      if (!isSignedIn) {
+        if (isOnBoardingRoute) {
+          return null;
+        }
+        return Routes.login;
+      } else {
+        if (isOnBoardingRoute) {
+          return Routes.dashboard;
+        }
+        return null;
+      }
     },
     errorPageBuilder: (context, state) => MaterialPage(
       key: state.pageKey,

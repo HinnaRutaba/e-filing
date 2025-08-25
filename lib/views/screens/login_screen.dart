@@ -1,8 +1,7 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -20,7 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool obscurePassword = true;
@@ -58,13 +57,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
               AppTextField(
-                controller: emailController,
+                controller: usernameController,
                 labelText: 'Username',
                 //labelColor: AppColors.white,
                 hintText: 'Username',
                 showLabel: false,
                 prefix: const Icon(Icons.person),
-                validator: Validators.emailValidator,
+                validator: Validators.notEmptyValidator,
               ),
               const SizedBox(height: 24),
               AppTextField(
@@ -93,12 +92,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               AppSolidButton(
                 onPressed: () async {
                   FocusScope.of(context).unfocus();
-                  RouteHelper.navigateTo(Routes.dashboard);
-                  // if (formKey.currentState?.validate() != true) return;
-                  // ref.read(authController).login(
-                  //   email: emailController.text,
-                  //   password: passwordController.text,
-                  // );
+
+                  if (formKey.currentState?.validate() != true) return;
+                  ref.read(authController).login(
+                        username: usernameController.text,
+                        password: passwordController.text,
+                      );
                 },
                 width: double.infinity,
                 text: "Sign In",

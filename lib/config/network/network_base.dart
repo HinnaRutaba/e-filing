@@ -13,7 +13,8 @@ enum RequestType {
 
 abstract class NetworkBase {
   final DioClient dioClient = DioClient(Dio());
-  final String baseUrl = 'https://85.31.239.89/api/';
+  static const String base = 'https://efiling.balochistan.gob.pk';
+  final String baseUrl = '$base/api/';
 
   Map<String, dynamic> get headers => {
         "Accept": "application/json",

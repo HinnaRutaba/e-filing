@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/services/ai_agent.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/ai_agent_chat_screen.dart';
@@ -32,7 +33,15 @@ class _CreateNewFileScreenState extends State<CreateNewFileScreen> {
   String? selectedFileType;
   bool showHtmlEditor = true;
 
-  List<AddFlagAndAttachment> attachments = [const AddFlagAndAttachment()];
+  final List<FlagAndAttachmentModel> attachments = [
+    FlagAndAttachmentModel(),
+  ];
+
+  @override
+  void initState() {
+    AIAgent().resetMessages();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,35 +242,33 @@ class _CreateNewFileScreenState extends State<CreateNewFileScreen> {
               const SizedBox(height: 24),
               header(Icons.code, "Flag & Attachment"),
               const SizedBox(height: 16),
-              ListView.builder(
+              ListView.separated(
                 itemCount: attachments.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, i) => Divider(
+                  height: 40,
+                  color: AppColors.secondaryLight.withOpacity(0.5),
+                ),
                 itemBuilder: (ctx, i) {
-                  return Column(
-                    children: [
-                      attachments[i],
-                      if (i != attachments.length - 1)
-                        Divider(
-                          height: 40,
-                          color: AppColors.secondaryLight.withOpacity(0.5),
-                        )
-                      else
-                        const SizedBox(height: 12),
-                    ],
+                  final model = attachments[i];
+                  return AddFlagAndAttachment(
+                    key:
+                        ValueKey(model), // keep identity stable across rebuilds
+                    model: model,
+                    onDelete: () {
+                      setState(() => attachments.removeAt(i));
+                    },
                   );
                 },
               ),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: AppOutlineButton(
                   onPressed: () {
                     setState(() {
-                      attachments.add(
-                        AddFlagAndAttachment(
-                          onDelete: () {},
-                        ),
-                      );
+                      attachments.add(FlagAndAttachmentModel());
                     });
                   },
                   text: "Add More",

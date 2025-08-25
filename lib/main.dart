@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:device_preview_plus/device_preview_plus.dart';
 import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -13,9 +14,13 @@ import 'package:toastification/toastification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    DevicePreview(
+      enabled: false,
+      builder: (context) => const ProviderScope(
+        child: MyApp(),
+      ), // Wrap your app
     ),
   );
 }
