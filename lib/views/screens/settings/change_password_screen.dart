@@ -1,16 +1,21 @@
+import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
+class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController currentPasswordController =
       TextEditingController();
@@ -104,6 +109,22 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   }
                   return Validators.passwordValidator(text);
                 },
+              ),
+              const SizedBox(height: 24),
+              AppSolidButton(
+                onPressed: () {
+                  if (!formKey.currentState!.validate()) return;
+                  ref.read(authController.notifier).changePassword(
+                        currentPassword: currentPasswordController.text,
+                        newPassword: newPasswordController.text,
+                        confirmPassword: confirmPasswordController.text,
+                      );
+                },
+                text: "Save Changes",
+                backgroundColor: AppColors.secondaryDark,
+                width: double.infinity,
+                fontSize: 18,
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ],
           ),

@@ -8,6 +8,7 @@ import 'package:efiling_balochistan/views/widgets/chips/custom_app_chip.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:uuid/uuid.dart';
 
@@ -15,8 +16,14 @@ class AIAgentChatScreen extends StatefulWidget {
   final int? fileId;
   final FileDetailsModel? file;
   final bool generateNew;
-  const AIAgentChatScreen(
-      {super.key, this.fileId, this.file, this.generateNew = false});
+  final bool suggestResponse;
+  const AIAgentChatScreen({
+    super.key,
+    this.fileId,
+    this.file,
+    this.generateNew = false,
+    this.suggestResponse = false,
+  });
 
   @override
   State<AIAgentChatScreen> createState() => _AIAgentChatScreenState();
@@ -41,7 +48,8 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
       id: _uuid.v4(),
       text: msg.content,
       metadata: {
-        'canAccept': !msg.isError,
+        'canAccept':
+            msg.content.contains(AIAgent.responseKey) || widget.generateNew,
         'toShow': msg.toShow,
         'isError': msg.isError
       },
@@ -77,12 +85,12 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
       });
     });
 
-    if (widget.file != null && _messages.isEmpty) {
-      _handleSendPressed(
-        "Summarise the file in 150 characters  or less and in next line say 'Ask me anything about this file'",
-        sendAsUserMessage: false,
-      );
-    }
+    // if (widget.file != null && _messages.isEmpty) {
+    //   _handleSendPressed(
+    //     "Summarise the file in 150 characters  or less and in next line say 'Ask me anything about this file'",
+    //     sendAsUserMessage: false,
+    //   );
+    // }
   }
 
   void _handleSendPressed(String text, {bool sendAsUserMessage = true}) {
@@ -97,7 +105,8 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
     // Send message & get AI streaming response
     _aiAgent
         .sendMessageStream(text, widget.file?.toContentJson(),
-            sendAsUserMessage: sendAsUserMessage)
+            sendAsUserMessage: sendAsUserMessage,
+            suggestResponse: widget.suggestResponse)
         .listen((partialResponse) {
       // Update last assistant message while typing
       if (_messages.isNotEmpty &&
@@ -156,9 +165,12 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
           children: [
             Expanded(
               child: _messages.isEmpty
-                  ? AppText.bodySmall(widget.file == null
-                      ? "Ask AI to assist you in generating a report"
-                      : "Hi, I have info about the file ask me anything about it")
+                  ? AppText.bodySmall(
+                      widget.file == null
+                          ? "Ask AI to assist you in generating a report"
+                          : "Hi, I'll be your assistant in answering questions about this file. Ask me anything about it",
+                      textAlign: TextAlign.center,
+                    )
                   : ListView.builder(
                       reverse: true,
                       itemCount: _messages.length,
@@ -195,7 +207,8 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                         ),
                                       ),
                                       if (!isUser &&
-                                          widget.generateNew &&
+                                          // (widget.generateNew ||
+                                          //     widget.suggestResponse) &&
                                           message.metadata?['canAccept'])
                                         CustomAppChip(
                                           label: "Accept this response",
@@ -204,7 +217,10 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                           chipColor: AppColors.white,
                                           borderColor: AppColors.primaryDark,
                                           onTap: () {
-                                            RouteHelper.pop(message.text);
+                                            RouteHelper.pop(
+                                              message.text.replaceAll(
+                                                  AIAgent.responseKey, ''),
+                                            );
                                           },
                                         ),
                                     ],
@@ -214,18 +230,21 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                       },
                     ),
             ),
+            const SizedBox(height: 12),
             AppTextField(
               controller: promptController,
               labelText: '',
               hintText: "Enter your prompt",
               showLabel: false,
-              maxLines: 4,
+              maxLines: 2,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             AppSolidButton(
               onPressed: loading
                   ? null
                   : () {
+                      FocusScope.of(context).unfocus();
+                      SystemChannels.textInput.invokeMethod('TextInput.hide');
                       _handleSendPressed(promptController.text);
                     },
               text: loading ? "Generating Response" : "Generate Response",

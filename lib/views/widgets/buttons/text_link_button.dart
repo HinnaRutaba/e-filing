@@ -6,12 +6,14 @@ class AppTextLinkButton extends StatelessWidget {
   final String text;
   final Color? color;
   final IconData? icon;
+  final double? fontSize;
   const AppTextLinkButton({
     super.key,
     required this.onPressed,
     required this.text,
     this.color,
     this.icon,
+    this.fontSize,
   });
 
   @override
@@ -19,12 +21,12 @@ class AppTextLinkButton extends StatelessWidget {
     return icon == null
         ? TextButton(
             onPressed: onPressed,
-            child: AppText(text, color: color),
+            child: AppText(text, color: color, fontSize: fontSize),
           )
         : TextButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, color: color),
-            label: AppText(text, color: color),
+            label: AppText(text, color: color, fontSize: fontSize),
           );
   }
 }

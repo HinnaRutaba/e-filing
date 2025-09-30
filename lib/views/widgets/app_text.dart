@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 typedef TextBuilder = Text Function(BuildContext context);
@@ -12,6 +13,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -29,6 +32,8 @@ class AppText extends Text {
           fontSize: fontSize,
           fontWeight: fontWeight,
           letterSpacing: letterSpacing,
+          decoration: decoration,
+          fontFamily: fontFamily,
         ),
       );
     };
@@ -42,6 +47,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -59,6 +66,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -72,6 +81,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -89,6 +100,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -102,6 +115,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.fontFamily,
+    this.decoration,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -119,6 +134,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -132,6 +149,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -149,6 +168,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -162,6 +183,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -179,6 +202,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -192,6 +217,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -209,6 +236,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -222,6 +251,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -239,6 +270,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -252,6 +285,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -269,6 +304,9 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              decorationColor: AppColors.textPrimary,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -282,6 +320,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -299,6 +339,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -312,6 +354,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -329,6 +373,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -342,6 +388,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -359,6 +407,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -372,6 +422,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -389,6 +441,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -402,6 +456,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -419,6 +475,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -432,6 +490,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -449,6 +509,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -462,6 +524,8 @@ class AppText extends Text {
     this.fontSize,
     this.fontWeight,
     this.letterSpacing,
+    this.decoration,
+    this.fontFamily,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -479,6 +543,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
+              decoration: decoration,
+              fontFamily: fontFamily,
             ),
       );
     };
@@ -495,6 +561,10 @@ class AppText extends Text {
   final FontWeight? fontWeight;
 
   final double? letterSpacing;
+
+  final TextDecoration? decoration;
+
+  final String? fontFamily;
 
   @override
   Widget build(BuildContext context) {

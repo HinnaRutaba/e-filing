@@ -94,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   FocusScope.of(context).unfocus();
 
                   if (formKey.currentState?.validate() != true) return;
-                  ref.read(authController).login(
+                  ref.read(authController.notifier).login(
                         username: usernameController.text,
                         password: passwordController.text,
                       );
@@ -102,7 +102,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: double.infinity,
                 text: "Sign In",
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+              // AppText.bodyMedium(
+              //   "Or use fingerprint to sign in ",
+              //   textAlign: TextAlign.center,
+              // ),
+              // const SizedBox(height: 8),
+              // Image.asset(
+              //   AssetsConstants.fingerprint,
+              //   width: 48,
+              //   height: 48,
+              // ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    AppText.titleSmall("Powered By"),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.asset(
+                            AssetsConstants.cmduLogo,
+                            height: 48,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(1.0),
+                          child: Image.asset(
+                            AssetsConstants.govtLogo,
+                            height: 40,
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              )
             ]
                 .animate(
                   interval: const Duration(milliseconds: 20),

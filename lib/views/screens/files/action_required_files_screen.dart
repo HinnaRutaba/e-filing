@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/not_found.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
@@ -51,8 +52,18 @@ class _ActionRequiredFilesScreenState
             const SizedBox(height: 16),
             Expanded(
               child: files.isEmpty
-                  ? const Center(
-                      child: NotFound(),
+                  ? Center(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const NotFound(),
+                          AppSolidButton(
+                            onPressed: fetchData,
+                            text: "Reload",
+                          ),
+                        ],
+                      ),
                     )
                   : ListView.builder(
                       itemBuilder: (ctx, i) => Padding(

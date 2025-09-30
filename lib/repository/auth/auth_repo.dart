@@ -27,19 +27,22 @@ class AuthRepo extends AuthInterface {
   }
 
   @override
-  Future<UserModel?> fetchCurrentUserDetails() async {
+  Future<UserModel?> fetchCurrentUserDetails(int? desId) async {
     try {
-      TokenModel? tokenModel = await localStorage.getToken();
-      return tokenModel?.user;
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      // TokenModel? tokenModel = await localStorage.getToken();
+      // return tokenModel?.user;
       // int? userId = await fetchLoggedInUserId();
       // if (userId == null) {
       //   throw Exception("User is not logged in");
       // }
-      // Map<String, dynamic> data = await dioClient.get(
-      //   url: meUrl,
-      //   options: await options(),
-      // );
-      // return UserModel.fromJson(data['data']);
+      Map<String, dynamic> data = await dioClient.get(
+        url: meUrl(desId),
+        options: await options(authRequired: true),
+      );
+      return UserModel.fromJson(data['data']);
     } catch (e) {
       rethrow;
     }
@@ -69,6 +72,26 @@ class AuthRepo extends AuthInterface {
   Future<void> logout() async {
     try {
       await localStorage.removeAll();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> changePassword(
+      {required String currentPassword,
+      required String newPassword,
+      required String confirmPassword}) async {
+    try {
+      Map<String, dynamic> data = await dioClient.post(
+        url: changePasswordUrl,
+        options: await options(authRequired: false),
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': confirmPassword,
+        },
+      );
     } catch (e) {
       rethrow;
     }

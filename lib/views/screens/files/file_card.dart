@@ -63,10 +63,38 @@ class FileCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: AppText.labelLarge(
-                              data?.barcode ?? '',
-                              color: AppColors.primaryDark,
-                              fontWeight: FontWeight.w800,
+                            child: Row(
+                              children: [
+                                AppText.labelLarge(
+                                  data?.barcode ?? '',
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                Visibility(
+                                  visible: fileType == FileType.forwarded,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AppText.bodyMedium(
+                                        "Forwarded ",
+                                        fontSize: 13,
+                                        color: AppColors.secondary,
+                                      ),
+                                      AppText.titleMedium(
+                                        "4",
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.secondaryDark,
+                                      ),
+                                      AppText.bodyMedium(
+                                        " Times",
+                                        fontSize: 13,
+                                        color: AppColors.secondary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           Visibility(
@@ -86,18 +114,22 @@ class FileCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(50),
-                                color: AppColors.secondary),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            child: AppText.labelLarge(
-                              data?.status?.label ?? '',
-                              color: AppColors.white,
-                              fontWeight: FontWeight.w600,
+                          if (fileType == FileType.forwarded ||
+                              data?.status != null)
+                            Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: AppColors.secondary),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: AppText.labelLarge(
+                                fileType == FileType.forwarded
+                                    ? "Forwarded"
+                                    : data?.status?.label ?? '',
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
                           const Icon(
                             Icons.arrow_right,
                             color: AppColors.secondaryDark,
@@ -112,37 +144,18 @@ class FileCard extends StatelessWidget {
                                       AppText.titleLarge(data?.fileType ?? ''),
                                 )
                               : const SizedBox(height: 4),
-                          if (fileType == FileType.forwarded)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AppText.bodyMedium(
-                                    "Forwarded ",
-                                    fontSize: 13,
-                                    color: AppColors.secondary,
-                                  ),
-                                  AppText.titleMedium(
-                                    "4",
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.secondaryDark,
-                                  ),
-                                  AppText.bodyMedium(
-                                    " Times",
-                                    fontSize: 13,
-                                    color: AppColors.secondary,
-                                  ),
-                                ],
-                              ),
-                            ),
+                          // if (fileType == FileType.forwarded)
+                          //   Padding(
+                          //     padding: const EdgeInsets.only(top: 8.0),
+                          //     child:
+                          //   ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       AppText.bodySmall(data?.subject ?? '---'),
                       const SizedBox(height: 12),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (data?.sender != null)
                             Expanded(
@@ -177,13 +190,21 @@ class FileCard extends StatelessWidget {
                                                 data?.createdAt),
                                         icon: Icons.calendar_month,
                                       )
-                                    : infoTile(
-                                        title: "Created on",
-                                        value:
-                                            DateTimeHelper.datFormatSlashShort(
-                                                data?.createdAt),
-                                        icon: Icons.calendar_month,
-                                      ),
+                                    : fileType == FileType.forwarded
+                                        ? infoTile(
+                                            title: "Forwarded on",
+                                            value: DateTimeHelper
+                                                .datFormatSlashShort(
+                                                    data?.latestDate),
+                                            icon: Icons.calendar_month,
+                                          )
+                                        : infoTile(
+                                            title: "Created on",
+                                            value: DateTimeHelper
+                                                .datFormatSlashShort(
+                                                    data?.createdAt),
+                                            icon: Icons.calendar_month,
+                                          ),
                           ),
                         ],
                       ),

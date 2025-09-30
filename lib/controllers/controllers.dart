@@ -1,7 +1,9 @@
 import 'package:efiling_balochistan/controllers/auth_controller.dart';
 import 'package:efiling_balochistan/controllers/connectivity_controller.dart';
+import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/files_controller.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
+import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
 import 'package:efiling_balochistan/repository/files/files_repo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +24,11 @@ final localStorageController = Provider<LocalStorageController>(
   (ref) => LocalStorageController(),
 );
 
-final authController = Provider<AuthController>(
-  (ref) => AuthController(ref),
+final authController = StateNotifierProvider<AuthController, UserModel>(
+  (ref) => AuthController(UserModel(), ref),
+);
+
+final dashboardController =
+    StateNotifierProvider<DashboardController, DashboardModel>(
+  (ref) => DashboardController(DashboardModel(), ref),
 );

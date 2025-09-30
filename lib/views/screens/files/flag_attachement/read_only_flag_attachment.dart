@@ -73,8 +73,9 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -130,7 +131,9 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: AppText.bodyLarge(
-                            attachment.flagAttach ?? "No Attachment",
+                            attachment.flagAttach != null
+                                ? "View Attachment"
+                                : "No Attachment",
                             color: AppColors.secondaryLight,
                             overflow: TextOverflow.ellipsis,
                           ),

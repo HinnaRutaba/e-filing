@@ -1,26 +1,9 @@
 part of 'dashboard_screen.dart';
 
 class PieChartSample extends StatelessWidget {
-  final List<String> labels = [
-    'Action Required',
-    'My Files',
-    'Pending Files',
-    'Disposed Off',
-  ];
+  final List<ChartModel> data;
 
-  final List<double> values = [
-    12,
-    4,
-    6,
-    4,
-  ];
-
-  final List<Color> colors = [
-    AppColors.primary,
-    AppColors.secondary,
-    Colors.yellow[800]!,
-    Colors.teal[800]!,
-  ];
+  const PieChartSample({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -32,18 +15,18 @@ class PieChartSample extends StatelessWidget {
               sectionsSpace: 2,
               centerSpaceRadius: 56,
               sections: List.generate(
-                labels.length,
+                data.length,
                 (index) => PieChartSectionData(
-                  color: colors[index],
-                  value: values[index],
+                  color: data[index].color,
+                  value: data[index].count,
                   gradient: LinearGradient(
                     colors: [
-                      colors[index].withOpacity(0.4),
-                      colors[index].withOpacity(0.8),
-                      colors[index],
+                      data[index].color.withOpacity(0.4),
+                      data[index].color.withOpacity(0.8),
+                      data[index].color,
                     ],
                   ),
-                  title: '${values[index].toInt()}',
+                  title: '${data[index].count.toInt()}',
                   titleStyle: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -82,19 +65,31 @@ class PieChartSample extends StatelessWidget {
           height: 20,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: colors[index],
+            color: data[index].color,
           ),
         ),
         const SizedBox(width: 12),
         Flexible(
-          child: AppText.titleSmall("${labels[index]}:"),
+          child: AppText.titleSmall("${data[index].title}:"),
         ),
         const SizedBox(width: 4),
         AppText.titleSmall(
-          values[index].toInt().toString(),
+          data[index].count.toInt().toString(),
           fontWeight: FontWeight.w900,
         ),
       ],
     );
   }
+}
+
+class ChartModel {
+  final String title;
+  final double count;
+  final Color color;
+
+  ChartModel({
+    required this.title,
+    required this.count,
+    required this.color,
+  });
 }

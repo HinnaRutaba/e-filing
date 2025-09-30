@@ -49,5 +49,9 @@
     <string>We need your camera to upload photos.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>We need your photo library to upload photos.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>E-Filing needs face id to authenticate</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>E-Filing needs to record audio for voice messages</string>
 </dict>
 </plist>

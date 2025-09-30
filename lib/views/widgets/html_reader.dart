@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+
+const String fileFont = 'BookAntiqua';
 
 class HtmlReader extends StatelessWidget {
   final String html;
@@ -49,7 +51,10 @@ class HtmlReader extends StatelessWidget {
       renderMode: RenderMode.column,
 
       // set the default styling for text
-      textStyle: textStyle ?? TextStyle(fontSize: 14),
+      textStyle: const TextStyle(
+        fontSize: 14,
+        fontFamily: fileFont,
+      ),
     );
   }
 }

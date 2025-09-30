@@ -109,16 +109,36 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                           borderRadius: BorderRadius.circular(10),
                           color: AppColors.white),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
                             Icons.picture_as_pdf,
                             color: AppColors.secondaryDark,
                           ),
                           const SizedBox(width: 8),
-                          AppText.bodyLarge(
-                            m.attachment?.name ?? "Attach File",
-                            color: AppColors.secondaryLight,
+                          Expanded(
+                            child: AppText.bodyLarge(
+                              m.attachment?.name ??
+                                  "Click here to add attachment",
+                              color: AppColors.secondaryLight,
+                            ),
                           ),
+                          if (m.attachment != null) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: InkWell(
+                                onTap: () {
+                                  m.attachment = null;
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.cancel,
+                                  color: Colors.red[800],
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ]
                         ],
                       ),
                     ),
@@ -143,4 +163,9 @@ class FlagAndAttachmentModel {
     this.attachment,
     this.usedFlags,
   });
+
+  bool get isValid {
+    if (flagType != null && attachment == null) return false;
+    return true;
+  }
 }

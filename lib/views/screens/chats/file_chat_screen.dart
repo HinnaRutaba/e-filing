@@ -1,69 +1,191 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/chat/chat_model.dart';
+import 'package:efiling_balochistan/models/chat/message_model.dart';
+import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/file_details_model.dart';
+import 'package:efiling_balochistan/models/user_model.dart';
+import 'package:efiling_balochistan/services/chat_service.dart';
+import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
+import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
+import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
 import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
+import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-class FileChatScreen extends StatefulWidget {
-  final int? fileId;
+class FileChatScreen extends ConsumerStatefulWidget {
+  final int fileId;
+  final FileDetailsModel? fileDetails;
 
-  const FileChatScreen({super.key, this.fileId});
+  const FileChatScreen(
+      {super.key, required this.fileId, required this.fileDetails});
 
   @override
   _FileChatScreenState createState() => _FileChatScreenState();
 }
 
-class _FileChatScreenState extends State<FileChatScreen> {
-  final List<types.Message> _messages = [];
-  final types.User _currentUser = types.User(id: "user_1");
-  final types.User _chatPartner = types.User(id: "user_2");
-  final Uuid _uuid = Uuid();
+class _FileChatScreenState extends ConsumerState<FileChatScreen> {
+  final ChatService chatService = ChatService();
+  final Uuid _uuid = const Uuid();
 
-  void _handleSendPressed(types.PartialText message) {
-    FocusScope.of(context).unfocus();
-    final textMessage = types.TextMessage(
-      author: _currentUser,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: _uuid.v4(),
+  ChatModel? chat;
+  bool _loading = true;
+
+  UserModel get _currentUser => ref.read(authController);
+
+  types.Message _mapMessage(MessageModel message) {
+    if (message.attachments.isNotEmpty) {
+      final url = message.attachments.first;
+
+      if (url.endsWith(".m4a") ||
+          url.endsWith(".aac") ||
+          url.endsWith(".mp3")) {
+        return types.AudioMessage(
+          id: message.id,
+          author: types.User(
+            id: message.userId.toString(),
+            firstName: message.userName,
+          ),
+          createdAt: message.sentAt.millisecondsSinceEpoch,
+          name: url.split('/').last,
+          size: 0,
+          uri: url,
+          duration: const Duration(),
+        );
+      }
+    }
+
+    return types.TextMessage(
+      id: message.id,
+      author: types.User(
+        id: message.userId.toString(),
+        firstName: message.userName,
+      ),
+      createdAt: message.sentAt.millisecondsSinceEpoch,
       text: message.text,
     );
-    _messages.insert(0, textMessage);
-    setState(() {});
-    Future.delayed(const Duration(milliseconds: 2700), () {
-      _messages.insert(
-        0,
-        types.TextMessage(
-          author: _chatPartner,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          id: _uuid.v4(),
-          text: "Hello!",
-        ),
-      );
-      setState(() {});
+  }
+
+  void _handleSendPressed(types.PartialText message) async {
+    if (chat?.id == null) return;
+
+    final msg = MessageModel(
+      id: _uuid.v4(),
+      text: message.text,
+      userId: _currentUser.id!,
+      userName: _currentUser.userTitle!,
+      userDesignationId: _currentUser.currentDesignation!.userDesgId!,
+      sentAt: DateTime.now(),
+    );
+
+    await chatService.sendMessage(chat: chat!, message: msg);
+  }
+
+  Future<void> _initChatRoom() async {
+    final participants = [
+      ParticipantModel(
+        userDesignationId: _currentUser.currentDesignation!.userDesgId!,
+        userId: _currentUser.id!,
+        userTitle: _currentUser.userTitle!,
+        designation: _currentUser.currentDesignation!.designation!,
+        joinedAt: DateTime.now(),
+        removed: false,
+        removedAt: null,
+      ),
+    ];
+
+    final chatId = await chatService.createChatRoom(
+      fileId: widget.fileId,
+      barcode: widget.fileDetails?.content?.first?.barcode,
+      participants: participants,
+    );
+
+    chat = await chatService.getChat(chatId);
+
+    chatService.markAllMessagesAsRead(
+      chatId: chat!.id,
+      userDesignationId: _currentUser.currentDesignation!.userDesgId!,
+    );
+
+    setState(() {
+      _loading = false;
     });
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initChatRoom();
+  }
+
+  ParticipantModel? get participant => chat == null
+      ? null
+      : chatService.currentParticipant(chat: chat!, userId: _currentUser.id!);
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900],
+      //backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: AppText.headlineSmall(
-          "File Discussion (FN-08980)",
-          color: AppColors.primaryDark,
-        ),
+        title: StreamBuilder<ChatModel>(
+            stream: chat == null ? null : chatService.readChatStream(chat!.id),
+            builder: (context, snapshot) {
+              final Widget title = AppText.headlineSmall(
+                "File Discussion",
+                color: AppColors.primaryDark,
+              );
+              if (!snapshot.hasData) {
+                return title;
+              }
+              final chat = snapshot.data!;
+              return InkWell(
+                onTap: chat.activeParticipants.isEmpty == true
+                    ? null
+                    : () {
+                        showModalBottomSheet(
+                          context: context,
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+                          ),
+                          isScrollControlled: true,
+                          backgroundColor: AppColors.background,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            ),
+                          ),
+                          builder: (BuildContext context) {
+                            return ChatParticipantsView(chatId: chat.id);
+                          },
+                        );
+                      },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    title,
+                    AppText.labelMedium(
+                      "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
+                      color: AppColors.textPrimary,
+                    ),
+                  ],
+                ),
+              );
+            }),
         elevation: 0,
         scrolledUnderElevation: 0,
         titleSpacing: 0,
         backgroundColor: AppColors.background,
         leading: IconButton(
-          onPressed: () {
-            RouteHelper.pop();
-          },
+          onPressed: () => RouteHelper.pop(),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.primaryDark,
@@ -77,8 +199,8 @@ class _FileChatScreenState extends State<FileChatScreen> {
                 showModalBottomSheet(
                   context: context,
                   constraints: BoxConstraints(
-                      maxHeight: MediaQuery.sizeOf(context).height * 0.9),
-                  showDragHandle: false,
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+                  ),
                   isScrollControlled: true,
                   backgroundColor: AppColors.background,
                   shape: const RoundedRectangleBorder(
@@ -88,30 +210,52 @@ class _FileChatScreenState extends State<FileChatScreen> {
                     ),
                   ),
                   builder: (BuildContext context) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: AppText.headlineSmall(
-                                  "File Preview",
+                    return StickyTagDrawer(
+                      mainContent: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: AppText.headlineSmall("File Preview"),
                                 ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  RouteHelper.pop();
-                                },
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: AppColors.textPrimary,
+                                IconButton(
+                                  onPressed: () => RouteHelper.pop(),
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: AppColors.textPrimary,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const PreviewFile(),
-                        ],
+                              ],
+                            ),
+                            PreviewFile(
+                              content: widget.fileDetails?.content,
+                            ),
+                          ],
+                        ),
+                      ),
+                      flagText: "Flags",
+                      panelContent: SingleChildScrollView(
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: widget.fileDetails?.attachments != null &&
+                                  widget.fileDetails!.attachments.isNotEmpty
+                              ? ReadOnlyFlagAttachmentList(
+                                  header: AppText.titleMedium("Attached Flags"),
+                                  data: widget.fileDetails!.attachments,
+                                )
+                                  .animate(delay: 100.ms)
+                                  .fade(
+                                      duration: 400.ms, curve: Curves.easeInOut)
+                                  .slide(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                              : Center(
+                                  child:
+                                      AppText.bodyMedium("No flags available"),
+                                ),
+                        ),
                       ),
                     );
                   },
@@ -122,60 +266,137 @@ class _FileChatScreenState extends State<FileChatScreen> {
             ),
           )
         ],
-        //backgroundColor: Colors.black,
       ),
-      body: Stack(
-        children: [
-          Chat(
-            messages: _messages,
-            onSendPressed: _handleSendPressed,
-            user: _currentUser,
-            theme: const DefaultChatTheme(
-              inputBackgroundColor: AppColors.white,
-              inputTextDecoration: InputDecoration(
-                fillColor: Colors.transparent,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                border: InputBorder.none,
-                hintStyle: TextStyle(
-                  color: AppColors.primaryDark,
-                ),
-              ),
-              primaryColor: AppColors.primary,
-              secondaryColor: AppColors.secondary,
-              inputTextColor: AppColors.textPrimary,
-              sendButtonIcon: Icon(
-                Icons.send_sharp,
-                color: AppColors.primaryDark,
-                size: 32,
-              ),
-              inputPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-              inputElevation: 18,
-              inputMargin: EdgeInsets.zero,
-              inputTextCursorColor: AppColors.primaryDark,
-              inputContainerDecoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(16),
-                  topLeft: Radius.circular(16),
-                ),
-              ),
-              bubbleMargin: EdgeInsets.only(bottom: 16, left: 16, right: 0),
-              backgroundColor: AppColors.background,
-              sentMessageBodyTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-              receivedMessageBodyTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : StreamBuilder<List<MessageModel>>(
+              stream: chatService.readMessagesStream(chat!.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final filteredMessages = snapshot.data!
+                    .where((e) =>
+                        e.hiddenFrom
+                            ?.contains(participant?.userDesignationId) !=
+                        true)
+                    .toList();
+
+                final messages = filteredMessages.map(_mapMessage).toList() ??
+                    <types.Message>[];
+
+                return Chat(
+                  messages: messages,
+                  // messages
+                  //     .where((m) => participant?.removedAt == null
+                  //         ? true
+                  //         : m.createdAt! <
+                  //             participant!
+                  //                 .removedAt!.millisecondsSinceEpoch)
+                  //     .toList(),
+                  onSendPressed: (text) {
+                    _handleSendPressed(text);
+                  },
+                  user: types.User(id: _currentUser.id.toString()),
+                  customBottomWidget: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: StreamBuilder<ChatModel>(
+                        stream: chat == null
+                            ? null
+                            : chatService.readChatStream(chat!.id),
+                        builder: (context, snapshot) {
+                          if (snapshot.data == null) {
+                            return const SizedBox.shrink();
+                          }
+                          final chat = snapshot.data!;
+                          this.chat = chat;
+                          return !chatService.isParticipantInChat(
+                            chat: chat,
+                            userId: _currentUser.id!,
+                          )
+                              ? Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: AppText.bodyMedium(
+                                      "You are no longer part oif this conversation."),
+                                )
+                              : Container(
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.appBarColor,
+                                    borderRadius: BorderRadius.only(
+                                      topRight: Radius.circular(16),
+                                      topLeft: Radius.circular(16),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        offset: Offset(0, -2),
+                                        blurRadius: 2,
+                                      )
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 8,
+                                  ),
+                                  child: ChatInputBar(
+                                    chat: chat!,
+                                    chatService: chatService,
+                                    userId: _currentUser.id!,
+                                    userDesignationId: _currentUser
+                                        .currentDesignation!.userDesgId!,
+                                    userTitle: _currentUser.userTitle!,
+                                    onSendText: (text) {
+                                      _handleSendPressed(
+                                          types.PartialText(text: text));
+                                    },
+                                    onAttachmentPressed: () {
+                                      // later: pick image/video/docs
+                                    },
+                                  ),
+                                );
+                        }),
+                  ),
+                  theme: const DefaultChatTheme(
+                    primaryColor: AppColors.secondaryLight,
+                    secondaryColor: AppColors.cardColor,
+                    inputTextColor: AppColors.textPrimary,
+                    inputPadding:
+                        EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                    inputElevation: 18,
+                    inputMargin: EdgeInsets.zero,
+                    userNameTextStyle: TextStyle(
+                      color: AppColors.secondaryDark,
+                      fontSize: 12,
+                      //fontWeight: FontWeight.w500,
+                    ),
+                    userAvatarNameColors: [
+                      AppColors.secondary,
+                      AppColors.primaryDark,
+                      AppColors.secondaryDark,
+                    ],
+                    inputTextCursorColor: AppColors.primaryDark,
+                    userAvatarImageBackgroundColor: AppColors.secondary,
+                    bubbleMargin: EdgeInsets.only(bottom: 8, left: 8, right: 0),
+                    backgroundColor: AppColors.background,
+                    sentMessageBodyTextStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    receivedMessageBodyTextStyle: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  showUserNames: true,
+                  showUserAvatars: true,
+                );
+              },
             ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -4,12 +4,14 @@ class Routes {
   static const String root = '/';
   static const String splash = '/splash';
   static const String login = '/login';
+  static const String selectDesignation = '/selectDesignation';
   static const String dashboard = '/dashboard';
   static const String createFile = '/createFile';
   static String fileDetails([fileId]) =>
       '/fileDetails/${fileId ?? ':${PathParams.fileId}'}';
   static String fileChat([fileId]) =>
       '/fileChat/${fileId ?? ':${PathParams.fileId}'}';
+  static const String chats = '/chats';
   static const String pendingFiles = '/pendingFiles';
   static const String myFiles = '/myFiles';
   static const String actionRequiredFiles = '/actionRequiredFiles';

@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,16 @@ class _PdfViewerState extends State<PdfViewer> {
         title: AppText.headlineSmall("View Attachment"),
         backgroundColor: AppColors.background,
         centerTitle: false,
+        leading: const SizedBox.shrink(),
+        titleSpacing: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: AppColors.textPrimary),
+            onPressed: () {
+              RouteHelper.pop();
+            },
+          ),
+        ],
       ),
       body: widget.url == null
           ? Center(

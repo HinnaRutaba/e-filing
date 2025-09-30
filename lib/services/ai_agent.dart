@@ -32,6 +32,7 @@ class AIAgent {
 
   final client = OpenAIClient(apiKey: Keys.openAIKey);
   static const aiModel = 'gpt-4o-mini';
+  static const responseKey = 'Suggested Response: ';
 
   final List<ChatMessage> _messageHistory = [];
   final _messageController = StreamController<List<ChatMessage>>.broadcast();
@@ -76,7 +77,9 @@ Submitted for approval and further directions please.
       '2.  ${FileDetailsSchema.attachments} - this contains List of Flags linked to the file. Each Flag has a url and a title'
       'You must be able to answer question about collective content of individual file content and flags'
       'If there is a typo in the message make sure to ignore it and answer the question correctly.'
-      'Only answer questions related to the file provided above.';
+      'Only answer questions related to the file provided above.'
+      'Give your reply only in WYSIWYG HTML format, do not use markdown or any other format.';
+
   //'If user tries to ask any other question that you know exactly are not typos, reply with "Sorry, I can only answer questions related to the provided file."';
 
   static String generateReportContext =
@@ -163,7 +166,7 @@ Submitted for approval and further directions please.
 
   Stream<String> sendMessageStream(
       String userMessage, Map<String, dynamic>? fileStr,
-      {bool sendAsUserMessage = true}) async* {
+      {bool sendAsUserMessage = true, bool suggestResponse = false}) async* {
     _addMessage(ChatRole.user, userMessage, toShow: sendAsUserMessage);
 
     try {
@@ -171,6 +174,18 @@ Submitted for approval and further directions please.
       if (fileStr == null || fileStr.isEmpty) {
         systemMessage = generateReportContext;
         //yield "No report found for this file. Please upload a report first.";
+      } else if (suggestResponse) {
+        try {
+          systemMessage = '''${reportContext(fileStr)}
+       
+          if user asks about a response read the whole report, read other peoples comments in the contents and only then suggest a reasonable response
+        Ensure to give just a ONE LINE response do not exceed 50 characters and should not include details like Sender name, designation etc.
+        The response should be in next line after the line '$responseKey'
+        Only give the response if user asks for it
+        ''';
+        } catch (e, s) {
+          print(s);
+        }
       } else {
         systemMessage = reportContext(fileStr);
       }

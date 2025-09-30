@@ -56,7 +56,7 @@ class SessionExpiredHandler {
                     AppSolidButton(
                       onPressed: () {
                         ProviderScope.containerOf(context)
-                            .read(authController)
+                            .read(authController.notifier)
                             .logout();
                         showingSessionExpiredDialog = false;
                       },

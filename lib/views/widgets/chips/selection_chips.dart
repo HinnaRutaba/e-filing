@@ -27,6 +27,7 @@ class SelectionChips<T> extends StatefulWidget {
   final bool enableMultiSelect;
   final double minMenuItemWidth;
   final bool singleLineScroll;
+  final Color? chipColor;
 
   const SelectionChips({
     super.key,
@@ -39,6 +40,7 @@ class SelectionChips<T> extends StatefulWidget {
     this.enableMultiSelect = false,
     this.minMenuItemWidth = 80,
     this.singleLineScroll = false,
+    this.chipColor,
   });
 
   @override
@@ -185,9 +187,12 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
             leadingIcon: widget.menu[index].icon != null
                 ? Icon(widget.menu[index].icon)
                 : null,
-            chipColor: isSelected(index) ? theme.primaryColor : AppColors.white,
-            borderColor:
-                isSelected(index) ? AppColors.white : theme.primaryColorDark,
+            chipColor: isSelected(index)
+                ? widget.chipColor ?? theme.primaryColor
+                : AppColors.white,
+            borderColor: isSelected(index)
+                ? AppColors.white
+                : widget.chipColor ?? theme.primaryColorDark,
             padding: const EdgeInsets.all(0),
             onTap: () {
               scrollToItem(widget.menu[index].key);

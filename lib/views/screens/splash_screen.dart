@@ -2,20 +2,24 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/web_view/file_support_web_view.dart';
+import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   final bool navigate;
   const SplashScreen({super.key, this.navigate = true});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   navigateToWebView() {
     if (widget.navigate) {
       try {
@@ -42,10 +46,27 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  fetchData() async {
+    final ctrl = ref.read(authController.notifier);
+    final loggedIn = await ctrl.isLoggedIn();
+    if (!loggedIn) {
+      RouteHelper.navigateTo(Routes.login);
+      return;
+    }
+    await ctrl.fetchLoggedInUser();
+    DesignationModel? designation = await ctrl.fetchDesignation();
+    if (designation == null) {
+      RouteHelper.navigateTo(Routes.login);
+      return;
+    }
+    RouteHelper.navigateTo(Routes.dashboard);
+  }
+
   @override
   void initState() {
     //navigateToWebView();
-    navigateToApp();
+    print("SPLASHH_____");
+    fetchData();
     super.initState();
   }
 
@@ -70,6 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.max,
             children: [
+              const Spacer(),
               widget.navigate
                   ? logo()
                       .animate()
@@ -82,6 +104,36 @@ class _SplashScreenState extends State<SplashScreen> {
                         curve: Curves.easeInOut,
                       )
                   : logo(),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    AppText.titleSmall("Powered By"),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.asset(
+                            AssetsConstants.cmduLogo,
+                            height: 72,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(1.0),
+                          child: Image.asset(
+                            AssetsConstants.govtLogo,
+                            height: 64,
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
         ),

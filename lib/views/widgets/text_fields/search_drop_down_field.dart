@@ -69,6 +69,7 @@ class SearchDropDownField<T> extends StatelessWidget {
             autofocus: false,
             style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
             decoration: InputDecoration(
+              enabled: enabled,
               hintText: hintText,
               suffixIcon: suffixIcon ??
                   const Icon(

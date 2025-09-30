@@ -60,10 +60,19 @@ dependencies:
   flutter_chat_types: ^3.6.1
   flutter_sliding_panel: ^0.0.5
   openai_dart: 0.4.5
-  flutter_widget_from_html: 0.16.1
+  flutter_widget_from_html_core: 0.16.1
   syncfusion_flutter_pdfviewer: ^27.1.52
   device_preview_plus:
   tuple: ^2.0.0
+  shimmer_animation: 2.2.1
+  firebase_core: 3.10.1
+  firebase_messaging: 15.2.1
+  cloud_firestore: 5.6.2
+  flutter_local_notifications: 18.0.1
+  dropdown_button2: ^2.3.9
+  local_auth: ^2.3.0
+  record: 6.1.0
+  audio_waveforms: ^1.0.4
 
 
 dev_dependencies:
@@ -104,10 +113,11 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  fonts:
+     - family: BookAntiqua
+       fonts:
+         - asset: assets/fonts/bookantiqua.ttf
+         - asset: assets/fonts/bookantiqua_bold.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

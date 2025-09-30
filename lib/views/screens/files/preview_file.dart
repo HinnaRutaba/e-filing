@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
@@ -36,6 +37,7 @@ class PreviewFile extends StatelessWidget {
                               child: AppText.labelLarge(
                                 details.barcode ?? '---',
                                 maxLines: 2,
+                                fontFamily: fileFont,
                               ),
                             ),
                           ),
@@ -45,15 +47,25 @@ class PreviewFile extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                AppText.titleMedium(details.fileType ?? ''),
+                                AppText.titleMedium(
+                                  details.fileType ?? '',
+                                  fontFamily: fileFont,
+                                ),
                                 const SizedBox(height: 8),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    AppText.bodyLarge("Subject: "),
+                                    AppText.bodyLarge(
+                                      "Subject: ",
+                                      fontFamily: fileFont,
+                                    ),
                                     Expanded(
                                       child: AppText.titleMedium(
-                                          details.subject ?? 'N/A'),
+                                        details.subject ?? 'N/A',
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                        fontFamily: fileFont,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -62,7 +74,7 @@ class PreviewFile extends StatelessWidget {
                           )
                         ],
                       ),
-                      const SizedBox(height: 0),
+                      const SizedBox(height: 8),
                       ...content!.map((e) {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,20 +83,22 @@ class PreviewFile extends StatelessWidget {
                               padding: const EdgeInsets.only(left: 8, top: 24),
                               child: RotatedBox(
                                 quarterTurns: 3,
-                                child: AppText.bodySmall(e.fileMovNo ?? ''),
+                                child: AppText.bodySmall(
+                                  e.fileMovNo ?? '',
+                                  fontFamily: fileFont,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 24),
+                            const SizedBox(width: 32),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 24.0),
-                                    child: AppText.titleMedium(
-                                      e.designation ?? '',
-                                    ),
+                                  const SizedBox(height: 12),
+                                  AppText.titleMedium(
+                                    e.receiver ?? '---',
+                                    fontFamily: fileFont,
                                   ),
                                   HtmlReader(
                                     html: e.content ?? '',
@@ -98,17 +112,26 @@ class PreviewFile extends StatelessWidget {
                                         if (e.signature != null &&
                                             e.signature!.isNotEmpty)
                                           Image.network(
-                                            e.signatureUrl!,
+                                            e.signature!.startsWith(
+                                                    NetworkBase.base)
+                                                ? e.signature!
+                                                : e.signatureUrl!,
                                             width: 80,
                                           ),
                                         const SizedBox(height: 8),
-                                        AppText.titleLarge(e.sender ?? '---'),
+                                        AppText.titleMedium(
+                                          e.sender ?? '---',
+                                          fontFamily: fileFont,
+                                        ),
                                         AppText.bodyMedium(
-                                            "(${e.designation ?? '---'})"),
+                                          "(${e.designation ?? '---'})",
+                                          fontFamily: fileFont,
+                                        ),
                                         const SizedBox(height: 4),
                                         AppText.bodyMedium(
                                           DateTimeHelper.datFormatSlash(
                                               e.sendingDate),
+                                          fontFamily: fileFont,
                                         ),
                                       ],
                                     ),
@@ -126,38 +149,20 @@ class PreviewFile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (html != null)
+                    if (html != null) ...[
                       HtmlReader(
                         html: html!,
-                      )
-                    else ...[
-                      AppText.titleMedium("PUC"),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          AppText.bodyLarge("Subject: "),
-                          AppText.titleMedium("The Subject of The File"),
-                        ],
                       ),
+                      const SizedBox(height: 48),
                     ],
-                    const SizedBox(height: 48),
                     Align(
-                      alignment: Alignment.bottomRight,
-                      child: Column(
-                        children: [
-                          Image.network(
-                            'https://upload.wikimedia.org/wikipedia/commons/0/00/Todd_Strasser_signature.png',
-                            width: 120,
-                          ),
-                          const SizedBox(height: 8),
-                          AppText.headlineSmall("User Name"),
-                          const SizedBox(height: 4),
-                          AppText.bodyLarge(
-                            DateTimeHelper.datFormatSlash(
-                              DateTime.now(),
-                            ),
-                          ),
-                        ],
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(52, 80, 0, 80),
+                        child: AppText.titleSmall(
+                          "Nothing to show. File data is empty",
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ],

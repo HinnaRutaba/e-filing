@@ -20,6 +20,11 @@ class NavDrawer extends ConsumerWidget {
         routeName: Routes.dashboard,
       ),
       DrawerMenu(
+        title: "Chats",
+        icon: Icons.chat,
+        routeName: Routes.chats,
+      ),
+      DrawerMenu(
         title: "Create New File",
         icon: Icons.add_link,
         routeName: Routes.createFile,
@@ -50,9 +55,9 @@ class NavDrawer extends ConsumerWidget {
         routeName: Routes.forwarded,
       ),
       DrawerMenu(
-        title: "Settings",
-        icon: Icons.settings,
-        routeName: Routes.settings,
+        title: "Change Password",
+        icon: Icons.lock_reset,
+        routeName: Routes.changePassword,
       ),
     ];
     return Drawer(
@@ -113,13 +118,41 @@ class NavDrawer extends ConsumerWidget {
                     );
                   },
                 ).toList(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      AppText.titleSmall("Powered By"),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.asset(
+                              AssetsConstants.cmduLogo,
+                              height: 48,
+                            ),
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(1.0),
+                            child: Image.asset(
+                              AssetsConstants.govtLogo,
+                              height: 40,
+                            ),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           )),
           const SizedBox(height: 16),
           AppTextLinkButton(
             onPressed: () {
-              ref.read(authController).logout();
+              ref.read(authController.notifier).logout();
             },
             text: "Sign Out",
             icon: Icons.logout,

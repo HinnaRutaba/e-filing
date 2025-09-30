@@ -52,6 +52,8 @@ class FileModel {
   final String? receiver;
   final String? fileType;
   final DateTime? createdAt;
+  final DateTime? latestDate;
+  final int? forwardedCount;
 
   FileModel({
     this.trackId,
@@ -69,9 +71,11 @@ class FileModel {
     this.receiver,
     this.fileType,
     this.createdAt,
+    this.latestDate,
+    this.forwardedCount,
   });
 
-  factory FileModel.fromJson(Map<String, dynamic> json) {
+  factory FileModel.fromJson(Map<String, dynamic> json, {FileStatus? status}) {
     return FileModel(
       trackId: json[FileSchema.trackId],
       fileId: json[FileSchema.fileId],
@@ -81,8 +85,10 @@ class FileModel {
       partFileNo: json[FileSchema.partFileNo],
       fileMovNo: json[FileSchema.fileMovNo],
       barcode: json[FileSchema.barcode],
-      status: FileStatus.fromValue(
-          json[FileSchema.status] ?? json[FileSchema.fileStatus]),
+      status: json[FileSchema.status] is int
+          ? FileStatus.fromValue(
+              json[FileSchema.status] ?? json[FileSchema.fileStatus])
+          : status,
       receivedAt: json[FileSchema.receivedAt] != null
           ? DateTime.tryParse(json[FileSchema.receivedAt])
           : null,
@@ -94,12 +100,16 @@ class FileModel {
               ? TagModel(
                   id: null,
                   title: json[FileSchema.tag],
-                  color: _getTagColor(json[FileSchema.tagColor] ?? 'primary'))
+                  color: getTagColor(json[FileSchema.tagColor] ?? 'primary'))
               : TagModel.fromJson(json[FileSchema.tag])
           : null,
       sender: json[FileSchema.sender] as String?,
       receiver: json[FileSchema.receiver] as String?,
       fileType: json[FileSchema.fileType] as String?,
+      latestDate: json[FileSchema.latestDate] != null
+          ? DateTime.tryParse(json[FileSchema.latestDate])
+          : null,
+      forwardedCount: json[FileSchema.forwardedCount] as int?,
     );
   }
 
@@ -135,7 +145,7 @@ class TagModel {
     return TagModel(
       id: json[TagSchema.id] as int?,
       title: json[TagSchema.title] as String?,
-      color: _getTagColor(json[TagSchema.color]),
+      color: getTagColor(json[TagSchema.color]),
     );
   }
 
@@ -166,6 +176,8 @@ class FileSchema {
   static const String receiver = "receiver";
   static const String fileType = "file_type";
   static const String createdAt = "created_at";
+  static const String latestDate = "latest_date";
+  static const String forwardedCount = "forwarded_count";
 }
 
 class TagSchema {
@@ -174,7 +186,7 @@ class TagSchema {
   static const String color = "color";
 }
 
-Color _getTagColor(String colorName) {
+Color getTagColor(String colorName) {
   Color tagColor = Colors.blue;
   if (colorName == 'danger') {
     tagColor = Colors.red[700]!;
