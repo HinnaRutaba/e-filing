@@ -47,33 +47,38 @@ class FileContentModel {
   String get signatureUrl => "${NetworkBase.base}/$signature";
 
   factory FileContentModel.fromJson(Map<String, dynamic> json) {
-    return FileContentModel(
-      fileId: json[FileContentSchema.fileId] as int?,
-      fileType: json[FileContentSchema.fileType] as String?,
-      subject: json[FileContentSchema.subject] as String?,
-      signature: json[FileContentSchema.signature] as String?,
-      content: json[FileContentSchema.content] as String?,
-      fileMovNo: json[FileContentSchema.fileMovNo] as String?,
-      barcode: json[FileContentSchema.barcode] as String?,
-      referenceNo: json[FileContentSchema.referenceNo] as String?,
-      dateIn: json[FileContentSchema.dateIn] != null
-          ? DateTime.tryParse(json[FileContentSchema.dateIn])
-          : null,
-      dateCreated: json[FileContentSchema.dateCreated] != null
-          ? DateTime.tryParse(json[FileContentSchema.dateCreated])
-          : null,
-      sender: json[FileContentSchema.sender] as String?,
-      receiver: json[FileContentSchema.receiver] as String?,
-      designation: json[FileContentSchema.designation] ??
-          json[FileContentSchema.senderDesignation],
-      sendingDate: json[FileContentSchema.sendingDate] != null
-          ? DateTime.tryParse(json[FileContentSchema.sendingDate])
-          : null,
-      trackId: json[FileContentSchema.trackId] as int?,
-      tag: json[FileContentSchema.tag] as String?,
-      tagColor: json[FileContentSchema.tagColor] as String?,
-      fileContentNumber: json[FileContentSchema.partFileNo] as String?,
-    );
+    try {
+      return FileContentModel(
+        fileId: json[FileContentSchema.fileId] as int?,
+        fileType: json[FileContentSchema.fileType] as String?,
+        subject: json[FileContentSchema.subject] as String?,
+        signature: json[FileContentSchema.signature] as String?,
+        content: (json[FileContentSchema.content]) as String?,
+        fileMovNo: json[FileContentSchema.fileMovNo] as String?,
+        barcode: json[FileContentSchema.barcode] as String?,
+        referenceNo: json[FileContentSchema.referenceNo] as String?,
+        dateIn: json[FileContentSchema.dateIn] != null
+            ? DateTime.tryParse(json[FileContentSchema.dateIn])
+            : null,
+        dateCreated: json[FileContentSchema.dateCreated] != null
+            ? DateTime.tryParse(json[FileContentSchema.dateCreated])
+            : null,
+        sender: json[FileContentSchema.sender] as String?,
+        receiver: json[FileContentSchema.receiver] as String?,
+        designation: json[FileContentSchema.designation] ??
+            json[FileContentSchema.senderDesignation],
+        sendingDate: json[FileContentSchema.sendingDate] != null
+            ? DateTime.tryParse(json[FileContentSchema.sendingDate])
+            : null,
+        trackId: json[FileContentSchema.trackId] as int?,
+        tag: json[FileContentSchema.tag] as String?,
+        tagColor: json[FileContentSchema.tagColor] as String?,
+        fileContentNumber: json[FileContentSchema.partFileNo] as String?,
+      );
+    } catch (e, s) {
+      print("ERROR FILEEEEEE_____${e}______$s");
+      return FileContentModel();
+    }
   }
 
   Map<String, dynamic> toJson() {

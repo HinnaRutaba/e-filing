@@ -113,40 +113,56 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   }
 
   Future<void> _initChatRoom() async {
-    await _fetchFileDetails();
-    final participants = [
-      ChatParticipantModel(
+    try {
+      await _fetchFileDetails();
+      final participants = [
+        ChatParticipantModel(
+          userDesignationId: _currentUser.currentDesignation!.userDesgId!,
+          userId: _currentUser.id!,
+          userTitle: _currentUser.userTitle!,
+          designation: _currentUser.currentDesignation!.designation!,
+          joinedAt: DateTime.now(),
+          removed: false,
+          removedAt: null,
+        ),
+      ];
+
+      String barcode = '';
+      if (file != null &&
+          file!.content != null &&
+          file!.content!.isNotEmpty &&
+          file!.content!.first.barcode != null) {
+        barcode = file!.content!.first.barcode!;
+      }
+
+      final chatId = await chatService.createChatRoom(
+        fileId: widget.fileId,
+        barcode: barcode,
+        participants: participants,
+      );
+
+      chat = await chatService.getChat(chatId);
+
+      chatService.markAllMessagesAsRead(
+        chatId: chat!.id,
         userDesignationId: _currentUser.currentDesignation!.userDesgId!,
-        userId: _currentUser.id!,
-        userTitle: _currentUser.userTitle!,
-        designation: _currentUser.currentDesignation!.designation!,
-        joinedAt: DateTime.now(),
-        removed: false,
-        removedAt: null,
-      ),
-    ];
+      );
 
-    final chatId = await chatService.createChatRoom(
-      fileId: widget.fileId,
-      barcode: (file ?? widget.fileDetails)?.content.first.barcode,
-      participants: participants,
-    );
-
-    chat = await chatService.getChat(chatId);
-
-    chatService.markAllMessagesAsRead(
-      chatId: chat!.id,
-      userDesignationId: _currentUser.currentDesignation!.userDesgId!,
-    );
-
-    setState(() {
-      _loading = false;
-    });
+      setState(() {
+        _loading = false;
+      });
+    } catch (e, s) {
+      print("Error init chat room: $e \n $s");
+    }
   }
 
   Future<void> _fetchFileDetails() async {
     try {
-      file = await ref.read(chatRepo).getFileDetailsForChat(widget.fileId);
+      if (widget.fileDetails != null) {
+        file = widget.fileDetails;
+      } else {
+        file = await ref.read(chatRepo).getFileDetailsForChat(widget.fileId);
+      }
       setState(() {});
     } catch (e) {
       print("Error fetching file details: $e");
@@ -269,7 +285,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             ],
                           ),
                           PreviewFile(
-                            content: (file ?? widget.fileDetails)?.content,
+                            content: file?.content,
                           ),
                         ],
                       ),
@@ -278,14 +294,11 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     panelContent: SingleChildScrollView(
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: (file ?? widget.fileDetails)?.attachments !=
-                                    null &&
-                                (file ?? widget.fileDetails)!
-                                    .attachments
-                                    .isNotEmpty
+                        child: file?.attachments != null &&
+                                file!.attachments.isNotEmpty
                             ? ReadOnlyFlagAttachmentList(
                                 header: AppText.titleMedium("Attached Flags"),
-                                data: (file ?? widget.fileDetails)!.attachments,
+                                data: file!.attachments,
                               )
                                 .animate(delay: 100.ms)
                                 .fade(duration: 400.ms, curve: Curves.easeInOut)

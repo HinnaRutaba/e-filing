@@ -13,7 +13,8 @@ class ChatRepo extends ChatInterface {
         url: fileForChatUrl(fileId),
         options: await options(authRequired: true),
       );
-      return FileDetailsModel.fromJsonMy(data['data']);
+
+      return FileDetailsModel.fromJsonPending(data['data']);
     } catch (e) {
       rethrow;
     }
