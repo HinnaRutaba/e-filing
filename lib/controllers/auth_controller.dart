@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/constants/keys.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
@@ -22,6 +23,7 @@ class AuthController extends BaseControllerState<UserModel> {
       if (model != null) {
         state = model.user!;
         localStorage.setToken(model);
+        getOpenAIToken();
         if (model.user?.designations.length == 1) {
           await setDesignation(model.user!.designations.first);
           RouteHelper.navigateTo(Routes.dashboard);
@@ -133,6 +135,15 @@ class AuthController extends BaseControllerState<UserModel> {
       await localStorage.setDesignation(model);
       state = state.copyWith(currentDesignation: model);
       return model;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future getOpenAIToken() async {
+    try {
+      Keys.openAIKey = await repo.getOpenAIKey();
     } catch (e) {
       Toast.error(message: handleException(e));
       return null;

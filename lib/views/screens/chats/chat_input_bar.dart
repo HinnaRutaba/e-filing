@@ -1,7 +1,7 @@
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/services/chat_service.dart';
+import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 
@@ -128,17 +128,18 @@ class _ChatInputBarState extends State<ChatInputBar> {
       child: Row(
         children: [
           // Attachment button 📎
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              border: Border.all(color: AppColors.secondaryLight, width: 0.5),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.attach_file, color: AppColors.secondary),
-              onPressed: widget.onAttachmentPressed,
-            ),
-          ),
-          const SizedBox(width: 8),
+          //Todo: Enable later
+          // Container(
+          //   decoration: BoxDecoration(
+          //     borderRadius: const BorderRadius.all(Radius.circular(8)),
+          //     border: Border.all(color: AppColors.secondaryLight, width: 0.5),
+          //   ),
+          //   child: IconButton(
+          //     icon: const Icon(Icons.attach_file, color: AppColors.secondary),
+          //     onPressed: widget.onAttachmentPressed,
+          //   ),
+          // ),
+          // const SizedBox(width: 8),
 
           // Text field
           Expanded(
@@ -161,10 +162,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     }
                   },
                 )
-              : IconButton(
-                  icon: const Icon(Icons.mic, color: AppColors.primaryDark),
-                  onPressed: _startRecording,
-                ),
+              : const SizedBox.shrink(),
+          // IconButton(
+          //         icon: const Icon(Icons.mic, color: AppColors.primaryDark),
+          //         onPressed: _startRecording,
+          //       ),
         ],
       ),
     );

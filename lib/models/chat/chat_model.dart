@@ -8,7 +8,7 @@ class ChatModel {
   final int fileId;
   final String? fileBarCode;
   final DateTime createdAt;
-  final List<ParticipantModel> participants;
+  final List<ChatParticipantModel> participants;
   final MessageModel? lastMessage;
 
   ChatModel({
@@ -20,7 +20,7 @@ class ChatModel {
     this.lastMessage,
   });
 
-  List<ParticipantModel> get activeParticipants =>
+  List<ChatParticipantModel> get activeParticipants =>
       participants.where((e) => e.removed != true).toList();
 
   factory ChatModel.fromJson(Map<String, dynamic> json, String docId) {
@@ -29,7 +29,8 @@ class ChatModel {
       fileId: json['file_id'] ?? '',
       createdAt: (json['created_at'] as Timestamp).toDate(),
       participants: (json['participants'] as List<dynamic>? ?? [])
-          .map((p) => ParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+          .map((p) =>
+              ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
           .toList(),
       fileBarCode: json['file_barcode'],
       lastMessage: json['last_message'] != null

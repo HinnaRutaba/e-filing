@@ -1,6 +1,6 @@
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/services/chat_service.dart';
+import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:flutter/material.dart';
 
 class VoiceInputBar extends StatefulWidget {

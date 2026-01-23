@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -6,7 +7,7 @@ import 'package:efiling_balochistan/models/chat/message_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
-import 'package:efiling_balochistan/services/chat_service.dart';
+import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
@@ -35,11 +36,33 @@ class FileChatScreen extends ConsumerStatefulWidget {
 class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   final ChatService chatService = ChatService();
   final Uuid _uuid = const Uuid();
+  List<MessageModel> _olderMessages = [];
+  DocumentSnapshot? _lastDoc;
+  bool _isLoadingMore = false;
 
   ChatModel? chat;
   bool _loading = true;
 
   UserModel get _currentUser => ref.read(authController);
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || _lastDoc == null) return;
+    setState(() => _isLoadingMore = true);
+
+    final older = await chatService.loadMoreMessages(
+      chatId: chat!.id,
+      lastDoc: _lastDoc!,
+    );
+
+    if (older.isNotEmpty) {
+      setState(() {
+        _olderMessages.addAll(older);
+        _lastDoc = null; // update with snapshot.docs.last
+      });
+    }
+
+    setState(() => _isLoadingMore = false);
+  }
 
   types.Message _mapMessage(MessageModel message) {
     if (message.attachments.isNotEmpty) {
@@ -91,7 +114,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   Future<void> _initChatRoom() async {
     final participants = [
-      ParticipantModel(
+      ChatParticipantModel(
         userDesignationId: _currentUser.currentDesignation!.userDesgId!,
         userId: _currentUser.id!,
         userTitle: _currentUser.userTitle!,
@@ -126,7 +149,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     _initChatRoom();
   }
 
-  ParticipantModel? get participant => chat == null
+  ChatParticipantModel? get participant => chat == null
       ? null
       : chatService.currentParticipant(chat: chat!, userId: _currentUser.id!);
 
@@ -270,24 +293,30 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : StreamBuilder<List<MessageModel>>(
-              stream: chatService.readMessagesStream(chat!.id),
+              stream: chatService.readRecentMessagesStream(chat!.id),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final filteredMessages = snapshot.data!
-                    .where((e) =>
-                        e.hiddenFrom
-                            ?.contains(participant?.userDesignationId) !=
-                        true)
+                final latest = snapshot.data!
+                    .where((e) => !(e.hiddenFrom?.contains(
+                            _currentUser!.currentDesignation!.userDesgId) ??
+                        false))
                     .toList();
 
-                final messages = filteredMessages.map(_mapMessage).toList() ??
-                    <types.Message>[];
+                final allMessages =
+                    [..._olderMessages, ...latest].map(_mapMessage).toList();
+
+                chatService.markAllMessagesAsRead(
+                  chatId: chat!.id,
+                  userDesignationId:
+                      _currentUser.currentDesignation!.userDesgId!,
+                );
 
                 return Chat(
-                  messages: messages,
+                  messages: allMessages,
                   // messages
                   //     .where((m) => participant?.removedAt == null
                   //         ? true
@@ -299,6 +328,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     _handleSendPressed(text);
                   },
                   user: types.User(id: _currentUser.id.toString()),
+                  onEndReached: _loadMore,
+                  onEndReachedThreshold: 0.5,
                   customBottomWidget: Padding(
                     padding: EdgeInsets.only(
                       bottom: MediaQuery.of(context).padding.bottom,

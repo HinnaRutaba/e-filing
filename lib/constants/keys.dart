@@ -1,4 +1,11 @@
 class Keys {
-  static const String openAIKey =
-      "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";
+  static final Keys _instance = Keys._internal();
+
+  factory Keys() {
+    return _instance;
+  }
+
+  Keys._internal();
+
+  static String openAIKey = ''; //Must get initialised on app start
 }

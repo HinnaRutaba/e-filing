@@ -96,4 +96,17 @@ class AuthRepo extends AuthInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<String> getOpenAIKey() async {
+    try {
+      Map<String, dynamic> data = await dioClient.get(
+        url: openAIKey,
+        options: await options(authRequired: true),
+      );
+      return data['openai_key'] ?? '';
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

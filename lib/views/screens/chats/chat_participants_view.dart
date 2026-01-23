@@ -3,7 +3,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
-import 'package:efiling_balochistan/services/chat_service.dart';
+import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +30,7 @@ class ChatParticipantsView extends ConsumerWidget {
         }
 
         final chat = snapshot.data!;
-        final List<ParticipantModel> participants = chat.activeParticipants;
+        final List<ChatParticipantModel> participants = chat.activeParticipants;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

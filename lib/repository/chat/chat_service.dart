@@ -17,7 +17,7 @@ class ChatService {
   Future<String> createChatRoom({
     required int fileId,
     required String? barcode,
-    required List<ParticipantModel> participants,
+    required List<ChatParticipantModel> participants,
   }) async {
     final query = await _firestore
         .collection(chatsCollection)
@@ -51,7 +51,7 @@ class ChatService {
 
   Future<void> addParticipants({
     required String chatId,
-    required List<ParticipantModel> newParticipants,
+    required List<ChatParticipantModel> newParticipants,
   }) async {
     final chatDoc =
         await _firestore.collection(chatsCollection).doc(chatId).get();
@@ -61,13 +61,13 @@ class ChatService {
     }
 
     final chatData = chatDoc.data()!;
-    final existingParticipants =
-        (chatData['participants'] as List<dynamic>? ?? [])
-            .map((p) => ParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-            .toList();
+    final existingParticipants = (chatData['participants'] as List<dynamic>? ??
+            [])
+        .map((p) => ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+        .toList();
 
     final updatedParticipants =
-        List<ParticipantModel>.from(existingParticipants);
+        List<ChatParticipantModel>.from(existingParticipants);
 
     for (final newP in newParticipants) {
       final index =
@@ -80,7 +80,7 @@ class ChatService {
         final existingP = existingParticipants[index];
         if (existingP.removed) {
           // 2. Already exists but removed → restore
-          updatedParticipants[index] = ParticipantModel(
+          updatedParticipants[index] = ChatParticipantModel(
             userDesignationId: existingP.userDesignationId,
             userId: existingP.userId,
             userTitle: existingP.userTitle,
@@ -103,7 +103,7 @@ class ChatService {
     }
   }
 
-  bool _listEquals(List<ParticipantModel> a, List<ParticipantModel> b) {
+  bool _listEquals(List<ChatParticipantModel> a, List<ChatParticipantModel> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i].toJson().toString() != b[i].toJson().toString()) {
@@ -126,13 +126,13 @@ class ChatService {
 
     final chatData = chatDoc.data()!;
     final participants = (chatData['participants'] as List<dynamic>? ?? [])
-        .map((p) => ParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+        .map((p) => ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
         .toList();
 
     // Update the participant if found
     final updatedParticipants = participants.map((p) {
       if (p.userId == userId) {
-        return ParticipantModel(
+        return ChatParticipantModel(
           userDesignationId: p.userDesignationId,
           userId: p.userId,
           userTitle: p.userTitle,
@@ -158,12 +158,13 @@ class ChatService {
     return chat.participants.any((p) => p.userId == userId && !p.removed);
   }
 
-  ParticipantModel? currentParticipant({
+  ChatParticipantModel? currentParticipant({
     required ChatModel chat,
     required int userId,
   }) {
-    ParticipantModel p = chat.participants.firstWhere((e) => e.userId == userId,
-        orElse: () => ParticipantModel());
+    ChatParticipantModel p = chat.participants.firstWhere(
+        (e) => e.userId == userId,
+        orElse: () => ChatParticipantModel());
     if (p.userId == null) return null;
     return p;
   }
@@ -230,6 +231,28 @@ class ChatService {
     });
   }
 
+  Stream<int> getUnreadChatsCountStream(int? userDesignationId) {
+    if (userDesignationId == null) {
+      return Stream.value(0);
+    }
+    return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
+      final unreadChats = snapshot.docs.where((doc) {
+        final data = doc.data();
+        final lastMessage = data['last_message'];
+        if (lastMessage == null) return false;
+        final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
+        return !seenBy.contains(userDesignationId);
+      });
+      return unreadChats.length;
+    });
+  }
+
+  Stream<int> getAllChatsCountStream() {
+    return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
+      return snapshot.docs.length;
+    });
+  }
+
   Stream<List<MessageModel>> readMessagesStream(String chatId) {
     return _firestore
         .collection(chatsCollection)
@@ -240,6 +263,41 @@ class ChatService {
         .map((snapshot) => snapshot.docs
             .map((doc) => MessageModel.fromJson(doc.data(), doc.id))
             .toList());
+  }
+
+  Stream<List<MessageModel>> readRecentMessagesStream(
+    String chatId, {
+    int limit = 20,
+  }) {
+    return _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection(messagesCollection)
+        .orderBy('sent_at', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => MessageModel.fromJson(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<List<MessageModel>> loadMoreMessages({
+    required String chatId,
+    required DocumentSnapshot lastDoc,
+    int limit = 20,
+  }) async {
+    final snapshot = await _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection(messagesCollection)
+        .orderBy('sent_at', descending: true)
+        .startAfterDocument(lastDoc)
+        .limit(limit)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => MessageModel.fromJson(doc.data(), doc.id))
+        .toList();
   }
 
   Future<void> markAllMessagesAsRead({

@@ -1,4 +1,4 @@
-class ParticipantModel {
+class ChatParticipantModel {
   final int? userDesignationId;
   final int? userId;
   final String? userTitle;
@@ -7,7 +7,7 @@ class ParticipantModel {
   final bool removed;
   final DateTime? removedAt;
 
-  ParticipantModel({
+  ChatParticipantModel({
     this.userDesignationId,
     this.userId,
     this.userTitle,
@@ -17,8 +17,8 @@ class ParticipantModel {
     this.removedAt,
   });
 
-  factory ParticipantModel.fromJson(Map<String, dynamic> json) {
-    return ParticipantModel(
+  factory ChatParticipantModel.fromJson(Map<String, dynamic> json) {
+    return ChatParticipantModel(
       userDesignationId: json['user_designation_id'] ?? 0,
       userId: json['user_id'] ?? '',
       userTitle: json['user_title'] ?? '',
@@ -29,6 +29,16 @@ class ParticipantModel {
       removedAt: json['removed_at'] != null
           ? DateTime.parse(json['removed_at'])
           : null,
+    );
+  }
+
+  factory ChatParticipantModel.fromParticipantEndpoint(
+      Map<String, dynamic> json) {
+    return ChatParticipantModel(
+      userDesignationId: json['userDesgId'] ?? 0,
+      userId: json['userId'] ?? '',
+      userTitle: json['userName'] ?? '',
+      designation: json['userDesignationTitle'] ?? '',
     );
   }
 
@@ -44,7 +54,7 @@ class ParticipantModel {
     };
   }
 
-  ParticipantModel copyWith({
+  ChatParticipantModel copyWith({
     int? userDesignationId,
     int? userId,
     String? userTitle,
@@ -53,7 +63,7 @@ class ParticipantModel {
     bool? removed,
     DateTime? removedAt,
   }) {
-    return ParticipantModel(
+    return ChatParticipantModel(
       userDesignationId: userDesignationId ?? this.userDesignationId,
       userId: userId ?? this.userId,
       userTitle: userTitle ?? this.userTitle,

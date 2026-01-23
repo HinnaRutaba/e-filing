@@ -3,6 +3,8 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/user_model.dart';
+import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +15,9 @@ class NavDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    UserModel currentUser = ref.read(authController);
+    final ChatService chatService = ChatService();
+
     final List<DrawerMenu> menus = [
       DrawerMenu(
         title: "Dashboard",
@@ -23,6 +28,31 @@ class NavDrawer extends ConsumerWidget {
         title: "Chats",
         icon: Icons.chat,
         routeName: Routes.chats,
+        titleWidget: StreamBuilder(
+            stream: chatService.getUnreadChatsCountStream(
+                currentUser.currentDesignation?.userDesgId),
+            builder: (context, ss) {
+              bool isSelected = Routes.chats == RouteHelper.currentLocation;
+              int unread = ss.hasData ? ss.data ?? 0 : 0;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.titleMedium(
+                    "Chats",
+                    color: isSelected
+                        ? AppColors.primaryDark
+                        : AppColors.secondaryDark,
+                  ),
+                  if (unread != 0)
+                    AppText.labelMedium(
+                      "$unread unread chat${unread > 1 ? 's' : ''}",
+                      color: isSelected
+                          ? AppColors.primaryDark
+                          : AppColors.secondaryDark,
+                    ),
+                ],
+              );
+            }),
       ),
       DrawerMenu(
         title: "Create New File",
@@ -103,12 +133,13 @@ class NavDrawer extends ConsumerWidget {
                               : AppColors.secondaryDark,
                         ),
                         horizontalTitleGap: 12,
-                        title: AppText.titleMedium(
-                          e.title,
-                          color: isSelected
-                              ? AppColors.primaryDark
-                              : AppColors.secondaryDark,
-                        ),
+                        title: e.titleWidget ??
+                            AppText.titleMedium(
+                              e.title,
+                              color: isSelected
+                                  ? AppColors.primaryDark
+                                  : AppColors.secondaryDark,
+                            ),
                         onTap: e.onTap ??
                             () {
                               RouteHelper.navigateTo(e.routeName);
@@ -169,11 +200,13 @@ class DrawerMenu {
   final IconData icon;
   final VoidCallback? onTap;
   final String routeName;
+  final Widget? titleWidget;
 
   DrawerMenu({
     required this.title,
     required this.icon,
     this.onTap,
+    this.titleWidget,
     required this.routeName,
   });
 }

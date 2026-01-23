@@ -54,6 +54,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
     await ctrl.fetchLoggedInUser();
+    ctrl.getOpenAIToken();
     DesignationModel? designation = await ctrl.fetchDesignation();
     if (designation == null) {
       RouteHelper.navigateTo(Routes.login);
@@ -65,7 +66,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     //navigateToWebView();
-    print("SPLASHH_____");
+
     fetchData();
     super.initState();
   }

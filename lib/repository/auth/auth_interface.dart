@@ -6,6 +6,7 @@ abstract class AuthInterface extends NetworkBase {
   String get loginUrl => '${baseUrl}login';
   String meUrl(int desId) => '${baseUrl}me?userDesgID=$desId';
   String get changePasswordUrl => '${baseUrl}change-password';
+  String get openAIKey => '${baseUrl}user/openai-key/38';
 
   Future<TokenModel?> login(
     String username,
@@ -24,4 +25,6 @@ abstract class AuthInterface extends NetworkBase {
       {required String currentPassword,
       required String newPassword,
       required String confirmPassword});
+
+  Future<String> getOpenAIKey();
 }
