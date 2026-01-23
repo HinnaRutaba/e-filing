@@ -29,30 +29,31 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.chat,
         routeName: Routes.chats,
         titleWidget: StreamBuilder(
-            stream: chatService.getUnreadChatsCountStream(
-                currentUser.currentDesignation?.userDesgId),
-            builder: (context, ss) {
-              bool isSelected = Routes.chats == RouteHelper.currentLocation;
-              int unread = ss.hasData ? ss.data ?? 0 : 0;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText.titleMedium(
-                    "Chats",
+          stream: chatService.getUnreadChatsCountStream(
+              currentUser.currentDesignation?.userDesgId),
+          builder: (context, ss) {
+            bool isSelected = Routes.chats == RouteHelper.currentLocation;
+            int unread = ss.hasData ? ss.data ?? 0 : 0;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.titleMedium(
+                  "Chats",
+                  color: isSelected
+                      ? AppColors.primaryDark
+                      : AppColors.secondaryDark,
+                ),
+                if (unread != 0)
+                  AppText.labelMedium(
+                    "$unread unread chat${unread > 1 ? 's' : ''}",
                     color: isSelected
                         ? AppColors.primaryDark
                         : AppColors.secondaryDark,
                   ),
-                  if (unread != 0)
-                    AppText.labelMedium(
-                      "$unread unread chat${unread > 1 ? 's' : ''}",
-                      color: isSelected
-                          ? AppColors.primaryDark
-                          : AppColors.secondaryDark,
-                    ),
-                ],
-              );
-            }),
+              ],
+            );
+          },
+        ),
       ),
       DrawerMenu(
         title: "Create New File",
