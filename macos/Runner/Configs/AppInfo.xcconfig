@@ -8,7 +8,7 @@
 PRODUCT_NAME = efiling_balochistan
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.lrm.efilingBalochistan
+PRODUCT_BUNDLE_IDENTIFIER = com.govt.efilingBalochistan
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.lrm. All rights reserved.
