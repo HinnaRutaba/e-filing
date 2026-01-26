@@ -25,9 +25,14 @@ class AppTextFieldTheme {
     ),
     hintStyle: const TextStyle(
       color: AppColors.secondaryDark,
+      fontSize: 12,
     ),
     filled: true,
     fillColor: AppColors.white,
+    contentPadding: const EdgeInsets.symmetric(
+      vertical: 8,
+      horizontal: 8,
+    ),
     prefixIconColor: AppColors.secondaryDark,
     suffixIconColor: AppColors.primaryLight,
   );

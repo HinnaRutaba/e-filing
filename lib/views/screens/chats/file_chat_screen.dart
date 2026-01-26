@@ -8,7 +8,6 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
-import 'package:efiling_balochistan/views/screens/chats/chat_add_paticipants.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
@@ -334,11 +333,16 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                         ),
                                       ),
                                       builder: (BuildContext context) {
-                                        return ChatAddParticipant(
-                                          chatId: chat!.id,
-                                          userDesgId: _currentUser
-                                              .currentDesignation!.userDesgId!,
+                                        return ChatParticipantsView(
+                                          chatId: chat.id,
+                                          participantsToAdd:
+                                              potentialParticipantsToAdd,
                                         );
+                                        //   ChatAddParticipant(
+                                        //   chatId: chat!.id,
+                                        //   userDesgId: _currentUser
+                                        //       .currentDesignation!.userDesgId!,
+                                        // );
                                       },
                                     );
                                   },
