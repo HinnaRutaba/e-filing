@@ -1,7 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -9,41 +8,27 @@ import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatParticipantsView extends ConsumerWidget {
+class ChatAddParticipant extends ConsumerWidget {
+  final int userDesgId;
   final String chatId;
-  final List<ChatParticipantModel> participantsToAdd;
   final ChatService _chatService = ChatService();
-
-  ChatParticipantsView({
-    super.key,
-    required this.chatId,
-    required this.participantsToAdd,
-  });
+  ChatAddParticipant(
+      {super.key, required this.userDesgId, required this.chatId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uid = ref.watch(authController).id;
-    return StreamBuilder<ChatModel>(
-      stream: _chatService.readChatStream(chatId),
+    return FutureBuilder<List<ChatParticipantModel>>(
+      future: ref.read(chatRepo).getUsersForChat(userDesgId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (!snapshot.hasData && participantsToAdd.isEmpty) {
+        if (!snapshot.hasData) {
           return const Center(child: Text("No participants found"));
         }
 
-        final chat = snapshot.data!;
-
-        // Combine active and pending participants, removing duplicates
-        // If a participant exists in both lists, keep only the active one (unless removed)
-        // If active participant is removed, prioritize the one from participantsToAdd
-        final List<ChatParticipantModel> participants = [
-          ...chat.activeParticipants.where((ap) => !ap.removed),
-          ...participantsToAdd.where((p) => !chat.activeParticipants
-              .any((ap) => ap.userId == p.userId && !ap.removed))
-        ];
+        final List<ChatParticipantModel> participants = snapshot.data!;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +40,7 @@ class ChatParticipantsView extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: AppText.headlineSmall(
-                      "Participants",
+                      "Add Participants",
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -63,7 +48,10 @@ class ChatParticipantsView extends ConsumerWidget {
                     onPressed: () {
                       RouteHelper.pop();
                     },
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -75,10 +63,6 @@ class ChatParticipantsView extends ConsumerWidget {
                 itemCount: participants.length,
                 itemBuilder: (context, index) {
                   final participant = participants[index];
-                  final isNewParticipant = !chat.activeParticipants
-                      .any((ap) => ap.userId == participant.userId);
-                  final isCurrentUser = uid == participant.userId;
-
                   return ListTile(
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
@@ -93,16 +77,9 @@ class ChatParticipantsView extends ConsumerWidget {
                       ),
                     ),
                     horizontalTitleGap: 10,
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: AppText.titleMedium(
-                            participant.userTitle ?? '',
-                            fontSize: 14,
-                          ),
-                        ),
-                        if (isCurrentUser) AppText.labelSmall("(You)")
-                      ],
+                    title: AppText.titleMedium(
+                      participant.userTitle ?? '',
+                      fontSize: 14,
                     ),
                     subtitle: AppText.labelMedium(
                       participant.designation ?? '',
@@ -110,31 +87,13 @@ class ChatParticipantsView extends ConsumerWidget {
                     ),
                     trailing: AppTextLinkButton(
                       onPressed: () {
-                        if (isNewParticipant) {
-                          _chatService.addParticipants(
-                            chatId: chatId,
-                            newParticipants: [participant],
-                          );
-                        } else {
-                          _chatService.removeParticipant(
-                            chatId: chatId,
-                            userId: participant.userId!,
-                          );
-                          // Navigate to chats screen if current user leaves
-                          if (isCurrentUser) {
-                            RouteHelper.pop();
-                            RouteHelper.pop();
-                          }
-                        }
+                        _chatService.addParticipants(
+                          chatId: chatId,
+                          newParticipants: [participant],
+                        );
                       },
-                      text: isCurrentUser
-                          ? participant.removed
-                              ? ""
-                              : "Leave"
-                          : (isNewParticipant ? "Add +" : "Remove"),
-                      color: isNewParticipant && !participant.removed
-                          ? AppColors.primaryDark
-                          : AppColors.error,
+                      text: "Add +",
+                      color: AppColors.primaryDark,
                       fontSize: 14,
                     ),
                   );

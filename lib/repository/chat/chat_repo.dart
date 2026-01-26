@@ -32,7 +32,7 @@ class ChatRepo extends ChatInterface {
       );
       return data['data']!
           .map<ChatParticipantModel>(
-            (e) => ChatParticipantModel.fromJson(e),
+            (e) => ChatParticipantModel.fromParticipantEndpoint(e),
           )
           .toList();
     } catch (e) {

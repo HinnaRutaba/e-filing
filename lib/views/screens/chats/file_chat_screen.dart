@@ -8,12 +8,14 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/views/screens/chats/chat_add_paticipants.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
 import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -36,6 +38,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   final ChatService chatService = ChatService();
   FileDetailsModel? file;
   final Uuid _uuid = const Uuid();
+  List<ChatParticipantModel> potentialParticipantsToAdd = [];
   List<MessageModel> _olderMessages = [];
   DocumentSnapshot? _lastDoc;
   bool _isLoadingMore = false;
@@ -112,8 +115,26 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     await chatService.sendMessage(chat: chat!, message: msg);
   }
 
+  Future<void> _getChatRoom() async {
+    try {
+      String? chatId = await chatService.getChatFromFile(widget.fileId);
+      if (chatId == null) {
+        setState(() {
+          _loading = false;
+        });
+      } else {
+        _initChatRoom();
+      }
+    } catch (e, s) {
+      print("Error getting chat room: $e \n $s");
+    }
+  }
+
   Future<void> _initChatRoom() async {
     try {
+      setState(() {
+        _loading = true;
+      });
       await _fetchFileDetails();
       final participants = [
         ChatParticipantModel(
@@ -169,10 +190,19 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     }
   }
 
+  Future<void> fetchParticipants() async {
+    potentialParticipantsToAdd = await ref
+        .read(chatRepo)
+        .getUsersForChat(_currentUser.currentDesignation!.userDesgId!);
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
-    _initChatRoom();
+    fetchParticipants();
+    _getChatRoom();
+    //_initChatRoom();
   }
 
   ChatParticipantModel? get participant => chat == null
@@ -181,284 +211,387 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      //backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        title: StreamBuilder<ChatModel>(
-            stream: chat == null ? null : chatService.readChatStream(chat!.id),
-            builder: (context, snapshot) {
-              final Widget title = AppText.headlineSmall(
+    return chat == null
+        ? Scaffold(
+            appBar: AppBar(
+              title: AppText.headlineSmall(
                 "File Discussion",
                 color: AppColors.primaryDark,
-              );
-              if (!snapshot.hasData) {
-                return title;
-              }
-              final chat = snapshot.data!;
-              return InkWell(
-                onTap: chat.activeParticipants.isEmpty == true
-                    ? null
-                    : () {
-                        showModalBottomSheet(
-                          context: context,
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
-                          ),
-                          isScrollControlled: true,
-                          backgroundColor: AppColors.background,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                            ),
-                          ),
-                          builder: (BuildContext context) {
-                            return ChatParticipantsView(chatId: chat.id);
-                          },
-                        );
-                      },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    title,
-                    AppText.labelMedium(
-                      "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
-                      color: AppColors.textPrimary,
-                    ),
-                  ],
+              ),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              titleSpacing: 0,
+              backgroundColor: AppColors.background,
+              leading: IconButton(
+                onPressed: () => RouteHelper.pop(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primaryDark,
                 ),
-              );
-            }),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleSpacing: 0,
-        backgroundColor: AppColors.background,
-        leading: IconButton(
-          onPressed: () => RouteHelper.pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.primaryDark,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.person_add_rounded,
-              size: 22,
+              ),
             ),
-            color: AppColors.secondaryDark,
-          ),
-          IconButton(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.9,
-                ),
-                isScrollControlled: true,
-                backgroundColor: AppColors.background,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                builder: (BuildContext context) {
-                  return StickyTagDrawer(
-                    mainContent: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
+            body: Center(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppText.bodyMedium(" No chat available for this file."),
+                        AppSolidButton(
+                            onPressed: () {
+                              _initChatRoom();
+                            },
+                            text: "Start Discussion"),
+                      ],
+                    ),
+            ),
+          )
+        : Scaffold(
+            //backgroundColor: Colors.grey[900],
+            appBar: AppBar(
+              title: StreamBuilder<ChatModel>(
+                  stream: chat == null
+                      ? null
+                      : chatService.readChatStream(chat!.id),
+                  builder: (context, snapshot) {
+                    final Widget title = AppText.headlineSmall(
+                      "File Discussion",
+                      color: AppColors.primaryDark,
+                    );
+                    if (!snapshot.hasData) {
+                      return title;
+                    }
+                    final chat = snapshot.data!;
+                    bool isUserActive = chatService.isParticipantInChat(
+                      chat: chat,
+                      userId: _currentUser.id!,
+                    );
+                    return !isUserActive
+                        ? title
+                        : Row(
                             children: [
                               Expanded(
-                                child: AppText.headlineSmall("File Preview"),
-                              ),
-                              IconButton(
-                                onPressed: () => RouteHelper.pop(),
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          PreviewFile(
-                            content: file?.content,
-                          ),
-                        ],
-                      ),
-                    ),
-                    flagText: "Flags",
-                    panelContent: SingleChildScrollView(
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: file?.attachments != null &&
-                                file!.attachments.isNotEmpty
-                            ? ReadOnlyFlagAttachmentList(
-                                header: AppText.titleMedium("Attached Flags"),
-                                data: file!.attachments,
-                              )
-                                .animate(delay: 100.ms)
-                                .fade(duration: 400.ms, curve: Curves.easeInOut)
-                                .slide(
-                                    begin: const Offset(1, 0), end: Offset.zero)
-                            : Center(
-                                child: AppText.bodyMedium("No flags available"),
-                              ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-            icon: const Icon(
-              Icons.file_copy_outlined,
-              size: 22,
-            ),
-            color: AppColors.secondaryDark,
-          ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : StreamBuilder<List<MessageModel>>(
-              stream: chatService.readRecentMessagesStream(chat!.id),
-              builder: (context, snapshot) {
-                //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final latest = snapshot.data!
-                    .where((e) => !(e.hiddenFrom?.contains(
-                            _currentUser!.currentDesignation!.userDesgId) ??
-                        false))
-                    .toList();
-
-                final allMessages =
-                    [..._olderMessages, ...latest].map(_mapMessage).toList();
-
-                chatService.markAllMessagesAsRead(
-                  chatId: chat!.id,
-                  userDesignationId:
-                      _currentUser.currentDesignation!.userDesgId!,
-                );
-
-                return Chat(
-                  messages: allMessages,
-                  // messages
-                  //     .where((m) => participant?.removedAt == null
-                  //         ? true
-                  //         : m.createdAt! <
-                  //             participant!
-                  //                 .removedAt!.millisecondsSinceEpoch)
-                  //     .toList(),
-                  onSendPressed: (text) {
-                    _handleSendPressed(text);
-                  },
-                  user: types.User(id: _currentUser.id.toString()),
-                  onEndReached: _loadMore,
-                  onEndReachedThreshold: 0.5,
-                  customBottomWidget: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).padding.bottom,
-                    ),
-                    child: StreamBuilder<ChatModel>(
-                        stream: chat == null
-                            ? null
-                            : chatService.readChatStream(chat!.id),
-                        builder: (context, snapshot) {
-                          if (snapshot.data == null) {
-                            return const SizedBox.shrink();
-                          }
-                          final chat = snapshot.data!;
-                          this.chat = chat;
-                          return !chatService.isParticipantInChat(
-                            chat: chat,
-                            userId: _currentUser.id!,
-                          )
-                              ? Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: AppText.bodyMedium(
-                                      "You are no longer part oif this conversation."),
-                                )
-                              : Container(
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.appBarColor,
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(16),
-                                      topLeft: Radius.circular(16),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        offset: Offset(0, -2),
-                                        blurRadius: 2,
-                                      )
+                                child: InkWell(
+                                  onTap: chat.activeParticipants.isEmpty == true
+                                      ? null
+                                      : () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            constraints: BoxConstraints(
+                                              maxHeight:
+                                                  MediaQuery.sizeOf(context)
+                                                          .height *
+                                                      0.9,
+                                            ),
+                                            isScrollControlled: true,
+                                            backgroundColor:
+                                                AppColors.background,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(16),
+                                                topRight: Radius.circular(16),
+                                              ),
+                                            ),
+                                            builder: (BuildContext context) {
+                                              return ChatParticipantsView(
+                                                chatId: chat.id,
+                                                participantsToAdd:
+                                                    potentialParticipantsToAdd,
+                                              );
+                                            },
+                                          );
+                                        },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      title,
+                                      AppText.labelMedium(
+                                        "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
+                                        color: AppColors.textPrimary,
+                                      ),
                                     ],
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 8,
+                                ),
+                              ),
+                              ...[
+                                IconButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      constraints: BoxConstraints(
+                                        maxHeight:
+                                            MediaQuery.sizeOf(context).height *
+                                                0.9,
+                                      ),
+                                      isScrollControlled: true,
+                                      backgroundColor: AppColors.background,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(16),
+                                          topRight: Radius.circular(16),
+                                        ),
+                                      ),
+                                      builder: (BuildContext context) {
+                                        return ChatAddParticipant(
+                                          chatId: chat!.id,
+                                          userDesgId: _currentUser
+                                              .currentDesignation!.userDesgId!,
+                                        );
+                                      },
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.person_add_rounded,
+                                    size: 22,
                                   ),
-                                  child: ChatInputBar(
-                                    chat: chat!,
-                                    chatService: chatService,
-                                    userId: _currentUser.id!,
-                                    userDesignationId: _currentUser
-                                        .currentDesignation!.userDesgId!,
-                                    userTitle: _currentUser.userTitle!,
-                                    onSendText: (text) {
-                                      _handleSendPressed(
-                                          types.PartialText(text: text));
-                                    },
-                                    onAttachmentPressed: () {
-                                      // later: pick image/video/docs
-                                    },
+                                  color: AppColors.secondaryDark,
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      constraints: BoxConstraints(
+                                        maxHeight:
+                                            MediaQuery.sizeOf(context).height *
+                                                0.9,
+                                      ),
+                                      isScrollControlled: true,
+                                      backgroundColor: AppColors.background,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(16),
+                                          topRight: Radius.circular(16),
+                                        ),
+                                      ),
+                                      builder: (BuildContext context) {
+                                        return StickyTagDrawer(
+                                          mainContent: SingleChildScrollView(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child:
+                                                          AppText.headlineSmall(
+                                                              "File Preview"),
+                                                    ),
+                                                    IconButton(
+                                                      onPressed: () =>
+                                                          RouteHelper.pop(),
+                                                      icon: const Icon(
+                                                        Icons.close,
+                                                        color: AppColors
+                                                            .textPrimary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                PreviewFile(
+                                                  content: file?.content,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          flagText: "Flags",
+                                          panelContent: SingleChildScrollView(
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      16, 0, 16, 16),
+                                              child: file?.attachments !=
+                                                          null &&
+                                                      file!.attachments
+                                                          .isNotEmpty
+                                                  ? ReadOnlyFlagAttachmentList(
+                                                      header:
+                                                          AppText.titleMedium(
+                                                              "Attached Flags"),
+                                                      data: file!.attachments,
+                                                    )
+                                                      .animate(delay: 100.ms)
+                                                      .fade(
+                                                          duration: 400.ms,
+                                                          curve:
+                                                              Curves.easeInOut)
+                                                      .slide(
+                                                          begin: const Offset(
+                                                              1, 0),
+                                                          end: Offset.zero)
+                                                  : Center(
+                                                      child: AppText.bodyMedium(
+                                                          "No flags available"),
+                                                    ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.file_copy_outlined,
+                                    size: 22,
                                   ),
-                                );
-                        }),
-                  ),
-                  theme: const DefaultChatTheme(
-                    primaryColor: AppColors.secondaryLight,
-                    secondaryColor: AppColors.cardColor,
-                    inputTextColor: AppColors.textPrimary,
-                    inputPadding:
-                        EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-                    inputElevation: 18,
-                    inputMargin: EdgeInsets.zero,
-                    userNameTextStyle: TextStyle(
-                      color: AppColors.secondaryDark,
-                      fontSize: 12,
-                      //fontWeight: FontWeight.w500,
-                    ),
-                    userAvatarNameColors: [
-                      AppColors.secondary,
-                      AppColors.primaryDark,
-                      AppColors.secondaryDark,
-                    ],
-                    inputTextCursorColor: AppColors.primaryDark,
-                    userAvatarImageBackgroundColor: AppColors.secondary,
-                    bubbleMargin: EdgeInsets.only(bottom: 8, left: 8, right: 0),
-                    backgroundColor: AppColors.background,
-                    sentMessageBodyTextStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    receivedMessageBodyTextStyle: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  showUserNames: true,
-                  showUserAvatars: true,
-                );
-              },
+                                  color: AppColors.secondaryDark,
+                                ),
+                              ],
+                            ],
+                          );
+                  }),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              titleSpacing: 0,
+              backgroundColor: AppColors.background,
+              leading: IconButton(
+                onPressed: () => RouteHelper.pop(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primaryDark,
+                ),
+              ),
             ),
-    );
+            body: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : StreamBuilder<List<MessageModel>>(
+                    stream: chatService.readRecentMessagesStream(chat!.id),
+                    builder: (context, snapshot) {
+                      //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final latest = snapshot.data!
+                          .where((e) => !(e.hiddenFrom?.contains(_currentUser!
+                                  .currentDesignation!.userDesgId) ??
+                              false))
+                          .toList();
+
+                      final allMessages = [..._olderMessages, ...latest]
+                          .map(_mapMessage)
+                          .toList();
+
+                      chatService.markAllMessagesAsRead(
+                        chatId: chat!.id,
+                        userDesignationId:
+                            _currentUser.currentDesignation!.userDesgId!,
+                      );
+
+                      return Chat(
+                        messages: allMessages,
+                        // messages
+                        //     .where((m) => participant?.removedAt == null
+                        //         ? true
+                        //         : m.createdAt! <
+                        //             participant!
+                        //                 .removedAt!.millisecondsSinceEpoch)
+                        //     .toList(),
+                        onSendPressed: (text) {
+                          _handleSendPressed(text);
+                        },
+                        user: types.User(id: _currentUser.id.toString()),
+                        onEndReached: _loadMore,
+                        onEndReachedThreshold: 0.5,
+                        customBottomWidget: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom,
+                          ),
+                          child: StreamBuilder<ChatModel>(
+                              stream: chat == null
+                                  ? null
+                                  : chatService.readChatStream(chat!.id),
+                              builder: (context, snapshot) {
+                                if (snapshot.data == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                final chat = snapshot.data!;
+                                this.chat = chat;
+                                return !chatService.isParticipantInChat(
+                                  chat: chat,
+                                  userId: _currentUser.id!,
+                                )
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: AppText.bodyMedium(
+                                            "You are no longer part of this conversation."),
+                                      )
+                                    : Container(
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.appBarColor,
+                                          borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(16),
+                                            topLeft: Radius.circular(16),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black12,
+                                              offset: Offset(0, -2),
+                                              blurRadius: 2,
+                                            )
+                                          ],
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 8,
+                                        ),
+                                        child: ChatInputBar(
+                                          chat: chat!,
+                                          chatService: chatService,
+                                          userId: _currentUser.id!,
+                                          userDesignationId: _currentUser
+                                              .currentDesignation!.userDesgId!,
+                                          userTitle: _currentUser.userTitle!,
+                                          onSendText: (text) {
+                                            _handleSendPressed(
+                                                types.PartialText(text: text));
+                                          },
+                                          onAttachmentPressed: () {
+                                            // later: pick image/video/docs
+                                          },
+                                        ),
+                                      );
+                              }),
+                        ),
+                        theme: const DefaultChatTheme(
+                          primaryColor: AppColors.secondaryLight,
+                          secondaryColor: AppColors.cardColor,
+                          inputTextColor: AppColors.textPrimary,
+                          inputPadding:
+                              EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                          inputElevation: 18,
+                          inputMargin: EdgeInsets.zero,
+                          userNameTextStyle: TextStyle(
+                            color: AppColors.secondaryDark,
+                            fontSize: 12,
+                            //fontWeight: FontWeight.w500,
+                          ),
+                          userAvatarNameColors: [
+                            AppColors.secondary,
+                            AppColors.primaryDark,
+                            AppColors.secondaryDark,
+                          ],
+                          inputTextCursorColor: AppColors.primaryDark,
+                          userAvatarImageBackgroundColor: AppColors.secondary,
+                          bubbleMargin:
+                              EdgeInsets.only(bottom: 8, left: 8, right: 0),
+                          backgroundColor: AppColors.background,
+                          sentMessageBodyTextStyle: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          receivedMessageBodyTextStyle: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        showUserNames: true,
+                        showUserAvatars: true,
+                      );
+                    },
+                  ),
+          );
   }
 }
