@@ -10,8 +10,8 @@ class AppOutlineButtonTheme {
       foregroundColor: AppColors.primary,
       side: const BorderSide(color: AppColors.primary),
       textStyle: const TextStyle(
-          fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.w600),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          fontSize: 14, color: AppColors.primary, fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: AppColors.primary, width: 1.5),
@@ -25,8 +25,8 @@ class AppOutlineButtonTheme {
       foregroundColor: Colors.white,
       side: const BorderSide(color: AppColors.primary),
       textStyle: const TextStyle(
-          fontSize: 16, color: Colors.white, fontWeight: FontWeight.w600),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: AppColors.cardColor, width: 1.5),

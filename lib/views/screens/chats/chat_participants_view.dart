@@ -71,50 +71,55 @@ class ChatParticipantsView extends ConsumerWidget {
                 ],
               ),
             ),
-            addMembers
-                ? Column(
-                    children: [
-                      _NotAddedParticipantsWidget(
-                        participants: notInChatParticipants,
-                        chatService: _chatService,
-                        chatId: chatId,
-                        uid: uid!,
+            Expanded(
+              child: SingleChildScrollView(
+                // padding: const EdgeInsets.symmetric(vertical: 12),
+                child: addMembers
+                    ? Column(
+                        children: [
+                          _NotAddedParticipantsWidget(
+                            participants: notInChatParticipants,
+                            chatService: _chatService,
+                            chatId: chatId,
+                            uid: uid!,
+                          ),
+                          Divider(
+                            color: Colors.grey[200]!,
+                            thickness: 4,
+                            height: 16,
+                          ),
+                          _AddedParticipantsWidget(
+                            participants: activeParticipants,
+                            chatService: _chatService,
+                            chatId: chatId,
+                            uid: uid,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _AddedParticipantsWidget(
+                            participants: activeParticipants,
+                            chatService: _chatService,
+                            chatId: chatId,
+                            uid: uid!,
+                          ),
+                          const Divider(
+                            color: AppColors.cardColor,
+                            thickness: 1,
+                            height: 0,
+                          ),
+                          _NotAddedParticipantsWidget(
+                            participants: notInChatParticipants,
+                            chatService: _chatService,
+                            chatId: chatId,
+                            uid: uid,
+                            showUnavailableMessage: false,
+                          ),
+                        ],
                       ),
-                      Divider(
-                        color: Colors.grey[200]!,
-                        thickness: 4,
-                        height: 16,
-                      ),
-                      _AddedParticipantsWidget(
-                        participants: activeParticipants,
-                        chatService: _chatService,
-                        chatId: chatId,
-                        uid: uid,
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      _AddedParticipantsWidget(
-                        participants: activeParticipants,
-                        chatService: _chatService,
-                        chatId: chatId,
-                        uid: uid!,
-                      ),
-                      const Divider(
-                        color: AppColors.cardColor,
-                        thickness: 1,
-                        height: 1,
-                      ),
-                      _NotAddedParticipantsWidget(
-                        participants: notInChatParticipants,
-                        chatService: _chatService,
-                        chatId: chatId,
-                        uid: uid,
-                        showUnavailableMessage: false,
-                      ),
-                    ],
-                  ),
+              ),
+            ),
           ],
         );
       },

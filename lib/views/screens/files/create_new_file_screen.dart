@@ -306,7 +306,6 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                     text: "Draft with AI",
                     icon: Icons.drafts_rounded,
                     color: AppColors.secondary,
-                    textSize: 16,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                   ),
@@ -427,7 +426,6 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                   },
                   text: "Add More",
                   color: AppColors.secondary,
-                  textSize: 18,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -502,7 +500,6 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                                     },
                                     text: "Close",
                                     color: AppColors.primaryDark,
-                                    textSize: 18,
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 12),

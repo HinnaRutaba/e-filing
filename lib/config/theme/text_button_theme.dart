@@ -10,7 +10,7 @@ class AppTextButtonTheme {
       foregroundColor: AppColors.secondary,
       padding: const EdgeInsets.symmetric(vertical: 18),
       textStyle: const TextStyle(
-          fontSize: 16, color: Colors.white, fontWeight: FontWeight.w600),
+          fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   );
@@ -21,7 +21,7 @@ class AppTextButtonTheme {
       foregroundColor: AppColors.accent,
       padding: const EdgeInsets.symmetric(vertical: 18),
       textStyle: const TextStyle(
-          fontSize: 16, color: Colors.white, fontWeight: FontWeight.w600),
+          fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   );
