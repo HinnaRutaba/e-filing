@@ -350,7 +350,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                                 details!.content.first.fileId),
                                             extra: details);
                                       },
-                                      text: "Start Discussion",
+                                      text: "Start Chat",
                                       icon: Icons.chat,
                                       color: AppColors.primaryDark,
                                       padding: const EdgeInsets.symmetric(

@@ -241,7 +241,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             onPressed: () {
                               _initChatRoom();
                             },
-                            text: "Start Discussion"),
+                            text: "Start Chat"),
                       ],
                     ),
             ),
@@ -284,6 +284,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                       0.9,
                                             ),
                                             isScrollControlled: true,
+                                            enableDrag: false,
                                             backgroundColor:
                                                 AppColors.background,
                                             shape: const RoundedRectangleBorder(
@@ -325,6 +326,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                 0.9,
                                       ),
                                       isScrollControlled: true,
+                                      enableDrag: false,
                                       backgroundColor: AppColors.background,
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.only(
