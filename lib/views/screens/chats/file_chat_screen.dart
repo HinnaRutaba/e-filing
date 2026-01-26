@@ -337,6 +337,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                           chatId: chat.id,
                                           participantsToAdd:
                                               potentialParticipantsToAdd,
+                                          addMembers: true,
                                         );
                                         //   ChatAddParticipant(
                                         //   chatId: chat!.id,
