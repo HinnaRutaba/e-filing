@@ -73,6 +73,7 @@ dependencies:
   local_auth: ^2.3.0
   record: 6.1.0
   audio_waveforms: ^1.0.4
+  pull_to_refresh: ^2.0.0
 
 
 dev_dependencies:

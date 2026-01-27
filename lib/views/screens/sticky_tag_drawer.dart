@@ -107,7 +107,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
                     constraints: const BoxConstraints(minHeight: 80),
                     //height: 80,
                     decoration: const BoxDecoration(
-                      color: AppColors.white,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
@@ -126,7 +126,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
                       child: Text(
                         widget.flagText,
                         style: const TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

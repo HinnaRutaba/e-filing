@@ -41,162 +41,166 @@ class ChatsListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ValueListenableBuilder<String>(
-          valueListenable: _filter,
-          builder: (context, filter, _) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: _buildFilterTile(
-                      title: "All Chats",
-                      countStream: _chatService.getAllChatsCountStream(),
-                      isSelected: filter == "All",
-                      onTap: () => _filter.value = "All",
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildFilterTile(
-                      title: "Unread",
-                      countStream: _chatService
-                          .getUnreadChatsCountStream(userDesignationId),
-                      isSelected: filter == "Unread",
-                      onTap: () => _filter.value = "Unread",
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ValueListenableBuilder<String>(
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ValueListenableBuilder<String>(
             valueListenable: _filter,
             builder: (context, filter, _) {
-              return StreamBuilder<List<ChatModel>>(
-                stream: _chatService.getUserChatsStream(
-                  userId: userId,
-                  userDesignationId: userDesignationId,
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: _buildFilterTile(
+                        title: "All Chats",
+                        countStream: _chatService.getAllChatsCountStream(),
+                        isSelected: filter == "All",
+                        onTap: () => _filter.value = "All",
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildFilterTile(
+                        title: "Unread",
+                        countStream: _chatService
+                            .getUnreadChatsCountStream(userDesignationId),
+                        isSelected: filter == "Unread",
+                        onTap: () => _filter.value = "Unread",
+                      ),
+                    ),
+                  ],
                 ),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No chats found"));
-                  }
-
-                  final chats = snapshot.data!;
-                  final filteredChats = filter == "Unread"
-                      ? chats
-                          .where((chat) => chat.hasUnread(userDesignationId))
-                          .toList()
-                      : chats;
-
-                  return ListView.separated(
-                    itemCount: filteredChats.length,
-                    separatorBuilder: (ctx, i) {
-                      if (i == filteredChats.length - 1) {
-                        return const SizedBox.shrink();
-                      }
-                      return const Divider(
-                        indent: 16,
-                        endIndent: 16,
-                        color: AppColors.cardColor,
-                      );
-                    },
-                    itemBuilder: (context, index) {
-                      final chat = filteredChats[index];
-                      final lastMsg = _chatService.isParticipantInChat(
-                                  chat: chat, userId: userId) !=
-                              true
-                          ? "You are no longer in this discussion"
-                          : chat.lastMessage?.text ?? "No messages yet";
-                      final int activeUsers = chat.activeParticipants.length;
-
-                      return Animate(
-                        effects: [
-                          FadeEffect(duration: 300.ms),
-                          SlideEffect(
-                            begin: const Offset(0, 0.2),
-                            end: Offset.zero,
-                            duration: 300.ms,
-                          ),
-                        ],
-                        delay:
-                            (index * 100).ms, // Staggered delay based on index
-                        child: Stack(
-                          children: [
-                            Badge(
-                              backgroundColor: AppColors.secondary,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              label: const Text('New'),
-                              offset: const Offset(-40, 2),
-                              isLabelVisible: chat.hasUnread(userDesignationId),
-                              child: ListTile(
-                                titleAlignment: ListTileTitleAlignment.top,
-                                leading: const CircleAvatar(
-                                  backgroundColor: AppColors.secondaryDark,
-                                  child: Icon(Icons.groups),
-                                ),
-                                title: AppText.titleMedium(
-                                    "File: ${chat?.fileBarCode ?? chat.fileId}"),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AppText.labelMedium(
-                                      "$activeUsers participant${activeUsers > 1 ? 's' : ''}",
-                                      maxLines: 1,
-                                      fontWeight: FontWeight.w600,
-                                      overflow: TextOverflow.ellipsis,
-                                      color: AppColors.secondaryDark,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    AppText.bodyMedium(
-                                      lastMsg,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      color: Colors.grey[800],
-                                    )
-                                  ],
-                                ),
-                                trailing: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    AppText.labelMedium(
-                                      chat.lastMessage?.sentAt != null
-                                          ? _formatTime(
-                                              chat.lastMessage!.sentAt)
-                                          : "",
-                                    ),
-                                  ],
-                                ),
-                                onTap: () {
-                                  RouteHelper.push(
-                                      Routes.fileChat(chat.fileId));
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
               );
             },
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Expanded(
+            child: ValueListenableBuilder<String>(
+              valueListenable: _filter,
+              builder: (context, filter, _) {
+                return StreamBuilder<List<ChatModel>>(
+                  stream: _chatService.getUserChatsStream(
+                    userId: userId,
+                    userDesignationId: userDesignationId,
+                  ),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text("No chats found"));
+                    }
+
+                    final chats = snapshot.data!;
+                    final filteredChats = filter == "Unread"
+                        ? chats
+                            .where((chat) => chat.hasUnread(userDesignationId))
+                            .toList()
+                        : chats;
+
+                    return ListView.separated(
+                      itemCount: filteredChats.length,
+                      separatorBuilder: (ctx, i) {
+                        if (i == filteredChats.length - 1) {
+                          return const SizedBox.shrink();
+                        }
+                        return const Divider(
+                          indent: 16,
+                          endIndent: 16,
+                          color: AppColors.cardColor,
+                        );
+                      },
+                      itemBuilder: (context, index) {
+                        final chat = filteredChats[index];
+                        final lastMsg = _chatService.isParticipantInChat(
+                                    chat: chat, userId: userId) !=
+                                true
+                            ? "You are no longer in this discussion"
+                            : chat.lastMessage?.text ?? "No messages yet";
+                        final int activeUsers = chat.activeParticipants.length;
+
+                        return Animate(
+                          effects: [
+                            FadeEffect(duration: 300.ms),
+                            SlideEffect(
+                              begin: const Offset(0, 0.2),
+                              end: Offset.zero,
+                              duration: 300.ms,
+                            ),
+                          ],
+                          delay: (index * 100)
+                              .ms, // Staggered delay based on index
+                          child: Stack(
+                            children: [
+                              Badge(
+                                backgroundColor: AppColors.secondary,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                label: const Text('New'),
+                                offset: const Offset(-40, 2),
+                                isLabelVisible:
+                                    chat.hasUnread(userDesignationId),
+                                child: ListTile(
+                                  titleAlignment: ListTileTitleAlignment.top,
+                                  leading: const CircleAvatar(
+                                    backgroundColor: AppColors.secondaryDark,
+                                    child: Icon(Icons.groups),
+                                  ),
+                                  title: AppText.titleMedium(
+                                      "File: ${chat?.fileBarCode ?? chat.fileId}"),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.labelMedium(
+                                        "$activeUsers participant${activeUsers > 1 ? 's' : ''}",
+                                        maxLines: 1,
+                                        fontWeight: FontWeight.w600,
+                                        overflow: TextOverflow.ellipsis,
+                                        color: AppColors.secondaryDark,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      AppText.bodyMedium(
+                                        lastMsg,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        color: Colors.grey[800],
+                                      )
+                                    ],
+                                  ),
+                                  trailing: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      AppText.labelMedium(
+                                        chat.lastMessage?.sentAt != null
+                                            ? _formatTime(
+                                                chat.lastMessage!.sentAt)
+                                            : "",
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () {
+                                    RouteHelper.push(
+                                        Routes.fileChat(chat.fileId));
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

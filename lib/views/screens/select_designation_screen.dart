@@ -28,18 +28,21 @@ class _SelectDesignationScreenState
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ...widget.designations
-                .map((designation) => DesignationCard(designation: designation))
-                .toList(),
-            const SizedBox(height: 24),
-            AppSolidButton(
-                onPressed: () {
-                  ref.read(authController.notifier).logout();
-                },
-                text: "Go back to Login"),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              ...widget.designations
+                  .map((designation) =>
+                      DesignationCard(designation: designation))
+                  .toList(),
+              const SizedBox(height: 24),
+              AppSolidButton(
+                  onPressed: () {
+                    ref.read(authController.notifier).logout();
+                  },
+                  text: "Go back to Login"),
+            ],
+          ),
         ),
       ),
     );

@@ -47,11 +47,11 @@ class PreviewFile extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                AppText.titleMedium(
-                                  details.fileType ?? '',
-                                  fontFamily: fileFont,
-                                ),
-                                const SizedBox(height: 8),
+                                // AppText.titleMedium(
+                                //   details.fileType ?? '',
+                                //   fontFamily: fileFont,
+                                // ),
+                                // const SizedBox(height: 8),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -96,10 +96,10 @@ class PreviewFile extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const SizedBox(height: 12),
-                                  AppText.titleMedium(
-                                    e.receiver ?? '---',
-                                    fontFamily: fileFont,
-                                  ),
+                                  // AppText.titleMedium(
+                                  //   e.receiver ?? '---',
+                                  //   fontFamily: fileFont,
+                                  // ),
                                   HtmlReader(
                                     html: e.content ?? '',
                                   ),
@@ -132,6 +132,13 @@ class PreviewFile extends StatelessWidget {
                                           DateTimeHelper.datFormatSlash(
                                               e.sendingDate),
                                           fontFamily: fileFont,
+                                        ),
+                                        Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: AppText.titleMedium(
+                                            e.receiver ?? '---',
+                                            fontFamily: fileFont,
+                                          ),
                                         ),
                                       ],
                                     ),

@@ -323,141 +323,144 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : StreamBuilder<List<MessageModel>>(
-              stream: chatService.readRecentMessagesStream(chat!.id),
-              builder: (context, snapshot) {
-                //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          : SafeArea(
+              child: StreamBuilder<List<MessageModel>>(
+                stream: chatService.readRecentMessagesStream(chat!.id),
+                builder: (context, snapshot) {
+                  //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                final latest = snapshot.data!
-                    .where((e) => !(e.hiddenFrom?.contains(
-                            _currentUser!.currentDesignation!.userDesgId) ??
-                        false))
-                    .toList();
+                  final latest = snapshot.data!
+                      .where((e) => !(e.hiddenFrom?.contains(
+                              _currentUser!.currentDesignation!.userDesgId) ??
+                          false))
+                      .toList();
 
-                final allMessages =
-                    [..._olderMessages, ...latest].map(_mapMessage).toList();
+                  final allMessages =
+                      [..._olderMessages, ...latest].map(_mapMessage).toList();
 
-                chatService.markAllMessagesAsRead(
-                  chatId: chat!.id,
-                  userDesignationId:
-                      _currentUser.currentDesignation!.userDesgId!,
-                );
+                  chatService.markAllMessagesAsRead(
+                    chatId: chat!.id,
+                    userDesignationId:
+                        _currentUser.currentDesignation!.userDesgId!,
+                  );
 
-                return Chat(
-                  messages: allMessages,
-                  // messages
-                  //     .where((m) => participant?.removedAt == null
-                  //         ? true
-                  //         : m.createdAt! <
-                  //             participant!
-                  //                 .removedAt!.millisecondsSinceEpoch)
-                  //     .toList(),
-                  onSendPressed: (text) {
-                    _handleSendPressed(text);
-                  },
-                  user: types.User(id: _currentUser.id.toString()),
-                  onEndReached: _loadMore,
-                  onEndReachedThreshold: 0.5,
-                  customBottomWidget: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).padding.bottom,
-                    ),
-                    child: StreamBuilder<ChatModel>(
-                        stream: chat == null
-                            ? null
-                            : chatService.readChatStream(chat!.id),
-                        builder: (context, snapshot) {
-                          if (snapshot.data == null) {
-                            return const SizedBox.shrink();
-                          }
-                          final chat = snapshot.data!;
-                          this.chat = chat;
-                          return !chatService.isParticipantInChat(
-                            chat: chat,
-                            userId: _currentUser.id!,
-                          )
-                              ? Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: AppText.bodyMedium(
-                                      "You are no longer part oif this conversation."),
-                                )
-                              : Container(
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.appBarColor,
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(16),
-                                      topLeft: Radius.circular(16),
+                  return Chat(
+                    messages: allMessages,
+                    // messages
+                    //     .where((m) => participant?.removedAt == null
+                    //         ? true
+                    //         : m.createdAt! <
+                    //             participant!
+                    //                 .removedAt!.millisecondsSinceEpoch)
+                    //     .toList(),
+                    onSendPressed: (text) {
+                      _handleSendPressed(text);
+                    },
+                    user: types.User(id: _currentUser.id.toString()),
+                    onEndReached: _loadMore,
+                    onEndReachedThreshold: 0.5,
+                    customBottomWidget: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: StreamBuilder<ChatModel>(
+                          stream: chat == null
+                              ? null
+                              : chatService.readChatStream(chat!.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.data == null) {
+                              return const SizedBox.shrink();
+                            }
+                            final chat = snapshot.data!;
+                            this.chat = chat;
+                            return !chatService.isParticipantInChat(
+                              chat: chat,
+                              userId: _currentUser.id!,
+                            )
+                                ? Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: AppText.bodyMedium(
+                                        "You are no longer part oif this conversation."),
+                                  )
+                                : Container(
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.appBarColor,
+                                      borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(16),
+                                        topLeft: Radius.circular(16),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          offset: Offset(0, -2),
+                                          blurRadius: 2,
+                                        )
+                                      ],
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        offset: Offset(0, -2),
-                                        blurRadius: 2,
-                                      )
-                                    ],
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 8,
-                                  ),
-                                  child: ChatInputBar(
-                                    chat: chat!,
-                                    chatService: chatService,
-                                    userId: _currentUser.id!,
-                                    userDesignationId: _currentUser
-                                        .currentDesignation!.userDesgId!,
-                                    userTitle: _currentUser.userTitle!,
-                                    onSendText: (text) {
-                                      _handleSendPressed(
-                                          types.PartialText(text: text));
-                                    },
-                                    onAttachmentPressed: () {
-                                      // later: pick image/video/docs
-                                    },
-                                  ),
-                                );
-                        }),
-                  ),
-                  theme: const DefaultChatTheme(
-                    primaryColor: AppColors.secondaryLight,
-                    secondaryColor: AppColors.cardColor,
-                    inputTextColor: AppColors.textPrimary,
-                    inputPadding:
-                        EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-                    inputElevation: 18,
-                    inputMargin: EdgeInsets.zero,
-                    userNameTextStyle: TextStyle(
-                      color: AppColors.secondaryDark,
-                      fontSize: 12,
-                      //fontWeight: FontWeight.w500,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 8,
+                                    ),
+                                    child: ChatInputBar(
+                                      chat: chat!,
+                                      chatService: chatService,
+                                      userId: _currentUser.id!,
+                                      userDesignationId: _currentUser
+                                          .currentDesignation!.userDesgId!,
+                                      userTitle: _currentUser.userTitle!,
+                                      onSendText: (text) {
+                                        _handleSendPressed(
+                                            types.PartialText(text: text));
+                                      },
+                                      onAttachmentPressed: () {
+                                        // later: pick image/video/docs
+                                      },
+                                    ),
+                                  );
+                          }),
                     ),
-                    userAvatarNameColors: [
-                      AppColors.secondary,
-                      AppColors.primaryDark,
-                      AppColors.secondaryDark,
-                    ],
-                    inputTextCursorColor: AppColors.primaryDark,
-                    userAvatarImageBackgroundColor: AppColors.secondary,
-                    bubbleMargin: EdgeInsets.only(bottom: 8, left: 8, right: 0),
-                    backgroundColor: AppColors.background,
-                    sentMessageBodyTextStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                    theme: const DefaultChatTheme(
+                      primaryColor: AppColors.secondaryLight,
+                      secondaryColor: AppColors.cardColor,
+                      inputTextColor: AppColors.textPrimary,
+                      inputPadding:
+                          EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+                      inputElevation: 18,
+                      inputMargin: EdgeInsets.zero,
+                      userNameTextStyle: TextStyle(
+                        color: AppColors.secondaryDark,
+                        fontSize: 12,
+                        //fontWeight: FontWeight.w500,
+                      ),
+                      userAvatarNameColors: [
+                        AppColors.secondary,
+                        AppColors.primaryDark,
+                        AppColors.secondaryDark,
+                      ],
+                      inputTextCursorColor: AppColors.primaryDark,
+                      userAvatarImageBackgroundColor: AppColors.secondary,
+                      bubbleMargin:
+                          EdgeInsets.only(bottom: 8, left: 8, right: 0),
+                      backgroundColor: AppColors.background,
+                      sentMessageBodyTextStyle: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      receivedMessageBodyTextStyle: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    receivedMessageBodyTextStyle: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  showUserNames: true,
-                  showUserAvatars: true,
-                );
-              },
+                    showUserNames: true,
+                    showUserAvatars: true,
+                  );
+                },
+              ),
             ),
     );
   }

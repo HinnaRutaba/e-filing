@@ -30,103 +30,105 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return BaseScreen(
       title: "Change Password",
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: formKey,
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              AppTextField(
-                controller: currentPasswordController,
-                labelText: 'Current Password',
-                hintText: "Current Password",
-                obscureText: obscureCurrentPassword,
-                showLabel: false,
-                // labelColor: AppColors.white,
-                prefix: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscureCurrentPassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                AppTextField(
+                  controller: currentPasswordController,
+                  labelText: 'Current Password',
+                  hintText: "Current Password",
+                  obscureText: obscureCurrentPassword,
+                  showLabel: false,
+                  // labelColor: AppColors.white,
+                  prefix: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscureCurrentPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        obscureCurrentPassword = !obscureCurrentPassword;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      obscureCurrentPassword = !obscureCurrentPassword;
-                    });
+                  validator: Validators.passwordValidator,
+                ),
+                const SizedBox(height: 24),
+                AppTextField(
+                  controller: newPasswordController,
+                  labelText: 'New Password',
+                  hintText: "New Password",
+                  obscureText: obscureNewPassword,
+                  showLabel: false,
+                  // labelColor: AppColors.white,
+                  prefix: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscureNewPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        obscureNewPassword = !obscureNewPassword;
+                      });
+                    },
+                  ),
+                  validator: Validators.passwordValidator,
+                ),
+                const SizedBox(height: 24),
+                AppTextField(
+                  controller: confirmPasswordController,
+                  labelText: 'Confirm Password',
+                  hintText: "Confirm Password",
+                  obscureText: obscureConfirmPassword,
+                  showLabel: false,
+                  // labelColor: AppColors.white,
+                  prefix: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscureConfirmPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        obscureConfirmPassword = !obscureConfirmPassword;
+                      });
+                    },
+                  ),
+                  validator: (text) {
+                    if (text != newPasswordController.text) {
+                      return "Passwords don't match";
+                    }
+                    return Validators.passwordValidator(text);
                   },
                 ),
-                validator: Validators.passwordValidator,
-              ),
-              const SizedBox(height: 24),
-              AppTextField(
-                controller: newPasswordController,
-                labelText: 'New Password',
-                hintText: "New Password",
-                obscureText: obscureNewPassword,
-                showLabel: false,
-                // labelColor: AppColors.white,
-                prefix: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscureNewPassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                  ),
+                const SizedBox(height: 24),
+                AppSolidButton(
                   onPressed: () {
-                    setState(() {
-                      obscureNewPassword = !obscureNewPassword;
-                    });
+                    if (!formKey.currentState!.validate()) return;
+                    ref.read(authController.notifier).changePassword(
+                          currentPassword: currentPasswordController.text,
+                          newPassword: newPasswordController.text,
+                          confirmPassword: confirmPasswordController.text,
+                        );
                   },
+                  text: "Save Changes",
+                  backgroundColor: AppColors.secondaryDark,
+                  width: double.infinity,
+                  fontSize: 18,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                validator: Validators.passwordValidator,
-              ),
-              const SizedBox(height: 24),
-              AppTextField(
-                controller: confirmPasswordController,
-                labelText: 'Confirm Password',
-                hintText: "Confirm Password",
-                obscureText: obscureConfirmPassword,
-                showLabel: false,
-                // labelColor: AppColors.white,
-                prefix: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscureConfirmPassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      obscureConfirmPassword = !obscureConfirmPassword;
-                    });
-                  },
-                ),
-                validator: (text) {
-                  if (text != newPasswordController.text) {
-                    return "Passwords don't match";
-                  }
-                  return Validators.passwordValidator(text);
-                },
-              ),
-              const SizedBox(height: 24),
-              AppSolidButton(
-                onPressed: () {
-                  if (!formKey.currentState!.validate()) return;
-                  ref.read(authController.notifier).changePassword(
-                        currentPassword: currentPasswordController.text,
-                        newPassword: newPasswordController.text,
-                        confirmPassword: confirmPasswordController.text,
-                      );
-                },
-                text: "Save Changes",
-                backgroundColor: AppColors.secondaryDark,
-                width: double.infinity,
-                fontSize: 18,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
