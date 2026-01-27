@@ -119,6 +119,10 @@ flutter:
        fonts:
          - asset: assets/fonts/bookantiqua.ttf
          - asset: assets/fonts/bookantiqua_bold.ttf
+     - family: Mako
+       fonts:
+         - asset: assets/fonts/Mako-Regular.ttf
+                   
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
