@@ -22,7 +22,7 @@ class ConnectivityScaffold extends ConsumerWidget {
               if (ss.data?.connectivity == ConnectivityResult.none) {
                 showNoConnectionToast();
               } else {
-                showConnectionRestoredToast();
+                //showConnectionRestoredToast();
               }
             }
           });
