@@ -273,7 +273,8 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                               key: remarksKey,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                header(Icons.short_text_outlined, "Remarks"),
+                                header(
+                                    Icons.short_text_outlined, "Add Remarks"),
                                 const SizedBox(height: 16),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
@@ -404,7 +405,11 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 12),
+                                Divider(
+                                  color: Colors.grey,
+                                ),
+                                //const SizedBox(height: 12),
                               ],
                             ),
                           // if (details?.attachments != null &&
@@ -457,8 +462,8 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                         reOpenedFile)) ...[
                                   Column(
                                     children: [
-                                      header(Icons.work_history_outlined,
-                                          "Section"),
+                                      header2(Icons.work_history_outlined,
+                                          "Forward to"),
                                       const SizedBox(height: 16),
                                       AppDropDownField<SectionModel>(
                                         items: state.sections,
@@ -626,9 +631,11 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     ],
                                   ),
                                 ],
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 8),
+                                Divider(color: Colors.grey),
+                                const SizedBox(height: 8),
                                 AppText.titleLarge(
-                                  "(File Attachment)",
+                                  "(Add File Attachment)",
                                   color: AppColors.secondary,
                                 ),
                                 const SizedBox(height: 12),
@@ -797,7 +804,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                 ? "Reopen"
                                 : viewOnly
                                     ? "Close"
-                                    : "Submit",
+                                    : "Send File",
                             backgroundColor: AppColors.primary,
                             width: double.infinity,
                           ),
@@ -830,6 +837,29 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
         AppText.headlineSmall(
           title,
           color: AppColors.primaryDark,
+        ),
+      ],
+    );
+  }
+
+  Widget header2(IconData icon, String title) {
+    return Row(
+      children: [
+        Card(
+          margin: const EdgeInsets.all(0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          color: AppColors.cardColor,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(icon, size: 24, color: AppColors.secondary),
+          ),
+        ),
+        const SizedBox(width: 8),
+        AppText.headlineSmall(
+          title,
+          color: AppColors.secondary,
         ),
       ],
     );

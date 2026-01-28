@@ -253,8 +253,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 fontWeight: FontWeight.w600,
                               ),
                               tabs: const [
-                                Tab(text: 'Action Required'),
                                 Tab(text: 'Pending Files'),
+                                Tab(text: 'Action Required'),
                                 Tab(text: 'Forwarded Files'),
                               ],
                             ),
@@ -268,16 +268,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               children: [
                                 // All tabs show filteredFiles, which is already
                                 // filtered by the current file type
-                                _buildFileList(
-                                  files: files,
-                                  fileType: FileType.actionRequired,
-                                  emptyMessage: 'No action required files',
-                                  onRefresh: () async {
-                                    await ref
-                                        .read(filesController.notifier)
-                                        .fetchFiles(FileType.actionRequired);
-                                  },
-                                ),
 
                                 _buildFileList(
                                   files: files,
@@ -287,6 +277,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     await ref
                                         .read(filesController.notifier)
                                         .fetchFiles(FileType.pending);
+                                  },
+                                ),
+
+                                _buildFileList(
+                                  files: files,
+                                  fileType: FileType.actionRequired,
+                                  emptyMessage: 'No action required files',
+                                  onRefresh: () async {
+                                    await ref
+                                        .read(filesController.notifier)
+                                        .fetchFiles(FileType.actionRequired);
                                   },
                                 ),
                                 _buildFileList(
