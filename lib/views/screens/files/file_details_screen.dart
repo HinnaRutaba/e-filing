@@ -350,8 +350,8 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       AppOutlineButton(
                                         onPressed: () {
                                           RouteHelper.push(
-                                              Routes.fileChat(
-                                                  details!.content.first.fileId),
+                                              Routes.fileChat(details!
+                                                  .content.first.fileId),
                                               extra: details);
                                         },
                                         text: "Start Chat",
@@ -367,9 +367,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                           context: context,
                                           constraints: BoxConstraints(
                                               maxHeight:
-                                              MediaQuery.sizeOf(context)
-                                                  .height *
-                                                  0.9),
+                                                  MediaQuery.sizeOf(context)
+                                                          .height *
+                                                      0.9),
                                           showDragHandle: false,
                                           isScrollControlled: true,
                                           backgroundColor: AppColors.background,
@@ -381,8 +381,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                           ),
                                           builder: (BuildContext context) {
                                             return Padding(
-                                              padding: const EdgeInsets.fromLTRB(
-                                                  8, 8, 8, 0),
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      8, 8, 8, 0),
                                               child: AIAgentChatScreen(
                                                 file: details,
                                                 suggestResponse: true,
@@ -398,7 +399,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       },
                                       text: "Draft with AI",
                                       icon: Icons.drafts_rounded,
-                                      color: AppColors.secondary,
+                                      color: AppColors.primaryDark,
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 12),
                                     ),
