@@ -136,23 +136,23 @@ class FileCard extends StatelessWidget {
                           )
                         ],
                       ),
-                      Row(
-                        children: [
-                          data?.fileType != null
-                              ? Expanded(
-                                  child:
-                                      AppText.titleLarge(data?.fileType ?? ''),
-                                )
-                              : const SizedBox(height: 4),
-                          // if (fileType == FileType.forwarded)
-                          //   Padding(
-                          //     padding: const EdgeInsets.only(top: 8.0),
-                          //     child:
-                          //   ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     data?.fileType != null
+                      //         ? Expanded(
+                      //             child:
+                      //                 AppText.titleLarge(data?.fileType ?? ''),
+                      //           )
+                      //         : const SizedBox(height: 4),
+                      //     // if (fileType == FileType.forwarded)
+                      //     //   Padding(
+                      //     //     padding: const EdgeInsets.only(top: 8.0),
+                      //     //     child:
+                      //     //   ),
+                      //   ],
+                      // ),
                       const SizedBox(height: 4),
-                      AppText.bodySmall(data?.subject ?? '---'),
+                      AppText.titleLarge(data?.subject ?? '---'),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,

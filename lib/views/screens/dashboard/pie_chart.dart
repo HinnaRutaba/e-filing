@@ -93,3 +93,41 @@ class ChartModel {
     required this.color,
   });
 }
+  // Widget _buildChartSection(DashboardModel model) {
+  //   return SizedBox(
+  //     height: 300,
+  //     width: double.infinity,
+  //     child: Card(
+  //       //color: AppColors.white,
+  //       margin: EdgeInsets.zero,
+  //       elevation: 0,
+  //       child: PieChartSample(
+  //         data: [
+  //           ChartModel(
+  //             title: "Action Required",
+  //             count: model.actionRequiredCount.toDouble(),
+  //             color: AppColors.primary,
+  //           ),
+  //           ChartModel(
+  //             title: "My Files",
+  //             count: model.myFilesCount.toDouble(),
+  //             color: AppColors.secondary,
+  //           ),
+  //           ChartModel(
+  //             title: "Pending Files",
+  //             count: model.pendingFilesCount.toDouble(),
+  //             color: Colors.yellow[800]!,
+  //           ),
+  //           ChartModel(
+  //             title: "Disposed Off",
+  //             count: model.disposedOffCount.toDouble(),
+  //             color: Colors.teal[800]!,
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+// part 'bar_chart.dart';
+// part 'dashboard_card.dart';
+// part 'pie_chart.dart';
