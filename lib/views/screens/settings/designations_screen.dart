@@ -19,36 +19,38 @@ class _UserDesignationsScreenState extends State<DesignationsScreen> {
     return BaseScreen(
       title: "Settings",
       showUserDetails: false,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Hero(
-                tag: HeroTags.profile,
-                child: CircleAvatar(
-                  backgroundColor: AppColors.primaryLight.withOpacity(0.2),
-                  radius: 30,
-                  child: const Icon(
-                    Icons.person,
-                    color: AppColors.primaryDark,
-                    size: 24,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Hero(
+                  tag: HeroTags.profile,
+                  child: CircleAvatar(
+                    backgroundColor: AppColors.primaryLight.withOpacity(0.2),
+                    radius: 30,
+                    child: const Icon(
+                      Icons.person,
+                      color: AppColors.primaryDark,
+                      size: 24,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              AppText.bodyLarge("User Name", fontSize: 20),
-              const SizedBox(height: 32),
-              _menuTile('Users', Icons.supervised_user_circle_outlined, () {
-                RouteHelper.push(Routes.users);
-              }),
-              _menuTile('Sections', Icons.file_copy_outlined, () {
-                RouteHelper.push(Routes.sections);
-              }),
-              _menuTile('Designations', Icons.work_outline, () {}),
-              _menuTile('Change Password', Icons.lock_outlined, () {}),
-            ],
+                const SizedBox(height: 8),
+                AppText.bodyLarge("User Name", fontSize: 20),
+                const SizedBox(height: 32),
+                _menuTile('Users', Icons.supervised_user_circle_outlined, () {
+                  RouteHelper.push(Routes.users);
+                }),
+                _menuTile('Sections', Icons.file_copy_outlined, () {
+                  RouteHelper.push(Routes.sections);
+                }),
+                _menuTile('Designations', Icons.work_outline, () {}),
+                _menuTile('Change Password', Icons.lock_outlined, () {}),
+              ],
+            ),
           ),
         ),
       ),

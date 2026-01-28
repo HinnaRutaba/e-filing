@@ -91,106 +91,110 @@ class NavDrawer extends ConsumerWidget {
         routeName: Routes.changePassword,
       ),
     ];
-    return Drawer(
-      width: 240,
-      backgroundColor: AppColors.cardColor,
-      elevation: 6,
-      shadowColor: AppColors.secondaryDark,
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
-          Image.asset(AssetsConstants.logo, width: 100, height: 100),
-          const SizedBox(height: 16),
-          Expanded(
-              child: SingleChildScrollView(
-            child: Column(
-              children: [
-                ...menus.map(
-                  (e) {
-                    bool isSelected =
-                        e.routeName == RouteHelper.currentLocation;
-                    return Container(
-                      margin: const EdgeInsets.only(right: 24),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.secondaryLight.withOpacity(0.2)
-                            : Colors.transparent,
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: ListTile(
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom),
+      child: Drawer(
+        width: 240,
+        backgroundColor: AppColors.cardColor,
+        elevation: 6,
+        shadowColor: AppColors.secondaryDark,
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            Image.asset(AssetsConstants.logo, width: 100, height: 100),
+            const SizedBox(height: 16),
+            Expanded(
+                child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ...menus.map(
+                    (e) {
+                      bool isSelected =
+                          e.routeName == RouteHelper.currentLocation;
+                      return Container(
+                        margin: const EdgeInsets.only(right: 24),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.secondaryLight.withOpacity(0.2)
+                              : Colors.transparent,
+                          borderRadius: const BorderRadius.only(
                             topRight: Radius.circular(12),
                             bottomRight: Radius.circular(12),
                           ),
                         ),
-                        leading: Icon(
-                          e.icon,
-                          color: isSelected
-                              ? AppColors.primaryDark
-                              : AppColors.secondaryDark,
-                        ),
-                        horizontalTitleGap: 12,
-                        title: e.titleWidget ??
-                            AppText.titleMedium(
-                              e.title,
-                              color: isSelected
-                                  ? AppColors.primaryDark
-                                  : AppColors.secondaryDark,
-                            ),
-                        onTap: e.onTap ??
-                            () {
-                              RouteHelper.navigateTo(e.routeName);
-                              // Navigate to Dashboard
-                            },
-                      ),
-                    );
-                  },
-                ).toList(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      AppText.titleSmall("Powered By"),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Image.asset(
-                              AssetsConstants.cmduLogo,
-                              height: 48,
+                        child: ListTile(
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
                             ),
                           ),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(1.0),
-                            child: Image.asset(
-                              AssetsConstants.govtLogo,
-                              height: 40,
+                          leading: Icon(
+                            e.icon,
+                            color: isSelected
+                                ? AppColors.primaryDark
+                                : AppColors.secondaryDark,
+                          ),
+                          horizontalTitleGap: 12,
+                          title: e.titleWidget ??
+                              AppText.titleMedium(
+                                e.title,
+                                color: isSelected
+                                    ? AppColors.primaryDark
+                                    : AppColors.secondaryDark,
+                              ),
+                          onTap: e.onTap ??
+                              () {
+                                RouteHelper.navigateTo(e.routeName);
+                                // Navigate to Dashboard
+                              },
+                        ),
+                      );
+                    },
+                  ).toList(),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        AppText.titleSmall("Powered By"),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.asset(
+                                AssetsConstants.cmduLogo,
+                                height: 48,
+                              ),
                             ),
-                          )
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              ],
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(1.0),
+                              child: Image.asset(
+                                AssetsConstants.govtLogo,
+                                height: 40,
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+            AppTextLinkButton(
+              onPressed: () {
+                ref.read(authController.notifier).logout();
+              },
+              text: "Sign Out",
+              icon: Icons.logout,
+              color: AppColors.error,
             ),
-          )),
-          const SizedBox(height: 16),
-          AppTextLinkButton(
-            onPressed: () {
-              ref.read(authController.notifier).logout();
-            },
-            text: "Sign Out",
-            icon: Icons.logout,
-            color: AppColors.error,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

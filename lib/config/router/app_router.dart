@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
@@ -181,6 +182,7 @@ class AppRouter {
   ];
 
   static final GoRouter _router = GoRouter(
+    observers: [routeObserver],
     navigatorKey: navigatorKey,
     initialLocation: Routes.splash,
     routes: _routes,

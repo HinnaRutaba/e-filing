@@ -61,6 +61,8 @@ class FileViewModel {
       loadingNewFileData: loadingNewFileData ?? this.loadingNewFileData,
     );
   }
+
+  getFilesByType(FileType actionRequired) {}
 }
 
 class FilesController extends BaseControllerState<FileViewModel> {

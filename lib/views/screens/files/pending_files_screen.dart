@@ -34,49 +34,51 @@ class _PendingFilesScreenState extends ConsumerState<PendingFilesScreen> {
       onRefresh: fetchData,
       child: BaseScreen(
         title: "Pending Files",
-        body: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            children: [
-              AppTextField(
-                controller: searchController,
-                labelText: "Search",
-                hintText: "Search by file name or number",
-                prefix:
-                    const Icon(Icons.search, color: AppColors.secondaryDark),
-                onChanged: (String value) {
-                  ref.read(filesController.notifier).filterFiles(value);
-                },
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: files.isEmpty
-                    ? Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const NotFound(),
-                            AppSolidButton(
-                              onPressed: fetchData,
-                              text: "Reload",
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemBuilder: (ctx, i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: FileCard(
-                            fileType: FileType.pending,
-                            data: files[i],
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              children: [
+                AppTextField(
+                  controller: searchController,
+                  labelText: "Search",
+                  hintText: "Search by file name or number",
+                  prefix:
+                      const Icon(Icons.search, color: AppColors.secondaryDark),
+                  onChanged: (String value) {
+                    ref.read(filesController.notifier).filterFiles(value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: files.isEmpty
+                      ? Center(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const NotFound(),
+                              AppSolidButton(
+                                onPressed: fetchData,
+                                text: "Reload",
+                              ),
+                            ],
                           ),
+                        )
+                      : ListView.builder(
+                          itemBuilder: (ctx, i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: FileCard(
+                              fileType: FileType.pending,
+                              data: files[i],
+                            ),
+                          ),
+                          itemCount: files.length,
+                          physics: const BouncingScrollPhysics(),
                         ),
-                        itemCount: files.length,
-                        physics: const BouncingScrollPhysics(),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

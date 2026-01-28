@@ -55,9 +55,11 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
               ],
             ),
           ),
-        Column(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            // Flag Type Dropdown - Expanded
+            Expanded(
               child: AppDropDownField<FlagModel>(
                 items: m.usedFlags == null
                     ? state.flags
@@ -76,54 +78,74 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                 itemBuilder: (item) {
                   return AppText.titleMedium(item?.title ?? '');
                 },
-                // validator: (item) {
-                //   if (m.flagType == null || item == null) {
-                //     return 'Please select a value';
-                //   }
-                //   return null;
-                // },
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
+
+            const SizedBox(width: 12),
+
+            // Attachment Button - Expanded
+
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppText.labelLarge(
-                    "Attachment",
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                  SizedBox(height: 5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppText.labelSmall(
+                      "Attachment",
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: AppColors.secondaryDark,
+                    ),
                   ),
-                  const SizedBox(height: 8),
                   InkWell(
                     onTap: () async {
                       m.attachment = await FilePickerService().pickPdf();
                       setState(() {});
                     },
                     child: Container(
+                      height: 50, // Match dropdown height
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14.5),
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                          border: Border.all(
-                              color: AppColors.secondaryLight.withOpacity(0.5)),
-                          borderRadius: BorderRadius.circular(10),
-                          color: AppColors.white),
+                        border: Border.all(
+                          color: AppColors.secondaryLight.withOpacity(0.5),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.white,
+                      ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
                             Icons.picture_as_pdf,
                             color: AppColors.secondaryDark,
+                            size: 20,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: AppText.bodyLarge(
-                              m.attachment?.name ??
-                                  "Click here to add attachment",
-                              color: AppColors.secondaryLight,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // AppText.labelSmall(
+                                //   "Attachment",
+                                //   fontWeight: FontWeight.w500,
+                                //   fontSize: 11,
+                                //   color: AppColors.secondaryDark,
+                                // ),
+                                const SizedBox(height: 2),
+                                AppText.bodyMedium(
+                                  m.attachment?.name ?? "Click to add",
+                                  color: m.attachment != null
+                                      ? AppColors.secondaryDark
+                                      : AppColors.secondaryLight,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ],
                             ),
                           ),
-                          if (m.attachment != null) ...[
+                          if (m.attachment != null)
                             Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: InkWell(
@@ -134,11 +156,10 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                                 child: Icon(
                                   Icons.cancel,
                                   color: Colors.red[800],
-                                  size: 20,
+                                  size: 18,
                                 ),
                               ),
                             ),
-                          ]
                         ],
                       ),
                     ),

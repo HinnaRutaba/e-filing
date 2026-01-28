@@ -15,39 +15,41 @@ class _UsersScreenState extends State<UsersScreen> {
   Widget build(BuildContext context) {
     return BaseScreen(
       title: "Users",
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Column(
-          children: [
-            SearchDropDownField(
-                suggestionsCallback: (String pattern) {
-                  // Simulate a search operation
-                  return Future.value([]);
-                },
-                onSelected: (void value) {
-                  // Handle the selected value
-                },
-                showLabel: false,
-                labelText: "Search",
-                hintText: "Search by name or username",
-                itemBuilder: (BuildContext context, void item) {
-                  // Build the item widget
-                  return ListTile(
-                    title: Text("Item"), // Customize as needed
-                  );
-                }),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemBuilder: (ctx, i) => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: UserCard(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            children: [
+              SearchDropDownField(
+                  suggestionsCallback: (String pattern) {
+                    // Simulate a search operation
+                    return Future.value([]);
+                  },
+                  onSelected: (void value) {
+                    // Handle the selected value
+                  },
+                  showLabel: false,
+                  labelText: "Search",
+                  hintText: "Search by name or username",
+                  itemBuilder: (BuildContext context, void item) {
+                    // Build the item widget
+                    return ListTile(
+                      title: Text("Item"), // Customize as needed
+                    );
+                  }),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  itemBuilder: (ctx, i) => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: UserCard(),
+                  ),
+                  itemCount: 10,
+                  physics: const BouncingScrollPhysics(),
                 ),
-                itemCount: 10,
-                physics: const BouncingScrollPhysics(),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
