@@ -9,7 +9,7 @@ class AppOutlineButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final Color? color;
   final Color? backgroundColor;
-  final double? textSize;
+
   final IconData? icon;
   const AppOutlineButton({
     super.key,
@@ -20,7 +20,6 @@ class AppOutlineButton extends StatelessWidget {
     this.padding,
     this.color,
     this.backgroundColor,
-    this.textSize,
     this.icon,
   });
 
@@ -51,7 +50,7 @@ class AppOutlineButton extends StatelessWidget {
           text,
           style: TextStyle(
             color: color ?? AppColors.primaryDark,
-            fontSize: textSize ?? 20,
+            //fontSize: textSize ?? 14,
           ),
         ),
       ),

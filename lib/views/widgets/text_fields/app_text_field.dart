@@ -73,7 +73,7 @@ class AppTextField extends StatelessWidget {
                 labelText,
                 color: enabled == false ? Colors.grey : null,
                 fontWeight: FontWeight.w500,
-                fontSize: 14,
+                fontSize: 10,
               ),
               if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
             ],
@@ -93,7 +93,7 @@ class AppTextField extends StatelessWidget {
           onTap: onTap,
           style: style ??
               const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: AppColors.textPrimary,
               ),
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -110,11 +110,11 @@ class AppTextField extends StatelessWidget {
             disabledBorder: border,
             prefixIcon: prefix,
             hintStyle: TextStyle(
-              color: enabled
-                  ? AppColors.secondaryDark.withOpacity(0.8)
-                  : AppColors.secondaryLight.withOpacity(0.5),
-              fontWeight: FontWeight.w400,
-            ),
+                color: enabled
+                    ? AppColors.secondaryDark.withOpacity(0.8)
+                    : AppColors.secondaryLight.withOpacity(0.5),
+                fontWeight: FontWeight.w400,
+                fontSize: 14),
             fillColor: filledColor,
           ),
           obscureText: obscureText,

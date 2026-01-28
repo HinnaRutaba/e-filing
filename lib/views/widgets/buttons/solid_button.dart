@@ -45,7 +45,7 @@ class AppSolidButton extends StatelessWidget {
         label: Text(
           text,
           style: TextStyle(
-            fontSize: fontSize ?? 20,
+            fontSize: fontSize ?? 16,
             color: AppColors.white,
           ),
         ),

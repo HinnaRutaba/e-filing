@@ -10,50 +10,40 @@ class HtmlReader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HtmlWidget(
-      '''
-         $html
-      ''',
-
-      // customStylesBuilder: (element) {
-      //   if (element.classes.contains('foo')) {
-      //     return {'color': 'red'};
-      //   }
-      //
-      //   return null;
-      // },
-
-      // customWidgetBuilder: (element) {
-      //   if (element.attributes['foo'] == 'bar') {
-      //     // render a custom block widget that takes the full width
-      //     return FooBarWidget();
-      //   }
-      //
-      //   if (element.attributes['fizz'] == 'buzz') {
-      //     // render a custom widget inline with surrounding text
-      //     return InlineCustomWidget(
-      //       child: FizzBuzzWidget(),
-      //     )
-      //   }
-      //
-      //   return null;
-      // },
-
-      // this callback will be triggered when user taps a link
-      onTapUrl: (url) {
-        print('tapped $url');
-        return true;
-      },
-
-      // select the render mode for HTML body
-      // by default, a simple `Column` is rendered
-      // consider using `ListView` or `SliverList` for better performance
-      renderMode: RenderMode.column,
-
-      // set the default styling for text
-      textStyle: const TextStyle(
-        fontSize: 14,
-        fontFamily: fileFont,
+    return SingleChildScrollView(
+      child: HtmlWidget(
+        html,
+        customWidgetBuilder: (element) {
+          // Wrap table elements in a horizontal scroll view
+          if (element.localName == 'table') {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: HtmlWidget(
+                element.outerHtml,
+                textStyle: const TextStyle(
+                  fontSize: 11,
+                  fontFamily: fileFont,
+                ),
+                // customStylesBuilder: (element) {
+                //   if (element.localName == 'table' ||
+                //       element.localName == 'td' ||
+                //       element.localName == 'th') {
+                //     return {
+                //       'font-size': '10px',
+                //     };
+                //   }
+                //   return null;
+                // },
+              ),
+            );
+          }
+          return null;
+        },
+        renderMode: RenderMode.column,
+        textStyle: const TextStyle(
+          fontSize: 14,
+          fontFamily: fileFont,
+        ),
       ),
     );
   }

@@ -356,7 +356,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                         text: "Start Discussion",
                                         icon: Icons.chat,
                                         color: AppColors.primaryDark,
-                                        textSize: 16,
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 16, vertical: 12),
                                       ),
@@ -397,10 +396,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                           }
                                         });
                                       },
-                                      text: "Draft with AI",
-                                      icon: Icons.drafts_rounded,
-                                      color: AppColors.secondary,
-                                      textSize: 16,
+                                      text: "Start Chat",
+                                      icon: Icons.chat,
+                                      color: AppColors.primaryDark,
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 12),
                                     ),
@@ -690,7 +688,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     },
                                     text: "Add More",
                                     color: AppColors.secondary,
-                                    textSize: 18,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 12),
                                   ),

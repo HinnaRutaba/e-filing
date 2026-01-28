@@ -14,7 +14,7 @@ import 'check_box_theme.dart';
 class AppTheme {
   AppTheme._();
 
-  static const fontFamily = 'Sura';
+  static const fontFamily = 'Mako';
 
   static ThemeData light = ThemeData(
     useMaterial3: true,

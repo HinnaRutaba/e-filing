@@ -19,15 +19,10 @@ class ChatService {
     required String? barcode,
     required List<ChatParticipantModel> participants,
   }) async {
-    final query = await _firestore
-        .collection(chatsCollection)
-        .where('file_id', isEqualTo: fileId)
-        .limit(1)
-        .get();
+    String? chatId = await getChatFromFile(fileId);
 
-    if (query.docs.isNotEmpty) {
-      final chatId = query.docs.first.id;
-      addParticipants(chatId: chatId, newParticipants: participants);
+    if (chatId != null) {
+      //addParticipants(chatId: chatId, newParticipants: participants);
       return chatId;
     }
 
@@ -41,6 +36,19 @@ class ChatService {
     });
 
     return chatRef.id;
+  }
+
+  Future<String?> getChatFromFile(int fileId) async {
+    final query = await _firestore
+        .collection(chatsCollection)
+        .where('file_id', isEqualTo: fileId)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.id;
+    }
+    return null;
   }
 
   Future<ChatModel> getChat(String chatId) async {
