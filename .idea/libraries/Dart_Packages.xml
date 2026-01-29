@@ -1052,6 +1052,13 @@
             </list>
           </value>
         </entry>
+        <entry key="pull_to_refresh">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/pull_to_refresh-2.0.0/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="quill_html_editor_v2">
           <value>
             <list>
@@ -1691,6 +1698,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/pointer_interceptor_web-0.10.2+1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/posix-6.0.3/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/provider-6.1.5+1/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/pull_to_refresh-2.0.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/quill_html_editor_v2-2.2.10/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/record-6.1.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/record_android-1.4.2/lib" />
