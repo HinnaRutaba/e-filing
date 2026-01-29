@@ -305,9 +305,8 @@ class FileRepo extends FilesInterface {
         options: await options(),
       );
       if (data.isNotEmpty) {
-        return data['forwarded_files'] != null &&
-                data['forwarded_files'] is List
-            ? (data['forwarded_files'] as List)
+        return data['data'] != null && data['data'] is List
+            ? (data['data'] as List)
                 .map((file) =>
                     FileModel.fromJson(file, status: FileStatus.reForwarded))
                 .toList()
@@ -331,7 +330,7 @@ class FileRepo extends FilesInterface {
         options: await options(),
       );
       if (data.isNotEmpty) {
-        return FileDetailsModel.fromJsonForwardedFiles(data);
+        return FileDetailsModel.fromJsonForwardedFiles(data['data']);
       }
       return null;
     } catch (e) {

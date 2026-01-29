@@ -24,12 +24,11 @@ class HtmlReader extends StatelessWidget {
                 element.outerHtml,
                 textStyle: textStyle ??
                     const TextStyle(
-                      fontSize: 10,
+                      fontSize: 14,
                       fontFamily: fileFont,
                     ),
                 customStylesBuilder: (element) {
-                  if (element.localName == 'td' ||
-                      element.localName == 'th') {
+                  if (element.localName == 'td' || element.localName == 'th') {
                     return {
                       'padding': '8px',
                       'word-break': 'break-word',
@@ -51,7 +50,7 @@ class HtmlReader extends StatelessWidget {
         renderMode: RenderMode.column,
         textStyle: textStyle ??
             const TextStyle(
-              fontSize: 10,
+              fontSize: 14,
               fontFamily: fileFont,
             ),
       ),
