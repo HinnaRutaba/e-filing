@@ -149,50 +149,28 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
         Expanded(
           child: SingleChildScrollView(
             // padding: const EdgeInsets.symmetric(vertical: 12),
-            child: widget.addMembers
-                ? Column(
-                    children: [
-                      _NotAddedParticipantsWidget(
-                        participants: filteredNotInChat,
-                        chatService: widget._chatService,
-                        chatId: widget.chatId,
-                        uid: uid!,
-                      ),
-                      Divider(
-                        color: Colors.grey[200]!,
-                        thickness: 4,
-                        height: 16,
-                      ),
-                      _AddedParticipantsWidget(
-                        participants: filteredActive,
-                        chatService: widget._chatService,
-                        chatId: widget.chatId,
-                        uid: uid,
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      _AddedParticipantsWidget(
-                        participants: filteredActive,
-                        chatService: widget._chatService,
-                        chatId: widget.chatId,
-                        uid: uid!,
-                      ),
-                      const Divider(
-                        color: AppColors.cardColor,
-                        thickness: 1,
-                        height: 0,
-                      ),
-                      _NotAddedParticipantsWidget(
-                        participants: filteredNotInChat,
-                        chatService: widget._chatService,
-                        chatId: widget.chatId,
-                        uid: uid,
-                        showUnavailableMessage: false,
-                      ),
-                    ],
-                  ),
+            child: Column(
+              children: [
+                _AddedParticipantsWidget(
+                  participants: filteredActive,
+                  chatService: widget._chatService,
+                  chatId: widget.chatId,
+                  uid: uid!,
+                ),
+                const Divider(
+                  color: AppColors.cardColor,
+                  thickness: 1,
+                  height: 0,
+                ),
+                _NotAddedParticipantsWidget(
+                  participants: filteredNotInChat,
+                  chatService: widget._chatService,
+                  chatId: widget.chatId,
+                  uid: uid,
+                  showUnavailableMessage: false,
+                ),
+              ],
+            ),
           ),
         ),
       ],

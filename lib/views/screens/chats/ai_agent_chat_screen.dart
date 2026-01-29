@@ -102,21 +102,17 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
       loading = true;
     });
 
-    // Send message & get AI streaming response
     _aiAgent
         .sendMessageStream(text, widget.file?.toContentJson(),
             sendAsUserMessage: sendAsUserMessage,
             suggestResponse: widget.suggestResponse)
         .listen((partialResponse) {
-      // Update last assistant message while typing
       if (_messages.isNotEmpty &&
           _messages.first.author.id == _chatPartner.id) {
-        // Update existing last assistant message
         _messages[0] = (_messages[0] as types.TextMessage).copyWith(
           text: partialResponse,
         );
       } else {
-        // Add a new assistant message with partial text
         _messages.insert(
           0,
           types.TextMessage(
@@ -135,7 +131,6 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
 
   @override
   void dispose() {
-    //_aiAgent.dispose();
     promptController.dispose();
     super.dispose();
   }
@@ -190,8 +185,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                   decoration: BoxDecoration(
                                     color: isUser
                                         ? AppColors.secondary
-                                        : AppColors.secondaryDark
-                                            .withOpacity(0.2),
+                                        : AppColors.secondaryDark.withAlpha(20),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
@@ -204,6 +198,9 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                           color: isUser
                                               ? Colors.white
                                               : Colors.black87,
+                                          fontWeight: isUser
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
                                         ),
                                       ),
                                       if (!isUser &&
@@ -249,7 +246,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                     },
               text: loading ? "Generating Response" : "Generate Response",
               width: 500,
-              backgroundColor: AppColors.secondary,
+              backgroundColor: AppColors.secondaryDark,
               fontSize: 18,
               padding: const EdgeInsets.all(16),
             ),
