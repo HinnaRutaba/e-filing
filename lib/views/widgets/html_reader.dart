@@ -10,6 +10,8 @@ class HtmlReader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return SingleChildScrollView(
       child: HtmlWidget(
         html,
@@ -20,30 +22,38 @@ class HtmlReader extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: HtmlWidget(
                 element.outerHtml,
-                textStyle: const TextStyle(
-                  fontSize: 11,
-                  fontFamily: fileFont,
-                ),
-                // customStylesBuilder: (element) {
-                //   if (element.localName == 'table' ||
-                //       element.localName == 'td' ||
-                //       element.localName == 'th') {
-                //     return {
-                //       'font-size': '10px',
-                //     };
-                //   }
-                //   return null;
-                // },
+                textStyle: textStyle ??
+                    const TextStyle(
+                      fontSize: 10,
+                      fontFamily: fileFont,
+                    ),
+                customStylesBuilder: (element) {
+                  if (element.localName == 'td' ||
+                      element.localName == 'th') {
+                    return {
+                      'padding': '8px',
+                      'word-break': 'break-word',
+                      'white-space': 'normal',
+                    };
+                  }
+                  if (element.localName == 'table') {
+                    return {
+                      'border-collapse': 'collapse',
+                    };
+                  }
+                  return null;
+                },
               ),
             );
           }
           return null;
         },
         renderMode: RenderMode.column,
-        textStyle: const TextStyle(
-          fontSize: 14,
-          fontFamily: fileFont,
-        ),
+        textStyle: textStyle ??
+            const TextStyle(
+              fontSize: 10,
+              fontFamily: fileFont,
+            ),
       ),
     );
   }
