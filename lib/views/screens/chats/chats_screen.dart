@@ -19,6 +19,7 @@ class ChatsScreen extends ConsumerWidget {
     UserModel currentUser = ref.read(authController);
     return BaseScreen(
       title: "Chats",
+      enableBackButton: true,
       body: ChatsListView(
         userId: currentUser.id!,
         userDesignationId: currentUser.currentDesignation!.userDesgId!,

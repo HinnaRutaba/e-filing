@@ -179,7 +179,7 @@ Submitted for approval and further directions please.
           systemMessage = '''${reportContext(fileStr)}
        
           if user asks about a response read the whole report, read other peoples comments in the contents and only then suggest a reasonable response
-        Ensure to give just a ONE LINE response do not exceed 50 characters and should not include details like Sender name, designation etc.
+        Ensure to give just a ONE LINE response UNLESS user asks for a detailed response ONLY THEN give response in a paragraph and should not include details like Sender name, designation etc.
         The response should be in next line after the line '$responseKey'
         Only give the response if user asks for it
         ''';

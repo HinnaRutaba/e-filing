@@ -1,3 +1,5 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -11,18 +13,36 @@ class BaseScreen extends ConsumerWidget {
   final Widget body;
   final String? title;
   final bool showUserDetails;
-  const BaseScreen(
-      {super.key,
-      required this.body,
-      this.title,
-      this.showUserDetails = false});
+  final bool enableBackButton;
+  const BaseScreen({
+    super.key,
+    required this.body,
+    this.title,
+    this.showUserDetails = false,
+    this.enableBackButton = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: title != null ? AppText.headlineSmall(title!) : null,
+        title: Row(
+          children: [
+            if (title != null)
+              Expanded(
+                child: AppText.headlineSmall(title!),
+              ),
+            if (enableBackButton)
+              IconButton(
+                onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
+                icon: const Icon(
+                  Icons.clear,
+                  color: AppColors.secondaryDark,
+                ),
+              ),
+          ],
+        ),
         titleSpacing: 0,
         actions: showUserDetails
             ? [

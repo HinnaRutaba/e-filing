@@ -92,6 +92,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     return BaseScreen(
       showUserDetails: true,
+      enableBackButton: false,
       body: _isFirstLoad
           ? _buildLoadingState()
           : SmartRefresher(
