@@ -8,6 +8,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
@@ -631,6 +632,32 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         ),
                         showUserNames: true,
                         showUserAvatars: true,
+                        avatarBuilder: (user) {
+                          return Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.only(
+                              bottom: 28,
+                              left: 4,
+                              right: 8,
+                            ),
+                            child: GestureDetector(
+                              // onTap: () => onAvatarTap?.call(),
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppColors.secondary,
+                                child: Text(
+                                  HelperUtils.firstTwoLetters(
+                                      "${user.firstName ?? ''} ${user.lastName ?? ''}"),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                         bubbleBuilder: (child,
                             {required message, required nextMessageInGroup}) {
                           final isMe =
