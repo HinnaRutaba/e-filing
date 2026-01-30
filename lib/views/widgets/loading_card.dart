@@ -13,7 +13,7 @@ class LoadingCard extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (ctx, i) {
         return const CardLoading(
-          height: 100,
+          height: 50,
           borderRadius: BorderRadius.all(Radius.circular(10)),
           margin: EdgeInsets.only(bottom: 10),
         );

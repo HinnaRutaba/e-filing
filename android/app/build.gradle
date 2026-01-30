@@ -16,12 +16,15 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.lrm.efiling_balochistan"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        
+        // ADD THIS LINE: Enable core library desugaring
+        coreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -37,6 +40,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // ADD THIS LINE: Enable multidex
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -50,7 +56,6 @@ android {
 
     buildTypes {
         release {
-
             signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
@@ -59,7 +64,21 @@ android {
                 debugSymbolLevel 'NONE'
             }
         }
+        
+        debug {
+            // Add this for debug builds too
+            minifyEnabled false
+            shrinkResources false
+        }
     }
+}
+
+dependencies {
+    // ADD THIS LINE: Add desugaring dependency
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
+    
+    // Make sure you have multidex for Android 5.0+ 
+    implementation "androidx.multidex:multidex:2.0.1"
 }
 
 flutter {
