@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
+ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -777,7 +777,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                               //'&nbsp$text';
                               // text.replaceAllMapped(RegExp(r'(<\s*p[^>]*>)'),
                               //     (m) => '${m.group(0)}&nbsp;&nbsp;');
-                              print("TTTT_____${spacedText}");
+                            
                               // return;
                               if (widget.fileType == FileType.pending) {
                                 controller.sendPendingFileRemarks(

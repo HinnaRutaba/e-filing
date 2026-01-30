@@ -22,6 +22,8 @@ import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 
 class CreateNewFileScreen extends ConsumerStatefulWidget {
   const CreateNewFileScreen({super.key});
@@ -408,8 +410,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                   itemBuilder: (ctx, i) {
                     final model = attachments[i];
                     return AddFlagAndAttachment(
-                      key: ValueKey(
-                          model), // keep identity stable across rebuilds
+                      key: ValueKey(model),
                       model: model,
                       onDelete: () {
                         setState(() => attachments.removeAt(i));
@@ -423,7 +424,16 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                   child: AppOutlineButton(
                     onPressed: () {
                       setState(() {
-                        attachments.add(FlagAndAttachmentModel());
+                        attachments.add(
+                          FlagAndAttachmentModel(
+                            usedFlags: [
+                              ...attachments
+                                      .map((e) => e.flagType ?? FlagModel())
+                                      .toList() ??
+                                  [],
+                            ],
+                          ),
+                        );
                       });
                     },
                     text: "Add More",
@@ -435,126 +445,119 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                 const SizedBox(height: 40),
                 Row(
                   children: [
-                    Container(
-                      height: 50,
-                      width: 150,
-                      child: AppSolidButton(
-                          onPressed: () async {
-                            final String desc =
-                                await quillEditorController.getText();
-                            final user = ref.read(authController);
-                            if (!context.mounted) return;
-                            showModalBottomSheet(
-                              context: context,
-                              constraints: BoxConstraints(
-                                  maxHeight:
-                                      MediaQuery.sizeOf(context).height * 0.9),
-                              showDragHandle: false,
-                              isScrollControlled: true,
-                              backgroundColor: AppColors.background,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              builder: (BuildContext context) {
-                                return SingleChildScrollView(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
+                    AppSolidButton(
+                      onPressed: () async {
+                        HelperUtils.hideKeyboard(context);
+                        final String desc =
+                            await quillEditorController.getText();
+                        final user = ref.read(authController);
+                        if (!context.mounted) return;
+                        showModalBottomSheet(
+                          context: context,
+                          constraints: BoxConstraints(
+                              maxHeight:
+                                  MediaQuery.sizeOf(context).height * 0.9),
+                          showDragHandle: false,
+                          isScrollControlled: true,
+                          backgroundColor: AppColors.background,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            ),
+                          ),
+                          builder: (BuildContext context) {
+                            return SingleChildScrollView(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: AppText.headlineSmall(
-                                              "File Preview",
-                                            ),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              RouteHelper.pop();
-                                            },
-                                            icon: const Icon(
-                                              Icons.close,
-                                              color: AppColors.textPrimary,
-                                            ),
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: AppText.headlineSmall(
+                                          "File Preview",
+                                        ),
                                       ),
-                                      PreviewFile(
-                                        content: [
-                                          FileContentModel(
-                                            subject: subject.text,
-                                            fileType:
-                                                selectedFileType?.title ?? '',
-                                            barcode: autoGeneratedFileNumber,
-                                            content: desc,
-                                            fileMovNo: autoGeneratedFileNumber,
-                                            sender: user.userTitle,
-                                            designation: user.currentDesignation
-                                                ?.designation,
-                                            signature: user.sign,
-                                            sendingDate: DateTime.now(),
-                                            receiver: forwardTo?.userTitle,
-                                          )
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      AppOutlineButton(
+                                      IconButton(
                                         onPressed: () {
                                           RouteHelper.pop();
                                         },
-                                        text: "Close",
-                                        color: AppColors.primaryDark,
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 12),
+                                        icon: const Icon(
+                                          Icons.close,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
+                                  PreviewFile(
+                                    content: [
+                                      FileContentModel(
+                                        subject: subject.text,
+                                        fileType: selectedFileType?.title ?? '',
+                                        barcode: autoGeneratedFileNumber,
+                                        content: desc,
+                                        fileMovNo: autoGeneratedFileNumber,
+                                        sender: user.userTitle,
+                                        designation: user
+                                            .currentDesignation?.designation,
+                                        signature: user.sign,
+                                        sendingDate: DateTime.now(),
+                                        receiver: forwardTo?.userTitle,
+                                      )
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  AppOutlineButton(
+                                    onPressed: () {
+                                      RouteHelper.pop();
+                                    },
+                                    text: "Close",
+                                    color: AppColors.primaryDark,
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                  ),
+                                ],
+                              ),
                             );
                           },
-                          text: "Preview"),
+                        );
+                      },
+                      text: "Preview",
                     ),
                     const SizedBox(width: 16),
-                    Container(
-                      height: 50,
-                      width: 150,
-                      child: AppSolidButton(
-                        onPressed: () async {
-                          if (!formKey.currentState!.validate()) return;
-                          String text = await quillEditorController.getText();
-                          if (text.trim().isEmpty) {
-                            Toast.show(
-                                message: "Add remarks before you submit");
-                            return;
-                          }
-                          if (!allAttachmentsValid) {
-                            Toast.error(
-                                message:
-                                    "One or more flags are missing attachments. Add a file and then try again");
-                            return;
-                          }
-                          final controller = ref.read(filesController.notifier);
-                          controller.createFile(
-                            subject: subject.text,
-                            fileType: selectedFileType?.id,
-                            content: text,
-                            forwardTo: forwardTo?.userDesgId,
-                            fileMovNumber: autoGeneratedFileNumber,
-                            fileNo: fileNo.text,
-                            partFileNumber: partFileNo.text,
-                            tagId: selectedTag?.id,
-                            flags: attachments,
-                          );
+                    AppSolidButton(
+                      onPressed: () async {
+                        HelperUtils.hideKeyboard(context);
+                        if (!formKey.currentState!.validate()) return;
+                        String text = await quillEditorController.getText();
+                        if (text.trim().isEmpty) {
+                          Toast.show(message: "Add remarks before you submit");
+                          return;
+                        }
+                        if (!allAttachmentsValid) {
+                          Toast.error(
+                              message:
+                                  "One or more flags are missing attachments. Add a file and then try again");
+                          return;
+                        }
+                        final controller = ref.read(filesController.notifier);
+                        controller.createFile(
+                          subject: subject.text,
+                          fileType: selectedFileType?.id,
+                          content: text,
+                          forwardTo: forwardTo?.userDesgId,
+                          fileMovNumber: autoGeneratedFileNumber,
+                          fileNo: fileNo.text,
+                          partFileNumber: partFileNo.text,
+                          tagId: selectedTag?.id,
+                          flags: attachments,
+                        );
 
-                          //RouteHelper.navigateTo(Routes.dashboard);
-                        },
-                        text: "Submit",
-                        backgroundColor: AppColors.secondary,
-                      ),
+                        //RouteHelper.navigateTo(Routes.dashboard);
+                      },
+                      text: "Submit",
+                      backgroundColor: AppColors.secondary,
                     ),
                   ],
                 ),

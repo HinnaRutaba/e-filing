@@ -36,25 +36,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    configLoading();
     return ToastificationWrapper(
-      child: TapCanvas(
-        child: MaterialApp.router(
-          builder: EasyLoading.init(builder: (context, child) {
-            configLoading();
-            return MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: TextScaler.noScaling),
-              child: ConnectivityScaffold(body: child!),
-            );
-          }),
-          debugShowCheckedModeBanner: false,
-          title: "E-Filing",
-        
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: ThemeMode.light,
-          routerConfig: AppRouter.router,
-        ),
+      child: MaterialApp.router(
+        builder: EasyLoading.init(builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.noScaling),
+            child: child!,
+          );
+        }),
+        debugShowCheckedModeBanner: false,
+        title: "E-Filing",
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.light,
+        routerConfig: AppRouter.router,
       ),
     );
   }
