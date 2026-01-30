@@ -150,17 +150,17 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         ),
       ];
 
-      String barcode = '';
+      String subject = '';
       if (file != null &&
           file!.content != null &&
           file!.content!.isNotEmpty &&
-          file!.content!.first.barcode != null) {
-        barcode = file!.content!.first.barcode!;
+          file!.content!.first.subject != null) {
+        subject = file!.content!.first.subject!;
       }
 
       final chatId = await chatService.createChatRoom(
         fileId: widget.fileId,
-        barcode: barcode,
+        subject: subject,
         participants: participants,
       );
 

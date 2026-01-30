@@ -16,7 +16,7 @@ class ChatService {
 
   Future<String> createChatRoom({
     required int fileId,
-    required String? barcode,
+    required String? subject,
     required List<ChatParticipantModel> participants,
   }) async {
     String? chatId = await getChatFromFile(fileId);
@@ -29,7 +29,7 @@ class ChatService {
     // No chat exists → create new one
     final chatRef = await _firestore.collection(chatsCollection).add({
       'file_id': fileId,
-      'file_barcode': barcode,
+      'file_barcode': subject,
       'created_at': DateTime.now(),
       'participants': participants.map((p) => p.toJson()).toList(),
       'last_message': null,
