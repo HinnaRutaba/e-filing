@@ -57,7 +57,10 @@ class ChatsListView extends StatelessWidget {
                     Expanded(
                       child: _buildFilterTile(
                         title: "All Chats",
-                        countStream: _chatService.getAllChatsCountStream(),
+                        countStream: _chatService.getAllChatsCountStream(
+                          userId: userId,
+                          userDesignationId: userDesignationId,
+                        ),
                         isSelected: filter == "All",
                         onTap: () => _filter.value = "All",
                       ),
@@ -66,8 +69,10 @@ class ChatsListView extends StatelessWidget {
                     Expanded(
                       child: _buildFilterTile(
                         title: "Unread",
-                        countStream: _chatService
-                            .getUnreadChatsCountStream(userDesignationId),
+                        countStream: _chatService.getUnreadChatsCountStream(
+                          userId: userId,
+                          userDesignationId: userDesignationId,
+                        ),
                         isSelected: filter == "Unread",
                         onTap: () => _filter.value = "Unread",
                       ),

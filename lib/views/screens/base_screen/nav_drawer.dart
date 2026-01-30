@@ -30,7 +30,9 @@ class NavDrawer extends ConsumerWidget {
         routeName: Routes.chats,
         titleWidget: StreamBuilder(
           stream: chatService.getUnreadChatsCountStream(
-              currentUser.currentDesignation?.userDesgId),
+            userDesignationId: currentUser.currentDesignation?.userDesgId,
+            userId: currentUser.id!,
+          ),
           builder: (context, ss) {
             bool isSelected = Routes.chats == RouteHelper.currentLocation;
             int unread = ss.hasData ? ss.data ?? 0 : 0;
