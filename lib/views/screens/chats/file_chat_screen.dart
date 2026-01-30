@@ -18,8 +18,10 @@ import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_chat_types/flutter_chat_types.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class FileChatScreen extends ConsumerStatefulWidget {
@@ -207,6 +209,37 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   ChatParticipantModel? get participant => chat == null
       ? null
       : chatService.currentParticipant(chat: chat!, userId: _currentUser.id!);
+
+  String _formatMessageTime(DateTime dt) {
+    final now = DateTime.now();
+    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+      return DateFormat('HH:mm').format(dt);
+    }
+    return DateFormat('dd MMM, HH:mm').format(dt);
+  }
+
+  String _getDeliveryStatus(types.Message message) {
+    final isMe = message.author.id == _currentUser.id.toString();
+    if (!isMe) return '';
+
+    if (chat == null) return '';
+
+    if (message.status == null) return '✓';
+
+    // Check if message has status property and return appropriate indicator
+    switch (message.status!) {
+      case types.Status.sending:
+        return '•';
+      case types.Status.sent:
+        return '✓';
+      case types.Status.delivered:
+        return '✓✓';
+      case types.Status.seen:
+        return '✓✓';
+      case types.Status.error:
+        return '⚠';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -500,6 +533,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         user: types.User(id: _currentUser.id.toString()),
                         onEndReached: _loadMore,
                         onEndReachedThreshold: 0.5,
+                        timeFormat: DateFormat('HH:mm'),
+                        dateFormat: DateFormat('dd MMM yyyy'),
                         customBottomWidget: Padding(
                           padding: EdgeInsets.only(
                             bottom: MediaQuery.of(context).padding.bottom,
@@ -596,6 +631,80 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         ),
                         showUserNames: true,
                         showUserAvatars: true,
+                        bubbleBuilder: (child,
+                            {required message, required nextMessageInGroup}) {
+                          final isMe =
+                              message.author.id == _currentUser.id.toString();
+                          final dt = DateTime.fromMillisecondsSinceEpoch(
+                              message.createdAt ??
+                                  DateTime.now().millisecondsSinceEpoch);
+                          final timeText = _formatMessageTime(dt);
+                          final status = _getDeliveryStatus(message);
+
+                          return Column(
+                            crossAxisAlignment: isMe
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(
+                                  bottom: 0,
+                                  left: isMe ? 8 : 0,
+                                  right: isMe ? 0 : 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: isMe
+                                      ? AppColors.secondaryLight
+                                      : AppColors.cardColor,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                child: Text(
+                                  message is types.TextMessage
+                                      ? message.text
+                                      : message is types.AudioMessage
+                                          ? '🎵 ${message.name}'
+                                          : 'Message',
+                                  style: TextStyle(
+                                    color: isMe
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 0, vertical: 4),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      timeText,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    if (status.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        status,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),
