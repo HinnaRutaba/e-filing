@@ -47,27 +47,46 @@ class DashboardCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Row(
+                    //   children: [
+                    //     Icon(
+                    //       Icons.dashboard_rounded,
+                    //       color: iconColor,
+                    //       size: 16,
+                    //     ),
+                    //     const Spacer(),
+                    //     Icon(
+                    //       Icons.keyboard_arrow_right_outlined,
+                    //       color: iconColor,
+                    //       size: 16,
+                    //     ),
+                    //   ],
+                    // ),
+                    //const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(
-                          Icons.dashboard_rounded,
-                          color: iconColor,
+                        AppText.bodyLarge(
+                          title,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey[900],
                         ),
-                        const Spacer(),
-                        Icon(
-                          Icons.keyboard_arrow_right_outlined,
-                          color: iconColor,
-                        ),
+                        Spacer(),
+                        Row(
+                          children: [
+                            AppText.headlineMedium(
+                              value,
+                              fontSize: 16,
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_right_outlined,
+                              color: iconColor,
+                              size: 16,
+                            ),
+                          ],
+                        )
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    AppText.bodyLarge(
-                      title,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[900],
-                    ),
-                    AppText.headlineMedium(value)
                   ],
                 ),
               ),

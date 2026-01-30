@@ -425,7 +425,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                 const SizedBox(height: 24),
                                 if (widget.fileType ==
                                     FileType.actionRequired) ...[
-                                  header(Icons.pending_actions, "Action"),
+                                  header2(Icons.pending_actions, "Action"),
                                   const SizedBox(height: 16),
                                   AppText.bodyMedium(
                                     "Archive File with actions below or Forward to another user if necessary",
