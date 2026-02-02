@@ -630,7 +630,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        showUserNames: true,
+                        showUserNames: false,
                         showUserAvatars: true,
                         avatarBuilder: (user) {
                           return Container(
@@ -668,33 +668,14 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           final timeText = _formatMessageTime(dt);
                           final status = _getDeliveryStatus(message);
 
+                          final showGroupFooter = !nextMessageInGroup;
+
                           return Column(
                             crossAxisAlignment: isMe
                                 ? CrossAxisAlignment.end
                                 : CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (!isMe)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 4,
-                                    right: 4,
-                                    bottom: 2,
-                                  ),
-                                  child: Text(
-                                    [
-                                      message.author.firstName ?? '',
-                                      message.author.lastName ?? '',
-                                    ]
-                                        .where((part) => part.trim().isNotEmpty)
-                                        .join(' '),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.secondaryDark,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
                               Container(
                                 margin: EdgeInsets.only(
                                   bottom: 0,
@@ -709,47 +690,72 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 8),
-                                child: SelectableText(
-                                  message is types.TextMessage
-                                      ? message.text
-                                      : message is types.AudioMessage
-                                          ? '🎵 ${message.name}'
-                                          : 'Message',
-                                  style: TextStyle(
-                                    color: isMe
-                                        ? Colors.white
-                                        : AppColors.textPrimary,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 4),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    if (showGroupFooter && !isMe)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          [
+                                            message.author.firstName ?? '',
+                                            message.author.lastName ?? '',
+                                          ]
+                                              .where((part) =>
+                                                  part.trim().isNotEmpty)
+                                              .join(' '),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.secondaryDark,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                     Text(
-                                      timeText,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textSecondary,
+                                      message is types.TextMessage
+                                          ? message.text
+                                          : message is types.AudioMessage
+                                              ? '🎵 ${message.name}'
+                                              : 'Message',
+                                      style: TextStyle(
+                                        color: isMe
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    if (status.isNotEmpty) ...[
-                                      const SizedBox(width: 6),
+                                  ],
+                                ),
+                              ),
+                              if (showGroupFooter)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 0, vertical: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
                                       Text(
-                                        status,
+                                        timeText,
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
+                                      if (status.isNotEmpty) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          status,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
-                              ),
                             ],
                           );
                         },
