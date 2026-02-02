@@ -107,6 +107,30 @@ class FilesController extends BaseControllerState<FileViewModel> {
     return files;
   }
 
+  Future<List<FileModel>> getFilesForDashboard(FileType fileType) async {
+    try {
+      int? designationId =
+          ref.read(authController).currentDesignation?.userDesgId;
+
+      if (fileType == FileType.pending) {
+        return await repo.fetchPendingFiles(designationId);
+      } else if (fileType == FileType.actionRequired) {
+        return await repo.fetchActionReqFiles(designationId);
+      } else if (fileType == FileType.forwarded) {
+        return await repo.fetchForwardedFiles(designationId);
+      } else if (fileType == FileType.my) {
+        return await repo.fetchMyFiles(designationId);
+      } else if (fileType == FileType.archived) {
+        return await repo.fetchArchivedFiles(designationId);
+      }
+
+      return [];
+    } catch (e) {
+      print("Dashboard files error: $e");
+      return [];
+    }
+  }
+
   void filterFiles(String query) {
     if (query.isEmpty) {
       state = state.copyWith(filteredFiles: state.files);
