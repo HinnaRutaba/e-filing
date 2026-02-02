@@ -425,7 +425,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                 const SizedBox(height: 24),
                                 if (widget.fileType ==
                                     FileType.actionRequired) ...[
-                                  header2(Icons.pending_actions, "Action"),
+                                  header(Icons.pending_actions, "Action"),
                                   const SizedBox(height: 16),
                                   AppText.bodyMedium(
                                     "Archive File with actions below or Forward to another user if necessary",
@@ -462,7 +462,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                         reOpenedFile)) ...[
                                   Column(
                                     children: [
-                                      header2(Icons.work_history_outlined,
+                                      header(Icons.work_history_outlined,
                                           "Forward to"),
                                       const SizedBox(height: 16),
                                       AppDropDownField<SectionModel>(
@@ -837,29 +837,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
         AppText.headlineSmall(
           title,
           color: AppColors.primaryDark,
-        ),
-      ],
-    );
-  }
-
-  Widget header2(IconData icon, String title) {
-    return Row(
-      children: [
-        Card(
-          margin: const EdgeInsets.all(0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          color: AppColors.cardColor,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, size: 24, color: AppColors.secondary),
-          ),
-        ),
-        const SizedBox(width: 8),
-        AppText.headlineSmall(
-          title,
-          color: AppColors.secondary,
         ),
       ],
     );

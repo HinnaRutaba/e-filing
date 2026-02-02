@@ -118,6 +118,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
         return await repo.fetchActionReqFiles(designationId);
       } else if (fileType == FileType.forwarded) {
         return await repo.fetchForwardedFiles(designationId);
+      } else if (fileType == FileType.my) {
+        return await repo.fetchMyFiles(designationId);
+      } else if (fileType == FileType.archived) {
+        return await repo.fetchArchivedFiles(designationId);
       }
 
       return [];

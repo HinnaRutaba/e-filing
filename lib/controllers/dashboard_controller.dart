@@ -65,41 +65,18 @@ class DashboardModel {
 class DashboardController extends BaseControllerState<DashboardModel> {
   DashboardController(super.state, super.ref);
 
-  Future<List<FileModel>> _fetchFilesForDashboard(FileType fileType) async {
-    try {
-      final repo = ref.read(filesRepo);
-      final designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
-
-      switch (fileType) {
-        case FileType.pending:
-          return await repo.fetchPendingFiles(designationId);
-        case FileType.actionRequired:
-          return await repo.fetchActionReqFiles(designationId);
-        case FileType.my:
-          return await repo.fetchMyFiles(designationId);
-        case FileType.archived:
-          return await repo.fetchArchivedFiles(designationId);
-        case FileType.forwarded:
-          return await repo.fetchForwardedFiles(designationId);
-        default:
-          return [];
-      }
-    } catch (e) {
-      print("Dashboard fetch error for $fileType: $e");
-      return [];
-    }
-  }
-
   Future<void> initData() async {
     await Future.delayed(Duration.zero);
     state = state.copyWith(loading: true);
 
     try {
-      final ar = await _fetchFilesForDashboard(FileType.actionRequired);
-      final mf = await _fetchFilesForDashboard(FileType.my);
-      final pf = await _fetchFilesForDashboard(FileType.pending);
-      final df = await _fetchFilesForDashboard(FileType.archived);
+      final filesdashmethods = ref.read(filesController.notifier);
+
+      final ar =
+          await filesdashmethods.getFilesForDashboard(FileType.actionRequired);
+      final mf = await filesdashmethods.getFilesForDashboard(FileType.my);
+      final pf = await filesdashmethods.getFilesForDashboard(FileType.pending);
+      final df = await filesdashmethods.getFilesForDashboard(FileType.archived);
 
       state = state.copyWith(
         actionRequiredCount: ar.length,
@@ -117,7 +94,10 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     state = state.copyWith(loadingActionFiles: true);
 
     try {
-      final files = await _fetchFilesForDashboard(FileType.actionRequired);
+      final filesdashmethods = ref.read(filesController.notifier);
+      final files =
+          await filesdashmethods.getFilesForDashboard(FileType.actionRequired);
+
       state = state.copyWith(
         actionRequiredFiles: files,
         loadingActionFiles: false,
@@ -133,7 +113,10 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     state = state.copyWith(loadingPendingFiles: true);
 
     try {
-      final files = await _fetchFilesForDashboard(FileType.pending);
+      final filesdashmethods = ref.read(filesController.notifier);
+      final files =
+          await filesdashmethods.getFilesForDashboard(FileType.pending);
+
       state = state.copyWith(
         pendingFiles: files,
         loadingPendingFiles: false,
@@ -149,7 +132,10 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     state = state.copyWith(loadingForwardedFiles: true);
 
     try {
-      final files = await _fetchFilesForDashboard(FileType.forwarded);
+      final filesdashmethods = ref.read(filesController.notifier);
+      final files =
+          await filesdashmethods.getFilesForDashboard(FileType.forwarded);
+
       state = state.copyWith(
         forwardedFiles: files,
         loadingForwardedFiles: false,

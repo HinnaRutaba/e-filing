@@ -47,22 +47,6 @@ class DashboardCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row(
-                    //   children: [
-                    //     Icon(
-                    //       Icons.dashboard_rounded,
-                    //       color: iconColor,
-                    //       size: 16,
-                    //     ),
-                    //     const Spacer(),
-                    //     Icon(
-                    //       Icons.keyboard_arrow_right_outlined,
-                    //       color: iconColor,
-                    //       size: 16,
-                    //     ),
-                    //   ],
-                    // ),
-                    //const SizedBox(height: 8),
                     Row(
                       children: [
                         AppText.bodyLarge(

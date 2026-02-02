@@ -29,7 +29,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with TickerProviderStateMixin {
   final RefreshController _refreshController = RefreshController();
   late TabController _tabController;
-  bool _isFirstLoad = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -51,11 +51,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
 
       setState(() {
-        _isFirstLoad = false;
+        _isLoading = false;
       });
     } catch (error) {
       setState(() {
-        _isFirstLoad = false;
+        _isLoading = false;
       });
     }
   }
@@ -93,7 +93,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return BaseScreen(
       showUserDetails: true,
       enableBackButton: false,
-      body: _isFirstLoad
+      body: _isLoading
           ? _buildLoadingState()
           : SmartRefresher(
               controller: _refreshController,
