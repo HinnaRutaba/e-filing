@@ -12,12 +12,16 @@ class HelperUtils {
 
     //ifString contains space, get 1st letter of first two words
     if (str.contains(' ')) {
-      List<String> words = str.split(' ');
-      if (words.length >= 2) {
+      List<String> words =
+          str.split(' ').where((word) => word.trim().isNotEmpty).toList();
+      if (words.length >= 2 && words[0].isNotEmpty && words[1].isNotEmpty) {
         return (words[0][0] + words[1][0]).toUpperCase();
-      } else {
-        return words[0][0].toUpperCase();
+      } else if (words.isNotEmpty && words[0].isNotEmpty) {
+        return words[0].length >= 2
+            ? words[0].substring(0, 2).toUpperCase()
+            : words[0][0].toUpperCase();
       }
+      return '';
     }
     return str.length >= 2
         ? str.substring(0, 2).toUpperCase()
