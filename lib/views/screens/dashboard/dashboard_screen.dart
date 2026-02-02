@@ -114,77 +114,77 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       builder: (context, ss) {
                         int unread = ss.hasData ? ss.data ?? 0 : 0;
 
-                        return
-                            // unread == 0
-                            //     ? const SizedBox.shrink()
-                            //     :
-                            Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          color: AppColors.secondary.withAlpha(30),
-                          shadowColor: Colors.grey.withAlpha(80),
-                          elevation: 0,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 0,
-                            ),
-                            horizontalTitleGap: 8,
-                            leading: Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              color: AppColors.white,
-                              elevation: 6,
-                              shadowColor: Colors.grey.withAlpha(50),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.chat_rounded,
-                                  color: AppColors.secondary,
+                        return unread == 0
+                            ? const SizedBox.shrink()
+                            : Card(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                              ),
-                            ),
-                            title: RichText(
-                              text: TextSpan(
-                                children: [
-                                  const TextSpan(
-                                    text: 'You have ',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 14,
+                                color: AppColors.secondary.withAlpha(30),
+                                shadowColor: Colors.grey.withAlpha(80),
+                                elevation: 0,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 0,
+                                  ),
+                                  horizontalTitleGap: 8,
+                                  leading: Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    color: AppColors.white,
+                                    elevation: 6,
+                                    shadowColor: Colors.grey.withAlpha(50),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Icon(
+                                        Icons.chat_rounded,
+                                        color: AppColors.secondary,
+                                      ),
                                     ),
                                   ),
-                                  TextSpan(
-                                    text: '$unread ',
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                                  title: RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: 'You have ',
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: '$unread ',
+                                          style: const TextStyle(
+                                            color: AppColors.secondary,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text:
+                                              'unread chat${unread > 1 ? 's' : ''}',
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  TextSpan(
-                                    text: 'unread chat${unread > 1 ? 's' : ''}',
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 14,
-                                    ),
+                                  trailing: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: AppColors.textSecondary,
                                   ),
-                                ],
-                              ),
-                            ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            onTap: () {
-                              RouteHelper.push(Routes.chats);
-                            },
-                          ),
-                        );
+                                  onTap: () {
+                                    RouteHelper.push(Routes.chats);
+                                  },
+                                ),
+                              );
                       },
                     ),
                     Padding(
