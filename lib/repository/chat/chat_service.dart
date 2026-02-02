@@ -16,7 +16,7 @@ class ChatService {
 
   Future<String> createChatRoom({
     required int fileId,
-    required String? barcode,
+    required String? subject,
     required List<ChatParticipantModel> participants,
   }) async {
     String? chatId = await getChatFromFile(fileId);
@@ -29,7 +29,7 @@ class ChatService {
     // No chat exists → create new one
     final chatRef = await _firestore.collection(chatsCollection).add({
       'file_id': fileId,
-      'file_barcode': barcode,
+      'file_barcode': subject,
       'created_at': DateTime.now(),
       'participants': participants.map((p) => p.toJson()).toList(),
       'last_message': null,
@@ -239,13 +239,29 @@ class ChatService {
     });
   }
 
-  Stream<int> getUnreadChatsCountStream(int? userDesignationId) {
+  Stream<int> getUnreadChatsCountStream({
+    required int? userDesignationId,
+    required int userId,
+  }) {
     if (userDesignationId == null) {
       return Stream.value(0);
     }
     return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
       final unreadChats = snapshot.docs.where((doc) {
         final data = doc.data();
+
+        // Check if user is a participant
+        final participants = (data['participants'] as List<dynamic>? ?? [])
+            .map((p) =>
+                ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+            .toList();
+        final isParticipant = participants.any(
+          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
+        );
+
+        if (!isParticipant) return false;
+
+        // Check if unread
         final lastMessage = data['last_message'];
         if (lastMessage == null) return false;
         final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
@@ -255,9 +271,27 @@ class ChatService {
     });
   }
 
-  Stream<int> getAllChatsCountStream() {
+  Stream<int> getAllChatsCountStream({
+    required int userId,
+    required int userDesignationId,
+  }) {
     return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
-      return snapshot.docs.length;
+      final userChats = snapshot.docs.where((doc) {
+        final data = doc.data();
+        final participants = (data['participants'] as List<dynamic>? ?? [])
+            .map((p) =>
+                ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+            .toList();
+        final isParticipant = participants.any(
+          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
+        );
+        print(
+            "Chat ${doc.id}: isParticipant=$isParticipant for userId=$userId, userDesgId=$userDesignationId");
+        return isParticipant;
+      });
+      print(
+          "Total user chats: ${userChats.length} out of ${snapshot.docs.length}");
+      return userChats.length;
     });
   }
 

@@ -315,26 +315,35 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                         const SizedBox(height: 8),
                                         Container(
                                           child: showHtmlEditor
-                                              ? QuillHtmlEditor(
-                                                  text: '',
-                                                  hintText: "...",
-                                                  autoFocus: true,
-                                                  controller:
-                                                      quillEditorController,
-                                                  minHeight: 270,
-                                                  textStyle: const TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.black,
+                                              ? GestureDetector(
+                                                  onLongPress: () {},
+                                                  onLongPressStart: (_) {},
+                                                  onLongPressMoveUpdate: (_) {},
+                                                  child: AbsorbPointer(
+                                                    absorbing: false,
+                                                    child: QuillHtmlEditor(
+                                                      text: '',
+                                                      hintText: "...",
+                                                      autoFocus: true,
+                                                      controller:
+                                                          quillEditorController,
+                                                      minHeight: 270,
+                                                      textStyle:
+                                                          const TextStyle(
+                                                        fontSize: 16,
+                                                        color: Colors.black,
+                                                      ),
+                                                      hintTextStyle:
+                                                          const TextStyle(
+                                                        fontSize: 16,
+                                                        color: Colors.grey,
+                                                      ),
+                                                      onEditorCreated: () {
+                                                        quillEditorController
+                                                            .requestFocus();
+                                                      },
+                                                    ),
                                                   ),
-                                                  hintTextStyle:
-                                                      const TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  onEditorCreated: () {
-                                                    quillEditorController
-                                                        .requestFocus();
-                                                  },
                                                 )
                                               : const SizedBox.shrink(),
                                         ),
@@ -399,14 +408,14 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       },
                                       text: "Draft with AI",
                                       icon: Icons.drafts_rounded,
-                                      color: AppColors.primaryDark,
+                                      color: AppColors.secondary,
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 12),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                Divider(
+                                const Divider(
                                   color: Colors.grey,
                                 ),
                                 //const SizedBox(height: 12),
@@ -632,12 +641,10 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   ),
                                 ],
                                 const SizedBox(height: 8),
-                                Divider(color: Colors.grey),
+                                const Divider(color: Colors.grey),
                                 const SizedBox(height: 8),
-                                AppText.titleLarge(
-                                  "(Add File Attachment)",
-                                  color: AppColors.secondary,
-                                ),
+                                header(
+                                    Icons.attach_file, "Flag and Attachment"),
                                 const SizedBox(height: 12),
                                 ListView.separated(
                                   itemCount: attachments.length,
@@ -777,7 +784,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                               //'&nbsp$text';
                               // text.replaceAllMapped(RegExp(r'(<\s*p[^>]*>)'),
                               //     (m) => '${m.group(0)}&nbsp;&nbsp;');
-                              print("TTTT_____${spacedText}");
+
                               // return;
                               if (widget.fileType == FileType.pending) {
                                 controller.sendPendingFileRemarks(
@@ -829,14 +836,15 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
           ),
           color: AppColors.cardColor,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, size: 24, color: AppColors.primaryDark),
+            padding: const EdgeInsets.all(6.0),
+            child: Icon(icon, size: 20, color: AppColors.primaryDark),
           ),
         ),
         const SizedBox(width: 8),
-        AppText.headlineSmall(
+        AppText.titleMedium(
           title,
           color: AppColors.primaryDark,
+          fontWeight: FontWeight.w600,
         ),
       ],
     );

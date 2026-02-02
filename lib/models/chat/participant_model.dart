@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ChatParticipantModel {
   final int? userDesignationId;
   final int? userId;
@@ -23,11 +25,16 @@ class ChatParticipantModel {
       userId: json['user_id'] ?? '',
       userTitle: json['user_title'] ?? '',
       designation: json['designation'] ?? '',
-      joinedAt:
-          json['joined_at'] != null ? DateTime.parse(json['joined_at']) : null,
+      joinedAt: json['joined_at'] != null
+          ? json['joined_at'] is Timestamp
+              ? (json['joined_at'] as Timestamp).toDate()
+              : DateTime.parse(json['joined_at'])
+          : null,
       removed: json['removed'] ?? false,
       removedAt: json['removed_at'] != null
-          ? DateTime.parse(json['removed_at'])
+          ? json['removed_at'] is Timestamp
+              ? (json['removed_at'] as Timestamp).toDate()
+              : DateTime.parse(json['removed_at'])
           : null,
     );
   }
@@ -49,8 +56,8 @@ class ChatParticipantModel {
       'user_title': userTitle,
       'designation': designation,
       'removed': removed ?? false,
-      if (joinedAt != null) 'joined_at': joinedAt!.toIso8601String(),
-      if (removedAt != null) 'removed_at': removedAt!.toIso8601String(),
+      if (joinedAt != null) 'joined_at': Timestamp.fromDate(joinedAt!),
+      if (removedAt != null) 'removed_at': Timestamp.fromDate(removedAt!),
     };
   }
 

@@ -8,6 +8,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
@@ -18,8 +19,10 @@ import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_chat_types/flutter_chat_types.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class FileChatScreen extends ConsumerStatefulWidget {
@@ -147,17 +150,17 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         ),
       ];
 
-      String barcode = '';
+      String subject = '';
       if (file != null &&
           file!.content != null &&
           file!.content!.isNotEmpty &&
-          file!.content!.first.barcode != null) {
-        barcode = file!.content!.first.barcode!;
+          file!.content!.first.subject != null) {
+        subject = file!.content!.first.subject!;
       }
 
       final chatId = await chatService.createChatRoom(
         fileId: widget.fileId,
-        barcode: barcode,
+        subject: subject,
         participants: participants,
       );
 
@@ -207,6 +210,37 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   ChatParticipantModel? get participant => chat == null
       ? null
       : chatService.currentParticipant(chat: chat!, userId: _currentUser.id!);
+
+  String _formatMessageTime(DateTime dt) {
+    final now = DateTime.now();
+    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+      return DateFormat('HH:mm').format(dt);
+    }
+    return DateFormat('dd MMM, HH:mm').format(dt);
+  }
+
+  String _getDeliveryStatus(types.Message message) {
+    final isMe = message.author.id == _currentUser.id.toString();
+    if (!isMe) return '';
+
+    if (chat == null) return '';
+
+    if (message.status == null) return '✓';
+
+    // Check if message has status property and return appropriate indicator
+    switch (message.status!) {
+      case types.Status.sending:
+        return '•';
+      case types.Status.sent:
+        return '✓';
+      case types.Status.delivered:
+        return '✓✓';
+      case types.Status.seen:
+        return '✓✓';
+      case types.Status.error:
+        return '⚠';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -469,10 +503,14 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
+                      final joinedAt = participant?.joinedAt;
                       final latest = snapshot.data!
                           .where((e) => !(e.hiddenFrom?.contains(_currentUser!
                                   .currentDesignation!.userDesgId) ??
                               false))
+                          .where((e) => joinedAt == null
+                              ? true
+                              : !e.sentAt.isBefore(joinedAt))
                           .toList();
 
                       final allMessages = [..._olderMessages, ...latest]
@@ -500,6 +538,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         user: types.User(id: _currentUser.id.toString()),
                         onEndReached: _loadMore,
                         onEndReachedThreshold: 0.5,
+                        timeFormat: DateFormat('HH:mm'),
+                        dateFormat: DateFormat('dd MMM yyyy'),
                         customBottomWidget: Padding(
                           padding: EdgeInsets.only(
                             bottom: MediaQuery.of(context).padding.bottom,
@@ -594,8 +634,135 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        showUserNames: true,
+                        showUserNames: false,
                         showUserAvatars: true,
+                        avatarBuilder: (user) {
+                          return Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.only(
+                              bottom: 28,
+                              left: 4,
+                              right: 8,
+                            ),
+                            child: GestureDetector(
+                              // onTap: () => onAvatarTap?.call(),
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppColors.secondary,
+                                child: Text(
+                                  HelperUtils.firstTwoLetters(
+                                      "${user.firstName ?? ''} ${user.lastName ?? ''}"),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        bubbleBuilder: (child,
+                            {required message, required nextMessageInGroup}) {
+                          final isMe =
+                              message.author.id == _currentUser.id.toString();
+                          final dt = DateTime.fromMillisecondsSinceEpoch(
+                              message.createdAt ??
+                                  DateTime.now().millisecondsSinceEpoch);
+                          final timeText = _formatMessageTime(dt);
+                          final status = _getDeliveryStatus(message);
+
+                          final showGroupFooter = !nextMessageInGroup;
+
+                          return Column(
+                            crossAxisAlignment: isMe
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(
+                                  bottom: 0,
+                                  left: isMe ? 8 : 0,
+                                  right: isMe ? 0 : 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: isMe
+                                      ? AppColors.secondaryLight
+                                      : AppColors.cardColor,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (showGroupFooter && !isMe)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          [
+                                            message.author.firstName ?? '',
+                                            message.author.lastName ?? '',
+                                          ]
+                                              .where((part) =>
+                                                  part.trim().isNotEmpty)
+                                              .join(' '),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.secondaryDark,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    Text(
+                                      message is types.TextMessage
+                                          ? message.text
+                                          : message is types.AudioMessage
+                                              ? '🎵 ${message.name}'
+                                              : 'Message',
+                                      style: TextStyle(
+                                        color: isMe
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (showGroupFooter)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 0, vertical: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        timeText,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      if (status.isNotEmpty) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          status,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),
