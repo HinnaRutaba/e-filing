@@ -503,10 +503,14 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
+                      final joinedAt = participant?.joinedAt;
                       final latest = snapshot.data!
                           .where((e) => !(e.hiddenFrom?.contains(_currentUser!
                                   .currentDesignation!.userDesgId) ??
                               false))
+                          .where((e) => joinedAt == null
+                              ? true
+                              : !e.sentAt.isBefore(joinedAt))
                           .toList();
 
                       final allMessages = [..._olderMessages, ...latest]
