@@ -48,8 +48,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     try {
       await ref.read(dashboardController.notifier).initData();
 
-      await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
-
       setState(() {
         _isLoading = false;
       });
@@ -63,10 +61,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _loadDataForCurrentTab() async {
     switch (_tabController.index) {
       case 0:
-        await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
+        await ref.read(dashboardController.notifier).fetchPendingFiles();
         break;
       case 1:
-        await ref.read(dashboardController.notifier).fetchPendingFiles();
+        await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
         break;
       case 2:
         await ref.read(dashboardController.notifier).fetchForwardedFiles();
@@ -180,7 +178,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               unselectedLabelColor: AppColors.textSecondary,
                               indicatorColor: AppColors.primary,
                               indicatorWeight: 3,
-                              labelStyle: TextStyle(fontSize: 12),
+                              labelStyle: const TextStyle(fontSize: 12),
                               tabs: const [
                                 Tab(text: 'Pending Files'),
                                 Tab(text: 'Action Required'),
@@ -193,20 +191,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               controller: _tabController,
                               children: [
                                 _buildFileList(
-                                  files: dashboardState.actionRequiredFiles,
-                                  fileType: FileType.actionRequired,
-                                  loading: dashboardState.loadingActionFiles,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchActionRequiredFiles(),
-                                ),
-                                _buildFileList(
                                   files: dashboardState.pendingFiles,
                                   fileType: FileType.pending,
                                   loading: dashboardState.loadingPendingFiles,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
                                       .fetchPendingFiles(),
+                                ),
+                                _buildFileList(
+                                  files: dashboardState.actionRequiredFiles,
+                                  fileType: FileType.actionRequired,
+                                  loading: dashboardState.loadingActionFiles,
+                                  onRefresh: () => ref
+                                      .read(dashboardController.notifier)
+                                      .fetchActionRequiredFiles(),
                                 ),
                                 _buildFileList(
                                   files: dashboardState.forwardedFiles,
