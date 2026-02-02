@@ -674,6 +674,27 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                 : CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              if (!isMe)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 4,
+                                    right: 4,
+                                    bottom: 2,
+                                  ),
+                                  child: Text(
+                                    [
+                                      message.author.firstName ?? '',
+                                      message.author.lastName ?? '',
+                                    ]
+                                        .where((part) => part.trim().isNotEmpty)
+                                        .join(' '),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.secondaryDark,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               Container(
                                 margin: EdgeInsets.only(
                                   bottom: 0,
@@ -688,7 +709,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 8),
-                                child: Text(
+                                child: SelectableText(
                                   message is types.TextMessage
                                       ? message.text
                                       : message is types.AudioMessage
