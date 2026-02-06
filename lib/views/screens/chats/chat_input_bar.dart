@@ -2,8 +2,13 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 class ChatInputBar extends StatefulWidget {
   final ChatModel chat;
@@ -12,7 +17,6 @@ class ChatInputBar extends StatefulWidget {
   final int userDesignationId;
   final String userTitle;
   final void Function(String text) onSendText;
-  final VoidCallback onAttachmentPressed;
 
   const ChatInputBar({
     super.key,
@@ -22,7 +26,6 @@ class ChatInputBar extends StatefulWidget {
     required this.userDesignationId,
     required this.userTitle,
     required this.onSendText,
-    required this.onAttachmentPressed,
   });
 
   @override
@@ -32,6 +35,9 @@ class ChatInputBar extends StatefulWidget {
 class _ChatInputBarState extends State<ChatInputBar> {
   final TextEditingController _textController = TextEditingController();
   final RecorderController _recorderController = RecorderController();
+  final FilePickerService _filePickerService = FilePickerService();
+  List<XFile> files = [];
+  Map<String, Uint8List?> videoThumbnails = {};
 
   bool _isRecording = false;
   bool _stoppingRecording = false;
@@ -68,7 +74,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
         _isRecording = false;
         _stoppingRecording = false;
       });
-      
     } catch (e, s) {
       print("Stop Recording Error_____${e}_____$s");
     }
@@ -127,28 +132,54 @@ class _ChatInputBarState extends State<ChatInputBar> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       // color: Colors.white,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Attachment button 📎
-          //Todo: Enable later
-          // Container(
-          //   decoration: BoxDecoration(
-          //     borderRadius: const BorderRadius.all(Radius.circular(8)),
-          //     border: Border.all(color: AppColors.secondaryLight, width: 0.5),
-          //   ),
-          //   child: IconButton(
-          //     icon: const Icon(Icons.attach_file, color: AppColors.secondary),
-          //     onPressed: widget.onAttachmentPressed,
-          //   ),
-          // ),
-          // const SizedBox(width: 8),
+
+          InkWell(
+            onTap: () async {
+              files = await _filePickerService.pickMedia();
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                border: Border.all(color: AppColors.secondaryLight, width: 0.7),
+              ),
+              child: const Icon(Icons.attach_file, color: AppColors.secondary),
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // Text field
           Expanded(
-            child: AppTextField(
-              controller: _textController,
-              labelText: '',
-              hintText: "Type message here...",
-              showLabel: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  controller: _textController,
+                  labelText: '',
+                  hintText: "Type message here...",
+                  showLabel: false,
+                ),
+                // File preview horizontal scroll
+                if (files.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 48,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: files.length,
+                      itemBuilder: (context, index) {
+                        return _buildFilePreview(files[index], index);
+                      },
+                    ),
+                  ),
+                ]
+              ],
             ),
           ),
 
@@ -171,6 +202,194 @@ class _ChatInputBarState extends State<ChatInputBar> {
         ],
       ),
     );
+  }
+
+  Widget _buildFilePreview(XFile file, int index) {
+    final fileName = file.name.toLowerCase();
+    final fileExtension = fileName.split('.').last;
+
+    return Container(
+      width: 48,
+      margin: const EdgeInsets.only(right: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.secondaryLight.withOpacity(0.3)),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              color: AppColors.cardColor,
+              child: _getFileWidget(file, fileExtension),
+            ),
+          ),
+          // Remove button
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => _removeFile(index),
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _getFileWidget(XFile file, String fileExtension) {
+    // Image files
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(fileExtension)) {
+      return Image.file(
+        File(file.path),
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+      );
+    }
+
+    // Video files
+    if (['mp4', 'mov', 'avi', 'mkv', '3gp', 'webm'].contains(fileExtension)) {
+      return FutureBuilder<Uint8List?>(
+        future: _getVideoThumbnail(file.path),
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data != null) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.memory(
+                  snapshot.data!,
+                  fit: BoxFit.cover,
+                  width: 70,
+                  height: 80,
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            );
+          }
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.videocam, color: AppColors.secondary, size: 24),
+                SizedBox(height: 4),
+                Text('Video', style: TextStyle(fontSize: 10)),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
+    // PDF files
+    if (fileExtension == 'pdf') {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.picture_as_pdf, color: Colors.red, size: 24),
+            SizedBox(height: 4),
+            Text('PDF', style: TextStyle(fontSize: 10)),
+          ],
+        ),
+      );
+    }
+
+    // Document files
+    if (['doc', 'docx', 'txt', 'rtf'].contains(fileExtension)) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.description, color: Colors.blue, size: 24),
+            SizedBox(height: 4),
+            Text('Doc', style: TextStyle(fontSize: 10)),
+          ],
+        ),
+      );
+    }
+
+    // Audio files
+    if (['mp3', 'wav', 'm4a', 'aac', 'ogg'].contains(fileExtension)) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.audiotrack, color: AppColors.secondary, size: 24),
+            SizedBox(height: 4),
+            Text('Audio', style: TextStyle(fontSize: 10)),
+          ],
+        ),
+      );
+    }
+
+    // Default for other files
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.insert_drive_file,
+              color: AppColors.textSecondary, size: 24),
+          SizedBox(height: 4),
+          Text('File', style: TextStyle(fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  Future<Uint8List?> _getVideoThumbnail(String videoPath) async {
+    if (videoThumbnails.containsKey(videoPath)) {
+      return videoThumbnails[videoPath];
+    }
+
+    try {
+      final thumbnail = await VideoThumbnail.thumbnailData(
+        video: videoPath,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 70,
+        maxHeight: 80,
+        quality: 75,
+      );
+
+      videoThumbnails[videoPath] = thumbnail;
+      return thumbnail;
+    } catch (e) {
+      print('Error generating video thumbnail: $e');
+      return null;
+    }
+  }
+
+  void _removeFile(int index) {
+    setState(() {
+      final removedFile = files[index];
+      files.removeAt(index);
+      // Clean up video thumbnail cache
+      videoThumbnails.remove(removedFile.path);
+    });
   }
 
   @override

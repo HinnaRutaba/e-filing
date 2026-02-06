@@ -611,9 +611,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                             _handleSendPressed(
                                                 types.PartialText(text: text));
                                           },
-                                          onAttachmentPressed: () {
-                                            // later: pick image/video/docs
-                                          },
+                                          
                                         ),
                                       );
                               }),

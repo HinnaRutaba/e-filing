@@ -117,7 +117,10 @@ class FilePickerService {
     try {
       EasyLoading.show(status: "Selecting files...");
 
-      final List<XFile> media = await picker.pickMultipleMedia();
+      final List<XFile> media = await picker.pickMultipleMedia(
+        imageQuality: 50,
+        limit: 10,
+      );
       await Future.delayed(Duration(milliseconds: 500));
 
       print('MEDIA_______${media.length}');

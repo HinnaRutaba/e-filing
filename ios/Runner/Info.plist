@@ -46,9 +46,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-    <string>We need your camera to upload photos.</string>
+    <string>E-Filing need your camera to upload photos.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need your photo library to upload photos.</string>
+    <string>E-Filing needs your photo library to upload photos.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>E-Filing needs face id to authenticate</string>
     <key>NSMicrophoneUsageDescription</key>
