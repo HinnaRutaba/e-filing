@@ -809,7 +809,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       iconColor: AppColors.white,
       iconBackgoundColor: AppColors.secondaryDark,
       playedColor: AppColors.secondaryDark,
-      unplayedColor: AppColors.cardColor.withAlpha(90),
+      unplayedColor: AppColors.cardColor.withOpacity(0.6),
       waveWidth: 100,
       barWidth: 3,
       buttonSize: 40,
