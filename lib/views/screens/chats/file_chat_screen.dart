@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -24,6 +25,8 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:waved_audio_player/waved_audio_player.dart';
 
 class FileChatScreen extends ConsumerStatefulWidget {
   final int fileId;
@@ -47,6 +50,12 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   ChatModel? chat;
   bool _loading = true;
+
+  // Audio player state
+  final Map<String, PlayerController> _audioControllers = {};
+  final Map<String, bool> _isPlayingMap = {};
+  final Map<String, Duration> _positionMap = {};
+  final Map<String, Duration> _durationMap = {};
 
   UserModel get _currentUser => ref.read(authController);
 
@@ -544,10 +553,14 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         dateFormat: DateFormat('dd MMM yyyy'),
                         dateHeaderBuilder: (header) {
                           return Center(
-                            child: AppText.labelMedium(
-                              DateFormat('dd MMM yyyy, hh:mm a')
-                                  .format(header.dateTime),
-                              color: Colors.grey[600],
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: AppText.labelMedium(
+                                DateFormat('dd MMM yyyy, hh:mm a')
+                                    .format(header.dateTime),
+                                color: Colors.grey[600],
+                              ),
                             ),
                           );
                         },
@@ -727,20 +740,30 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                           ),
                                         ),
                                       ),
-                                    Text(
-                                      message is types.TextMessage
-                                          ? message.text
-                                          : message is types.AudioMessage
-                                              ? '🎵 ${message.name}'
-                                              : 'Message',
-                                      style: TextStyle(
-                                        color: isMe
-                                            ? Colors.white
-                                            : AppColors.textPrimary,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
+                                    if (message is types.TextMessage)
+                                      Text(
+                                        message.text,
+                                        style: TextStyle(
+                                          color: isMe
+                                              ? Colors.white
+                                              : AppColors.textPrimary,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      )
+                                    else if (message is types.AudioMessage)
+                                      _buildAudioPlayer(message, isMe)
+                                    else
+                                      Text(
+                                        'Message',
+                                        style: TextStyle(
+                                          color: isMe
+                                              ? Colors.white
+                                              : AppColors.textPrimary,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -778,5 +801,43 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     },
                   ),
           );
+  }
+
+  Widget _buildAudioPlayer(types.AudioMessage audioMessage, bool isMe) {
+    return WavedAudioPlayer(
+      source: UrlSource(audioMessage.uri),
+      iconColor: AppColors.white,
+      iconBackgoundColor: AppColors.secondaryDark,
+      playedColor: AppColors.secondary,
+      unplayedColor: AppColors.cardColor,
+      waveWidth: 100,
+      barWidth: 3,
+      buttonSize: 40,
+      showTiming: true,
+      timingStyle: const TextStyle(
+        fontSize: 12,
+        color: AppColors.cardColor,
+      ),
+      onError: (error) {
+        print('Error occurred: $error.message');
+      },
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$twoDigitMinutes:$twoDigitSeconds';
+  }
+
+  @override
+  void dispose() {
+    // Dispose all audio controllers
+    for (final controller in _audioControllers.values) {
+      controller.dispose();
+    }
+    _audioControllers.clear();
+    super.dispose();
   }
 }
