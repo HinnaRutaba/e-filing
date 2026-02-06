@@ -176,11 +176,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
                         icon: const Icon(Icons.send,
                             color: AppColors.primaryDark),
                         onPressed: () async {
-                          final text = _textController.text.trim();
-                          if (text.isNotEmpty) {
-                            widget.onSendText(text);
-                            _textController.clear();
-                          }
                           if (files.isNotEmpty) {
                             await widget.chatService.sendMessageWithAttachment(
                               chat: widget.chat,
@@ -192,6 +187,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
                             setState(() {
                               files.clear();
                             });
+                          }
+                          final text = _textController.text.trim();
+                          if (text.isNotEmpty) {
+                            widget.onSendText(text);
+                            _textController.clear();
                           }
                         },
                       )

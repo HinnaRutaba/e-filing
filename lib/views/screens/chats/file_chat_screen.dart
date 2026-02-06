@@ -229,6 +229,22 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     return DateFormat('dd MMM, hh:mm a').format(dt);
   }
 
+  String _formatDateHeader(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final timeString = DateFormat('hh:mm a').format(dateTime);
+
+    if (messageDate == today) {
+      return 'Today, $timeString';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday, $timeString';
+    } else {
+      return DateFormat('dd MMM yyyy, hh:mm a').format(dateTime);
+    }
+  }
+
   String _getDeliveryStatus(types.Message message) {
     final isMe = message.author.id == _currentUser.id.toString();
     if (!isMe) return '';
@@ -556,8 +572,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                               padding:
                                   const EdgeInsets.symmetric(vertical: 8.0),
                               child: AppText.labelMedium(
-                                DateFormat('dd MMM yyyy, hh:mm a')
-                                    .format(header.dateTime),
+                                _formatDateHeader(header.dateTime),
                                 color: Colors.grey[600],
                               ),
                             ),
