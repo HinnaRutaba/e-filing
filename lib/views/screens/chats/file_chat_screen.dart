@@ -816,6 +816,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       showTiming: true,
       timingStyle: const TextStyle(
         fontSize: 12,
+        fontWeight: FontWeight.bold,
         color: AppColors.cardColor,
       ),
       onError: (error) {
