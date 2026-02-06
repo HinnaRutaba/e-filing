@@ -51,12 +51,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   ChatModel? chat;
   bool _loading = true;
 
-  // Audio player state
-  final Map<String, PlayerController> _audioControllers = {};
-  final Map<String, bool> _isPlayingMap = {};
-  final Map<String, Duration> _positionMap = {};
-  final Map<String, Duration> _durationMap = {};
-
   UserModel get _currentUser => ref.read(authController);
 
   Future<void> _loadMore() async {
@@ -823,22 +817,5 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         print('Error occurred: $error.message');
       },
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$twoDigitMinutes:$twoDigitSeconds';
-  }
-
-  @override
-  void dispose() {
-    // Dispose all audio controllers
-    for (final controller in _audioControllers.values) {
-      controller.dispose();
-    }
-    _audioControllers.clear();
-    super.dispose();
   }
 }
