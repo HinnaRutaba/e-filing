@@ -17,6 +17,7 @@ import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/views/widgets/file_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -27,6 +28,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:waved_audio_player/waved_audio_player.dart';
+import 'dart:io';
 
 class FileChatScreen extends ConsumerStatefulWidget {
   final int fileId;
@@ -104,6 +106,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       ),
       createdAt: message.sentAt.millisecondsSinceEpoch,
       text: message.text,
+      metadata: {
+        'attachments': message.attachments,
+      },
     );
   }
 
@@ -611,7 +616,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                             _handleSendPressed(
                                                 types.PartialText(text: text));
                                           },
-                                          
                                         ),
                                       );
                               }),
@@ -690,6 +694,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
                           final showGroupFooter = !nextMessageInGroup;
 
+                          final List<String> attachments =
+                              message.metadata?['attachments'] ?? [];
+
                           return Column(
                             crossAxisAlignment: isMe
                                 ? CrossAxisAlignment.end
@@ -733,16 +740,32 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                         ),
                                       ),
                                     if (message is types.TextMessage)
-                                      Text(
-                                        message.text,
-                                        style: TextStyle(
-                                          color: isMe
-                                              ? Colors.white
-                                              : AppColors.textPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      )
+                                      attachments.isNotEmpty
+                                          ? Wrap(
+                                              spacing: 4,
+                                              runSpacing: 6,
+                                              children: [
+                                                ...attachments
+                                                    .map((e) => InkWell(
+                                                          onTap: () =>
+                                                              _openFilePreview(
+                                                                  e),
+                                                          child: FileViewer(
+                                                              filePath: e),
+                                                        ))
+                                                    .toList(),
+                                              ],
+                                            )
+                                          : Text(
+                                              message.text,
+                                              style: TextStyle(
+                                                color: isMe
+                                                    ? Colors.white
+                                                    : AppColors.textPrimary,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            )
                                     else if (message is types.AudioMessage)
                                       _buildAudioPlayer(message, isMe)
                                     else
@@ -793,6 +816,88 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     },
                   ),
           );
+  }
+
+  void _openFilePreview(String filePath) {
+    final fileName = filePath.split('/').last;
+    final fileExtension = fileName.toLowerCase().split('.').last;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width - 32,
+                    maxHeight: MediaQuery.of(context).size.height - 100,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header with close button
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryDark,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                fileName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Content area
+                      Flexible(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          child: FileViewer(
+                            filePath: filePath,
+                            size: FileViewerSize.large,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildAudioPlayer(types.AudioMessage audioMessage, bool isMe) {

@@ -8,12 +8,14 @@ import 'package:efiling_balochistan/models/chat/message_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_repo.dart';
 import 'package:efiling_balochistan/services/record_audio_service.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String chatsCollection = "chats";
   static const String messagesCollection = "messages";
+  final ChatRepo chatRepo = ChatRepo();
 
   final AudioRecordService audioRecorder = AudioRecordService();
 
@@ -416,16 +418,9 @@ class ChatService {
       // Upload to Firebase Storage
       final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-      //TODO: Replace with the url from the api
-      // final ref = _storage.ref().child("chat_audio").child(chatId).child(fileName);
+      ChatFileModel model = await chatRepo.saveChatFile(
+          filePath: audioFile.path, fileName: fileName);
 
-      ChatFileModel model = await ChatRepo()
-          .saveChatFile(filePath: audioFile.path, fileName: fileName);
-
-      // await ref.putFile(audioFile);
-      // final url = await ref.getDownloadURL();
-
-      // Build a MessageModel
       final msg = MessageModel(
         id: const Uuid().v4(),
         text: model.fileUrl ?? '',
@@ -434,6 +429,48 @@ class ChatService {
         userDesignationId: userDesignationId,
         sentAt: DateTime.now(),
         attachments: [model.fileUrl],
+      );
+
+      await _firestore
+          .collection(chatsCollection)
+          .doc(chat.id)
+          .collection(messagesCollection)
+          .add(msg.toJson(chat));
+
+      await _firestore.collection(chatsCollection).doc(chat.id).update({
+        'last_message': msg.toJson(chat),
+      });
+    } catch (e, s) {
+      log("ERRR________${e}_______$s");
+    }
+  }
+
+  Future<void> sendMessageWithAttachment({
+    required ChatModel chat,
+    required int userId,
+    required int userDesignationId,
+    required String userTitle,
+    required List<XFile> attachments,
+  }) async {
+    try {
+      List<String> attachmentUrls = [];
+
+      for (final attachment in attachments) {
+        ChatFileModel model = await chatRepo.saveChatFile(
+            filePath: attachment.path, fileName: attachment.name);
+        if (model.fileUrl != null) {
+          attachmentUrls.add(model.fileUrl!);
+        }
+      }
+
+      final msg = MessageModel(
+        id: const Uuid().v4(),
+        text: attachmentUrls.isNotEmpty ? attachmentUrls.join(', ') : '',
+        userId: userId,
+        userName: userTitle,
+        userDesignationId: userDesignationId,
+        sentAt: DateTime.now(),
+        attachments: attachmentUrls,
       );
 
       await _firestore
