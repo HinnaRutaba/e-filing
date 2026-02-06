@@ -68,6 +68,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
         _isRecording = false;
         _stoppingRecording = false;
       });
+      
     } catch (e, s) {
       print("Stop Recording Error_____${e}_____$s");
     }
@@ -109,11 +110,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.stop, color: Colors.red),
+                  : const Icon(Icons.send_outlined, color: AppColors.secondary),
               onPressed: _stoppingRecording ? null : _stopRecording,
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.grey),
+              icon: Icon(Icons.delete_outline, color: Colors.red[700]),
               onPressed: _cancelRecording,
             ),
           ],
@@ -163,10 +164,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   },
                 )
               : const SizedBox.shrink(),
-          // IconButton(
-          //         icon: const Icon(Icons.mic, color: AppColors.primaryDark),
-          //         onPressed: _startRecording,
-          //       ),
+          IconButton(
+            icon: const Icon(Icons.mic, color: AppColors.secondary),
+            onPressed: _startRecording,
+          ),
         ],
       ),
     );

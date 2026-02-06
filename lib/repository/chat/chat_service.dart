@@ -1,9 +1,12 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:efiling_balochistan/models/chat/chat_file_model.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/message_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/repository/chat/chat_repo.dart';
 import 'package:efiling_balochistan/services/record_audio_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -406,39 +409,45 @@ class ChatService {
     required int userDesignationId,
     required String userTitle,
   }) async {
-    final File? audioFile = await audioRecorder.stop();
-    if (audioFile == null) return;
+    try {
+      final File? audioFile = await audioRecorder.stop();
+      if (audioFile == null) return;
 
-    // Upload to Firebase Storage
-    final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+      // Upload to Firebase Storage
+      final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-    //TODO: Replace with the url from the api
-    // final ref = _storage.ref().child("chat_audio").child(chatId).child(fileName);
-    //
-    // await ref.putFile(audioFile);
-    // final url = await ref.getDownloadURL();
-    final url = '';
+      //TODO: Replace with the url from the api
+      // final ref = _storage.ref().child("chat_audio").child(chatId).child(fileName);
 
-    // Build a MessageModel
-    final msg = MessageModel(
-      id: const Uuid().v4(),
-      text: "", // voice message doesn't carry text
-      userId: userId,
-      userName: userTitle,
-      userDesignationId: userDesignationId,
-      sentAt: DateTime.now(),
-      attachments: [url],
-    );
+      ChatFileModel model = await ChatRepo()
+          .saveChatFile(filePath: audioFile.path, fileName: fileName);
 
-    await _firestore
-        .collection(chatsCollection)
-        .doc(chat.id)
-        .collection(messagesCollection)
-        .add(msg.toJson(chat));
+      // await ref.putFile(audioFile);
+      // final url = await ref.getDownloadURL();
 
-    await _firestore.collection(chatsCollection).doc(chat.id).update({
-      'last_message': msg.toJson(chat),
-    });
+      // Build a MessageModel
+      final msg = MessageModel(
+        id: const Uuid().v4(),
+        text: model.fileUrl ?? '',
+        userId: userId,
+        userName: userTitle,
+        userDesignationId: userDesignationId,
+        sentAt: DateTime.now(),
+        attachments: [model.fileUrl],
+      );
+
+      await _firestore
+          .collection(chatsCollection)
+          .doc(chat.id)
+          .collection(messagesCollection)
+          .add(msg.toJson(chat));
+
+      await _firestore.collection(chatsCollection).doc(chat.id).update({
+        'last_message': msg.toJson(chat),
+      });
+    } catch (e, s) {
+      log("ERRR________${e}_______$s");
+    }
   }
 
   Future<void> cancelVoiceRecording() async {

@@ -5,7 +5,7 @@ import 'message_model.dart';
 
 class ChatModel {
   final String id;
-  final int fileId;
+  final int? fileId;
   final String? fileBarCode;
   final DateTime createdAt;
   final List<ChatParticipantModel> participants;
@@ -26,7 +26,7 @@ class ChatModel {
   factory ChatModel.fromJson(Map<String, dynamic> json, String docId) {
     return ChatModel(
       id: docId,
-      fileId: json['file_id'] ?? '',
+      fileId: json['file_id'],
       createdAt: (json['created_at'] as Timestamp).toDate(),
       participants: (json['participants'] as List<dynamic>? ?? [])
           .map((p) =>

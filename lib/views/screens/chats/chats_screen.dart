@@ -93,7 +93,8 @@ class ChatsListView extends StatelessWidget {
                     userDesignationId: userDesignationId,
                   ),
                   builder: (context, snapshot) {
-                  
+                    print(
+                        "CCCCC______${snapshot.error}_____${snapshot.stackTrace}");
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }

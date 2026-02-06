@@ -8,7 +8,7 @@ class MessageModel {
   final int userDesignationId;
   final String userName;
   final DateTime sentAt;
-  final List<String> attachments;
+  final List<String?> attachments;
   final List<int> hiddenFrom;
   final List<int> seenBy;
 

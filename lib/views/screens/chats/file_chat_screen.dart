@@ -72,22 +72,24 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   types.Message _mapMessage(MessageModel message) {
     if (message.attachments.isNotEmpty) {
       final url = message.attachments.first;
-
-      if (url.endsWith(".m4a") ||
-          url.endsWith(".aac") ||
-          url.endsWith(".mp3")) {
-        return types.AudioMessage(
-          id: message.id,
-          author: types.User(
-            id: message.userId.toString(),
-            firstName: message.userName,
-          ),
-          createdAt: message.sentAt.millisecondsSinceEpoch,
-          name: url.split('/').last,
-          size: 0,
-          uri: url,
-          duration: const Duration(),
-        );
+      if (url != null) {
+        if (url.endsWith(".m4a") ||
+            url.endsWith(".aac") ||
+            url.endsWith(".mp3") ||
+            url.endsWith(".wav")) {
+          return types.AudioMessage(
+            id: message.id,
+            author: types.User(
+              id: message.userId.toString(),
+              firstName: message.userName,
+            ),
+            createdAt: message.sentAt.millisecondsSinceEpoch,
+            name: url.split('/').last,
+            size: 0,
+            uri: url,
+            duration: const Duration(),
+          );
+        }
       }
     }
 
@@ -214,9 +216,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   String _formatMessageTime(DateTime dt) {
     final now = DateTime.now();
     if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
-      return DateFormat('HH:mm').format(dt);
+      return DateFormat('hh:mm a').format(dt);
     }
-    return DateFormat('dd MMM, HH:mm').format(dt);
+    return DateFormat('dd MMM, hh:mm a').format(dt);
   }
 
   String _getDeliveryStatus(types.Message message) {
@@ -540,6 +542,15 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         onEndReachedThreshold: 0.5,
                         timeFormat: DateFormat('HH:mm'),
                         dateFormat: DateFormat('dd MMM yyyy'),
+                        dateHeaderBuilder: (header) {
+                          return Center(
+                            child: AppText.labelMedium(
+                              DateFormat('dd MMM yyyy, hh:mm a')
+                                  .format(header.dateTime),
+                              color: Colors.grey[600],
+                            ),
+                          );
+                        },
                         customBottomWidget: Padding(
                           padding: EdgeInsets.only(
                             bottom: MediaQuery.of(context).padding.bottom,

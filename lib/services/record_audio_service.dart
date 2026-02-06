@@ -53,6 +53,7 @@ class AudioRecordService {
 
     await _recorder.start(cfg, path: outPath);
     _filePath = outPath;
+    print("PATH______$outPath");
     return outPath;
   }
 

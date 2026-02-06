@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:efiling_balochistan/models/chat/chat_file_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_interface.dart';
@@ -35,6 +37,29 @@ class ChatRepo extends ChatInterface {
             (e) => ChatParticipantModel.fromParticipantEndpoint(e),
           )
           .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ChatFileModel> saveChatFile(
+      {required String filePath, required String fileName}) async {
+    try {
+      Map<String, dynamic> data = await dioClient.post(
+        url: saveFileUrl(),
+        options:
+            await options(authRequired: true, isMultipartContentType: true),
+        formData: FormData.fromMap(
+          {
+            'chat_file': await MultipartFile.fromFile(
+              filePath,
+              filename: fileName,
+            ),
+          },
+        ),
+      );
+      return ChatFileModel.fromJson(data['data']);
     } catch (e) {
       rethrow;
     }
