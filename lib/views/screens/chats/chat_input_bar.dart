@@ -176,22 +176,33 @@ class _ChatInputBarState extends State<ChatInputBar> {
                         icon: const Icon(Icons.send,
                             color: AppColors.primaryDark),
                         onPressed: () async {
+                          Future<void>? fileSendingFuture;
+
+                          // Start file sending without awaiting
                           if (files.isNotEmpty) {
-                            await widget.chatService.sendMessageWithAttachment(
+                            fileSendingFuture =
+                                widget.chatService.sendMessageWithAttachment(
                               chat: widget.chat,
                               userId: widget.userId,
                               userDesignationId: widget.userDesignationId,
                               userTitle: widget.userTitle,
                               attachments: files,
                             );
-                            setState(() {
-                              files.clear();
-                            });
                           }
+
+                          // Handle text immediately (happens simultaneously with file upload)
                           final text = _textController.text.trim();
                           if (text.isNotEmpty) {
                             widget.onSendText(text);
                             _textController.clear();
+                          }
+
+                          // Wait for file upload to complete, then clear files
+                          if (fileSendingFuture != null) {
+                            await fileSendingFuture;
+                            setState(() {
+                              files.clear();
+                            });
                           }
                         },
                       )
