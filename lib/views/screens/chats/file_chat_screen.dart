@@ -31,11 +31,15 @@ import 'package:waved_audio_player/waved_audio_player.dart';
 import 'dart:io';
 
 class FileChatScreen extends ConsumerStatefulWidget {
-  final int fileId;
+  final int? fileId;
   final FileDetailsModel? fileDetails;
+  final String? chatId;
 
   const FileChatScreen(
-      {super.key, required this.fileId, required this.fileDetails});
+      {super.key,
+      required this.fileId,
+      required this.fileDetails,
+      this.chatId});
 
   @override
   _FileChatScreenState createState() => _FileChatScreenState();
@@ -129,7 +133,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   Future<void> _getChatRoom() async {
     try {
-      String? chatId = await chatService.getChatFromFile(widget.fileId);
+      String? chatId =
+          widget.chatId ?? await chatService.getChatFromFile(widget.fileId!);
       if (chatId == null) {
         setState(() {
           _loading = false;
@@ -168,11 +173,12 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         subject = file!.content!.first.subject!;
       }
 
-      final chatId = await chatService.createChatRoom(
-        fileId: widget.fileId,
-        subject: subject,
-        participants: participants,
-      );
+      final chatId = widget.chatId ??
+          await chatService.createChatRoom(
+            fileId: widget.fileId,
+            subject: subject,
+            participants: participants,
+          );
 
       chat = await chatService.getChat(chatId);
 
@@ -193,6 +199,10 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     try {
       if (widget.fileDetails != null) {
         file = widget.fileDetails;
+      }
+      print("fID______${widget.fileId}");
+      if (widget.fileId == null) {
+        return;
       } else {
         file = await ref.read(chatRepo).getFileDetailsForChat(widget.fileId);
       }
@@ -291,7 +301,18 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
             body: Center(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        AppText.bodyMedium(
+                          "Getting chat ready",
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ))
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
@@ -409,100 +430,119 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                       },
                                     );
                                   },
-                                  icon: const Icon(
-                                    Icons.person_add_rounded,
-                                    size: 22,
+                                  icon: Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.person_add_rounded,
+                                        size: 22,
+                                      ),
+                                      AppText.labelSmall(
+                                        "Add",
+                                        color: AppColors.secondaryDark,
+                                        fontWeight: FontWeight.w600,
+                                      )
+                                    ],
                                   ),
                                   color: AppColors.secondaryDark,
                                 ),
-                                IconButton(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.sizeOf(context).height *
-                                                0.9,
-                                      ),
-                                      isScrollControlled: true,
-                                      backgroundColor: AppColors.background,
-                                      shape: const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(16),
-                                          topRight: Radius.circular(16),
+                                if (file != null)
+                                  IconButton(
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        constraints: BoxConstraints(
+                                          maxHeight: MediaQuery.sizeOf(context)
+                                                  .height *
+                                              0.9,
                                         ),
-                                      ),
-                                      builder: (BuildContext context) {
-                                        return StickyTagDrawer(
-                                          mainContent: SingleChildScrollView(
-                                            padding: const EdgeInsets.all(16),
-                                            child: Column(
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child:
-                                                          AppText.headlineSmall(
-                                                              "File Preview"),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed: () =>
-                                                          RouteHelper.pop(),
-                                                      icon: const Icon(
-                                                        Icons.close,
-                                                        color: AppColors
-                                                            .textPrimary,
+                                        isScrollControlled: true,
+                                        backgroundColor: AppColors.background,
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(16),
+                                            topRight: Radius.circular(16),
+                                          ),
+                                        ),
+                                        builder: (BuildContext context) {
+                                          return StickyTagDrawer(
+                                            mainContent: SingleChildScrollView(
+                                              padding: const EdgeInsets.all(16),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: AppText
+                                                            .headlineSmall(
+                                                                "File Preview"),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                PreviewFile(
-                                                  content: file?.content,
-                                                ),
-                                              ],
+                                                      IconButton(
+                                                        onPressed: () =>
+                                                            RouteHelper.pop(),
+                                                        icon: const Icon(
+                                                          Icons.close,
+                                                          color: AppColors
+                                                              .textPrimary,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  PreviewFile(
+                                                    content: file?.content,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          flagText: "Flags",
-                                          panelContent: SingleChildScrollView(
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      16, 0, 16, 16),
-                                              child: file?.attachments !=
-                                                          null &&
-                                                      file!.attachments
-                                                          .isNotEmpty
-                                                  ? ReadOnlyFlagAttachmentList(
-                                                      header:
-                                                          AppText.titleMedium(
-                                                              "Attached Flags"),
-                                                      data: file!.attachments,
-                                                    )
-                                                      .animate(delay: 100.ms)
-                                                      .fade(
-                                                          duration: 400.ms,
-                                                          curve:
-                                                              Curves.easeInOut)
-                                                      .slide(
-                                                          begin: const Offset(
-                                                              1, 0),
-                                                          end: Offset.zero)
-                                                  : Center(
-                                                      child: AppText.bodyMedium(
-                                                          "No flags available"),
-                                                    ),
+                                            flagText: "Flags",
+                                            panelContent: SingleChildScrollView(
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                        16, 0, 16, 16),
+                                                child: file?.attachments !=
+                                                            null &&
+                                                        file!.attachments
+                                                            .isNotEmpty
+                                                    ? ReadOnlyFlagAttachmentList(
+                                                        header:
+                                                            AppText.titleMedium(
+                                                                "Attached Flags"),
+                                                        data: file!.attachments,
+                                                      )
+                                                        .animate(delay: 100.ms)
+                                                        .fade(
+                                                            duration: 400.ms,
+                                                            curve: Curves
+                                                                .easeInOut)
+                                                        .slide(
+                                                            begin: const Offset(
+                                                                1, 0),
+                                                            end: Offset.zero)
+                                                    : Center(
+                                                        child: AppText.bodyMedium(
+                                                            "No flags available"),
+                                                      ),
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.file_copy_outlined,
-                                    size: 22,
+                                          );
+                                        },
+                                      );
+                                    },
+                                    icon: Column(
+                                      children: [
+                                        const Icon(
+                                          Icons.file_copy_outlined,
+                                          size: 22,
+                                        ),
+                                        AppText.labelSmall(
+                                          "File",
+                                          color: AppColors.secondaryDark,
+                                          fontWeight: FontWeight.w600,
+                                        )
+                                      ],
+                                    ),
+                                    color: AppColors.secondaryDark,
                                   ),
-                                  color: AppColors.secondaryDark,
-                                ),
                               ],
                             ],
                           );
@@ -524,7 +564,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                 : StreamBuilder<List<MessageModel>>(
                     stream: chatService.readRecentMessagesStream(chat!.id),
                     builder: (context, snapshot) {
-                      //print("ERRR______${snapshot.error}_____${snapshot.stackTrace}");
+                     
                       if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
                       }

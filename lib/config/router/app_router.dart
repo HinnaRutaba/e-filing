@@ -96,9 +96,10 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toTop.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => FileChatScreen(
-          fileId:
-              int.tryParse(state.pathParameters[PathParams.fileId] ?? '-1') ??
-                  -1,
+          fileId: state.pathParameters[PathParams.fileId] != null
+              ? int.tryParse(state.pathParameters[PathParams.fileId]!)
+              : null,
+          chatId: state.pathParameters[PathParams.chatId],
           fileDetails: state.extra as FileDetailsModel?,
         ),
       ),

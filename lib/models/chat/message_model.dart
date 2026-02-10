@@ -4,7 +4,7 @@ import 'package:efiling_balochistan/models/chat/chat_model.dart';
 class MessageModel {
   final String id;
   final String text;
-  final int userId;
+  final int? userId;
   final int userDesignationId;
   final String userName;
   final DateTime sentAt;
@@ -25,21 +25,35 @@ class MessageModel {
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json, String docId) {
-    return MessageModel(
-      id: docId,
-      text: json['text'] ?? '',
-      userId: json['sent_by']?['user_id'] ?? '',
-      userDesignationId: json['sent_by']?['user_designation_id'] ?? 0,
-      userName: json['sent_by']?['user_name'] ?? 'Unknown',
-      sentAt: (json['sent_at'] as Timestamp).toDate(),
-      attachments: (json['attachments'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
-          .toList(),
-      hiddenFrom: (json['hidden_from'] as List<dynamic>? ?? [])
-          .map((e) => e as int)
-          .toList(),
-      seenBy: List<int>.from(json['seen_by'] ?? []),
-    );
+    try {
+      return MessageModel(
+        id: docId,
+        text: json['text'] ?? '',
+        userId: json['sent_by']?['user_id'],
+        userDesignationId: json['sent_by']?['user_designation_id'] ?? 0,
+        userName: json['sent_by']?['user_name'] ?? 'Unknown',
+        sentAt: json['sent_at'] != null
+            ? (json['sent_at'] as Timestamp).toDate()
+            : DateTime.now(),
+        attachments: (json['attachments'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+        hiddenFrom: (json['hidden_from'] as List<dynamic>? ?? [])
+            .map((e) => e as int)
+            .toList(),
+        seenBy: List<int>.from(json['seen_by'] ?? []),
+      );
+    } catch (e, s) {
+      print("Message Model Error____${e}_____$s");
+      return MessageModel(
+        id: '',
+        text: '',
+        userId: null,
+        userDesignationId: 0,
+        userName: '',
+        sentAt: DateTime.now(),
+      );
+    }
   }
 
   Map<String, dynamic> toJson(ChatModel chat) {

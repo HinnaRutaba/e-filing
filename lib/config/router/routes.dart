@@ -9,8 +9,8 @@ class Routes {
   static const String createFile = '/createFile';
   static String fileDetails([fileId]) =>
       '/fileDetails/${fileId ?? ':${PathParams.fileId}'}';
-  static String fileChat([fileId]) =>
-      '/fileChat/${fileId ?? ':${PathParams.fileId}'}';
+  static String fileChat([fileId, chatId]) =>
+      '/fileChat/${fileId ?? ':${PathParams.fileId}'}/${chatId ?? ':${PathParams.chatId}'}';
   static const String chats = '/chats';
   static const String pendingFiles = '/pendingFiles';
   static const String myFiles = '/myFiles';
@@ -34,6 +34,7 @@ class PathParams {
   PathParams._();
 
   static const String fileId = 'fileId';
+  static const String chatId = 'chatId';
 
   static const String complainId = 'complainId';
 }

@@ -13,7 +13,7 @@ class ChatModel {
 
   ChatModel({
     required this.id,
-    required this.fileId,
+    this.fileId,
     required this.createdAt,
     required this.participants,
     required this.fileBarCode,

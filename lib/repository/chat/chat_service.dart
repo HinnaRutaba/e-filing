@@ -20,11 +20,15 @@ class ChatService {
   final AudioRecordService audioRecorder = AudioRecordService();
 
   Future<String> createChatRoom({
-    required int fileId,
+    required int? fileId,
     required String? subject,
     required List<ChatParticipantModel> participants,
   }) async {
-    String? chatId = await getChatFromFile(fileId);
+    String? chatId;
+
+    if (fileId != null) {
+      chatId = await getChatFromFile(fileId);
+    }
 
     if (chatId != null) {
       //addParticipants(chatId: chatId, newParticipants: participants);
@@ -43,7 +47,7 @@ class ChatService {
     return chatRef.id;
   }
 
-  Future<String?> getChatFromFile(int fileId) async {
+  Future<String?> getChatFromFile(int? fileId) async {
     final query = await _firestore
         .collection(chatsCollection)
         .where('file_id', isEqualTo: fileId)

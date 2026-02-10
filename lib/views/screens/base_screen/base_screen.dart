@@ -14,12 +14,14 @@ class BaseScreen extends ConsumerWidget {
   final String? title;
   final bool showUserDetails;
   final bool enableBackButton;
+  final List<Widget>? actions;
   const BaseScreen({
     super.key,
     required this.body,
     this.title,
     this.showUserDetails = false,
     this.enableBackButton = true,
+    this.actions,
   });
 
   @override
@@ -33,22 +35,14 @@ class BaseScreen extends ConsumerWidget {
               Expanded(
                 child: AppText.headlineSmall(title!),
               ),
-            if (enableBackButton)
-              IconButton(
-                onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
-                icon: const Icon(
-                  Icons.clear,
-                  color: AppColors.secondaryDark,
-                ),
-              ),
           ],
         ),
         titleSpacing: 0,
-        actions: showUserDetails
-            ? [
-                Consumer(
-                    //future: ref.read(authRepo).fetchCurrentUserDetails(),
-                    builder: (context, ref, child) {
+        actions: [
+          showUserDetails
+              ? Consumer(
+                  //future: ref.read(authRepo).fetchCurrentUserDetails(),
+                  builder: (context, ref, child) {
                   final user = ref.watch(authController);
                   bool multiDesignations = user.designations.length > 1;
                   final DesignationModel? selectedDesignation =
@@ -122,10 +116,19 @@ class BaseScreen extends ConsumerWidget {
                       ],
                     ),
                   );
-                }),
-                const SizedBox(width: 16)
-              ]
-            : null,
+                })
+              : const SizedBox(),
+          const SizedBox(width: 16),
+          ...actions ?? [],
+          if (enableBackButton)
+            IconButton(
+              onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
+              icon: const Icon(
+                Icons.clear,
+                color: AppColors.secondaryDark,
+              ),
+            ),
+        ],
       ),
       drawer: const NavDrawer(),
       body: body,
