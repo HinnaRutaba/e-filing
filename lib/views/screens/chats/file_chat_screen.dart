@@ -14,6 +14,7 @@ import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
 import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
+import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -564,7 +565,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                 : StreamBuilder<List<MessageModel>>(
                     stream: chatService.readRecentMessagesStream(chat!.id),
                     builder: (context, snapshot) {
-                     
                       if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
                       }
@@ -801,14 +801,29 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                               runSpacing: 6,
                                               children: [
                                                 ...attachments
-                                                    .map((e) => InkWell(
-                                                          onTap: () =>
-                                                              _openFilePreview(
-                                                                  e),
-                                                          child: FileViewer(
-                                                              filePath: e),
-                                                        ))
-                                                    .toList(),
+                                                    .asMap()
+                                                    .entries
+                                                    .map((entry) {
+                                                  final index = entry.key;
+                                                  final filePath = entry.value;
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              GalleryView(
+                                                                  imageUrls:
+                                                                      attachments,
+                                                                  initialIndex:
+                                                                      index),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: FileViewer(
+                                                        filePath: filePath),
+                                                  );
+                                                }).toList(),
                                               ],
                                             )
                                           : Text(
@@ -871,88 +886,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     },
                   ),
           );
-  }
-
-  void _openFilePreview(String filePath) {
-    final fileName = filePath.split('/').last;
-    final fileExtension = fileName.toLowerCase().split('.').last;
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              Center(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width - 32,
-                    maxHeight: MediaQuery.of(context).size.height - 100,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header with close button
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryDark,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            topRight: Radius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                fileName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Content area
-                      Flexible(
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          child: FileViewer(
-                            filePath: filePath,
-                            size: FileViewerSize.large,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Widget _buildAudioPlayer(types.AudioMessage audioMessage, bool isMe) {

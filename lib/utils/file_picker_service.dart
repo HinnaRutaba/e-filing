@@ -112,24 +112,25 @@ class FilePickerService {
 
   Future<List<XFile>> pickMedia() async {
     List<XFile> pickedFiles = [];
-    final ImagePicker picker = ImagePicker();
 
     try {
       EasyLoading.show(status: "Selecting files...");
 
-      final List<XFile> media = await picker.pickMultipleMedia(
-        imageQuality: 50,
-        limit: 10,
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
       );
+
       await Future.delayed(Duration(milliseconds: 500));
 
-      print('MEDIA_______${media.length}');
+      List<XFile> files = result?.xFiles ?? [];
+      print('MEDIA_______${files.length}');
 
       EasyLoading.dismiss();
 
       // Filter files under 20MB
       final validFiles = <XFile>[];
-      for (final file in media) {
+      for (final file in files) {
         final fileLength = await file.length();
         if (bytesToMB(fileLength) <= 20) {
           validFiles.add(file);
@@ -138,7 +139,7 @@ class FilePickerService {
 
       print('VALID_______${validFiles.length}');
 
-      if (validFiles.length != media.length) {
+      if (validFiles.length != files.length) {
         Toast.error(
             message: "Some files exceeded the 20MB limit and were not added.");
       }

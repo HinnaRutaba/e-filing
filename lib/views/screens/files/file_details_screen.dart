@@ -216,11 +216,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                   fontSize: 16,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-                )
-                    .animate(
-                      onPlay: (controller) => controller.repeat(reverse: true),
-                    )
-                    .scale(
+                ).animate().scale(
                       duration: 1200.ms,
                       begin: const Offset(0.97, 0.97),
                       end: const Offset(1.02, 1.02),

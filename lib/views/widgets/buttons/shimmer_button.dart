@@ -27,11 +27,11 @@ class AppShimmerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer(
-      duration: const Duration(seconds: 1),
-      interval: const Duration(seconds: 1),
+      duration: const Duration(seconds: 2),
+      interval: const Duration(seconds: 3),
       color: Colors.white,
-      colorOpacity: 0.3,
-      enabled: true,
+      colorOpacity: 0.2,
+      enabled: false, // Disable continuous shimmer to prevent GPU spam
       direction: const ShimmerDirection.fromLTRB(),
       child: SizedBox(
         width: width,
