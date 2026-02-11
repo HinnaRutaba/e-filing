@@ -39,6 +39,8 @@ class _ChatInputBarState extends State<ChatInputBar> {
   bool _isRecording = false;
   bool _stoppingRecording = false;
 
+  bool showingAudioCameraButtons = true;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +48,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
   }
 
   void _onTextChanged() {
+    if (_textController.text.isEmpty) {
+      showingAudioCameraButtons = true;
+    } else {
+      showingAudioCameraButtons = false;
+    }
     setState(() {}); // rebuild to toggle send/mic button
   }
 
@@ -91,6 +98,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
         //color: AppColors.cardColor,
         child: Row(
           children: [
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: Colors.red[700]),
+              onPressed: _cancelRecording,
+            ),
             Expanded(
               child: AudioWaveforms(
                 enableGesture: false,
@@ -115,10 +126,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   : const Icon(Icons.send_outlined, color: AppColors.secondary),
               onPressed: _stoppingRecording ? null : _stopRecording,
             ),
-            IconButton(
-              icon: Icon(Icons.delete_outline, color: Colors.red[700]),
-              onPressed: _cancelRecording,
-            ),
           ],
         ),
       );
@@ -135,7 +142,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Attachment button 📎
 
@@ -148,15 +155,14 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   },
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      borderRadius: const BorderRadius.all(Radius.circular(8)),
-                      border: Border.all(
-                          color: AppColors.secondaryLight, width: 0.7),
-                    ),
-                    child: const Icon(Icons.attach_file,
-                        color: AppColors.secondary),
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                    // decoration: BoxDecoration(
+                    //   color: Colors.white.withOpacity(0.8),
+                    //   borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    //   border: Border.all(
+                    //       color: AppColors.secondaryLight, width: 0.7),
+                    // ),
+                    child: const Icon(Icons.add, color: AppColors.secondary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -168,14 +174,24 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     labelText: '',
                     hintText: "Type message here...",
                     showLabel: false,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: AppColors.secondaryLight,
+                        width: 0.2,
+                      ),
+                    ),
                   ),
                 ),
 
                 _textController.text.trim().isNotEmpty || files.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.send,
-                            color: AppColors.primaryDark),
-                        onPressed: () async {
+                    ? InkWell(
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 12),
+                          child:
+                              Icon(Icons.send, color: AppColors.secondaryDark),
+                        ),
+                        onTap: () async {
                           // Start file sending without awaiting
                           if (files.isNotEmpty) {
                             // Make a copy of files before clearing the UI list
@@ -205,10 +221,27 @@ class _ChatInputBarState extends State<ChatInputBar> {
                         },
                       )
                     : const SizedBox.shrink(),
-                if (files.isEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.mic, color: AppColors.secondary),
-                    onPressed: _startRecording,
+                const SizedBox(width: 8),
+                if (showingAudioCameraButtons)
+                  InkWell(
+                    onTap: () async {
+                      final f = await _filePickerService
+                          .imagePick(ImageSource.camera, isMultiImage: false);
+                      setState(() {
+                        files.addAll(f);
+                      });
+                    },
+                    child: const Icon(Icons.camera_alt_outlined,
+                        color: AppColors.secondary),
+                  ),
+                if (files.isEmpty && showingAudioCameraButtons)
+                  InkWell(
+                    onTap: _startRecording,
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Icon(Icons.mic_none_outlined,
+                          color: AppColors.secondary),
+                    ),
                   ),
               ],
             ),

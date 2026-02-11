@@ -580,15 +580,16 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                       const Icon(
                                         Icons.person_add_rounded,
                                         size: 22,
+                                        color: AppColors.primaryDark,
                                       ),
                                       AppText.labelSmall(
                                         "Add",
-                                        color: AppColors.secondaryDark,
+                                        color: AppColors.primaryDark,
                                         fontWeight: FontWeight.w600,
                                       )
                                     ],
                                   ),
-                                  color: AppColors.secondaryDark,
+                                  color: AppColors.primaryDark,
                                 ),
                                 if (file != null)
                                   IconButton(
@@ -678,15 +679,16 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                         const Icon(
                                           Icons.file_copy_outlined,
                                           size: 22,
+                                          color: AppColors.primaryDark,
                                         ),
                                         AppText.labelSmall(
                                           "File",
-                                          color: AppColors.secondaryDark,
+                                          color: AppColors.primaryDark,
                                           fontWeight: FontWeight.w600,
                                         )
                                       ],
                                     ),
-                                    color: AppColors.secondaryDark,
+                                    color: AppColors.primaryDark,
                                   ),
                               ],
                             ],
@@ -1116,7 +1118,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   Widget _buildAudioPlayer(types.AudioMessage audioMessage, bool isMe) {
     return WavedAudioPlayer(
-      source: UrlSource(audioMessage.uri),
+      source: UrlSource(audioMessage.uri, mimeType: 'audio/x-wav'),
       iconColor: AppColors.white,
       iconBackgoundColor: AppColors.secondaryDark,
       playedColor: AppColors.secondaryDark,

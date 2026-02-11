@@ -31,7 +31,6 @@ class FilePickerService {
   ];
 
   Future<bool> checkPermission(Permission perm) async {
-    print("SSSS______${await perm.status}");
     if (await perm.isGranted) return true;
     PermissionStatus permission = await perm.request();
     if (permission == PermissionStatus.granted) return true;

@@ -581,13 +581,14 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
           color: AppColors.cardColor,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, size: 24, color: AppColors.primaryDark),
+            child: Icon(icon, size: 20, color: AppColors.primaryDark),
           ),
         ),
         const SizedBox(width: 8),
-        AppText.headlineSmall(
+        AppText.titleMedium(
           title,
           color: AppColors.primaryDark,
+          fontWeight: FontWeight.w600,
         ),
       ],
     );
