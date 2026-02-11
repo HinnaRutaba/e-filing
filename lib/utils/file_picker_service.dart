@@ -114,14 +114,14 @@ class FilePickerService {
     List<XFile> pickedFiles = [];
 
     try {
-      EasyLoading.show(status: "Selecting files...");
+      // EasyLoading.show(status: "Selecting files...");
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.any,
       );
 
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(Duration(milliseconds: 200));
 
       List<XFile> files = result?.xFiles ?? [];
       print('MEDIA_______${files.length}');
@@ -144,7 +144,7 @@ class FilePickerService {
             message: "Some files exceeded the 20MB limit and were not added.");
       }
 
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(Duration(milliseconds: 200));
 
       pickedFiles.addAll(validFiles);
     } catch (e, s) {
