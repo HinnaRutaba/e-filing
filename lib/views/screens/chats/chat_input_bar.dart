@@ -176,33 +176,31 @@ class _ChatInputBarState extends State<ChatInputBar> {
                         icon: const Icon(Icons.send,
                             color: AppColors.primaryDark),
                         onPressed: () async {
-                          Future<void>? fileSendingFuture;
-
                           // Start file sending without awaiting
                           if (files.isNotEmpty) {
-                            fileSendingFuture =
-                                widget.chatService.sendMessageWithAttachment(
+                            // Make a copy of files before clearing the UI list
+                            final filesToSend = List<XFile>.from(files);
+
+                            // Clear files immediately from UI
+                            setState(() {
+                              files.clear();
+                            });
+
+                            // Send the copied files
+                            widget.chatService.sendMessageWithAttachment(
                               chat: widget.chat,
                               userId: widget.userId,
                               userDesignationId: widget.userDesignationId,
                               userTitle: widget.userTitle,
-                              attachments: files,
+                              attachments: filesToSend,
                             );
                           }
 
-                          // Handle text immediately (happens simultaneously with file upload)
+                          // Handle text immediately
                           final text = _textController.text.trim();
                           if (text.isNotEmpty) {
                             widget.onSendText(text);
                             _textController.clear();
-                          }
-
-                          // Wait for file upload to complete, then clear files
-                          if (fileSendingFuture != null) {
-                            await fileSendingFuture;
-                            setState(() {
-                              files.clear();
-                            });
                           }
                         },
                       )

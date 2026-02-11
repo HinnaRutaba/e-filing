@@ -457,6 +457,42 @@ class ChatService {
     required List<XFile> attachments,
   }) async {
     try {
+      final messageId = const Uuid().v4();
+
+      // First, create a "sending" message with local file paths
+      final sendingMsg = MessageModel(
+        id: messageId,
+        text: "",
+        userId: userId,
+        userName: userTitle,
+        userDesignationId: userDesignationId,
+        sentAt: DateTime.now(),
+        attachments: attachments.map((e) => e.path).toList(),
+        seenBy: [userDesignationId],
+      );
+
+      // Add the "sending" message to Firestore immediately
+      final docRef = _firestore
+          .collection(chatsCollection)
+          .doc(chat.id)
+          .collection(messagesCollection)
+          .doc(messageId);
+
+      await docRef.set({
+        ...sendingMsg.toJson(chat),
+        'upload_status': 'sending',
+        'local_files': attachments.map((e) => e.path).toList(),
+      });
+
+      // Update last_message with sending status
+      await _firestore.collection(chatsCollection).doc(chat.id).update({
+        'last_message': {
+          ...sendingMsg.toJson(chat),
+          'upload_status': 'sending',
+        },
+      });
+
+      // Now upload files in the background
       List<String> attachmentUrls = [];
 
       for (final attachment in attachments) {
@@ -467,27 +503,26 @@ class ChatService {
         }
       }
 
-      final msg = MessageModel(
-        id: const Uuid().v4(),
-        text: attachmentUrls.isNotEmpty ? attachmentUrls.join(', ') : '',
-        userId: userId,
-        userName: userTitle,
-        userDesignationId: userDesignationId,
-        sentAt: DateTime.now(),
+      // Update the message with uploaded URLs
+      final completedMsg = sendingMsg.copyWith(
         attachments: attachmentUrls,
       );
 
-      await _firestore
-          .collection(chatsCollection)
-          .doc(chat.id)
-          .collection(messagesCollection)
-          .add(msg.toJson(chat));
+      await docRef.update({
+        ...completedMsg.toJson(chat),
+        'upload_status': 'sent',
+      });
 
+      // Update last_message with completed status
       await _firestore.collection(chatsCollection).doc(chat.id).update({
-        'last_message': msg.toJson(chat),
+        'last_message': {
+          ...completedMsg.toJson(chat),
+          'upload_status': 'sent',
+        },
       });
     } catch (e, s) {
       log("ERRR________${e}_______$s");
+      // TODO: Update message status to 'failed' on error
     }
   }
 

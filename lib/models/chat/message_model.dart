@@ -11,6 +11,7 @@ class MessageModel {
   final List<String?> attachments;
   final List<int> hiddenFrom;
   final List<int> seenBy;
+  final Map<String, dynamic>? metadata;
 
   MessageModel({
     required this.id,
@@ -22,6 +23,7 @@ class MessageModel {
     this.attachments = const [],
     this.hiddenFrom = const [],
     this.seenBy = const [],
+    this.metadata,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json, String docId) {
@@ -42,6 +44,10 @@ class MessageModel {
             .map((e) => e as int)
             .toList(),
         seenBy: List<int>.from(json['seen_by'] ?? []),
+        metadata: {
+          'upload_status': json['upload_status'],
+          'local_files': json['local_files'],
+        },
       );
     } catch (e, s) {
       print("Message Model Error____${e}_____$s");
@@ -84,6 +90,7 @@ class MessageModel {
     List<String>? attachments,
     List<int>? hiddenFrom,
     List<int>? seenBy,
+    Map<String, dynamic>? metadata,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -95,6 +102,7 @@ class MessageModel {
       attachments: attachments ?? this.attachments,
       hiddenFrom: hiddenFrom ?? this.hiddenFrom,
       seenBy: seenBy ?? this.seenBy,
+      metadata: metadata ?? this.metadata,
     );
   }
 }

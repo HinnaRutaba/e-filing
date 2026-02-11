@@ -15,6 +15,7 @@ import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.d
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/read_only_flag_attachment.dart';
 import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
 import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
+import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -30,6 +31,10 @@ import 'package:uuid/uuid.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:waved_audio_player/waved_audio_player.dart';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
 
 class FileChatScreen extends ConsumerStatefulWidget {
   final int? fileId;
@@ -113,6 +118,10 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       text: message.text,
       metadata: {
         'attachments': message.attachments,
+        'upload_status':
+            message.metadata?['upload_status'], // Store upload status
+        'local_files': message.metadata?[
+            'local_files'], // Store local file paths for sending state
       },
     );
   }
@@ -276,6 +285,141 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         return '✓✓';
       case types.Status.error:
         return '⚠';
+    }
+  }
+
+  void _handleFilePreview(BuildContext context, String filePath, int index,
+      List<String> attachments) {
+    final fileName = filePath.split('/').last.toLowerCase();
+    final extension = fileName.split('.').last.toLowerCase();
+
+    // Image and video extensions
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+    const videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', '3gp'];
+
+    if (imageExtensions.contains(extension) ||
+        videoExtensions.contains(extension)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GalleryView(
+            imageUrls: attachments,
+            initialIndex: index,
+          ),
+        ),
+      );
+    } else if (extension == 'pdf') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewer(
+            url: filePath,
+            title: fileName,
+          ),
+        ),
+      );
+    } else {
+      _downloadFile(filePath, fileName);
+    }
+  }
+
+  Future<void> _downloadFile(String fileUrl, String fileName) async {
+    try {
+      // Request storage permission
+      final permission = Permission.storage;
+      if (await permission.isDenied) {
+        final result = await permission.request();
+        if (result != PermissionStatus.granted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content:
+                    Text('Storage permission is required to download files'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // Get the downloads directory or documents directory
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = Directory('/storage/emulated/0/Download');
+        if (!await downloadsDir.exists()) {
+          downloadsDir = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (downloadsDir == null) {
+        throw Exception('Could not access storage directory');
+      }
+
+      // Create E-Filing folder
+      final eFilingDir = Directory('${downloadsDir.path}/E-Filing');
+      if (!await eFilingDir.exists()) {
+        await eFilingDir.create(recursive: true);
+      }
+
+      // Prepare file path
+      final filePath = '${eFilingDir.path}/$fileName';
+      final file = File(filePath);
+
+      // Show downloading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading $fileName...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Download the file
+      final dio = Dio();
+      await dio.download(fileUrl, filePath);
+
+      // Show success message with open option
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded $fileName to E-Filing folder'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open File',
+              textColor: Colors.white,
+              onPressed: () async {
+                final result = await OpenFile.open(filePath);
+                if (result.type != ResultType.done) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open file: ${result.message}'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Download error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download $fileName: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -750,7 +894,25 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           final showGroupFooter = !nextMessageInGroup;
 
                           final List<String> attachments =
-                              message.metadata?['attachments'] ?? [];
+                              (message.metadata?['attachments']
+                                          as List<dynamic>?)
+                                      ?.map((e) => e.toString())
+                                      .toList() ??
+                                  [];
+                          final String? uploadStatus =
+                              message.metadata?['upload_status'];
+                          final List<String> localFiles =
+                              (message.metadata?['local_files']
+                                          as List<dynamic>?)
+                                      ?.map((e) => e.toString())
+                                      .toList() ??
+                                  [];
+
+                          // Use local files if message is sending, uploaded files otherwise
+                          final List<String> filesToShow =
+                              uploadStatus == 'sending'
+                                  ? localFiles
+                                  : attachments;
 
                           return Column(
                             crossAxisAlignment: isMe
@@ -795,35 +957,99 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                         ),
                                       ),
                                     if (message is types.TextMessage)
-                                      attachments.isNotEmpty
-                                          ? Wrap(
-                                              spacing: 4,
-                                              runSpacing: 6,
+                                      filesToShow.isNotEmpty
+                                          ? Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                ...attachments
-                                                    .asMap()
-                                                    .entries
-                                                    .map((entry) {
-                                                  final index = entry.key;
-                                                  final filePath = entry.value;
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              GalleryView(
-                                                                  imageUrls:
-                                                                      attachments,
-                                                                  initialIndex:
-                                                                      index),
+                                                Wrap(
+                                                  spacing: 4,
+                                                  runSpacing: 6,
+                                                  children: [
+                                                    ...filesToShow
+                                                        .asMap()
+                                                        .entries
+                                                        .map((entry) {
+                                                      final index = entry.key;
+                                                      final filePath =
+                                                          entry.value;
+                                                      return InkWell(
+                                                        onTap: uploadStatus ==
+                                                                'sending'
+                                                            ? null
+                                                            : () {
+                                                                _handleFilePreview(
+                                                                  context,
+                                                                  filePath,
+                                                                  index,
+                                                                  attachments,
+                                                                );
+                                                              },
+                                                        child: Stack(
+                                                          children: [
+                                                            FileViewer(
+                                                                filePath:
+                                                                    filePath),
+                                                            if (uploadStatus ==
+                                                                'sending')
+                                                              Positioned.fill(
+                                                                child:
+                                                                    Container(
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: Colors
+                                                                        .black
+                                                                        .withOpacity(
+                                                                            0.3),
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(8),
+                                                                  ),
+                                                                  child:
+                                                                      const Center(
+                                                                    child:
+                                                                        SizedBox(
+                                                                      width: 20,
+                                                                      height:
+                                                                          20,
+                                                                      child:
+                                                                          CircularProgressIndicator(
+                                                                        strokeWidth:
+                                                                            2,
+                                                                        valueColor:
+                                                                            AlwaysStoppedAnimation<Color>(
+                                                                          Colors
+                                                                              .white,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                          ],
                                                         ),
                                                       );
-                                                    },
-                                                    child: FileViewer(
-                                                        filePath: filePath),
-                                                  );
-                                                }).toList(),
+                                                    }).toList(),
+                                                  ],
+                                                ),
+                                                if (uploadStatus == 'sending')
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 4),
+                                                    child: Text(
+                                                      'Sending...',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontStyle:
+                                                            FontStyle.italic,
+                                                        color: isMe
+                                                            ? Colors.white70
+                                                            : AppColors
+                                                                .textSecondary,
+                                                      ),
+                                                    ),
+                                                  ),
                                               ],
                                             )
                                           : Text(
@@ -852,7 +1078,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                   ],
                                 ),
                               ),
-                              if (showGroupFooter)
+                              if (showGroupFooter && uploadStatus != 'sending')
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 0, vertical: 4),
