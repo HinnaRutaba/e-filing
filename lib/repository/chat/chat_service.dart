@@ -86,6 +86,9 @@ class ChatService {
     final updatedParticipants =
         List<ChatParticipantModel>.from(existingParticipants);
 
+    List<String> addedParticipantNames = [];
+    List<String> restoredParticipantNames = [];
+
     for (final newP in newParticipants) {
       final index =
           existingParticipants.indexWhere((p) => p.userId == newP.userId);
@@ -93,6 +96,7 @@ class ChatService {
       if (index == -1) {
         // 1. Not in list → add
         updatedParticipants.add(newP.copyWith(joinedAt: DateTime.now()));
+        addedParticipantNames.add(newP.userTitle ?? 'Unknown User');
       } else {
         final existingP = existingParticipants[index];
         if (existingP.removed) {
@@ -106,6 +110,7 @@ class ChatService {
             removed: false,
             removedAt: null,
           );
+          restoredParticipantNames.add(existingP.userTitle ?? 'Unknown User');
         }
         // 3. Already exists & active → do nothing
       }
@@ -117,6 +122,45 @@ class ChatService {
       await _firestore.collection(chatsCollection).doc(chatId).update({
         'participants': updatedParticipants.map((p) => p.toJson()).toList(),
       });
+
+      // Create system messages for added participants
+      // final chat = ChatModel.fromJson(chatData, chatId);
+
+      // for (final name in addedParticipantNames) {
+      //   final systemMessage = MessageModel(
+      //     id: const Uuid().v4(),
+      //     text: "$name was added to the chat",
+      //     userId: null,
+      //     userDesignationId: 0,
+      //     userName: name,
+      //     sentAt: DateTime.now(),
+      //     messageType: MessageType.info,
+      //   );
+
+      //   await _firestore
+      //       .collection(chatsCollection)
+      //       .doc(chatId)
+      //       .collection(messagesCollection)
+      //       .add(systemMessage.toJson(chat));
+      // }
+
+      // for (final name in restoredParticipantNames) {
+      //   final systemMessage = MessageModel(
+      //     id: const Uuid().v4(),
+      //     text: "$name rejoined the chat",
+      //     userId: null,
+      //     userDesignationId: 0,
+      //     userName: name,
+      //     sentAt: DateTime.now(),
+      //     messageType: MessageType.info,
+      //   );
+
+      //   await _firestore
+      //       .collection(chatsCollection)
+      //       .doc(chatId)
+      //       .collection(messagesCollection)
+      //       .add(systemMessage.toJson(chat));
+      // }
     }
   }
 
@@ -146,9 +190,12 @@ class ChatService {
         .map((p) => ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
         .toList();
 
+    String? removedUserName;
+
     // Update the participant if found
     final updatedParticipants = participants.map((p) {
-      if (p.userId == userId) {
+      if (p.userId == userId && !p.removed) {
+        removedUserName = p.userTitle;
         return ChatParticipantModel(
           userDesignationId: p.userDesignationId,
           userId: p.userId,
@@ -166,6 +213,27 @@ class ChatService {
     await _firestore.collection(chatsCollection).doc(chatId).update({
       'participants': updatedParticipants.map((p) => p.toJson()).toList(),
     });
+
+    // Create system message if a participant was actually removed
+    // if (removedUserName != null) {
+    //   final chat = ChatModel.fromJson(chatData, chatId);
+
+    //   final systemMessage = MessageModel(
+    //     id: const Uuid().v4(),
+    //     text: "$removedUserName left the chat",
+    //     userId: null,
+    //     userDesignationId: 0,
+    //     userName: "System",
+    //     sentAt: DateTime.now(),
+    //     messageType: MessageType.info,
+    //   );
+
+    //   await _firestore
+    //       .collection(chatsCollection)
+    //       .doc(chatId)
+    //       .collection(messagesCollection)
+    //       .add(systemMessage.toJson(chat));
+    // }
   }
 
   bool isParticipantInChat({

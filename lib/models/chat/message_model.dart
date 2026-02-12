@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 
+enum MessageType {
+  message,
+  info,
+}
+
 class MessageModel {
   final String id;
   final String text;
@@ -12,6 +17,7 @@ class MessageModel {
   final List<int> hiddenFrom;
   final List<int> seenBy;
   final Map<String, dynamic>? metadata;
+  final MessageType messageType;
 
   MessageModel({
     required this.id,
@@ -24,7 +30,18 @@ class MessageModel {
     this.hiddenFrom = const [],
     this.seenBy = const [],
     this.metadata,
+    this.messageType = MessageType.message, // Default to 'message' type
   });
+
+  static MessageType _parseMessageType(String? type) {
+    switch (type) {
+      case 'info':
+        return MessageType.info;
+      case 'message':
+      default:
+        return MessageType.message;
+    }
+  }
 
   factory MessageModel.fromJson(Map<String, dynamic> json, String docId) {
     try {
@@ -44,6 +61,7 @@ class MessageModel {
             .map((e) => e as int)
             .toList(),
         seenBy: List<int>.from(json['seen_by'] ?? []),
+        messageType: _parseMessageType(json['message_type']),
         metadata: {
           'upload_status': json['upload_status'],
           'local_files': json['local_files'],
@@ -58,6 +76,7 @@ class MessageModel {
         userDesignationId: 0,
         userName: '',
         sentAt: DateTime.now(),
+        messageType: MessageType.message,
       );
     }
   }
@@ -72,6 +91,7 @@ class MessageModel {
       },
       'sent_at': sentAt,
       'attachments': attachments,
+      'message_type': messageType.name,
       'hidden_from': chat.participants
           .where((e) => e.removed)
           .map((e) => e.userDesignationId)
@@ -91,6 +111,7 @@ class MessageModel {
     List<int>? hiddenFrom,
     List<int>? seenBy,
     Map<String, dynamic>? metadata,
+    MessageType? messageType,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -103,6 +124,7 @@ class MessageModel {
       hiddenFrom: hiddenFrom ?? this.hiddenFrom,
       seenBy: seenBy ?? this.seenBy,
       metadata: metadata ?? this.metadata,
+      messageType: messageType ?? this.messageType,
     );
   }
 }

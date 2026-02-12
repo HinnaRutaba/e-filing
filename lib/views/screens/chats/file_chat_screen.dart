@@ -23,7 +23,6 @@ import 'package:efiling_balochistan/views/widgets/file_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_types/flutter_chat_types.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -85,6 +84,17 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   }
 
   types.Message _mapMessage(MessageModel message) {
+    if (message.messageType == MessageType.info) {
+      return types.SystemMessage(
+        id: message.id,
+        createdAt: message.sentAt.millisecondsSinceEpoch,
+        text: message.text,
+        metadata: {
+          'messageType': message.messageType.name,
+        },
+      );
+    }
+
     if (message.attachments.isNotEmpty) {
       final url = message.attachments.first;
       if (url != null) {
@@ -103,6 +113,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             size: 0,
             uri: url,
             duration: const Duration(),
+            metadata: {
+              'messageType': message.messageType.name,
+            },
           );
         }
       }
@@ -122,6 +135,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             message.metadata?['upload_status'], // Store upload status
         'local_files': message.metadata?[
             'local_files'], // Store local file paths for sending state
+        'messageType': message.messageType.name,
       },
     );
   }
@@ -210,7 +224,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       if (widget.fileDetails != null) {
         file = widget.fileDetails;
       }
-      print("fID______${widget.fileId}");
+
       if (widget.fileId == null) {
         return;
       } else {
@@ -885,6 +899,32 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                         },
                         bubbleBuilder: (child,
                             {required message, required nextMessageInGroup}) {
+                          // Handle system messages (participant add/remove notifications)
+                          if (message is types.SystemMessage) {
+                            return Container(
+                              alignment: Alignment.center,
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  message.text,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            );
+                          }
+
                           final isMe =
                               message.author.id == _currentUser.id.toString();
                           final dt = DateTime.fromMillisecondsSinceEpoch(
