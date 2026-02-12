@@ -902,27 +902,10 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             {required message, required nextMessageInGroup}) {
                           // Handle system messages (participant add/remove notifications)
                           if (message is types.SystemMessage) {
-                            return Container(
-                              alignment: Alignment.center,
-                              margin: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 16),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  message.text,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                            return AppText.labelMedium(
+                              message.text,
+                              color: Colors.grey[600],
+                              textAlign: TextAlign.center,
                             );
                           }
 
@@ -963,162 +946,166 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                 : CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                margin: EdgeInsets.only(
-                                  bottom: 0,
-                                  left: isMe ? 8 : 0,
-                                  right: isMe ? 0 : 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: isMe
-                                      ? AppColors.secondaryLight
-                                      : AppColors.cardColor,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (showGroupFooter && !isMe)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4),
-                                        child: Text(
-                                          [
-                                            message.author.firstName ?? '',
-                                            message.author.lastName ?? '',
-                                          ]
-                                              .where((part) =>
-                                                  part.trim().isNotEmpty)
-                                              .join(' '),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.secondaryDark,
-                                            fontWeight: FontWeight.w600,
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  margin: EdgeInsets.only(
+                                    bottom: 0,
+                                    left: isMe ? 8 : 0,
+                                    right: isMe ? 0 : 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: isMe
+                                        ? AppColors.secondaryLight
+                                        : AppColors.cardColor,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (showGroupFooter && !isMe)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 4),
+                                          child: Text(
+                                            [
+                                              message.author.firstName ?? '',
+                                              message.author.lastName ?? '',
+                                            ]
+                                                .where((part) =>
+                                                    part.trim().isNotEmpty)
+                                                .join(' '),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.secondaryDark,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    if (message is types.TextMessage)
-                                      filesToShow.isNotEmpty
-                                          ? Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Wrap(
-                                                  spacing: 4,
-                                                  runSpacing: 6,
-                                                  children: [
-                                                    ...filesToShow
-                                                        .asMap()
-                                                        .entries
-                                                        .map((entry) {
-                                                      final index = entry.key;
-                                                      final filePath =
-                                                          entry.value;
-                                                      return InkWell(
-                                                        onTap: uploadStatus ==
-                                                                'sending'
-                                                            ? null
-                                                            : () {
-                                                                _handleFilePreview(
-                                                                  context,
-                                                                  filePath,
-                                                                  index,
-                                                                  attachments,
-                                                                );
-                                                              },
-                                                        child: Stack(
-                                                          children: [
-                                                            FileViewer(
-                                                                filePath:
-                                                                    filePath),
-                                                            if (uploadStatus ==
-                                                                'sending')
-                                                              Positioned.fill(
-                                                                child:
-                                                                    Container(
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    color: Colors
-                                                                        .black
-                                                                        .withOpacity(
-                                                                            0.3),
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(8),
-                                                                  ),
+                                      if (message is types.TextMessage)
+                                        filesToShow.isNotEmpty
+                                            ? Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Wrap(
+                                                    spacing: 4,
+                                                    runSpacing: 6,
+                                                    children: [
+                                                      ...filesToShow
+                                                          .asMap()
+                                                          .entries
+                                                          .map((entry) {
+                                                        final index = entry.key;
+                                                        final filePath =
+                                                            entry.value;
+                                                        return InkWell(
+                                                          onTap: uploadStatus ==
+                                                                  'sending'
+                                                              ? null
+                                                              : () {
+                                                                  _handleFilePreview(
+                                                                    context,
+                                                                    filePath,
+                                                                    index,
+                                                                    attachments,
+                                                                  );
+                                                                },
+                                                          child: Stack(
+                                                            children: [
+                                                              FileViewer(
+                                                                  filePath:
+                                                                      filePath),
+                                                              if (uploadStatus ==
+                                                                  'sending')
+                                                                Positioned.fill(
                                                                   child:
-                                                                      const Center(
+                                                                      Container(
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                              0.3),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              8),
+                                                                    ),
                                                                     child:
-                                                                        SizedBox(
-                                                                      width: 20,
-                                                                      height:
-                                                                          20,
+                                                                        const Center(
                                                                       child:
-                                                                          CircularProgressIndicator(
-                                                                        strokeWidth:
-                                                                            2,
-                                                                        valueColor:
-                                                                            AlwaysStoppedAnimation<Color>(
-                                                                          Colors
-                                                                              .white,
+                                                                          SizedBox(
+                                                                        width:
+                                                                            20,
+                                                                        height:
+                                                                            20,
+                                                                        child:
+                                                                            CircularProgressIndicator(
+                                                                          strokeWidth:
+                                                                              2,
+                                                                          valueColor:
+                                                                              AlwaysStoppedAnimation<Color>(
+                                                                            Colors.white,
+                                                                          ),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                   ),
                                                                 ),
-                                                              ),
-                                                          ],
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                    ],
+                                                  ),
+                                                  if (uploadStatus == 'sending')
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 4),
+                                                      child: Text(
+                                                        'Sending...',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontStyle:
+                                                              FontStyle.italic,
+                                                          color: isMe
+                                                              ? Colors.white70
+                                                              : AppColors
+                                                                  .textSecondary,
                                                         ),
-                                                      );
-                                                    }).toList(),
-                                                  ],
-                                                ),
-                                                if (uploadStatus == 'sending')
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 4),
-                                                    child: Text(
-                                                      'Sending...',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        fontStyle:
-                                                            FontStyle.italic,
-                                                        color: isMe
-                                                            ? Colors.white70
-                                                            : AppColors
-                                                                .textSecondary,
                                                       ),
                                                     ),
-                                                  ),
-                                              ],
-                                            )
-                                          : Text(
-                                              message.text,
-                                              style: TextStyle(
-                                                color: isMe
-                                                    ? Colors.white
-                                                    : AppColors.textPrimary,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            )
-                                    else if (message is types.AudioMessage)
-                                      _buildAudioPlayer(message, isMe)
-                                    else
-                                      Text(
-                                        'Message',
-                                        style: TextStyle(
-                                          color: isMe
-                                              ? Colors.white
-                                              : AppColors.textPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
+                                                ],
+                                              )
+                                            : Text(
+                                                message.text,
+                                                style: TextStyle(
+                                                  color: isMe
+                                                      ? Colors.white
+                                                      : AppColors.textPrimary,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              )
+                                      else if (message is types.AudioMessage)
+                                        _buildAudioPlayer(message, isMe)
+                                      else
+                                        Text(
+                                          'Message',
+                                          style: TextStyle(
+                                            color: isMe
+                                                ? Colors.white
+                                                : AppColors.textPrimary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                               if (showGroupFooter && uploadStatus != 'sending')

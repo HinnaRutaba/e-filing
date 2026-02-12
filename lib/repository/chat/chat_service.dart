@@ -124,43 +124,43 @@ class ChatService {
       });
 
       // Create system messages for added participants
-      // final chat = ChatModel.fromJson(chatData, chatId);
+      final chat = ChatModel.fromJson(chatData, chatId);
 
-      // for (final name in addedParticipantNames) {
-      //   final systemMessage = MessageModel(
-      //     id: const Uuid().v4(),
-      //     text: "$name was added to the chat",
-      //     userId: null,
-      //     userDesignationId: 0,
-      //     userName: name,
-      //     sentAt: DateTime.now(),
-      //     messageType: MessageType.info,
-      //   );
+      for (final name in addedParticipantNames) {
+        final systemMessage = MessageModel(
+          id: const Uuid().v4(),
+          text: "$name was added to the chat",
+          userId: null,
+          userDesignationId: 0,
+          userName: name,
+          sentAt: DateTime.now(),
+          messageType: MessageType.info,
+        );
 
-      //   await _firestore
-      //       .collection(chatsCollection)
-      //       .doc(chatId)
-      //       .collection(messagesCollection)
-      //       .add(systemMessage.toJson(chat));
-      // }
+        await _firestore
+            .collection(chatsCollection)
+            .doc(chatId)
+            .collection(messagesCollection)
+            .add(systemMessage.toJson(chat));
+      }
 
-      // for (final name in restoredParticipantNames) {
-      //   final systemMessage = MessageModel(
-      //     id: const Uuid().v4(),
-      //     text: "$name rejoined the chat",
-      //     userId: null,
-      //     userDesignationId: 0,
-      //     userName: name,
-      //     sentAt: DateTime.now(),
-      //     messageType: MessageType.info,
-      //   );
+      for (final name in restoredParticipantNames) {
+        final systemMessage = MessageModel(
+          id: const Uuid().v4(),
+          text: "$name rejoined the chat",
+          userId: null,
+          userDesignationId: 0,
+          userName: name,
+          sentAt: DateTime.now(),
+          messageType: MessageType.info,
+        );
 
-      //   await _firestore
-      //       .collection(chatsCollection)
-      //       .doc(chatId)
-      //       .collection(messagesCollection)
-      //       .add(systemMessage.toJson(chat));
-      // }
+        await _firestore
+            .collection(chatsCollection)
+            .doc(chatId)
+            .collection(messagesCollection)
+            .add(systemMessage.toJson(chat));
+      }
     }
   }
 
@@ -215,25 +215,25 @@ class ChatService {
     });
 
     // Create system message if a participant was actually removed
-    // if (removedUserName != null) {
-    //   final chat = ChatModel.fromJson(chatData, chatId);
+    if (removedUserName != null) {
+      final chat = ChatModel.fromJson(chatData, chatId);
 
-    //   final systemMessage = MessageModel(
-    //     id: const Uuid().v4(),
-    //     text: "$removedUserName left the chat",
-    //     userId: null,
-    //     userDesignationId: 0,
-    //     userName: "System",
-    //     sentAt: DateTime.now(),
-    //     messageType: MessageType.info,
-    //   );
+      final systemMessage = MessageModel(
+        id: const Uuid().v4(),
+        text: "$removedUserName left the chat",
+        userId: null,
+        userDesignationId: 0,
+        userName: "System",
+        sentAt: DateTime.now(),
+        messageType: MessageType.info,
+      );
 
-    //   await _firestore
-    //       .collection(chatsCollection)
-    //       .doc(chatId)
-    //       .collection(messagesCollection)
-    //       .add(systemMessage.toJson(chat));
-    // }
+      await _firestore
+          .collection(chatsCollection)
+          .doc(chatId)
+          .collection(messagesCollection)
+          .add(systemMessage.toJson(chat));
+    }
   }
 
   bool isParticipantInChat({
