@@ -18,6 +18,7 @@ import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/audio_player/audio_waved_player.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/file_viewer.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:waved_audio_player/waved_audio_player.dart';
+
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
