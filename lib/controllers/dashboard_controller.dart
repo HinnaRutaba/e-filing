@@ -67,27 +67,24 @@ class DashboardController extends BaseControllerState<DashboardModel> {
 
   Future<void> initData() async {
     await Future.delayed(Duration.zero);
-    state = state.copyWith(
-        loading: true, loadingPendingFiles: true); 
+    state = state.copyWith(loading: true, loadingPendingFiles: true);
 
     try {
       final filesCtrl = ref.read(filesController.notifier);
 
-      
       final ar = await filesCtrl.getFilesForDashboard(FileType.actionRequired);
       final mf = await filesCtrl.getFilesForDashboard(FileType.my);
       final pf = await filesCtrl.getFilesForDashboard(FileType.pending);
       final df = await filesCtrl.getFilesForDashboard(FileType.archived);
       final ff = await filesCtrl.getFilesForDashboard(FileType.forwarded);
 
-     
       state = state.copyWith(
         actionRequiredCount: ar.length,
         myFilesCount: mf.length,
         pendingFilesCount: pf.length,
         disposedOffCount: df.length,
-        pendingFiles: pf, 
-        forwardedFiles: ff, 
+        pendingFiles: pf,
+        forwardedFiles: ff,
         loading: false,
         loadingPendingFiles: false,
       );
