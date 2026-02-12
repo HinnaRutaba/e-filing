@@ -60,9 +60,12 @@ class ChatService {
     return null;
   }
 
-  Future<ChatModel> getChat(String chatId) async {
+  Future<ChatModel?> getChat(String chatId) async {
     DocumentSnapshot ds =
         await _firestore.collection(chatsCollection).doc(chatId).get();
+    if (!ds.exists) {
+      return null;
+    }
     return ChatModel.fromJson(ds.data() as Map<String, dynamic>, ds.id);
   }
 

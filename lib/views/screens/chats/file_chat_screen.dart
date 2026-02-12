@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
@@ -64,6 +66,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
   bool _loading = true;
 
   UserModel get _currentUser => ref.read(authController);
+
+  String? get incomingChatId =>
+      widget.chatId == ':chatId' ? null : widget.chatId;
 
   Future<void> _loadMore() async {
     if (_isLoadingMore || _lastDoc == null) return;
@@ -158,8 +163,10 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   Future<void> _getChatRoom() async {
     try {
+      await _fetchFileDetails();
       String? chatId =
-          widget.chatId ?? await chatService.getChatFromFile(widget.fileId!);
+          incomingChatId ?? await chatService.getChatFromFile(widget.fileId!);
+
       if (chatId == null) {
         setState(() {
           _loading = false;
@@ -177,7 +184,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       setState(() {
         _loading = true;
       });
-      await _fetchFileDetails();
+
       final participants = [
         ChatParticipantModel(
           userDesignationId: _currentUser.currentDesignation!.userDesgId!,
@@ -198,7 +205,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         subject = file!.content!.first.subject!;
       }
 
-      final chatId = widget.chatId ??
+      final chatId = incomingChatId ??
           await chatService.createChatRoom(
             fileId: widget.fileId,
             subject: subject,
@@ -216,7 +223,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         _loading = false;
       });
     } catch (e, s) {
-      print("Error init chat room: $e \n $s");
+      log("Error init chat room: $e \n $s");
     }
   }
 
