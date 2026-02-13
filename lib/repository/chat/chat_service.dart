@@ -633,6 +633,7 @@ class ChatService {
         'last_message': {
           ...sendingMsg.toJson(chat),
           'upload_status': 'sending',
+          'message_type': 'voice', // Add type indicator
         },
       });
 
