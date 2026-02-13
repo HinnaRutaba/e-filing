@@ -122,6 +122,7 @@ class PreviewFile extends StatelessWidget {
                                         AppText.titleMedium(
                                           e.sender ?? '---',
                                           fontFamily: fileFont,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                         AppText.bodyMedium(
                                           "(${e.designation ?? '---'})",
@@ -129,8 +130,9 @@ class PreviewFile extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         AppText.bodyMedium(
-                                          DateTimeHelper.datFormatSlash(
-                                              e.sendingDate),
+                                          DateTimeHelper
+                                              .dateFormatSlashWithTime(
+                                                  e.sendingDate),
                                           fontFamily: fileFont,
                                         ),
                                         Align(
@@ -138,6 +140,7 @@ class PreviewFile extends StatelessWidget {
                                           child: AppText.titleMedium(
                                             e.receiver ?? '---',
                                             fontFamily: fileFont,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],

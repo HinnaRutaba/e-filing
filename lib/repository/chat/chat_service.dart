@@ -44,6 +44,18 @@ class ChatService {
       'last_message': null,
     });
 
+    // Add participants to subcollection
+    final batch = _firestore.batch();
+    for (final participant in participants) {
+      final participantRef = chatRef
+          .collection('participants')
+          .doc(participant.userDesignationId.toString());
+      final participantData = participant.toJson();
+      participantData['user_designation_id'] = participant.userDesignationId;
+      batch.set(participantRef, participantData);
+    }
+    await batch.commit();
+
     return chatRef.id;
   }
 
@@ -126,6 +138,29 @@ class ChatService {
         'participants': updatedParticipants.map((p) => p.toJson()).toList(),
       });
 
+      // Update participants subcollection for added/restored participants
+      final batch = _firestore.batch();
+
+      for (final newP in newParticipants) {
+        final participantRef = _firestore
+            .collection(chatsCollection)
+            .doc(chatId)
+            .collection('participants')
+            .doc(newP.userDesignationId.toString());
+
+        final updatedParticipant = updatedParticipants.firstWhere(
+          (p) => p.userDesignationId == newP.userDesignationId,
+          orElse: () => newP,
+        );
+
+        final participantData = updatedParticipant.toJson();
+        participantData['user_designation_id'] =
+            updatedParticipant.userDesignationId;
+        batch.set(participantRef, participantData);
+      }
+
+      await batch.commit();
+
       // Create system messages for added participants
       final chat = ChatModel.fromJson(chatData, chatId);
 
@@ -194,11 +229,13 @@ class ChatService {
         .toList();
 
     String? removedUserName;
+    int? removedUserDesignationId;
 
     // Update the participant if found
     final updatedParticipants = participants.map((p) {
       if (p.userId == userId && !p.removed) {
         removedUserName = p.userTitle;
+        removedUserDesignationId = p.userDesignationId;
         return ChatParticipantModel(
           userDesignationId: p.userDesignationId,
           userId: p.userId,
@@ -216,6 +253,23 @@ class ChatService {
     await _firestore.collection(chatsCollection).doc(chatId).update({
       'participants': updatedParticipants.map((p) => p.toJson()).toList(),
     });
+
+    // Update participants subcollection if a participant was removed
+    if (removedUserDesignationId != null) {
+      final removedParticipant = updatedParticipants.firstWhere(
+        (p) => p.userDesignationId == removedUserDesignationId,
+      );
+
+      final participantData = removedParticipant.toJson();
+      participantData['user_designation_id'] =
+          removedParticipant.userDesignationId;
+      await _firestore
+          .collection(chatsCollection)
+          .doc(chatId)
+          .collection('participants')
+          .doc(removedUserDesignationId.toString())
+          .set(participantData);
+    }
 
     // Create system message if a participant was actually removed
     if (removedUserName != null) {
@@ -298,24 +352,44 @@ class ChatService {
     required int userId,
     required int userDesignationId,
   }) {
-    return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
-      final chats = snapshot.docs
-          .map((doc) => ChatModel.fromJson(doc.data(), doc.id))
+    return _firestore
+        .collectionGroup('participants')
+        .where('user_designation_id', isEqualTo: userDesignationId)
+        .snapshots()
+        .asyncMap((participantSnapshot) async {
+      // Get unique chat IDs from participant documents
+      final chatIds = participantSnapshot.docs
+          .map((doc) => doc.reference.parent.parent!.id)
+          .toSet()
           .toList();
 
-      // Filter by participants (regardless of removed status)
-      return chats.where((chat) {
-        return chat.participants.any(
-          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
-        );
-      }).toList()
-        ..sort((a, b) {
-          final aTime =
-              a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime =
-              b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return bTime.compareTo(aTime); // newest first
-        });
+      if (chatIds.isEmpty) return <ChatModel>[];
+
+      // Fetch all chat documents
+      final chats = <ChatModel>[];
+      for (final chatId in chatIds) {
+        final chatDoc =
+            await _firestore.collection(chatsCollection).doc(chatId).get();
+        if (chatDoc.exists) {
+          final chat = ChatModel.fromJson(chatDoc.data()!, chatDoc.id);
+          // Additional filter by userId to ensure both userId and userDesignationId match
+          if (chat.participants.any((p) =>
+              p.userId == userId && p.userDesignationId == userDesignationId)) {
+            chats.add(chat);
+          }
+        }
+      }
+
+      // Sort by last message time
+      chats.sort((a, b) {
+        final aTime =
+            a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime =
+            b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bTime.compareTo(aTime); // newest first
+      });
+
+      return chats;
     });
   }
 
@@ -326,28 +400,49 @@ class ChatService {
     if (userDesignationId == null) {
       return Stream.value(0);
     }
-    return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
-      final unreadChats = snapshot.docs.where((doc) {
-        final data = doc.data();
+    return _firestore
+        .collectionGroup('participants')
+        .where('user_designation_id', isEqualTo: userDesignationId)
+        .snapshots()
+        .asyncMap((participantSnapshot) async {
+      // Get unique chat IDs from participant documents
+      final chatIds = participantSnapshot.docs
+          .map((doc) => doc.reference.parent.parent!.id)
+          .toSet()
+          .toList();
 
-        // Check if user is a participant
-        final participants = (data['participants'] as List<dynamic>? ?? [])
-            .map((p) =>
-                ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-            .toList();
-        final isParticipant = participants.any(
-          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
-        );
+      if (chatIds.isEmpty) return 0;
 
-        if (!isParticipant) return false;
+      int unreadCount = 0;
+      for (final chatId in chatIds) {
+        final chatDoc =
+            await _firestore.collection(chatsCollection).doc(chatId).get();
+        if (chatDoc.exists) {
+          final data = chatDoc.data()!;
 
-        // Check if unread
-        final lastMessage = data['last_message'];
-        if (lastMessage == null) return false;
-        final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
-        return !seenBy.contains(userDesignationId);
-      });
-      return unreadChats.length;
+          // Check if user is a participant and not removed
+          final participants = (data['participants'] as List<dynamic>? ?? [])
+              .map((p) =>
+                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+              .toList();
+          final isParticipant = participants.any(
+            (p) =>
+                p.userId == userId && p.userDesignationId == userDesignationId,
+          );
+
+          if (!isParticipant) continue;
+
+          // Check if unread
+          final lastMessage = data['last_message'];
+          if (lastMessage != null) {
+            final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
+            if (!seenBy.contains(userDesignationId)) {
+              unreadCount++;
+            }
+          }
+        }
+      }
+      return unreadCount;
     });
   }
 
@@ -355,23 +450,37 @@ class ChatService {
     required int userId,
     required int userDesignationId,
   }) {
-    return _firestore.collection(chatsCollection).snapshots().map((snapshot) {
-      final userChats = snapshot.docs.where((doc) {
-        final data = doc.data();
-        final participants = (data['participants'] as List<dynamic>? ?? [])
-            .map((p) =>
-                ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-            .toList();
-        final isParticipant = participants.any(
-          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
-        );
-        print(
-            "Chat ${doc.id}: isParticipant=$isParticipant for userId=$userId, userDesgId=$userDesignationId");
-        return isParticipant;
-      });
-      print(
-          "Total user chats: ${userChats.length} out of ${snapshot.docs.length}");
-      return userChats.length;
+    return _firestore
+        .collectionGroup('participants')
+        .where('user_designation_id', isEqualTo: userDesignationId)
+        .snapshots()
+        .asyncMap((participantSnapshot) async {
+      // Get unique chat IDs from participant documents
+      final chatIds = participantSnapshot.docs
+          .map((doc) => doc.reference.parent.parent!.id)
+          .toSet()
+          .toList();
+
+      if (chatIds.isEmpty) return 0;
+
+      int chatCount = 0;
+      for (final chatId in chatIds) {
+        final chatDoc =
+            await _firestore.collection(chatsCollection).doc(chatId).get();
+        if (chatDoc.exists) {
+          final data = chatDoc.data()!;
+          final participants = (data['participants'] as List<dynamic>? ?? [])
+              .map((p) =>
+                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+              .toList();
+          final isParticipant = participants.any((p) =>
+              p.userId == userId && p.userDesignationId == userDesignationId);
+          if (isParticipant) {
+            chatCount++;
+          }
+        }
+      }
+      return chatCount;
     });
   }
 
@@ -490,33 +599,87 @@ class ChatService {
       final File? audioFile = await audioRecorder.stop();
       if (audioFile == null) return;
 
-      // Upload to Firebase Storage
+      final messageId = const Uuid().v4();
       final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
-      ChatFileModel model = await chatRepo.saveChatFile(
-          filePath: audioFile.path, fileName: fileName);
-
-      final msg = MessageModel(
-        id: const Uuid().v4(),
-        text: model.fileUrl ?? '',
+      // First, create a "sending" message with placeholder
+      final sendingMsg = MessageModel(
+        id: messageId,
+        text: "🎙️ Voice message",
         userId: userId,
         userName: userTitle,
         userDesignationId: userDesignationId,
         sentAt: DateTime.now(),
-        attachments: [model.fileUrl],
+        attachments: [], // Empty during upload to avoid player errors
+        seenBy: [userDesignationId],
       );
 
-      await _firestore
+      // Add the "sending" message to Firestore immediately
+      final docRef = _firestore
           .collection(chatsCollection)
           .doc(chat.id)
           .collection(messagesCollection)
-          .add(msg.toJson(chat));
+          .doc(messageId);
 
-      await _firestore.collection(chatsCollection).doc(chat.id).update({
-        'last_message': msg.toJson(chat),
+      await docRef.set({
+        ...sendingMsg.toJson(chat),
+        'upload_status': 'sending',
+        'local_files': [audioFile.path],
+        'message_type': 'voice', // Add type indicator
       });
+
+      // Update last_message with sending status
+      await _firestore.collection(chatsCollection).doc(chat.id).update({
+        'last_message': {
+          ...sendingMsg.toJson(chat),
+          'upload_status': 'sending',
+        },
+      });
+
+      log("Voice message created with sending status, starting upload...");
+
+      // Now upload file in the background
+      ChatFileModel model = await chatRepo.saveChatFile(
+          filePath: audioFile.path, fileName: fileName);
+
+      log("Upload completed. FileUrl: ${model.fileUrl}");
+
+      if (model.fileUrl != null) {
+        // Update the message with uploaded URL
+        final completedMsg = sendingMsg.copyWith(
+          text: model.fileUrl!,
+          attachments: [model.fileUrl!],
+        );
+
+        try {
+          await docRef.update({
+            ...completedMsg.toJson(chat),
+            'upload_status': 'sent',
+          });
+
+          // Update last_message with completed status
+          await _firestore.collection(chatsCollection).doc(chat.id).update({
+            'last_message': {
+              ...completedMsg.toJson(chat),
+              'upload_status': 'sent',
+            },
+          });
+
+          log("Voice message uploaded successfully: ${model.fileUrl}");
+        } catch (updateError, updateStack) {
+          log("Error updating voice message status: $updateError");
+          log("Stack trace: $updateStack");
+        }
+      } else {
+        // Handle upload failure
+        log("Voice message upload failed - no URL returned");
+        await docRef.update({
+          'upload_status': 'failed',
+        });
+      }
     } catch (e, s) {
       log("ERRR________${e}_______$s");
+      // TODO: Update message status to 'failed' on error
     }
   }
 

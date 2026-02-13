@@ -1157,7 +1157,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       iconColor: AppColors.white,
       iconBackgoundColor: AppColors.secondaryDark,
       playedColor: AppColors.secondaryDark,
-      unplayedColor: AppColors.cardColor.withOpacity(0.6),
+      unplayedColor: isMe
+          ? AppColors.cardColor.withOpacity(0.8)
+          : AppColors.secondary.withOpacity(0.6),
       waveWidth: 100,
       barWidth: 3,
       buttonSize: 40,
