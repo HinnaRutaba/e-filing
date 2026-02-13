@@ -5,13 +5,13 @@ import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/firebase_options.dart';
-import 'package:efiling_balochistan/views/widgets/connectivity_scaffold.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:tap_canvas/tap_canvas.dart';
+
 import 'package:toastification/toastification.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
