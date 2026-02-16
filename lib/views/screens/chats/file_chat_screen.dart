@@ -11,6 +11,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_input_bar.dart';
 import 'package:efiling_balochistan/views/screens/chats/chat_participants_view.dart';
@@ -321,12 +322,24 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
     if (imageExtensions.contains(extension) ||
         videoExtensions.contains(extension)) {
+      // Filter attachments to only include images and videos
+      final filteredAttachments = attachments.where((attachment) {
+        final attachmentName = attachment.split('/').last.toLowerCase();
+        final attachmentExtension =
+            attachmentName.split('.').last.toLowerCase();
+        return imageExtensions.contains(attachmentExtension) ||
+            videoExtensions.contains(attachmentExtension);
+      }).toList();
+
+      // Find the new index of the current file in the filtered list
+      final newIndex = filteredAttachments.indexOf(filePath);
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => GalleryView(
-            imageUrls: attachments,
-            initialIndex: index,
+            imageUrls: filteredAttachments,
+            initialIndex: newIndex >= 0 ? newIndex : 0,
           ),
         ),
       );
@@ -341,107 +354,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         ),
       );
     } else {
-      _downloadFile(filePath, fileName);
-    }
-  }
-
-  Future<void> _downloadFile(String fileUrl, String fileName) async {
-    try {
-      // Request storage permission
-      final permission = Permission.storage;
-      if (await permission.isDenied) {
-        final result = await permission.request();
-        if (result != PermissionStatus.granted) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content:
-                    Text('Storage permission is required to download files'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
-        }
-      }
-
-      // Get the downloads directory or documents directory
-      Directory? downloadsDir;
-      if (Platform.isAndroid) {
-        downloadsDir = Directory('/storage/emulated/0/Download');
-        if (!await downloadsDir.exists()) {
-          downloadsDir = await getExternalStorageDirectory();
-        }
-      } else if (Platform.isIOS) {
-        downloadsDir = await getApplicationDocumentsDirectory();
-      }
-
-      if (downloadsDir == null) {
-        throw Exception('Could not access storage directory');
-      }
-
-      // Create E-Filing folder
-      final eFilingDir = Directory('${downloadsDir.path}/E-Filing');
-      if (!await eFilingDir.exists()) {
-        await eFilingDir.create(recursive: true);
-      }
-
-      // Prepare file path
-      final filePath = '${eFilingDir.path}/$fileName';
-      final file = File(filePath);
-
-      // Show downloading snackbar
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloading $fileName...'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-
-      // Download the file
-      final dio = Dio();
-      await dio.download(fileUrl, filePath);
-
-      // Show success message with open option
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloaded $fileName to E-Filing folder'),
-            backgroundColor: Colors.green,
-            action: SnackBarAction(
-              label: 'Open File',
-              textColor: Colors.white,
-              onPressed: () async {
-                final result = await OpenFile.open(filePath);
-                if (result.type != ResultType.done) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not open file: ${result.message}'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Download error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to download $fileName: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      FilePickerService().downloadFile(context, filePath, fileName);
     }
   }
 
@@ -905,250 +818,218 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             ),
                           );
                         },
-                        bubbleBuilder: (child,
-                            {required message, required nextMessageInGroup}) {
-                          // Handle system messages (participant add/remove notifications)
-                          if (message is types.SystemMessage) {
-                            return AppText.labelMedium(
-                              message.text,
-                              color: Colors.grey[600],
-                              textAlign: TextAlign.center,
-                            );
-                          }
-
-                          final isMe =
-                              message.author.id == _currentUser.id.toString();
-                          final dt = DateTime.fromMillisecondsSinceEpoch(
-                              message.createdAt ??
-                                  DateTime.now().millisecondsSinceEpoch);
-                          final timeText = _formatMessageTime(dt);
-                          final status = _getDeliveryStatus(message);
-
-                          final showGroupFooter = !nextMessageInGroup;
-
-                          final List<String> attachments =
-                              (message.metadata?['attachments']
-                                          as List<dynamic>?)
-                                      ?.map((e) => e.toString())
-                                      .toList() ??
-                                  [];
-                          final String? uploadStatus =
-                              message.metadata?['upload_status'];
-                          final List<String> localFiles =
-                              (message.metadata?['local_files']
-                                          as List<dynamic>?)
-                                      ?.map((e) => e.toString())
-                                      .toList() ??
-                                  [];
-
-                          // Use local files if message is sending, uploaded files otherwise
-                          final List<String> filesToShow =
-                              uploadStatus == 'sending'
-                                  ? localFiles
-                                  : attachments;
-
-                          return Column(
-                            crossAxisAlignment: isMe
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AnimatedSize(
-                                duration: const Duration(milliseconds: 200),
-                                child: Container(
-                                  margin: EdgeInsets.only(
-                                    bottom: 0,
-                                    left: isMe ? 8 : 0,
-                                    right: isMe ? 0 : 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    color: isMe
-                                        ? AppColors.secondaryLight
-                                        : AppColors.cardColor,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (showGroupFooter && !isMe)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 4),
-                                          child: Text(
-                                            [
-                                              message.author.firstName ?? '',
-                                              message.author.lastName ?? '',
-                                            ]
-                                                .where((part) =>
-                                                    part.trim().isNotEmpty)
-                                                .join(' '),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.secondaryDark,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      if (message is types.TextMessage)
-                                        filesToShow.isNotEmpty
-                                            ? Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Wrap(
-                                                    spacing: 4,
-                                                    runSpacing: 6,
-                                                    children: [
-                                                      ...filesToShow
-                                                          .asMap()
-                                                          .entries
-                                                          .map((entry) {
-                                                        final index = entry.key;
-                                                        final filePath =
-                                                            entry.value;
-                                                        return InkWell(
-                                                          onTap: uploadStatus ==
-                                                                  'sending'
-                                                              ? null
-                                                              : () {
-                                                                  _handleFilePreview(
-                                                                    context,
-                                                                    filePath,
-                                                                    index,
-                                                                    attachments,
-                                                                  );
-                                                                },
-                                                          child: Stack(
-                                                            children: [
-                                                              FileViewer(
-                                                                  filePath:
-                                                                      filePath),
-                                                              if (uploadStatus ==
-                                                                  'sending')
-                                                                Positioned.fill(
-                                                                  child:
-                                                                      Container(
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                              0.3),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              8),
-                                                                    ),
-                                                                    child:
-                                                                        const Center(
-                                                                      child:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            20,
-                                                                        height:
-                                                                            20,
-                                                                        child:
-                                                                            CircularProgressIndicator(
-                                                                          strokeWidth:
-                                                                              2,
-                                                                          valueColor:
-                                                                              AlwaysStoppedAnimation<Color>(
-                                                                            Colors.white,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                      }).toList(),
-                                                    ],
-                                                  ),
-                                                  if (uploadStatus == 'sending')
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 4),
-                                                      child: Text(
-                                                        'Sending...',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                          color: isMe
-                                                              ? Colors.white70
-                                                              : AppColors
-                                                                  .textSecondary,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              )
-                                            : Text(
-                                                message.text,
-                                                style: TextStyle(
-                                                  color: isMe
-                                                      ? Colors.white
-                                                      : AppColors.textPrimary,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              )
-                                      else if (message is types.AudioMessage)
-                                        _buildAudioPlayer(message, isMe)
-                                      else
-                                        Text(
-                                          'Message',
-                                          style: TextStyle(
-                                            color: isMe
-                                                ? Colors.white
-                                                : AppColors.textPrimary,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              if (showGroupFooter && uploadStatus != 'sending')
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 0, vertical: 4),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        timeText,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                      if (status.isNotEmpty) ...[
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          status,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
+                        bubbleBuilder: _buildMessageBubble,
                       );
                     },
                   ),
           );
+  }
+
+  Widget _buildMessageBubble(Widget child,
+      {required types.Message message, required bool nextMessageInGroup}) {
+    if (message is types.SystemMessage) {
+      return AppText.labelMedium(
+        message.text,
+        color: Colors.grey[600],
+        textAlign: TextAlign.center,
+      );
+    }
+
+    final isMe = message.author.id == _currentUser.id.toString();
+    final dt = DateTime.fromMillisecondsSinceEpoch(
+        message.createdAt ?? DateTime.now().millisecondsSinceEpoch);
+    final timeText = _formatMessageTime(dt);
+    final status = _getDeliveryStatus(message);
+
+    final showGroupFooter = !nextMessageInGroup;
+
+    final List<String> attachments =
+        (message.metadata?['attachments'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+    final String? uploadStatus = message.metadata?['upload_status'];
+    final List<String> localFiles =
+        (message.metadata?['local_files'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+
+    // Use local files if message is sending, uploaded files otherwise
+    final List<String> filesToShow =
+        uploadStatus == 'sending' ? localFiles : attachments;
+
+    return Column(
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            margin: EdgeInsets.only(
+              bottom: 0,
+              left: isMe ? 8 : 0,
+              right: isMe ? 0 : 8,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft:
+                    isMe ? const Radius.circular(16) : const Radius.circular(0),
+                bottomRight:
+                    isMe ? const Radius.circular(0) : const Radius.circular(16),
+              ),
+              color: isMe ? AppColors.secondaryLight : AppColors.cardColor,
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showGroupFooter && !isMe)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      [
+                        message.author.firstName ?? '',
+                        message.author.lastName ?? '',
+                      ].where((part) => part.trim().isNotEmpty).join(' '),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.secondaryDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                if (message is types.TextMessage)
+                  filesToShow.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 6,
+                              children: [
+                                ...filesToShow.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final filePath = entry.value;
+                                  return InkWell(
+                                    onTap: uploadStatus == 'sending'
+                                        ? null
+                                        : () {
+                                            _handleFilePreview(
+                                              context,
+                                              filePath,
+                                              index,
+                                              attachments,
+                                            );
+                                          },
+                                    child: Stack(
+                                      children: [
+                                        FileViewer(
+                                          filePath: filePath,
+                                          size: FileViewerSize.large,
+                                        ),
+                                        if (uploadStatus == 'sending')
+                                          Positioned.fill(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withOpacity(0.3),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                            Color>(
+                                                      Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
+                            ),
+                            if (uploadStatus == 'sending')
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'Sending...',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: isMe
+                                        ? Colors.white70
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
+                      : Text(
+                          message.text,
+                          style: TextStyle(
+                            color: isMe ? Colors.white : AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )
+                else if (message is types.AudioMessage)
+                  _buildAudioPlayer(message, isMe)
+                else
+                  Text(
+                    'Message',
+                    style: TextStyle(
+                      color: isMe ? Colors.white : AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (showGroupFooter && uploadStatus != 'sending')
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  timeText,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (status.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    status,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildAudioPlayer(types.AudioMessage audioMessage, bool isMe) {

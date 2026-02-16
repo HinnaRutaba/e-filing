@@ -104,6 +104,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
   Duration currentPosition = Duration.zero;
   bool isPlaying = false;
   bool isPausing = true;
+  bool hasCompleted = false;
   Uint8List? _audioBytes;
 
   @override
@@ -210,9 +211,14 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
       }
     });
     _audioPlayer.onPlayerComplete.listen((event) {
-      isPausing = false;
+      setState(() {
+        isPlaying = false;
+        isPausing = false;
+        hasCompleted = true;
+        currentPosition = audioDuration; // Set to end position
+      });
       _controller.onPlayerStopped(this);
-      _audioPlayer.release();
+      // Don't release - keep the source loaded for replay
     });
 
     _audioPlayer.onDurationChanged.listen((Duration duration) {
@@ -267,10 +273,23 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
     // Use controller to stop other players and play this one
     _controller.playExclusive(this);
 
-    isPausing
-        ? _audioPlayer.resume()
-        : _audioPlayer
-            .play(BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+    // If audio has completed, restart from beginning
+    if (hasCompleted) {
+      await _audioPlayer.stop();
+      await _audioPlayer.setSource(
+          BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+      setState(() {
+        hasCompleted = false;
+        currentPosition = Duration.zero;
+      });
+      await _audioPlayer.resume();
+    } else {
+      // Normal play/resume logic
+      isPausing
+          ? _audioPlayer.resume()
+          : _audioPlayer.play(
+              BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+    }
   }
 
   /// Internal pause method called by controller (doesn't update state)
@@ -303,18 +322,10 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
                     isPlaying = !isPlaying;
                   });
                 },
-                child: Container(
-                  height: widget.buttonSize,
-                  width: widget.buttonSize,
-                  decoration: BoxDecoration(
-                    color: widget.iconBackgoundColor,
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Icon(
-                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    color: widget.iconColor,
-                    size: 4 * widget.buttonSize / 5,
-                  ),
+                child: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: widget.iconColor,
+                  size: 4 * widget.buttonSize / 5,
                 ),
               ),
               const SizedBox(
