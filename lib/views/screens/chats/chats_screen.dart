@@ -236,15 +236,34 @@ class ChatsListView extends StatelessWidget {
                                 chat: chat, userId: userId) !=
                             true) {
                           lastMsg = "You are no longer in this discussion";
-                        } else if (chat.lastMessage != null &&
-                            chat.lastMessage!.text.isNotEmpty) {
+                        } else if (chat.lastMessage != null) {
                           // Check if the message was sent by current user
                           final isCurrentUser =
                               chat.lastMessage!.userId == userId;
                           final senderName = isCurrentUser
                               ? "You"
                               : chat.lastMessage!.userName;
-                          lastMsg = "$senderName: ${chat.lastMessage!.text}";
+
+                          // Check for attachments
+                          if (chat.lastMessage!.attachments.isNotEmpty) {
+                            final hasAudio = chat.lastMessage!.attachments.any(
+                                (attachment) =>
+                                    attachment != null &&
+                                    (attachment.endsWith('.m4a') ||
+                                        attachment.endsWith('.aac') ||
+                                        attachment.endsWith('.mp3') ||
+                                        attachment.endsWith('.wav')));
+
+                            if (hasAudio) {
+                              lastMsg = "$senderName sent an audio";
+                            } else {
+                              lastMsg = "$senderName sent an attachment";
+                            }
+                          } else if (chat.lastMessage!.text.isNotEmpty) {
+                            lastMsg = "$senderName: ${chat.lastMessage!.text}";
+                          } else {
+                            lastMsg = "No messages yet";
+                          }
                         } else {
                           lastMsg = "No messages yet";
                         }
@@ -309,9 +328,9 @@ class ChatsListView extends StatelessWidget {
                                     children: [
                                       AppText.bodyMedium(
                                         lastMsg,
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        color: Colors.grey[800],
+                                        color: Colors.grey[600],
                                       )
                                     ],
                                   ),
