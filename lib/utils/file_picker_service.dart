@@ -187,20 +187,15 @@ class FilePickerService {
   Future<void> downloadFile(
       BuildContext context, fileUrl, String fileName) async {
     try {
-      // Request storage permission
       final permission = Permission.mediaLibrary;
-      print("PERMMMM______${permission}");
 
-      // Check current permission status
       PermissionStatus status = await permission.status;
-      print("Current permission status: $status");
 
       if (status.isGranted) {
         print("Permission already granted, proceeding with download");
       } else if (status.isDenied || status.isLimited) {
-        // Request permission if it's denied or limited
         final result = await permission.request();
-        print("RSULLT______${result}");
+
         if (!result.isGranted) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +209,6 @@ class FilePickerService {
           return;
         }
       } else if (status.isPermanentlyDenied) {
-        // Permission is permanently denied, show settings dialog
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -233,7 +227,6 @@ class FilePickerService {
         return;
       }
 
-      // Get the downloads directory or documents directory
       Directory? downloadsDir;
       if (Platform.isAndroid) {
         downloadsDir = Directory('/storage/emulated/0/Download');
@@ -269,11 +262,9 @@ class FilePickerService {
         );
       }
 
-      // Download the file
       final dio = Dio();
       await dio.download(fileUrl, filePath);
 
-      // Show success message with open option
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
