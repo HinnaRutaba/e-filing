@@ -230,11 +230,25 @@ class ChatsListView extends StatelessWidget {
                       },
                       itemBuilder: (context, index) {
                         final chat = filteredChats[index];
-                        final lastMsg = _chatService.isParticipantInChat(
-                                    chat: chat, userId: userId) !=
-                                true
-                            ? "You are no longer in this discussion"
-                            : chat.lastMessage?.text ?? "No messages yet";
+                        String lastMsg;
+
+                        if (_chatService.isParticipantInChat(
+                                chat: chat, userId: userId) !=
+                            true) {
+                          lastMsg = "You are no longer in this discussion";
+                        } else if (chat.lastMessage != null &&
+                            chat.lastMessage!.text.isNotEmpty) {
+                          // Check if the message was sent by current user
+                          final isCurrentUser =
+                              chat.lastMessage!.userId == userId;
+                          final senderName = isCurrentUser
+                              ? "You"
+                              : chat.lastMessage!.userName;
+                          lastMsg = "$senderName: ${chat.lastMessage!.text}";
+                        } else {
+                          lastMsg = "No messages yet";
+                        }
+
                         final int activeUsers = chat.activeParticipants.length;
 
                         return Animate(
@@ -264,20 +278,35 @@ class ChatsListView extends StatelessWidget {
                                     backgroundColor: AppColors.secondaryDark,
                                     child: Icon(Icons.groups),
                                   ),
-                                  title: AppText.titleMedium(
-                                      "${chat?.fileBarCode ?? chat.fileId}"),
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: AppText.titleMedium(
+                                            "${chat?.fileBarCode ?? chat.fileId}"),
+                                      ),
+                                      // Row(
+                                      //   children: [
+                                      //     const Icon(
+                                      //       Icons.person,
+                                      //       color: AppColors.secondaryDark,
+                                      //       size: 16,
+                                      //     ),
+                                      //     const SizedBox(width: 2),
+                                      //     AppText.labelMedium(
+                                      //       activeUsers.toString(),
+                                      //       maxLines: 1,
+                                      //       fontWeight: FontWeight.w600,
+                                      //       overflow: TextOverflow.ellipsis,
+                                      //       color: AppColors.secondaryDark,
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                    ],
+                                  ),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      AppText.labelMedium(
-                                        "$activeUsers participant${activeUsers > 1 ? 's' : ''}",
-                                        maxLines: 1,
-                                        fontWeight: FontWeight.w600,
-                                        overflow: TextOverflow.ellipsis,
-                                        color: AppColors.secondaryDark,
-                                      ),
-                                      const SizedBox(height: 4),
                                       AppText.bodyMedium(
                                         lastMsg,
                                         maxLines: 1,

@@ -841,7 +841,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     final timeText = _formatMessageTime(dt);
     final status = _getDeliveryStatus(message);
 
-    final showGroupFooter = !nextMessageInGroup;
+    final showGroupHeader = nextMessageInGroup;
 
     final List<String> attachments =
         (message.metadata?['attachments'] as List<dynamic>?)
@@ -887,7 +887,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (showGroupFooter && !isMe)
+                if (showGroupHeader && !isMe)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
@@ -1002,7 +1002,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
           ),
         ),
-        if (showGroupFooter && uploadStatus != 'sending')
+        if (!nextMessageInGroup && uploadStatus != 'sending')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
             child: Row(
