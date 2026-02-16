@@ -237,32 +237,49 @@ class ChatsListView extends StatelessWidget {
                             true) {
                           lastMsg = "You are no longer in this discussion";
                         } else if (chat.lastMessage != null) {
-                          // Check if the message was sent by current user
-                          final isCurrentUser =
-                              chat.lastMessage!.userId == userId;
-                          final senderName = isCurrentUser
-                              ? "You"
-                              : chat.lastMessage!.userName;
+                          // Check if user joined after the last message was sent
+                          final userParticipant = chat.participants
+                              .where((p) =>
+                                  p.userId == userId &&
+                                  p.userDesignationId == userDesignationId)
+                              .firstOrNull;
 
-                          // Check for attachments
-                          if (chat.lastMessage!.attachments.isNotEmpty) {
-                            final hasAudio = chat.lastMessage!.attachments.any(
-                                (attachment) =>
-                                    attachment != null &&
-                                    (attachment.endsWith('.m4a') ||
-                                        attachment.endsWith('.aac') ||
-                                        attachment.endsWith('.mp3') ||
-                                        attachment.endsWith('.wav')));
-
-                            if (hasAudio) {
-                              lastMsg = "$senderName sent an audio";
-                            } else {
-                              lastMsg = "$senderName sent an attachment";
-                            }
-                          } else if (chat.lastMessage!.text.isNotEmpty) {
-                            lastMsg = "$senderName: ${chat.lastMessage!.text}";
-                          } else {
+                          if (userParticipant != null &&
+                              userParticipant.joinedAt != null &&
+                              userParticipant.joinedAt
+                                      ?.isAfter(chat.lastMessage!.sentAt) ==
+                                  true) {
+                            // User joined after this message was sent, don't show message content
                             lastMsg = "No messages yet";
+                          } else {
+                            // Check if the message was sent by current user
+                            final isCurrentUser =
+                                chat.lastMessage!.userId == userId;
+                            final senderName = isCurrentUser
+                                ? "You"
+                                : chat.lastMessage!.userName;
+
+                            // Check for attachments
+                            if (chat.lastMessage!.attachments.isNotEmpty) {
+                              final hasAudio = chat.lastMessage!.attachments
+                                  .any((attachment) =>
+                                      attachment != null &&
+                                      (attachment.endsWith('.m4a') ||
+                                          attachment.endsWith('.aac') ||
+                                          attachment.endsWith('.mp3') ||
+                                          attachment.endsWith('.wav')));
+
+                              if (hasAudio) {
+                                lastMsg = "$senderName sent an audio";
+                              } else {
+                                lastMsg = "$senderName sent an attachment";
+                              }
+                            } else if (chat.lastMessage!.text.isNotEmpty) {
+                              lastMsg =
+                                  "$senderName: ${chat.lastMessage!.text}";
+                            } else {
+                              lastMsg = "No messages yet";
+                            }
                           }
                         } else {
                           lastMsg = "No messages yet";
