@@ -292,36 +292,18 @@ class ChatsListView extends StatelessWidget {
                                 isLabelVisible:
                                     chat.hasUnread(userDesignationId),
                                 child: ListTile(
-                                  titleAlignment: ListTileTitleAlignment.top,
+                                  titleAlignment: ListTileTitleAlignment.center,
+                                  horizontalTitleGap: 8,
                                   leading: const CircleAvatar(
+                                    radius: 16,
                                     backgroundColor: AppColors.secondaryDark,
-                                    child: Icon(Icons.groups),
+                                    child: Icon(
+                                      Icons.groups,
+                                      size: 20,
+                                    ),
                                   ),
-                                  title: Row(
-                                    children: [
-                                      Expanded(
-                                        child: AppText.titleMedium(
-                                            "${chat?.fileBarCode ?? chat.fileId}"),
-                                      ),
-                                      // Row(
-                                      //   children: [
-                                      //     const Icon(
-                                      //       Icons.person,
-                                      //       color: AppColors.secondaryDark,
-                                      //       size: 16,
-                                      //     ),
-                                      //     const SizedBox(width: 2),
-                                      //     AppText.labelMedium(
-                                      //       activeUsers.toString(),
-                                      //       maxLines: 1,
-                                      //       fontWeight: FontWeight.w600,
-                                      //       overflow: TextOverflow.ellipsis,
-                                      //       color: AppColors.secondaryDark,
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                    ],
-                                  ),
+                                  title: AppText.titleMedium(
+                                      "${chat?.fileBarCode ?? chat.fileId}"),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,

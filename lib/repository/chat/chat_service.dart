@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -356,40 +357,89 @@ class ChatService {
         .collectionGroup('participants')
         .where('user_designation_id', isEqualTo: userDesignationId)
         .snapshots()
-        .asyncMap((participantSnapshot) async {
+        .asyncExpand((participantSnapshot) {
       // Get unique chat IDs from participant documents
       final chatIds = participantSnapshot.docs
           .map((doc) => doc.reference.parent.parent!.id)
           .toSet()
           .toList();
 
-      if (chatIds.isEmpty) return <ChatModel>[];
+      if (chatIds.isEmpty) return Stream.value(<ChatModel>[]);
 
-      // Fetch all chat documents
-      final chats = <ChatModel>[];
-      for (final chatId in chatIds) {
-        final chatDoc =
-            await _firestore.collection(chatsCollection).doc(chatId).get();
-        if (chatDoc.exists) {
-          final chat = ChatModel.fromJson(chatDoc.data()!, chatDoc.id);
-          // Additional filter by userId to ensure both userId and userDesignationId match
-          if (chat.participants.any((p) =>
-              p.userId == userId && p.userDesignationId == userDesignationId)) {
-            chats.add(chat);
-          }
+      // Create streams for each chat document to listen to real-time changes
+      final chatStreams = chatIds
+          .map((chatId) => _firestore
+                  .collection(chatsCollection)
+                  .doc(chatId)
+                  .snapshots()
+                  .map((doc) {
+                if (!doc.exists) return null;
+                final chat = ChatModel.fromJson(doc.data()!, doc.id);
+                // Filter by userId to ensure both userId and userDesignationId match
+                if (chat.participants.any((p) =>
+                    p.userId == userId &&
+                    p.userDesignationId == userDesignationId)) {
+                  return chat;
+                }
+                return null;
+              }))
+          .toList();
+
+      // Combine all chat streams and filter out nulls
+      return _combineLatestList(chatStreams).map((chats) {
+        final validChats =
+            chats.where((chat) => chat != null).cast<ChatModel>().toList();
+
+        // Sort by last message time
+        validChats.sort((a, b) {
+          final aTime =
+              a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime =
+              b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime); // newest first
+        });
+
+        return validChats;
+      });
+    });
+  }
+
+  // Helper method to combine multiple streams
+  Stream<List<T>> _combineLatestList<T>(List<Stream<T>> streams) {
+    if (streams.isEmpty) return Stream.value(<T>[]);
+
+    return Stream.multi((controller) {
+      final values = List<T?>.filled(streams.length, null);
+      final subscriptions = <StreamSubscription>[];
+      var completedCount = 0;
+
+      void checkAndEmit() {
+        if (completedCount == streams.length) {
+          controller.add(values.cast<T>());
         }
       }
 
-      // Sort by last message time
-      chats.sort((a, b) {
-        final aTime =
-            a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bTime =
-            b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bTime.compareTo(aTime); // newest first
-      });
+      for (int i = 0; i < streams.length; i++) {
+        subscriptions.add(streams[i].listen(
+          (value) {
+            bool wasNull = values[i] == null;
+            values[i] = value;
+            if (wasNull) completedCount++;
+            checkAndEmit();
+          },
+          onError: controller.addError,
+          onDone: () {
+            if (values[i] == null) completedCount++;
+            checkAndEmit();
+          },
+        ));
+      }
 
-      return chats;
+      controller.onCancel = () {
+        for (final sub in subscriptions) {
+          sub.cancel();
+        }
+      };
     });
   }
 
