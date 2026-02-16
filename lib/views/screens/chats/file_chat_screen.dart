@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/message_model.dart';
@@ -59,6 +60,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   ChatModel? chat;
   bool _loading = true;
+  List<types.Message> _allMessages =
+      []; // Store all messages for bubble builder access
 
   UserModel get _currentUser => ref.read(authController);
 
@@ -305,6 +308,15 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     }
   }
 
+  types.Message? _getNextMessage(types.Message currentMessage) {
+    for (int i = 0; i < _allMessages.length - 1; i++) {
+      if (_allMessages[i].id == currentMessage.id) {
+        return _allMessages[i + 1];
+      }
+    }
+    return null; // No next message found or current message is the last one
+  }
+
   void _handleFilePreview(BuildContext context, String filePath, int index,
       List<String> attachments) {
     final fileName = filePath.split('/').last.toLowerCase();
@@ -354,82 +366,193 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return chat == null
-        ? Scaffold(
-            appBar: AppBar(
-              title: AppText.headlineSmall(
-                "File Discussion",
-                color: AppColors.primaryDark,
-              ),
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              titleSpacing: 0,
-              backgroundColor: AppColors.background,
-              leading: IconButton(
-                onPressed: () => RouteHelper.pop(),
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.primaryDark,
-                ),
-              ),
+    return Stack(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(AssetsConstants.chatBG),
+              fit: BoxFit.cover,
             ),
-            body: Center(
-              child: _loading
-                  ? Center(
-                      child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: 16),
-                        AppText.bodyMedium(
-                          "Getting chat ready",
-                          color: Colors.grey,
-                        ),
-                      ],
-                    ))
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppText.bodyMedium(" No chat available for this file."),
-                        AppSolidButton(
-                            onPressed: () {
-                              _initChatRoom();
-                            },
-                            text: "Start Chat"),
-                      ],
-                    ),
-            ),
-          )
-        : Scaffold(
-            //backgroundColor: Colors.grey[900],
-            appBar: AppBar(
-              title: StreamBuilder<ChatModel>(
-                  stream: chat == null
-                      ? null
-                      : chatService.readChatStream(chat!.id),
-                  builder: (context, snapshot) {
-                    final Widget title = AppText.headlineSmall(
-                      "File Discussion",
+          ),
+        ),
+        chat == null
+            ? Scaffold(
+                appBar: AppBar(
+                  title: AppText.headlineSmall(
+                    "File Discussion",
+                    color: AppColors.primaryDark,
+                  ),
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  titleSpacing: 0,
+                  backgroundColor: Colors.transparent,
+                  leading: IconButton(
+                    onPressed: () => RouteHelper.pop(),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
                       color: AppColors.primaryDark,
-                    );
-                    if (!snapshot.hasData) {
-                      return title;
-                    }
-                    final chat = snapshot.data!;
-                    bool isUserActive = chatService.isParticipantInChat(
-                      chat: chat,
-                      userId: _currentUser.id!,
-                    );
-                    return !isUserActive
-                        ? title
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: chat.activeParticipants.isEmpty == true
-                                      ? null
-                                      : () {
+                    ),
+                  ),
+                ),
+                body: Center(
+                  child: _loading
+                      ? Center(
+                          child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 16),
+                            AppText.bodyMedium(
+                              "Getting chat ready",
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ))
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppText.bodyMedium(
+                                " No chat available for this file."),
+                            AppSolidButton(
+                                onPressed: () {
+                                  _initChatRoom();
+                                },
+                                text: "Start Chat"),
+                          ],
+                        ),
+                ),
+              )
+            : Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: AppBar(
+                  title: StreamBuilder<ChatModel>(
+                      stream: chat == null
+                          ? null
+                          : chatService.readChatStream(chat!.id),
+                      builder: (context, snapshot) {
+                        final Widget title = AppText.headlineSmall(
+                          "File Discussion",
+                          color: AppColors.primaryDark,
+                        );
+                        if (!snapshot.hasData) {
+                          return title;
+                        }
+                        final chat = snapshot.data!;
+                        bool isUserActive = chatService.isParticipantInChat(
+                          chat: chat,
+                          userId: _currentUser.id!,
+                        );
+                        return !isUserActive
+                            ? title
+                            : Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: chat.activeParticipants.isEmpty ==
+                                              true
+                                          ? null
+                                          : () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                constraints: BoxConstraints(
+                                                  maxHeight:
+                                                      MediaQuery.sizeOf(context)
+                                                              .height *
+                                                          0.9,
+                                                ),
+                                                isScrollControlled: true,
+                                                enableDrag: false,
+                                                backgroundColor:
+                                                    AppColors.background,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                    topLeft:
+                                                        Radius.circular(16),
+                                                    topRight:
+                                                        Radius.circular(16),
+                                                  ),
+                                                ),
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return ChatParticipantsView(
+                                                    chatId: chat.id,
+                                                    participantsToAdd:
+                                                        potentialParticipantsToAdd,
+                                                  );
+                                                },
+                                              );
+                                            },
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          title,
+                                          AppText.labelMedium(
+                                            "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  ...[
+                                    IconButton(
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          constraints: BoxConstraints(
+                                            maxHeight:
+                                                MediaQuery.sizeOf(context)
+                                                        .height *
+                                                    0.9,
+                                          ),
+                                          isScrollControlled: true,
+                                          enableDrag: false,
+                                          backgroundColor: AppColors.background,
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(16),
+                                              topRight: Radius.circular(16),
+                                            ),
+                                          ),
+                                          builder: (BuildContext context) {
+                                            return ChatParticipantsView(
+                                              chatId: chat.id,
+                                              participantsToAdd:
+                                                  potentialParticipantsToAdd,
+                                              addMembers: true,
+                                            );
+                                            //   ChatAddParticipant(
+                                            //   chatId: chat!.id,
+                                            //   userDesgId: _currentUser
+                                            //       .currentDesignation!.userDesgId!,
+                                            // );
+                                          },
+                                        );
+                                      },
+                                      icon: Column(
+                                        children: [
+                                          const Icon(
+                                            Icons.person_add_rounded,
+                                            size: 22,
+                                            color: AppColors.primaryDark,
+                                          ),
+                                          AppText.labelSmall(
+                                            "Add",
+                                            color: AppColors.primaryDark,
+                                            fontWeight: FontWeight.w600,
+                                          )
+                                        ],
+                                      ),
+                                      color: AppColors.primaryDark,
+                                    ),
+                                    if (file != null)
+                                      IconButton(
+                                        onPressed: () {
                                           showModalBottomSheet(
                                             context: context,
                                             constraints: BoxConstraints(
@@ -439,7 +562,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                       0.9,
                                             ),
                                             isScrollControlled: true,
-                                            enableDrag: false,
                                             backgroundColor:
                                                 AppColors.background,
                                             shape: const RoundedRectangleBorder(
@@ -449,374 +571,305 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                               ),
                                             ),
                                             builder: (BuildContext context) {
-                                              return ChatParticipantsView(
-                                                chatId: chat.id,
-                                                participantsToAdd:
-                                                    potentialParticipantsToAdd,
+                                              return StickyTagDrawer(
+                                                mainContent:
+                                                    SingleChildScrollView(
+                                                  padding:
+                                                      const EdgeInsets.all(16),
+                                                  child: Column(
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: AppText
+                                                                .headlineSmall(
+                                                                    "File Preview"),
+                                                          ),
+                                                          IconButton(
+                                                            onPressed: () =>
+                                                                RouteHelper
+                                                                    .pop(),
+                                                            icon: const Icon(
+                                                              Icons.close,
+                                                              color: AppColors
+                                                                  .textPrimary,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      PreviewFile(
+                                                        content: file?.content,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                flagText: "Flags",
+                                                panelContent:
+                                                    SingleChildScrollView(
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .fromLTRB(
+                                                        16, 0, 16, 16),
+                                                    child: file?.attachments !=
+                                                                null &&
+                                                            file!.attachments
+                                                                .isNotEmpty
+                                                        ? ReadOnlyFlagAttachmentList(
+                                                            header: AppText
+                                                                .titleMedium(
+                                                                    "Attached Flags"),
+                                                            data: file!
+                                                                .attachments,
+                                                          )
+                                                            .animate(
+                                                                delay: 100.ms)
+                                                            .fade(
+                                                                duration:
+                                                                    400.ms,
+                                                                curve: Curves
+                                                                    .easeInOut)
+                                                            .slide(
+                                                                begin:
+                                                                    const Offset(
+                                                                        1, 0),
+                                                                end:
+                                                                    Offset.zero)
+                                                        : Center(
+                                                            child: AppText
+                                                                .bodyMedium(
+                                                                    "No flags available"),
+                                                          ),
+                                                  ),
+                                                ),
                                               );
                                             },
                                           );
                                         },
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      title,
-                                      AppText.labelMedium(
-                                        "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              ...[
-                                IconButton(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.sizeOf(context).height *
-                                                0.9,
-                                      ),
-                                      isScrollControlled: true,
-                                      enableDrag: false,
-                                      backgroundColor: AppColors.background,
-                                      shape: const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(16),
-                                          topRight: Radius.circular(16),
-                                        ),
-                                      ),
-                                      builder: (BuildContext context) {
-                                        return ChatParticipantsView(
-                                          chatId: chat.id,
-                                          participantsToAdd:
-                                              potentialParticipantsToAdd,
-                                          addMembers: true,
-                                        );
-                                        //   ChatAddParticipant(
-                                        //   chatId: chat!.id,
-                                        //   userDesgId: _currentUser
-                                        //       .currentDesignation!.userDesgId!,
-                                        // );
-                                      },
-                                    );
-                                  },
-                                  icon: Column(
-                                    children: [
-                                      const Icon(
-                                        Icons.person_add_rounded,
-                                        size: 22,
-                                        color: AppColors.primaryDark,
-                                      ),
-                                      AppText.labelSmall(
-                                        "Add",
-                                        color: AppColors.primaryDark,
-                                        fontWeight: FontWeight.w600,
-                                      )
-                                    ],
-                                  ),
-                                  color: AppColors.primaryDark,
-                                ),
-                                if (file != null)
-                                  IconButton(
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        constraints: BoxConstraints(
-                                          maxHeight: MediaQuery.sizeOf(context)
-                                                  .height *
-                                              0.9,
-                                        ),
-                                        isScrollControlled: true,
-                                        backgroundColor: AppColors.background,
-                                        shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(16),
-                                            topRight: Radius.circular(16),
-                                          ),
-                                        ),
-                                        builder: (BuildContext context) {
-                                          return StickyTagDrawer(
-                                            mainContent: SingleChildScrollView(
-                                              padding: const EdgeInsets.all(16),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: AppText
-                                                            .headlineSmall(
-                                                                "File Preview"),
-                                                      ),
-                                                      IconButton(
-                                                        onPressed: () =>
-                                                            RouteHelper.pop(),
-                                                        icon: const Icon(
-                                                          Icons.close,
-                                                          color: AppColors
-                                                              .textPrimary,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  PreviewFile(
-                                                    content: file?.content,
-                                                  ),
-                                                ],
-                                              ),
+                                        icon: Column(
+                                          children: [
+                                            const Icon(
+                                              Icons.file_copy_outlined,
+                                              size: 22,
+                                              color: AppColors.primaryDark,
                                             ),
-                                            flagText: "Flags",
-                                            panelContent: SingleChildScrollView(
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                        16, 0, 16, 16),
-                                                child: file?.attachments !=
-                                                            null &&
-                                                        file!.attachments
-                                                            .isNotEmpty
-                                                    ? ReadOnlyFlagAttachmentList(
-                                                        header:
-                                                            AppText.titleMedium(
-                                                                "Attached Flags"),
-                                                        data: file!.attachments,
-                                                      )
-                                                        .animate(delay: 100.ms)
-                                                        .fade(
-                                                            duration: 400.ms,
-                                                            curve: Curves
-                                                                .easeInOut)
-                                                        .slide(
-                                                            begin: const Offset(
-                                                                1, 0),
-                                                            end: Offset.zero)
-                                                    : Center(
-                                                        child: AppText.bodyMedium(
-                                                            "No flags available"),
-                                                      ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    icon: Column(
-                                      children: [
-                                        const Icon(
-                                          Icons.file_copy_outlined,
-                                          size: 22,
-                                          color: AppColors.primaryDark,
-                                        ),
-                                        AppText.labelSmall(
-                                          "File",
-                                          color: AppColors.primaryDark,
-                                          fontWeight: FontWeight.w600,
-                                        )
-                                      ],
-                                    ),
-                                    color: AppColors.primaryDark,
-                                  ),
-                              ],
-                            ],
-                          );
-                  }),
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              titleSpacing: 0,
-              backgroundColor: AppColors.background,
-              leading: IconButton(
-                onPressed: () => RouteHelper.pop(),
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ),
-            body: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : StreamBuilder<List<MessageModel>>(
-                    stream: chatService.readRecentMessagesStream(chat!.id),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final joinedAt = participant?.joinedAt;
-                      final latest = snapshot.data!
-                          .where((e) => !(e.hiddenFrom?.contains(_currentUser!
-                                  .currentDesignation!.userDesgId) ??
-                              false))
-                          .where((e) => joinedAt == null
-                              ? true
-                              : !e.sentAt.isBefore(joinedAt))
-                          .toList();
-
-                      final allMessages = [..._olderMessages, ...latest]
-                          .map(_mapMessage)
-                          .toList();
-
-                      chatService.markAllMessagesAsRead(
-                        chatId: chat!.id,
-                        userDesignationId:
-                            _currentUser.currentDesignation!.userDesgId!,
-                      );
-
-                      return Chat(
-                        messages: allMessages,
-                        // messages
-                        //     .where((m) => participant?.removedAt == null
-                        //         ? true
-                        //         : m.createdAt! <
-                        //             participant!
-                        //                 .removedAt!.millisecondsSinceEpoch)
-                        //     .toList(),
-                        onSendPressed: (text) {
-                          _handleSendPressed(text);
-                        },
-                        user: types.User(id: _currentUser.id.toString()),
-                        onEndReached: _loadMore,
-                        onEndReachedThreshold: 0.5,
-                        timeFormat: DateFormat('HH:mm'),
-                        dateFormat: DateFormat('dd MMM yyyy'),
-                        dateHeaderBuilder: (header) {
-                          return Center(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: AppText.labelMedium(
-                                _formatDateHeader(header.dateTime),
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          );
-                        },
-                        customBottomWidget: Padding(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom,
-                          ),
-                          child: StreamBuilder<ChatModel>(
-                              stream: chat == null
-                                  ? null
-                                  : chatService.readChatStream(chat!.id),
-                              builder: (context, snapshot) {
-                                if (snapshot.data == null) {
-                                  return const SizedBox.shrink();
-                                }
-                                final chat = snapshot.data!;
-                                this.chat = chat;
-                                return !chatService.isParticipantInChat(
-                                  chat: chat,
-                                  userId: _currentUser.id!,
-                                )
-                                    ? Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: AppText.bodyMedium(
-                                            "You are no longer part of this conversation."),
-                                      )
-                                    : Container(
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.appBarColor,
-                                          borderRadius: BorderRadius.only(
-                                            topRight: Radius.circular(16),
-                                            topLeft: Radius.circular(16),
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black12,
-                                              offset: Offset(0, -2),
-                                              blurRadius: 2,
+                                            AppText.labelSmall(
+                                              "File",
+                                              color: AppColors.primaryDark,
+                                              fontWeight: FontWeight.w600,
                                             )
                                           ],
                                         ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 8,
-                                        ),
-                                        child: ChatInputBar(
-                                          chat: chat!,
-                                          chatService: chatService,
-                                          userId: _currentUser.id!,
-                                          userDesignationId: _currentUser
-                                              .currentDesignation!.userDesgId!,
-                                          userTitle: _currentUser.userTitle!,
-                                          onSendText: (text) {
-                                            _handleSendPressed(
-                                                types.PartialText(text: text));
-                                          },
-                                        ),
-                                      );
-                              }),
-                        ),
-                        theme: const DefaultChatTheme(
-                          primaryColor: AppColors.secondaryLight,
-                          secondaryColor: AppColors.cardColor,
-                          inputTextColor: AppColors.textPrimary,
-                          inputPadding:
-                              EdgeInsets.symmetric(horizontal: 0, vertical: 16),
-                          inputElevation: 18,
-                          inputMargin: EdgeInsets.zero,
-                          userNameTextStyle: TextStyle(
-                            color: AppColors.secondaryDark,
-                            fontSize: 12,
-                            //fontWeight: FontWeight.w500,
-                          ),
-                          userAvatarNameColors: [
-                            AppColors.secondary,
-                            AppColors.primaryDark,
-                            AppColors.secondaryDark,
-                          ],
-                          inputTextCursorColor: AppColors.primaryDark,
-                          userAvatarImageBackgroundColor: AppColors.secondary,
-                          bubbleMargin:
-                              EdgeInsets.only(bottom: 8, left: 8, right: 0),
-                          backgroundColor: AppColors.background,
-                          sentMessageBodyTextStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          receivedMessageBodyTextStyle: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        showUserNames: false,
-                        showUserAvatars: true,
-                        avatarBuilder: (user) {
-                          return Container(
-                            alignment: Alignment.topLeft,
-                            padding: const EdgeInsets.only(
-                              bottom: 28,
-                              left: 4,
-                              right: 8,
-                            ),
-                            child: GestureDetector(
-                              // onTap: () => onAvatarTap?.call(),
-                              child: CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppColors.secondary,
-                                child: Text(
-                                  HelperUtils.firstTwoLetters(
-                                      "${user.firstName ?? ''} ${user.lastName ?? ''}"),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryDark,
+                                      ),
+                                  ],
+                                ],
+                              );
+                      }),
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  titleSpacing: 0,
+                  backgroundColor: AppColors.background,
+                  leading: IconButton(
+                    onPressed: () => RouteHelper.pop(),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+                body: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : StreamBuilder<List<MessageModel>>(
+                        stream: chatService.readRecentMessagesStream(chat!.id),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+
+                          final joinedAt = participant?.joinedAt;
+                          final latest = snapshot.data!
+                              .where((e) => !(e.hiddenFrom?.contains(
+                                      _currentUser!
+                                          .currentDesignation!.userDesgId) ??
+                                  false))
+                              .where((e) => joinedAt == null
+                                  ? true
+                                  : !e.sentAt.isBefore(joinedAt))
+                              .toList();
+
+                          final allMessages = [..._olderMessages, ...latest]
+                              .map(_mapMessage)
+                              .toList();
+
+                          // Store messages for bubble builder access
+                          _allMessages = allMessages;
+
+                          chatService.markAllMessagesAsRead(
+                            chatId: chat!.id,
+                            userDesignationId:
+                                _currentUser.currentDesignation!.userDesgId!,
+                          );
+
+                          return Chat(
+                            messages: allMessages,
+                            // messages
+                            //     .where((m) => participant?.removedAt == null
+                            //         ? true
+                            //         : m.createdAt! <
+                            //             participant!
+                            //                 .removedAt!.millisecondsSinceEpoch)
+                            //     .toList(),
+                            onSendPressed: (text) {
+                              _handleSendPressed(text);
+                            },
+                            user: types.User(id: _currentUser.id.toString()),
+                            onEndReached: _loadMore,
+                            onEndReachedThreshold: 0.5,
+                            timeFormat: DateFormat('HH:mm'),
+                            dateFormat: DateFormat('dd MMM yyyy'),
+                            dateHeaderBuilder: (header) {
+                              return Center(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: AppText.labelMedium(
+                                    _formatDateHeader(header.dateTime),
+                                    color: Colors.grey[600],
                                   ),
                                 ),
+                              );
+                            },
+                            customBottomWidget: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: MediaQuery.of(context).padding.bottom,
+                              ),
+                              child: StreamBuilder<ChatModel>(
+                                  stream: chat == null
+                                      ? null
+                                      : chatService.readChatStream(chat!.id),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.data == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final chat = snapshot.data!;
+                                    this.chat = chat;
+                                    return !chatService.isParticipantInChat(
+                                      chat: chat,
+                                      userId: _currentUser.id!,
+                                    )
+                                        ? Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: AppText.bodyMedium(
+                                                "You are no longer part of this conversation."),
+                                          )
+                                        : Container(
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.appBarColor,
+                                              borderRadius: BorderRadius.only(
+                                                topRight: Radius.circular(16),
+                                                topLeft: Radius.circular(16),
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black12,
+                                                  offset: Offset(0, -2),
+                                                  blurRadius: 2,
+                                                )
+                                              ],
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                              vertical: 8,
+                                            ),
+                                            child: ChatInputBar(
+                                              chat: chat!,
+                                              chatService: chatService,
+                                              userId: _currentUser.id!,
+                                              userDesignationId: _currentUser
+                                                  .currentDesignation!
+                                                  .userDesgId!,
+                                              userTitle:
+                                                  _currentUser.userTitle!,
+                                              onSendText: (text) {
+                                                _handleSendPressed(
+                                                    types.PartialText(
+                                                        text: text));
+                                              },
+                                            ),
+                                          );
+                                  }),
+                            ),
+                            theme: const DefaultChatTheme(
+                              primaryColor: AppColors.secondaryLight,
+                              secondaryColor: AppColors.cardColor,
+                              inputTextColor: AppColors.textPrimary,
+                              inputPadding: EdgeInsets.symmetric(
+                                  horizontal: 0, vertical: 16),
+                              inputElevation: 18,
+                              inputMargin: EdgeInsets.zero,
+                              userNameTextStyle: TextStyle(
+                                color: AppColors.secondaryDark,
+                                fontSize: 12,
+                                //fontWeight: FontWeight.w500,
+                              ),
+                              userAvatarNameColors: [
+                                AppColors.secondary,
+                                AppColors.primaryDark,
+                                AppColors.secondaryDark,
+                              ],
+                              inputTextCursorColor: AppColors.primaryDark,
+                              userAvatarImageBackgroundColor:
+                                  AppColors.secondary,
+                              bubbleMargin:
+                                  EdgeInsets.only(bottom: 8, left: 8, right: 0),
+                              backgroundColor: AppColors.background,
+                              sentMessageBodyTextStyle: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              receivedMessageBodyTextStyle: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
+                            showUserNames: false,
+                            showUserAvatars: true,
+                            avatarBuilder: (user) {
+                              return Container(
+                                alignment: Alignment.topLeft,
+                                padding: const EdgeInsets.only(
+                                  bottom: 28,
+                                  left: 4,
+                                  right: 8,
+                                ),
+                                child: GestureDetector(
+                                  // onTap: () => onAvatarTap?.call(),
+                                  child: CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: AppColors.secondary,
+                                    child: Text(
+                                      HelperUtils.firstTwoLetters(
+                                          "${user.firstName ?? ''} ${user.lastName ?? ''}"),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            bubbleBuilder: _buildMessageBubble,
                           );
                         },
-                        bubbleBuilder: _buildMessageBubble,
-                      );
-                    },
-                  ),
-          );
+                      ),
+              ),
+      ],
+    );
   }
 
   Widget _buildMessageBubble(Widget child,
@@ -835,7 +888,22 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     final timeText = _formatMessageTime(dt);
     final status = _getDeliveryStatus(message);
 
-    final showGroupHeader = nextMessageInGroup;
+    // Get the next message
+    final nextMessage = _getNextMessage(message);
+
+    bool showGroupHeader = !isMe;
+    if (nextMessage != null && !isMe) {
+      final isSameUser = nextMessage.author.id == message.author.id;
+      if (isSameUser &&
+          message.createdAt != null &&
+          nextMessage.createdAt != null) {
+        final currentTime = message.createdAt!;
+        final nextTime = nextMessage.createdAt!;
+        final timeDifferenceMs = (nextTime - currentTime).abs();
+        final oneMinuteMs = 60 * 1000;
+        showGroupHeader = timeDifferenceMs >= oneMinuteMs;
+      }
+    }
 
     final List<String> attachments =
         (message.metadata?['attachments'] as List<dynamic>?)
