@@ -369,6 +369,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     return Stack(
       children: [
         Container(
+          width: double.infinity,
+          height: double.infinity,
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage(AssetsConstants.chatBG),
@@ -378,6 +380,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         ),
         chat == null
             ? Scaffold(
+                backgroundColor: Colors.transparent,
                 appBar: AppBar(
                   title: AppText.headlineSmall(
                     "File Discussion",
@@ -723,6 +726,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                             onSendPressed: (text) {
                               _handleSendPressed(text);
                             },
+
                             user: types.User(id: _currentUser.id.toString()),
                             onEndReached: _loadMore,
                             onEndReachedThreshold: 0.5,
@@ -823,7 +827,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                   AppColors.secondary,
                               bubbleMargin:
                                   EdgeInsets.only(bottom: 8, left: 8, right: 0),
-                              backgroundColor: AppColors.background,
+                              backgroundColor: Colors.transparent,
                               sentMessageBodyTextStyle: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -970,7 +974,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Wrap(
-                              spacing: 4,
+                              spacing: 6,
                               runSpacing: 6,
                               children: [
                                 ...filesToShow.asMap().entries.map((entry) {
