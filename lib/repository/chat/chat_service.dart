@@ -374,14 +374,9 @@ class ChatService {
                   .snapshots()
                   .map((doc) {
                 if (!doc.exists) return null;
+
                 final chat = ChatModel.fromJson(doc.data()!, doc.id);
-                // Filter by userId to ensure both userId and userDesignationId match
-                if (chat.participants.any((p) =>
-                    p.userId == userId &&
-                    p.userDesignationId == userDesignationId)) {
-                  return chat;
-                }
-                return null;
+                return chat;
               }))
           .toList();
 
@@ -454,45 +449,37 @@ class ChatService {
         .collectionGroup('participants')
         .where('user_designation_id', isEqualTo: userDesignationId)
         .snapshots()
-        .asyncMap((participantSnapshot) async {
+        .asyncExpand((participantSnapshot) {
       // Get unique chat IDs from participant documents
       final chatIds = participantSnapshot.docs
           .map((doc) => doc.reference.parent.parent!.id)
           .toSet()
           .toList();
 
-      if (chatIds.isEmpty) return 0;
+      if (chatIds.isEmpty) return Stream.value(0);
 
-      int unreadCount = 0;
-      for (final chatId in chatIds) {
-        final chatDoc =
-            await _firestore.collection(chatsCollection).doc(chatId).get();
-        if (chatDoc.exists) {
-          final data = chatDoc.data()!;
+      final chatStreams = chatIds
+          .map((chatId) => _firestore
+                  .collection(chatsCollection)
+                  .doc(chatId)
+                  .snapshots()
+                  .map((doc) {
+                if (!doc.exists) return 0;
 
-          // Check if user is a participant and not removed
-          final participants = (data['participants'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-              .toList();
-          final isParticipant = participants.any(
-            (p) =>
-                p.userId == userId && p.userDesignationId == userDesignationId,
-          );
+                final data = doc.data()!;
+                final lastMessage = data['last_message'];
 
-          if (!isParticipant) continue;
+                if (lastMessage != null) {
+                  final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
+                  return seenBy.contains(userDesignationId) ? 0 : 1;
+                }
+                return 0;
+              }))
+          .toList();
 
-          // Check if unread
-          final lastMessage = data['last_message'];
-          if (lastMessage != null) {
-            final seenBy = List<int>.from(lastMessage['seen_by'] ?? []);
-            if (!seenBy.contains(userDesignationId)) {
-              unreadCount++;
-            }
-          }
-        }
-      }
-      return unreadCount;
+      return _combineLatestList(chatStreams).map((unreadCounts) {
+        return unreadCounts.fold(0, (sum, count) => sum + count);
+      });
     });
   }
 
@@ -518,16 +505,7 @@ class ChatService {
         final chatDoc =
             await _firestore.collection(chatsCollection).doc(chatId).get();
         if (chatDoc.exists) {
-          final data = chatDoc.data()!;
-          final participants = (data['participants'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-              .toList();
-          final isParticipant = participants.any((p) =>
-              p.userId == userId && p.userDesignationId == userDesignationId);
-          if (isParticipant) {
-            chatCount++;
-          }
+          chatCount++;
         }
       }
       return chatCount;
