@@ -319,6 +319,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
   void _handleFilePreview(BuildContext context, String filePath, int index,
       List<String> attachments) {
+    HelperUtils.hideKeyboard(context);
     final fileName = filePath.split('/').last.toLowerCase();
     final extension = fileName.split('.').last.toLowerCase();
 

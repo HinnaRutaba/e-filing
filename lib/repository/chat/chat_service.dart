@@ -374,14 +374,9 @@ class ChatService {
                   .snapshots()
                   .map((doc) {
                 if (!doc.exists) return null;
+
                 final chat = ChatModel.fromJson(doc.data()!, doc.id);
-                // Filter by userId to ensure both userId and userDesignationId match
-                if (chat.participants.any((p) =>
-                    p.userId == userId &&
-                    p.userDesignationId == userDesignationId)) {
-                  return chat;
-                }
-                return null;
+                return chat;
               }))
           .toList();
 
@@ -470,18 +465,6 @@ class ChatService {
         if (chatDoc.exists) {
           final data = chatDoc.data()!;
 
-          // Check if user is a participant and not removed
-          final participants = (data['participants'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-              .toList();
-          final isParticipant = participants.any(
-            (p) =>
-                p.userId == userId && p.userDesignationId == userDesignationId,
-          );
-
-          if (!isParticipant) continue;
-
           // Check if unread
           final lastMessage = data['last_message'];
           if (lastMessage != null) {
@@ -518,16 +501,7 @@ class ChatService {
         final chatDoc =
             await _firestore.collection(chatsCollection).doc(chatId).get();
         if (chatDoc.exists) {
-          final data = chatDoc.data()!;
-          final participants = (data['participants'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
-              .toList();
-          final isParticipant = participants.any((p) =>
-              p.userId == userId && p.userDesignationId == userDesignationId);
-          if (isParticipant) {
-            chatCount++;
-          }
+          chatCount++;
         }
       }
       return chatCount;
