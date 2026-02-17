@@ -53,7 +53,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     } else {
       showingAudioCameraButtons = false;
     }
-    setState(() {}); // rebuild to toggle send/mic button
+    setState(() {});
   }
 
   Future<void> _startRecording() async {
@@ -64,22 +64,28 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   Future<void> _stopRecording() async {
     try {
+      // Stop recording controller immediately
+      await _recorderController.stop();
+
+      // Update UI immediately to show recording has stopped
       setState(() {
-        _stoppingRecording = true;
+        _isRecording = false;
+        _stoppingRecording = false;
       });
-      await widget.chatService.stopAndSendVoiceMessage(
+
+      // Process and send voice message in background (no await)
+      widget.chatService.stopAndSendVoiceMessage(
         chat: widget.chat,
         userId: widget.userId,
         userDesignationId: widget.userDesignationId,
         userTitle: widget.userTitle,
       );
-      await _recorderController.stop();
+    } catch (e, s) {
+      print("Stop Recording Error_____${e}_____$s");
       setState(() {
         _isRecording = false;
         _stoppingRecording = false;
       });
-    } catch (e, s) {
-      print("Stop Recording Error_____${e}_____$s");
     }
   }
 

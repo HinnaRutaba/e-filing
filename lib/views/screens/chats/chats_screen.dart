@@ -230,11 +230,61 @@ class ChatsListView extends StatelessWidget {
                       },
                       itemBuilder: (context, index) {
                         final chat = filteredChats[index];
-                        final lastMsg = _chatService.isParticipantInChat(
-                                    chat: chat, userId: userId) !=
-                                true
-                            ? "You are no longer in this discussion"
-                            : chat.lastMessage?.text ?? "No messages yet";
+                        String lastMsg;
+
+                        if (_chatService.isParticipantInChat(
+                                chat: chat, userId: userId) !=
+                            true) {
+                          lastMsg = "You are no longer in this discussion";
+                        } else if (chat.lastMessage != null) {
+                          // Check if user joined after the last message was sent
+                          final userParticipant = chat.participants
+                              .where((p) =>
+                                  p.userId == userId &&
+                                  p.userDesignationId == userDesignationId)
+                              .firstOrNull;
+
+                          if (userParticipant != null &&
+                              userParticipant.joinedAt != null &&
+                              userParticipant.joinedAt
+                                      ?.isAfter(chat.lastMessage!.sentAt) ==
+                                  true) {
+                            // User joined after this message was sent, don't show message content
+                            lastMsg = "No messages yet";
+                          } else {
+                            // Check if the message was sent by current user
+                            final isCurrentUser =
+                                chat.lastMessage!.userId == userId;
+                            final senderName = isCurrentUser
+                                ? "You"
+                                : chat.lastMessage!.userName;
+
+                            // Check for attachments
+                            if (chat.lastMessage!.attachments.isNotEmpty) {
+                              final hasAudio = chat.lastMessage!.attachments
+                                  .any((attachment) =>
+                                      attachment != null &&
+                                      (attachment.endsWith('.m4a') ||
+                                          attachment.endsWith('.aac') ||
+                                          attachment.endsWith('.mp3') ||
+                                          attachment.endsWith('.wav')));
+
+                              if (hasAudio) {
+                                lastMsg = "$senderName sent an audio";
+                              } else {
+                                lastMsg = "$senderName sent an attachment";
+                              }
+                            } else if (chat.lastMessage!.text.isNotEmpty) {
+                              lastMsg =
+                                  "$senderName: ${chat.lastMessage!.text}";
+                            } else {
+                              lastMsg = "No messages yet";
+                            }
+                          }
+                        } else {
+                          lastMsg = "No messages yet";
+                        }
+
                         final int activeUsers = chat.activeParticipants.length;
 
                         return Animate(
@@ -259,10 +309,15 @@ class ChatsListView extends StatelessWidget {
                                 isLabelVisible:
                                     chat.hasUnread(userDesignationId),
                                 child: ListTile(
-                                  titleAlignment: ListTileTitleAlignment.top,
+                                  titleAlignment: ListTileTitleAlignment.center,
+                                  horizontalTitleGap: 8,
                                   leading: const CircleAvatar(
+                                    radius: 16,
                                     backgroundColor: AppColors.secondaryDark,
-                                    child: Icon(Icons.groups),
+                                    child: Icon(
+                                      Icons.groups,
+                                      size: 20,
+                                    ),
                                   ),
                                   title: AppText.titleMedium(
                                       "${chat?.fileBarCode ?? chat.fileId}"),
@@ -270,19 +325,11 @@ class ChatsListView extends StatelessWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      AppText.labelMedium(
-                                        "$activeUsers participant${activeUsers > 1 ? 's' : ''}",
-                                        maxLines: 1,
-                                        fontWeight: FontWeight.w600,
-                                        overflow: TextOverflow.ellipsis,
-                                        color: AppColors.secondaryDark,
-                                      ),
-                                      const SizedBox(height: 4),
                                       AppText.bodyMedium(
                                         lastMsg,
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        color: Colors.grey[800],
+                                        color: Colors.grey[600],
                                       )
                                     ],
                                   ),

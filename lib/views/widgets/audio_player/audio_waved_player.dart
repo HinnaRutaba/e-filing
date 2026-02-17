@@ -4,6 +4,10 @@ library waved_audio_player;
 
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:efiling_balochistan/views/widgets/audio_player/audio_player_error.dart';
@@ -11,6 +15,74 @@ import 'package:efiling_balochistan/views/widgets/audio_player/wave_form_painter
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+/// Audio cache manager for caching remote audio files
+class AudioCacheManager {
+  static final AudioCacheManager _instance = AudioCacheManager._internal();
+  factory AudioCacheManager() => _instance;
+  AudioCacheManager._internal();
+
+  static const String _cacheDir = 'audio_cache';
+  Directory? _cacheDirectory;
+
+  Future<Directory> get cacheDirectory async {
+    if (_cacheDirectory != null) return _cacheDirectory!;
+
+    final tempDir = await getTemporaryDirectory();
+    _cacheDirectory = Directory('${tempDir.path}/$_cacheDir');
+
+    if (!await _cacheDirectory!.exists()) {
+      await _cacheDirectory!.create(recursive: true);
+    }
+
+    return _cacheDirectory!;
+  }
+
+  String _generateCacheKey(String url) {
+    final bytes = utf8.encode(url);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<File> _getCacheFile(String url) async {
+    final cacheDir = await cacheDirectory;
+    final cacheKey = _generateCacheKey(url);
+    return File('${cacheDir.path}/$cacheKey.cache');
+  }
+
+  Future<Uint8List?> getCachedAudio(String url) async {
+    try {
+      final cacheFile = await _getCacheFile(url);
+      if (await cacheFile.exists()) {
+        return await cacheFile.readAsBytes();
+      }
+    } catch (e) {
+      print('Error reading cache: $e');
+    }
+    return null;
+  }
+
+  Future<void> cacheAudio(String url, Uint8List audioBytes) async {
+    try {
+      final cacheFile = await _getCacheFile(url);
+      await cacheFile.writeAsBytes(audioBytes);
+    } catch (e) {
+      print('Error writing cache: $e');
+    }
+  }
+
+  Future<void> clearCache() async {
+    try {
+      final cacheDir = await cacheDirectory;
+      if (await cacheDir.exists()) {
+        await cacheDir.delete(recursive: true);
+      }
+      _cacheDirectory = null;
+    } catch (e) {
+      print('Error clearing cache: $e');
+    }
+  }
+}
 
 /// Controller to manage multiple audio players and ensure only one plays at a time
 class AudioPlayerController {
@@ -99,11 +171,13 @@ class WavedAudioPlayer extends StatefulWidget {
 class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioPlayerController _controller = AudioPlayerController();
+  final AudioCacheManager _cacheManager = AudioCacheManager();
   List<double> waveformData = [];
   Duration audioDuration = Duration.zero;
   Duration currentPosition = Duration.zero;
   bool isPlaying = false;
   bool isPausing = true;
+  bool hasCompleted = false;
   Uint8List? _audioBytes;
 
   @override
@@ -169,12 +243,27 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
 
   Future<Uint8List?> _loadRemoteAudioWaveform(String url) async {
     try {
+      // First, check if audio is cached
+      Uint8List? cachedBytes = await _cacheManager.getCachedAudio(url);
+      if (cachedBytes != null) {
+        print('Using cached audio for: $url');
+        return cachedBytes;
+      }
+
+      print('Downloading and caching audio for: $url');
+      // If not cached, download from URL
       final HttpClient httpClient = HttpClient();
       final HttpClientRequest request = await httpClient.getUrl(Uri.parse(url));
       final HttpClientResponse response = await request.close();
 
       if (response.statusCode == 200) {
-        return await consolidateHttpClientResponseBytes(response);
+        final Uint8List audioBytes =
+            await consolidateHttpClientResponseBytes(response);
+
+        // Cache the downloaded audio for future use
+        await _cacheManager.cacheAudio(url, audioBytes);
+
+        return audioBytes;
       } else {
         _callOnError(WavedAudioPlayerError(
             "Failed to load audio: ${response.statusCode}"));
@@ -210,9 +299,14 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
       }
     });
     _audioPlayer.onPlayerComplete.listen((event) {
-      isPausing = false;
+      setState(() {
+        isPlaying = false;
+        isPausing = false;
+        hasCompleted = true;
+        currentPosition = audioDuration; // Set to end position
+      });
       _controller.onPlayerStopped(this);
-      _audioPlayer.release();
+      // Don't release - keep the source loaded for replay
     });
 
     _audioPlayer.onDurationChanged.listen((Duration duration) {
@@ -267,10 +361,23 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
     // Use controller to stop other players and play this one
     _controller.playExclusive(this);
 
-    isPausing
-        ? _audioPlayer.resume()
-        : _audioPlayer
-            .play(BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+    // If audio has completed, restart from beginning
+    if (hasCompleted) {
+      await _audioPlayer.stop();
+      await _audioPlayer.setSource(
+          BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+      setState(() {
+        hasCompleted = false;
+        currentPosition = Duration.zero;
+      });
+      await _audioPlayer.resume();
+    } else {
+      // Normal play/resume logic
+      isPausing
+          ? _audioPlayer.resume()
+          : _audioPlayer.play(
+              BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+    }
   }
 
   /// Internal pause method called by controller (doesn't update state)
@@ -303,18 +410,10 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
                     isPlaying = !isPlaying;
                   });
                 },
-                child: Container(
-                  height: widget.buttonSize,
-                  width: widget.buttonSize,
-                  decoration: BoxDecoration(
-                    color: widget.iconBackgoundColor,
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Icon(
-                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    color: widget.iconColor,
-                    size: 4 * widget.buttonSize / 5,
-                  ),
+                child: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: widget.iconColor,
+                  size: 4 * widget.buttonSize / 5,
                 ),
               ),
               const SizedBox(
