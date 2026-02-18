@@ -14,6 +14,7 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
+      isdash: false,
       title: "Users",
       body: SafeArea(
         child: Padding(

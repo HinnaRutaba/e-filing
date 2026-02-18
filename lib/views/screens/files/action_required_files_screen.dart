@@ -35,6 +35,7 @@ class _ActionRequiredFilesScreenState
   Widget build(BuildContext context) {
     final files = ref.watch(filesController).filteredFiles;
     return BaseScreen(
+      isdash: false,
       title: "Action Required",
       body: SafeArea(
         child: Padding(

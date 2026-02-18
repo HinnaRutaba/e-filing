@@ -31,6 +31,7 @@ class _MyFilesScreenState extends ConsumerState<MyFilesScreen> {
   Widget build(BuildContext context) {
     final files = ref.watch(filesController).filteredFiles;
     return BaseScreen(
+      isdash: false,
       title: "My Files",
       body: SafeArea(
         child: Padding(

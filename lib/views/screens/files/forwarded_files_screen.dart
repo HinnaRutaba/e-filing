@@ -32,6 +32,7 @@ class _ForwardedFilesScreenState extends ConsumerState<ForwardedFilesScreen> {
   Widget build(BuildContext context) {
     final files = ref.watch(filesController).filteredFiles;
     return BaseScreen(
+      isdash: false,
       title: "Forwarded Files",
       body: SafeArea(
         child: Padding(

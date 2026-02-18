@@ -17,6 +17,7 @@ class _UserSettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
+      isdash: false,
       title: "Settings",
       showUserDetails: false,
       body: SafeArea(

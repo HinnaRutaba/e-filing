@@ -67,10 +67,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         await ref.read(dashboardController.notifier).fetchPendingFiles();
         break;
       case 1:
-        await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
+        await ref.read(dashboardController.notifier).fetchForwardedFiles();
         break;
       case 2:
-        await ref.read(dashboardController.notifier).fetchForwardedFiles();
+        await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
         break;
     }
   }
@@ -94,6 +94,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     return BaseScreen(
       showUserDetails: true,
+      isdash: true,
       enableBackButton: false,
       body: _isLoading
           ? _buildLoadingState()
@@ -188,15 +189,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       },
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.only(
+                          top: 16, left: 16, right: 16, bottom: 6),
                       child: Column(
                         children: [
                           Row(
                             children: [
                               Expanded(
                                 child: DashboardCard(
-                                  cardColor: AppColors.primary,
-                                  iconColor: AppColors.primaryDark,
+                                  cardColor: Colors.orange,
+                                  iconColor: Colors.yellow,
+                                  title: "Pending Files",
+                                  value: "${dashboardState.pendingFilesCount}",
+                                  onTap: () {
+                                    RouteHelper.push(Routes.pendingFiles);
+                                  },
+                                  loading: dashboardState.loading,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: DashboardCard(
+                                  cardColor:
+                                      const Color.fromARGB(255, 255, 39, 23),
+                                  iconColor: Colors.red.withRed(600),
                                   title: "Action Required",
                                   value:
                                       "${dashboardState.actionRequiredCount}",
@@ -207,7 +223,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   loading: dashboardState.loading,
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
                               Expanded(
                                 child: DashboardCard(
                                   cardColor: AppColors.secondaryLight,
@@ -220,32 +240,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   loading: dashboardState.loading,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DashboardCard(
-                                  cardColor: Colors.yellow[800]!,
-                                  iconColor: Colors.orange[800]!,
-                                  title: "Pending Files",
-                                  value: "${dashboardState.pendingFilesCount}",
-                                  onTap: () {
-                                    RouteHelper.push(Routes.pendingFiles);
-                                  },
-                                  loading: dashboardState.loading,
-                                ),
-                              ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: DashboardCard(
                                   cardColor: Colors.teal[500]!,
                                   iconColor: Colors.teal[800]!,
-                                  title: "Disposed Off",
-                                  value: "${dashboardState.disposedOffCount}",
+                                  title: "Processed Files",
+                                  value:
+                                      "${dashboardState.forwardedFiles.length}",
                                   onTap: () {
-                                    RouteHelper.push(Routes.archived);
+                                    RouteHelper.push(Routes.forwarded);
                                   },
                                   loading: dashboardState.loading,
                                 ),
@@ -259,7 +263,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       child: Column(
                         children: [
                           Container(
-                            color: AppColors.white,
+                            color: Colors.transparent,
                             child: TabBar(
                               controller: _tabController,
                               labelColor: AppColors.primary,
@@ -269,8 +273,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               labelStyle: const TextStyle(fontSize: 12),
                               tabs: const [
                                 Tab(text: 'Pending Files'),
+                                Tab(text: 'Processed Files'),
                                 Tab(text: 'Action Required'),
-                                Tab(text: 'Forwarded Files'),
                               ],
                             ),
                           ),
@@ -287,20 +291,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                       .fetchPendingFiles(),
                                 ),
                                 _buildFileList(
-                                  files: dashboardState.actionRequiredFiles,
-                                  fileType: FileType.actionRequired,
-                                  loading: dashboardState.loadingActionFiles,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchActionRequiredFiles(),
-                                ),
-                                _buildFileList(
                                   files: dashboardState.forwardedFiles,
                                   fileType: FileType.forwarded,
                                   loading: dashboardState.loadingForwardedFiles,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
                                       .fetchForwardedFiles(),
+                                ),
+                                _buildFileList(
+                                  files: dashboardState.actionRequiredFiles,
+                                  fileType: FileType.actionRequired,
+                                  loading: dashboardState.loadingActionFiles,
+                                  onRefresh: () => ref
+                                      .read(dashboardController.notifier)
+                                      .fetchActionRequiredFiles(),
                                 ),
                               ],
                             ),

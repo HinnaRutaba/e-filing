@@ -121,6 +121,7 @@ class ChatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     UserModel currentUser = ref.read(authController);
     return BaseScreen(
+      isdash: false,
       title: "Chats",
       enableBackButton: true,
       actions: [

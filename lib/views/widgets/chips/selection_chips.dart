@@ -9,7 +9,8 @@ class SelectionChipMenuItem<T> {
   final T value;
   final GlobalKey? key;
 
-  SelectionChipMenuItem({
+  const SelectionChipMenuItem({
+    // Made const
     required this.label,
     required this.value,
     this.icon,
@@ -30,6 +31,7 @@ class SelectionChips<T> extends StatefulWidget {
   final Color? chipColor;
 
   const SelectionChips({
+    // Made const
     super.key,
     required this.menu,
     this.initialSelected = 0,
@@ -48,43 +50,93 @@ class SelectionChips<T> extends StatefulWidget {
 }
 
 class _SelectionChipsState<T> extends State<SelectionChips<T>> {
-  int selectedIndex = 0;
-  List<int> selectedIndexes = [0];
+  late int selectedIndex;
+  late List<int> selectedIndexes;
   final ScrollController scrollController = ScrollController();
+  bool _isProcessing = false; // Debounce flag
 
-  scrollToItem(GlobalKey? key) {
+  @override
+  void initState() {
+    super.initState();
+    _initializeSelection();
+    _scrollToInitial();
+  }
+
+  void _initializeSelection() {
+    selectedIndex = widget.initialSelected;
+    selectedIndexes = widget.enableMultiSelect
+        ? [widget.initialSelected]
+        : [widget.initialSelected];
+
+    // Call callbacks after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.singleLineScroll &&
-          key != null &&
-          key.currentContext != null) {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
-          alignment: 0.5,
+      if (widget.enableMultiSelect) {
+        widget.onMultiSelect?.call(
+          selectedIndexes,
+          selectedIndexes.map<T>((e) => widget.menu[e].value).toList(),
         );
+      } else {
+        widget.onSelected(selectedIndex, widget.menu[selectedIndex].value);
       }
     });
   }
 
-  handleTap(int index) {
-    if (widget.enableMultiSelect) {
-      setState(() {
+  void _scrollToInitial() {
+    if (widget.singleLineScroll && widget.menu[selectedIndex].key != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final key = widget.menu[selectedIndex].key;
+        if (key?.currentContext != null) {
+          Scrollable.ensureVisible(
+            key!.currentContext!,
+            alignment: 0.5,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  void _handleTap(int index) {
+    if (_isProcessing) return; // Debounce
+    _isProcessing = true;
+
+    setState(() {
+      if (widget.enableMultiSelect) {
         if (selectedIndexes.contains(index)) {
           selectedIndexes.remove(index);
         } else {
           selectedIndexes.add(index);
         }
-      });
+      } else {
+        selectedIndex = index;
+      }
+    });
+
+    // Call callbacks
+    if (widget.enableMultiSelect) {
       widget.onMultiSelect?.call(
         selectedIndexes,
         selectedIndexes.map<T>((e) => widget.menu[e].value).toList(),
       );
     } else {
-      setState(() {
-        selectedIndex = index;
-      });
       widget.onSelected(index, widget.menu[index].value);
     }
+
+    // Scroll to selected item
+    if (widget.singleLineScroll && widget.menu[index].key != null) {
+      Scrollable.ensureVisible(
+        widget.menu[index].key!.currentContext!,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    // Reset debounce after short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _isProcessing = false;
+    });
   }
 
   bool isSelected(int index) {
@@ -94,35 +146,23 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
   }
 
   @override
-  void initState() {
-    setState(() {
-      selectedIndex = widget.initialSelected;
-
-      //widget.onSelected(selectedIndex, widget.menu[selectedIndex].value);
-
-      widget.onMultiSelect?.call(
-        selectedIndexes,
-        selectedIndexes.map<T>((e) => widget.menu[e].value).toList(),
-      );
-    });
-    scrollToItem(widget.menu[selectedIndex].key);
-    super.initState();
+  void didUpdateWidget(covariant SelectionChips<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only update if initialSelected changed
+    if (oldWidget.initialSelected != widget.initialSelected) {
+      setState(() {
+        selectedIndex = widget.initialSelected;
+        if (!widget.enableMultiSelect) {
+          selectedIndexes = [widget.initialSelected];
+        }
+      });
+    }
   }
 
   @override
-  void didUpdateWidget(covariant SelectionChips<T> oldWidget) {
-    setState(() {
-      selectedIndex = widget.initialSelected;
-
-      // widget.onSelected(selectedIndex, widget.menu[selectedIndex].value);
-
-      widget.onMultiSelect?.call(
-        selectedIndexes,
-        selectedIndexes.map<T>((e) => widget.menu[e].value).toList(),
-      );
-    });
-    scrollToItem(widget.menu[selectedIndex].key);
-    super.didUpdateWidget(oldWidget);
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -133,74 +173,84 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          if (widget.label != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: AppText.labelLarge(
-                    widget.label!,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-                if (widget.isMandatory)
-                  AppText.headlineSmall(" *", color: Colors.red),
-              ],
-            ),
-          ],
-          widget.singleLineScroll
-              ? Center(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: chips(
-                        margin: const EdgeInsets.only(right: 8),
-                      ),
-                    ),
-                  ),
-                )
-              : Wrap(
-                  runSpacing: 0,
-                  spacing: 8,
-                  alignment: WrapAlignment.start,
-                  children: chips(),
-                ),
+          if (widget.label != null) _buildLabel(),
+          if (widget.singleLineScroll)
+            _buildHorizontalScroll()
+          else
+            _buildWrap(),
         ],
       ),
     );
   }
 
-  List<Widget> chips({EdgeInsets margin = const EdgeInsets.all(0)}) {
-    final ThemeData theme = Theme.of(context);
-    return List.generate(
-      widget.menu.length,
-      (index) {
+  Widget _buildLabel() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Expanded(
+            child: AppText.labelLarge(
+              widget.label!,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+          if (widget.isMandatory)
+            AppText.headlineSmall(" *", color: Colors.red),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalScroll() {
+    return SingleChildScrollView(
+      controller: scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: List.generate(widget.menu.length, (index) {
+          return Container(
+            key: widget.menu[index].key,
+            margin: const EdgeInsets.only(right: 8),
+            child: _buildChip(index),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildWrap() {
+    return Wrap(
+      runSpacing: 8,
+      spacing: 8,
+      alignment: WrapAlignment.start,
+      children: List.generate(widget.menu.length, (index) {
         return Container(
           key: widget.menu[index].key,
-          margin: margin,
-          child: CustomAppChip(
-            minWidth: widget.minMenuItemWidth,
-            label: widget.menu[index].label,
-            leadingIcon: widget.menu[index].icon != null
-                ? Icon(widget.menu[index].icon)
-                : null,
-            chipColor: isSelected(index)
-                ? widget.chipColor ?? theme.primaryColor
-                : AppColors.white,
-            borderColor: isSelected(index)
-                ? AppColors.white
-                : widget.chipColor ?? theme.primaryColorDark,
-            padding: const EdgeInsets.all(0),
-            onTap: () {
-              scrollToItem(widget.menu[index].key);
-              handleTap(index);
-            },
-          ),
+          child: _buildChip(index),
         );
-      },
+      }),
+    );
+  }
+
+  Widget _buildChip(int index) {
+    final isSelected = this.isSelected(index);
+    final theme = Theme.of(context);
+
+    return CustomAppChip(
+      minWidth: widget.minMenuItemWidth,
+      label: widget.menu[index].label,
+      leadingIcon: widget.menu[index].icon != null
+          ? Icon(widget.menu[index].icon, size: 16)
+          : null,
+      chipColor:
+          isSelected ? widget.chipColor ?? theme.primaryColor : AppColors.white,
+      borderColor: isSelected
+          ? AppColors.white
+          : widget.chipColor ?? theme.primaryColorDark,
+      padding: EdgeInsets.zero,
+      onTap: () => _handleTap(index),
     );
   }
 }

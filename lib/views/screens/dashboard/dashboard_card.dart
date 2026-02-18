@@ -34,10 +34,10 @@ class DashboardCard extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       cardColor,
-                      cardColor.withOpacity(0.5),
-                      cardColor.withOpacity(0.2),
-                      cardColor.withOpacity(0.4),
+                      cardColor.withOpacity(0.9),
                       cardColor.withOpacity(0.6),
+                      cardColor.withOpacity(0.8),
+                      cardColor.withOpacity(0.9),
                     ],
                     begin: Alignment.bottomRight,
                     end: Alignment.topLeft,
@@ -52,7 +52,7 @@ class DashboardCard extends StatelessWidget {
                         AppText.bodyLarge(
                           title,
                           fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w600,
                           color: Colors.grey[900],
                         ),
                         Spacer(),
@@ -61,6 +61,7 @@ class DashboardCard extends StatelessWidget {
                             AppText.headlineMedium(
                               value,
                               fontSize: 16,
+                              //fontWeight: FontWeight.w500,
                             ),
                             Icon(
                               Icons.keyboard_arrow_right_outlined,

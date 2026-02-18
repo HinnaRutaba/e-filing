@@ -33,6 +33,7 @@ class _PendingFilesScreenState extends ConsumerState<PendingFilesScreen> {
     return RefreshIndicator(
       onRefresh: fetchData,
       child: BaseScreen(
+        isdash: false,
         title: "Pending Files",
         body: SafeArea(
           child: Padding(

@@ -29,6 +29,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
+      isdash: false,
       title: "Change Password",
       body: SafeArea(
         child: SingleChildScrollView(

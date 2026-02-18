@@ -94,6 +94,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(filesController);
     return BaseScreen(
+      isdash: false,
       title: "Create New File",
       body: SafeArea(
         child: SingleChildScrollView(

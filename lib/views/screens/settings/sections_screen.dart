@@ -14,6 +14,7 @@ class _SectionsScreenState extends State<SectionsScreen> {
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
+      isdash: false,
       title: "Sections",
       body: SafeArea(
         child: Padding(

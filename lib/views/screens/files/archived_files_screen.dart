@@ -35,6 +35,7 @@ class _ArchivedFilesScreenState extends ConsumerState<ArchivedFilesScreen> {
     return RefreshIndicator(
       onRefresh: fetchData,
       child: BaseScreen(
+        isdash: false,
         title: "Archived Files",
         body: SafeArea(
           child: Padding(
