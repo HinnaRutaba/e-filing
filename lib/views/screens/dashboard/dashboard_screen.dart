@@ -198,7 +198,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               Expanded(
                                 child: DashboardCard(
                                   cardColor: Colors.orange,
-                                  iconColor: Colors.yellow,
+                                  iconColor: Color(0xFFFF8C00),
                                   title: "Pending Files",
                                   value: "${dashboardState.pendingFilesCount}",
                                   onTap: () {
