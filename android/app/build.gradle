@@ -17,7 +17,14 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.lrm.efiling_balochistan"
     compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "29.0.14206865"
+    
+    // Add CMake version to fix native build issues
+    externalNativeBuild {
+        cmake {
+            version = "3.22.1"
+        }
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

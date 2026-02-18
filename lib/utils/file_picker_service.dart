@@ -1,13 +1,17 @@
 import 'dart:io';
 
 //import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -35,7 +39,7 @@ class FilePickerService {
     PermissionStatus permission = await perm.request();
     if (permission == PermissionStatus.granted) return true;
     await perm.request();
-    Toast.error(message: "Kindly grant ${perm} for ACM");
+    Toast.error(message: "Kindly grant ${perm} for E-Filing");
     return false;
   }
 
@@ -43,7 +47,7 @@ class FilePickerService {
   //   if(await Permission.videos.isGranted) return true;
   //   PermissionStatus permission = await Permission.videos.request();
   //   if (permission == PermissionStatus.granted) return true;
-  //   Toast.error(message: "Kindly grant Video permission for ACM");
+  //   Toast.error(message: "Kindly grant Video permission for E-Filing");
   //   return false;
   // }
   //
@@ -51,7 +55,7 @@ class FilePickerService {
   //   if(await Permission.storage.isGranted) return true;
   //   PermissionStatus permission = await Permission.storage.request();
   //   if (permission == PermissionStatus.granted) return true;
-  //   Toast.error(message: "Kindly grant Storage permission for ACM");
+  //   Toast.error(message: "Kindly grant Storage permission for E-Filing");
   //   return false;
   // }
 
@@ -178,5 +182,126 @@ class FilePickerService {
 
     file.writeAsBytesSync(response.bodyBytes);
     return file;
+  }
+
+  Future<void> downloadFile(
+      BuildContext context, fileUrl, String fileName) async {
+    try {
+      final permission = Permission.mediaLibrary;
+
+      PermissionStatus status = await permission.status;
+
+      if (status.isGranted) {
+        print("Permission already granted, proceeding with download");
+      } else if (status.isDenied || status.isLimited) {
+        final result = await permission.request();
+
+        if (!result.isGranted) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content:
+                    Text('Storage permission is required to download files'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      } else if (status.isPermanentlyDenied) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Storage permission is permanently denied. Please enable it in app settings.'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => openAppSettings(),
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = Directory('/storage/emulated/0/Download');
+        if (!await downloadsDir.exists()) {
+          downloadsDir = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (downloadsDir == null) {
+        throw Exception('Could not access storage directory');
+      }
+
+      // Create E-Filing folder
+      final eFilingDir = Directory('${downloadsDir.path}/E-Filing');
+      if (!await eFilingDir.exists()) {
+        await eFilingDir.create(recursive: true);
+      }
+
+      // Prepare file path
+      final filePath = '${eFilingDir.path}/$fileName';
+      final file = File(filePath);
+
+      // Show downloading snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading $fileName...'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppColors.secondary,
+          ),
+        );
+      }
+
+      final dio = Dio();
+      await dio.download(fileUrl, filePath);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded $fileName to E-Filing folder'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open File',
+              textColor: Colors.white,
+              onPressed: () async {
+                final result = await OpenFile.open(filePath);
+                if (result.type != ResultType.done) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Could not open file: ${result.message}'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Download error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download $fileName: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }

@@ -15,6 +15,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -32,7 +33,8 @@ class AppText extends Text {
           fontSize: fontSize,
           fontWeight: fontWeight,
           letterSpacing: letterSpacing,
-          decoration: decoration,
+          decoration:
+              decoration ?? (underline ? TextDecoration.underline : null),
           fontFamily: fontFamily,
         ),
       );
@@ -49,6 +51,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -66,7 +69,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -83,6 +87,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -100,7 +105,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -117,6 +123,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.fontFamily,
     this.decoration,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -134,7 +141,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -151,6 +159,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -168,7 +177,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -185,6 +195,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -202,7 +213,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -219,6 +231,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -236,7 +249,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -253,6 +267,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -270,7 +285,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -287,6 +303,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -304,7 +321,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               decorationColor: AppColors.textPrimary,
               fontFamily: fontFamily,
             ),
@@ -322,6 +340,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -339,7 +358,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -356,6 +376,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -373,7 +394,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -390,6 +412,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -407,7 +430,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -424,6 +448,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -441,7 +466,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -458,6 +484,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -475,7 +502,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -492,6 +520,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -509,7 +538,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -526,6 +556,7 @@ class AppText extends Text {
     this.letterSpacing,
     this.decoration,
     this.fontFamily,
+    this.underline = false,
     super.textAlign,
     super.maxLines,
     super.overflow,
@@ -543,7 +574,8 @@ class AppText extends Text {
               fontSize: fontSize,
               fontWeight: fontWeight,
               letterSpacing: letterSpacing,
-              decoration: decoration,
+              decoration:
+                  decoration ?? (underline ? TextDecoration.underline : null),
               fontFamily: fontFamily,
             ),
       );
@@ -565,6 +597,8 @@ class AppText extends Text {
   final TextDecoration? decoration;
 
   final String? fontFamily;
+
+  final bool underline;
 
   @override
   Widget build(BuildContext context) {
