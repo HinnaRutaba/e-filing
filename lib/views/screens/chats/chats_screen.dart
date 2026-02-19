@@ -46,31 +46,34 @@ class ChatsScreen extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppTextField(
-                    controller: chatNameController,
-                    labelText: 'Group Chat Name',
-                    hintText: 'Enter group chat name',
-                    showLabel: false,
-                    validator: (text) {
-                      if (text == null || text.trim().isEmpty) {
-                        return 'Group chat name cannot be empty';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+          content: SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppTextField(
+                      controller: chatNameController,
+                      labelText: 'Group Chat Name',
+                      hintText: 'Enter group chat name',
+                      showLabel: false,
+                      validator: (text) {
+                        if (text == null || text.trim().isEmpty) {
+                          return 'Group chat name cannot be empty';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           actions: [
             SizedBox(
-              width: 100,
+              width: 124,
               child: AppOutlineButton(
                 onPressed: () {
                   RouteHelper.pop();
@@ -80,7 +83,7 @@ class ChatsScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             SizedBox(
-              width: 100,
+              width: 124,
               child: StatefulBuilder(builder: (context, dState) {
                 return creating
                     ? const Center(
