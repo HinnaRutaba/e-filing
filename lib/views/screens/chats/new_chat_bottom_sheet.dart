@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   late TextEditingController _searchController;
   List<ChatParticipantModel> _allParticipants = [];
   List<ChatParticipantModel> _filteredParticipants = [];
+  ChatParticipantModel? _selectedParticipant;
   bool _isLoading = true;
   bool _isCreatingChat = false;
   final ChatService _chatService = ChatService();
@@ -78,7 +80,30 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     false))
             .toList();
       }
+
+      // Clear selection if filtered participant is no longer in results
+      if (_selectedParticipant != null &&
+          !_filteredParticipants.contains(_selectedParticipant)) {
+        _selectedParticipant = null;
+      }
     });
+  }
+
+  void _selectParticipant(ChatParticipantModel participant) {
+    setState(() {
+      // Toggle selection - if same participant is selected, deselect them
+      if (_selectedParticipant?.userId == participant.userId) {
+        _selectedParticipant = null;
+      } else {
+        _selectedParticipant = participant;
+      }
+    });
+  }
+
+  Future<void> _startChatWithSelectedUser() async {
+    if (_selectedParticipant == null) return;
+
+    await _createChatWithUser(_selectedParticipant!);
   }
 
   Future<void> _createChatWithUser(ChatParticipantModel selectedUser) async {
@@ -96,10 +121,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
       String chatId;
 
       if (existingChatId != null) {
-      
         chatId = existingChatId;
       } else {
-        
         final participants = [
           ChatParticipantModel(
             userDesignationId: currentUser.currentDesignation!.userDesgId!,
@@ -167,18 +190,19 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
-                      child: AppText.headlineSmall(
+                      child: AppText.titleLarge(
                         "Start New Chat",
                         color: AppColors.textPrimary,
                       ),
                     ),
                     IconButton(
                       onPressed: () => RouteHelper.pop(),
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close,
+                          color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -243,46 +267,94 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                         itemCount: _filteredParticipants.length,
                         itemBuilder: (context, index) {
                           final participant = _filteredParticipants[index];
+                          final isSelected = _selectedParticipant?.userId ==
+                              participant.userId;
+                          final isOtherSelected =
+                              _selectedParticipant != null && !isSelected;
 
-                          return ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 4),
-                            leading: CircleAvatar(
-                              backgroundColor: AppColors.secondary,
-                              radius: 20,
-                              child: Text(
-                                (participant.userTitle?.isNotEmpty == true)
-                                    ? participant.userTitle![0].toUpperCase()
-                                    : 'U',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 100),
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 0),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primaryDark.withAlpha(12)
+                                  : null,
+                              borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: AppColors.primaryDark, width: 1.2)
+                                  : null,
+                            ),
+                            child: Opacity(
+                              opacity: isOtherSelected ? 0.4 : 1.0,
+                              child: ListTile(
+                                contentPadding: isSelected
+                                    ? const EdgeInsets.symmetric(horizontal: 8)
+                                    : const EdgeInsets.all(0),
+                                horizontalTitleGap: 8,
+                                leading: CircleAvatar(
+                                  backgroundColor: isSelected
+                                      ? AppColors.primaryDark
+                                      : AppColors.secondary,
+                                  radius: 16,
+                                  child: AppText.titleLarge(
+                                    (participant.userTitle?.isNotEmpty == true)
+                                        ? participant.userTitle![0]
+                                            .toUpperCase()
+                                        : 'U',
+                                    color: Colors.white,
+                                  ),
                                 ),
+                                title: AppText.titleMedium(
+                                  participant.userTitle ?? 'Unknown User',
+                                  fontSize: 16,
+                                  color:
+                                      isSelected ? AppColors.primaryDark : null,
+                                ),
+                                subtitle: Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.primaryDark
+                                                  .withOpacity(0.1)
+                                              : AppColors.cardColor,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: isSelected
+                                              ? Border.all(
+                                                  color: AppColors.primaryDark
+                                                      .withOpacity(0.3))
+                                              : null,
+                                        ),
+                                        child: AppText.labelMedium(
+                                          participant.designation ?? '',
+                                          fontSize: 12,
+                                          color: isSelected
+                                              ? AppColors.primaryDark
+                                              : AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.primaryDark,
+                                      )
+                                    : const Icon(
+                                        Icons.add_circle_outline,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                onTap: () => _selectParticipant(participant),
                               ),
                             ),
-                            title: AppText.titleMedium(
-                              participant.userTitle ?? 'Unknown User',
-                              fontSize: 16,
-                            ),
-                            subtitle: AppText.labelMedium(
-                              participant.designation ?? '',
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                            trailing: _isCreatingChat
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : const Icon(
-                                    Icons.chat_bubble_outline,
-                                    color: AppColors.primaryDark,
-                                  ),
-                            onTap: _isCreatingChat
-                                ? null
-                                : () => _createChatWithUser(participant),
                           );
                         },
                         separatorBuilder: (_, __) => const Divider(
@@ -291,6 +363,37 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                           height: 1,
                         ),
                       ),
+          ),
+
+          // Bottom button
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey[200]!),
+              ),
+            ),
+            child: SafeArea(
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: AppSolidButton(
+                  onPressed: (_selectedParticipant != null && !_isCreatingChat)
+                      ? _startChatWithSelectedUser
+                      : null,
+                  backgroundColor:
+                      (_selectedParticipant != null && !_isCreatingChat)
+                          ? AppColors.primary
+                          : AppColors.disabled,
+                  text: _isCreatingChat
+                      ? 'Creating Chat...'
+                      : _selectedParticipant != null
+                          ? 'Start Chat with ${_selectedParticipant!.userTitle}'
+                          : 'Select a user to start chat',
+                ),
+              ),
+            ),
           ),
         ],
       ),
