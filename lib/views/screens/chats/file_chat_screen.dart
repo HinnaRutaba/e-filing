@@ -292,9 +292,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
     if (chat == null) return null;
 
-    if (message.status == null) return Icons.check;
+    if (message.status == null) return Icons.done_all;
 
-    // Check if message has status property and return appropriate indicator
     switch (message.status!) {
       case types.Status.sending:
         return Icons.schedule;
@@ -1123,14 +1122,12 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                if (status.isNotEmpty) ...[
-                  const SizedBox(width: 6),
-                  Text(
+                if (status != null) ...[
+                  const SizedBox(width: 4),
+                  Icon(
                     status,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
+                    size: 14,
+                    color: AppColors.textSecondary,
                   ),
                 ],
               ],

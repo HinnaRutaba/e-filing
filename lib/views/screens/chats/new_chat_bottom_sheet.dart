@@ -93,7 +93,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   void _selectParticipant(ChatParticipantModel participant) {
     setState(() {
       // Toggle selection - if same participant is selected, deselect them
-      if (_selectedParticipant?.userId == participant.userId) {
+      if (_selectedParticipant?.userId == participant.userId &&
+          _selectedParticipant?.userDesignationId ==
+              participant.userDesignationId) {
         _selectedParticipant = null;
       } else {
         _selectedParticipant = participant;
@@ -269,7 +271,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                         itemBuilder: (context, index) {
                           final participant = _filteredParticipants[index];
                           final isSelected = _selectedParticipant?.userId ==
-                              participant.userId;
+                                  participant.userId &&
+                              _selectedParticipant?.userDesignationId ==
+                                  participant.userDesignationId;
                           final isOtherSelected =
                               _selectedParticipant != null && !isSelected;
 
@@ -303,6 +307,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                     HelperUtils.firstTwoLetters(
                                         participant.userTitle ?? ''),
                                     color: Colors.white,
+                                    fontSize: 14,
                                   ),
                                 ),
                                 title: AppText.titleMedium(

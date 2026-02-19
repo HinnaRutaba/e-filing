@@ -39,7 +39,13 @@ class ChatsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Create New Group Chat'),
+          title: AppText.titleMedium(
+            'Create New Group Chat',
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -450,8 +456,6 @@ class ChatsListView extends StatelessWidget {
       ),
     );
   }
-
-
 
   String _formatTime(DateTime dt) {
     final now = DateTime.now();

@@ -239,9 +239,23 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     if (isCurrentUser) AppText.labelSmall("(You)")
                   ],
                 ),
-                subtitle: AppText.labelMedium(
-                  participant.designation ?? '',
-                  fontSize: 12,
+                subtitle: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: AppText.labelMedium(
+                        participant.designation ?? '',
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
                 trailing: AppTextLinkButton(
                   onPressed: () {
@@ -326,9 +340,23 @@ class _AddedParticipantsWidget extends StatelessWidget {
                     if (isCurrentUser) AppText.labelSmall("(You)")
                   ],
                 ),
-                subtitle: AppText.labelMedium(
-                  participant.designation ?? '',
-                  fontSize: 12,
+                subtitle: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: AppText.labelMedium(
+                        participant.designation ?? '',
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
                 trailing: AppTextLinkButton(
                   onPressed: () {
