@@ -286,26 +286,26 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
     }
   }
 
-  String _getDeliveryStatus(types.Message message) {
+  IconData? _getDeliveryStatus(types.Message message) {
     final isMe = message.author.id == _currentUser.id.toString();
-    if (!isMe) return '';
+    if (!isMe) return null;
 
-    if (chat == null) return '';
+    if (chat == null) return null;
 
-    if (message.status == null) return '✓';
+    if (message.status == null) return Icons.check;
 
     // Check if message has status property and return appropriate indicator
     switch (message.status!) {
       case types.Status.sending:
-        return '•';
+        return Icons.schedule;
       case types.Status.sent:
-        return '✓';
+        return Icons.check;
       case types.Status.delivered:
-        return '✓✓';
+        return Icons.done_all;
       case types.Status.seen:
-        return '✓✓';
+        return Icons.done_all;
       case types.Status.error:
-        return '⚠';
+        return Icons.warning;
     }
   }
 
@@ -449,16 +449,143 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           chat: chat,
                           userId: _currentUser.id!,
                         );
-                        return !isUserActive
-                            ? title
-                            : Row(
+
+                        return chat.type == ChatType.direct
+                            ? Row(
                                 children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: chat.activeParticipants.isEmpty ==
-                                              true
-                                          ? null
-                                          : () {
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: AppColors.cardColor,
+                                    child: AppText.titleMedium(
+                                      HelperUtils.firstTwoLetters(
+                                          ChatService.getChatTitle(
+                                              chat, _currentUser.id!)),
+                                      color: AppColors.primaryDark,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  AppText.headlineSmall(
+                                    ChatService.getChatTitle(
+                                        chat, _currentUser.id!),
+                                    color: AppColors.primaryDark,
+                                  )
+                                ],
+                              )
+                            : !isUserActive
+                                ? title
+                                : Row(
+                                    children: [
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: chat.activeParticipants
+                                                      .isEmpty ==
+                                                  true
+                                              ? null
+                                              : () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    constraints: BoxConstraints(
+                                                      maxHeight:
+                                                          MediaQuery.sizeOf(
+                                                                      context)
+                                                                  .height *
+                                                              0.9,
+                                                    ),
+                                                    isScrollControlled: true,
+                                                    enableDrag: false,
+                                                    backgroundColor:
+                                                        AppColors.background,
+                                                    shape:
+                                                        const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                        topLeft:
+                                                            Radius.circular(16),
+                                                        topRight:
+                                                            Radius.circular(16),
+                                                      ),
+                                                    ),
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return ChatParticipantsView(
+                                                        chatId: chat.id,
+                                                        participantsToAdd:
+                                                            potentialParticipantsToAdd,
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              title,
+                                              AppText.labelMedium(
+                                                "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      ...[
+                                        IconButton(
+                                          onPressed: () {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              constraints: BoxConstraints(
+                                                maxHeight:
+                                                    MediaQuery.sizeOf(context)
+                                                            .height *
+                                                        0.9,
+                                              ),
+                                              isScrollControlled: true,
+                                              enableDrag: false,
+                                              backgroundColor:
+                                                  AppColors.background,
+                                              shape:
+                                                  const RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(16),
+                                                  topRight: Radius.circular(16),
+                                                ),
+                                              ),
+                                              builder: (BuildContext context) {
+                                                return ChatParticipantsView(
+                                                  chatId: chat.id,
+                                                  participantsToAdd:
+                                                      potentialParticipantsToAdd,
+                                                  addMembers: true,
+                                                );
+                                                //   ChatAddParticipant(
+                                                //   chatId: chat!.id,
+                                                //   userDesgId: _currentUser
+                                                //       .currentDesignation!.userDesgId!,
+                                                // );
+                                              },
+                                            );
+                                          },
+                                          icon: Column(
+                                            children: [
+                                              const Icon(
+                                                Icons.person_add_rounded,
+                                                size: 22,
+                                                color: AppColors.primaryDark,
+                                              ),
+                                              AppText.labelSmall(
+                                                "Add",
+                                                color: AppColors.primaryDark,
+                                                fontWeight: FontWeight.w600,
+                                              )
+                                            ],
+                                          ),
+                                          color: AppColors.primaryDark,
+                                        ),
+                                        if (file != null)
+                                          IconButton(
+                                            onPressed: () {
                                               showModalBottomSheet(
                                                 context: context,
                                                 constraints: BoxConstraints(
@@ -468,7 +595,6 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                           0.9,
                                                 ),
                                                 isScrollControlled: true,
-                                                enableDrag: false,
                                                 backgroundColor:
                                                     AppColors.background,
                                                 shape:
@@ -483,192 +609,106 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                 ),
                                                 builder:
                                                     (BuildContext context) {
-                                                  return ChatParticipantsView(
-                                                    chatId: chat.id,
-                                                    participantsToAdd:
-                                                        potentialParticipantsToAdd,
+                                                  return StickyTagDrawer(
+                                                    mainContent:
+                                                        SingleChildScrollView(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              16),
+                                                      child: Column(
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child: AppText
+                                                                    .headlineSmall(
+                                                                        "File Preview"),
+                                                              ),
+                                                              IconButton(
+                                                                onPressed: () =>
+                                                                    RouteHelper
+                                                                        .pop(),
+                                                                icon:
+                                                                    const Icon(
+                                                                  Icons.close,
+                                                                  color: AppColors
+                                                                      .textPrimary,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          PreviewFile(
+                                                            content:
+                                                                file?.content,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    flagText: "Flags",
+                                                    panelContent:
+                                                        SingleChildScrollView(
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .fromLTRB(
+                                                                16, 0, 16, 16),
+                                                        child: file?.attachments !=
+                                                                    null &&
+                                                                file!
+                                                                    .attachments
+                                                                    .isNotEmpty
+                                                            ? ReadOnlyFlagAttachmentList(
+                                                                header: AppText
+                                                                    .titleMedium(
+                                                                        "Attached Flags"),
+                                                                data: file!
+                                                                    .attachments,
+                                                              )
+                                                                .animate(
+                                                                    delay:
+                                                                        100.ms)
+                                                                .fade(
+                                                                    duration:
+                                                                        400.ms,
+                                                                    curve: Curves
+                                                                        .easeInOut)
+                                                                .slide(
+                                                                    begin:
+                                                                        const Offset(
+                                                                            1,
+                                                                            0),
+                                                                    end: Offset
+                                                                        .zero)
+                                                            : Center(
+                                                                child: AppText
+                                                                    .bodyMedium(
+                                                                        "No flags available"),
+                                                              ),
+                                                      ),
+                                                    ),
                                                   );
                                                 },
                                               );
                                             },
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          title,
-                                          AppText.labelMedium(
-                                            "${chat.activeParticipants.length} ${chat.activeParticipants.length > 1 ? "Participants" : "Participant"}",
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  ...[
-                                    IconButton(
-                                      onPressed: () {
-                                        showModalBottomSheet(
-                                          context: context,
-                                          constraints: BoxConstraints(
-                                            maxHeight:
-                                                MediaQuery.sizeOf(context)
-                                                        .height *
-                                                    0.9,
-                                          ),
-                                          isScrollControlled: true,
-                                          enableDrag: false,
-                                          backgroundColor: AppColors.background,
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(16),
-                                              topRight: Radius.circular(16),
+                                            icon: Column(
+                                              children: [
+                                                const Icon(
+                                                  Icons.file_copy_outlined,
+                                                  size: 22,
+                                                  color: AppColors.primaryDark,
+                                                ),
+                                                AppText.labelSmall(
+                                                  "File",
+                                                  color: AppColors.primaryDark,
+                                                  fontWeight: FontWeight.w600,
+                                                )
+                                              ],
                                             ),
-                                          ),
-                                          builder: (BuildContext context) {
-                                            return ChatParticipantsView(
-                                              chatId: chat.id,
-                                              participantsToAdd:
-                                                  potentialParticipantsToAdd,
-                                              addMembers: true,
-                                            );
-                                            //   ChatAddParticipant(
-                                            //   chatId: chat!.id,
-                                            //   userDesgId: _currentUser
-                                            //       .currentDesignation!.userDesgId!,
-                                            // );
-                                          },
-                                        );
-                                      },
-                                      icon: Column(
-                                        children: [
-                                          const Icon(
-                                            Icons.person_add_rounded,
-                                            size: 22,
                                             color: AppColors.primaryDark,
                                           ),
-                                          AppText.labelSmall(
-                                            "Add",
-                                            color: AppColors.primaryDark,
-                                            fontWeight: FontWeight.w600,
-                                          )
-                                        ],
-                                      ),
-                                      color: AppColors.primaryDark,
-                                    ),
-                                    if (file != null)
-                                      IconButton(
-                                        onPressed: () {
-                                          showModalBottomSheet(
-                                            context: context,
-                                            constraints: BoxConstraints(
-                                              maxHeight:
-                                                  MediaQuery.sizeOf(context)
-                                                          .height *
-                                                      0.9,
-                                            ),
-                                            isScrollControlled: true,
-                                            backgroundColor:
-                                                AppColors.background,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(16),
-                                                topRight: Radius.circular(16),
-                                              ),
-                                            ),
-                                            builder: (BuildContext context) {
-                                              return StickyTagDrawer(
-                                                mainContent:
-                                                    SingleChildScrollView(
-                                                  padding:
-                                                      const EdgeInsets.all(16),
-                                                  child: Column(
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Expanded(
-                                                            child: AppText
-                                                                .headlineSmall(
-                                                                    "File Preview"),
-                                                          ),
-                                                          IconButton(
-                                                            onPressed: () =>
-                                                                RouteHelper
-                                                                    .pop(),
-                                                            icon: const Icon(
-                                                              Icons.close,
-                                                              color: AppColors
-                                                                  .textPrimary,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      PreviewFile(
-                                                        content: file?.content,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                flagText: "Flags",
-                                                panelContent:
-                                                    SingleChildScrollView(
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .fromLTRB(
-                                                        16, 0, 16, 16),
-                                                    child: file?.attachments !=
-                                                                null &&
-                                                            file!.attachments
-                                                                .isNotEmpty
-                                                        ? ReadOnlyFlagAttachmentList(
-                                                            header: AppText
-                                                                .titleMedium(
-                                                                    "Attached Flags"),
-                                                            data: file!
-                                                                .attachments,
-                                                          )
-                                                            .animate(
-                                                                delay: 100.ms)
-                                                            .fade(
-                                                                duration:
-                                                                    400.ms,
-                                                                curve: Curves
-                                                                    .easeInOut)
-                                                            .slide(
-                                                                begin:
-                                                                    const Offset(
-                                                                        1, 0),
-                                                                end:
-                                                                    Offset.zero)
-                                                        : Center(
-                                                            child: AppText
-                                                                .bodyMedium(
-                                                                    "No flags available"),
-                                                          ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                        icon: Column(
-                                          children: [
-                                            const Icon(
-                                              Icons.file_copy_outlined,
-                                              size: 22,
-                                              color: AppColors.primaryDark,
-                                            ),
-                                            AppText.labelSmall(
-                                              "File",
-                                              color: AppColors.primaryDark,
-                                              fontWeight: FontWeight.w600,
-                                            )
-                                          ],
-                                        ),
-                                        color: AppColors.primaryDark,
-                                      ),
-                                  ],
-                                ],
-                              );
+                                      ],
+                                    ],
+                                  );
                       }),
                   elevation: 0,
                   scrolledUnderElevation: 0,

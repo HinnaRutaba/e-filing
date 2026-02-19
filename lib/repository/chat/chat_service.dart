@@ -932,4 +932,18 @@ class ChatService {
   Future<void> disposeRecorder() async {
     await audioRecorder.dispose();
   }
+
+  static String getChatTitle(ChatModel chat, int currentUserId) {
+    if (chat.type == ChatType.direct) {
+      final otherParticipant = chat.activeParticipants
+          .where((participant) => participant.userId != currentUserId)
+          .firstOrNull;
+
+      if (otherParticipant != null) {
+        return otherParticipant.userTitle ?? 'Unknown User';
+      }
+    }
+
+    return chat.fileBarCode ?? chat.fileId?.toString() ?? 'Chat';
+  }
 }

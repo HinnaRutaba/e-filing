@@ -364,7 +364,7 @@ class ChatsListView extends StatelessWidget {
                                     ),
                                   ),
                                   title: AppText.titleMedium(
-                                      _getChatTitle(chat, userId)),
+                                      ChatService.getChatTitle(chat, userId)),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -451,19 +451,7 @@ class ChatsListView extends StatelessWidget {
     );
   }
 
-  String _getChatTitle(ChatModel chat, int currentUserId) {
-    if (chat.type == ChatType.direct) {
-      final otherParticipant = chat.activeParticipants
-          .where((participant) => participant.userId != currentUserId)
-          .firstOrNull;
 
-      if (otherParticipant != null) {
-        return otherParticipant.userTitle ?? 'Unknown User';
-      }
-    }
-
-    return chat.fileBarCode ?? chat.fileId?.toString() ?? 'Chat';
-  }
 
   String _formatTime(DateTime dt) {
     final now = DateTime.now();

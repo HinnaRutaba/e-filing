@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -299,10 +300,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                       : AppColors.secondary,
                                   radius: 16,
                                   child: AppText.titleLarge(
-                                    (participant.userTitle?.isNotEmpty == true)
-                                        ? participant.userTitle![0]
-                                            .toUpperCase()
-                                        : 'U',
+                                    HelperUtils.firstTwoLetters(
+                                        participant.userTitle ?? ''),
                                     color: Colors.white,
                                   ),
                                 ),
