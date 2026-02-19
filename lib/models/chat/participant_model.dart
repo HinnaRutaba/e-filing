@@ -44,7 +44,7 @@ class ChatParticipantModel {
     return ChatParticipantModel(
       userDesignationId: json['userDesgId'] ?? 0,
       userId: json['userId'] ?? '',
-      userTitle: json['userName'] ?? '',
+      userTitle: json['userTitle'] ?? json['userName'] ?? '',
       designation: json['userDesignationTitle'] ?? '',
     );
   }
