@@ -241,18 +241,20 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                 ),
                 subtitle: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: AppText.labelMedium(
-                        participant.designation ?? '',
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: AppText.labelMedium(
+                          participant.designation ?? '',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -262,6 +264,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     chatService.addParticipants(
                       chatId: chatId,
                       newParticipants: [participant],
+                      addedByUserId: uid,
                     );
                   },
                   text: "Add +",
@@ -342,18 +345,20 @@ class _AddedParticipantsWidget extends StatelessWidget {
                 ),
                 subtitle: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: AppText.labelMedium(
-                        participant.designation ?? '',
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: AppText.labelMedium(
+                          participant.designation ?? '',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -363,6 +368,7 @@ class _AddedParticipantsWidget extends StatelessWidget {
                     chatService.removeParticipant(
                       chatId: chatId,
                       userId: participant.userId!,
+                      removedByUserId: uid,
                     );
                     // Navigate to chats screen if current user leaves
                     if (isCurrentUser) {

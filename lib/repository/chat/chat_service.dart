@@ -134,6 +134,7 @@ class ChatService {
   Future<void> addParticipants({
     required String chatId,
     required List<ChatParticipantModel> newParticipants,
+    required int addedByUserId,
   }) async {
     final chatDoc =
         await _firestore.collection(chatsCollection).doc(chatId).get();
@@ -216,13 +217,20 @@ class ChatService {
       final chat = await getChat(chatId);
       if (chat == null) return;
 
+      // Find the user who added the participants
+      final addedByUser = updatedParticipants.firstWhere(
+        (p) => p.userId == addedByUserId,
+        orElse: () => ChatParticipantModel(userTitle: 'Someone'),
+      );
+      final adderName = addedByUser.userTitle ?? 'Someone';
+
       for (final name in addedParticipantNames) {
         final systemMessage = MessageModel(
           id: const Uuid().v4(),
-          text: "$name was added to the chat",
+          text: "$adderName added $name to the chat",
           userId: null,
           userDesignationId: 0,
-          userName: name,
+          userName: "System",
           sentAt: DateTime.now(),
           messageType: MessageType.info,
         );
@@ -237,10 +245,10 @@ class ChatService {
       for (final name in restoredParticipantNames) {
         final systemMessage = MessageModel(
           id: const Uuid().v4(),
-          text: "$name rejoined the chat",
+          text: "$adderName added $name back to the chat",
           userId: null,
           userDesignationId: 0,
-          userName: name,
+          userName: "System",
           sentAt: DateTime.now(),
           messageType: MessageType.info,
         );
@@ -267,6 +275,7 @@ class ChatService {
   Future<void> removeParticipant({
     required String chatId,
     required int userId,
+    required int removedByUserId,
   }) async {
     final chatDoc =
         await _firestore.collection(chatsCollection).doc(chatId).get();
@@ -329,9 +338,23 @@ class ChatService {
       final chat = await getChat(chatId);
       if (chat == null) return;
 
+      String messageText;
+      if (userId == removedByUserId) {
+        // Self-removal
+        messageText = "$removedUserName left the chat";
+      } else {
+        // Removed by someone else
+        final removedByUser = participants.firstWhere(
+          (p) => p.userId == removedByUserId && !p.removed,
+          orElse: () => ChatParticipantModel(userTitle: 'Someone'),
+        );
+        final removerName = removedByUser.userTitle ?? 'Someone';
+        messageText = "$removerName removed $removedUserName from the chat";
+      }
+
       final systemMessage = MessageModel(
         id: const Uuid().v4(),
-        text: "$removedUserName left the chat",
+        text: messageText,
         userId: null,
         userDesignationId: 0,
         userName: "System",

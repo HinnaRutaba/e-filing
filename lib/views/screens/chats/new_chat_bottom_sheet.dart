@@ -320,28 +320,30 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                   margin: const EdgeInsets.only(top: 4),
                                   child: Row(
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppColors.primaryDark
-                                                  .withOpacity(0.1)
-                                              : AppColors.cardColor,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: isSelected
-                                              ? Border.all(
-                                                  color: AppColors.primaryDark
-                                                      .withOpacity(0.3))
-                                              : null,
-                                        ),
-                                        child: AppText.labelMedium(
-                                          participant.designation ?? '',
-                                          fontSize: 12,
-                                          color: isSelected
-                                              ? AppColors.primaryDark
-                                              : AppColors.textSecondary,
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? AppColors.primaryDark
+                                                    .withOpacity(0.1)
+                                                : AppColors.cardColor,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: isSelected
+                                                ? Border.all(
+                                                    color: AppColors.primaryDark
+                                                        .withOpacity(0.3))
+                                                : null,
+                                          ),
+                                          child: AppText.labelMedium(
+                                            participant.designation ?? '',
+                                            fontSize: 12,
+                                            color: isSelected
+                                                ? AppColors.primaryDark
+                                                : AppColors.textSecondary,
+                                          ),
                                         ),
                                       ),
                                     ],
