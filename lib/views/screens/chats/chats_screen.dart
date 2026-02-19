@@ -124,9 +124,43 @@ class ChatsScreen extends ConsumerWidget {
       title: "Chats",
       enableBackButton: true,
       actions: [
-        AppTextLinkButton(
-            onPressed: () => _showCreateChatDialog(context, currentUser),
-            text: "+ New Chat"),
+        InkWell(
+          onTap: () => _showCreateChatDialog(context, currentUser),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.add,
+                color: AppColors.secondaryDark,
+                size: 20,
+              ),
+              AppText.labelMedium(
+                "New Chat",
+                color: AppColors.secondaryDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        InkWell(
+          onTap: () => _showCreateChatDialog(context, currentUser),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.group_add_outlined,
+                color: AppColors.secondaryDark,
+                size: 20,
+              ),
+              AppText.labelMedium(
+                "New Group",
+                color: AppColors.secondaryDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
+        ),
       ],
       body: ChatsListView(
         userId: currentUser.id!,

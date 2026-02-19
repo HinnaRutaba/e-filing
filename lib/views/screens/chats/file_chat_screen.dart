@@ -390,7 +390,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   titleSpacing: 0,
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: AppColors.background,
                   leading: IconButton(
                     onPressed: () => RouteHelper.pop(),
                     icon: const Icon(

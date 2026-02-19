@@ -125,7 +125,7 @@ class BaseScreen extends ConsumerWidget {
               onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
               icon: const Icon(
                 Icons.clear,
-                color: AppColors.secondaryDark,
+                color: Colors.black87,
               ),
             ),
         ],
