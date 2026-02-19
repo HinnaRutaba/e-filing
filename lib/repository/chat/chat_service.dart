@@ -24,6 +24,7 @@ class ChatService {
     required int? fileId,
     required String? subject,
     required List<ChatParticipantModel> participants,
+    required ChatType chatType,
   }) async {
     String? chatId;
 
@@ -40,6 +41,7 @@ class ChatService {
     final chatRef = await _firestore.collection(chatsCollection).add({
       'file_id': fileId,
       'file_barcode': subject,
+      'type': chatType.name,
       'created_at': DateTime.now(),
       'last_message': null,
     });
@@ -70,6 +72,41 @@ class ChatService {
       return query.docs.first.id;
     }
     return null;
+  }
+
+  Future<String?> getDirectChatBetweenUsers(int userId1, int userId2) async {
+    try {
+      // Query all direct chats
+      final query = await _firestore
+          .collection(chatsCollection)
+          .where('type', isEqualTo: 'direct')
+          .get();
+
+      for (final doc in query.docs) {
+        final participantsSnapshot = await _firestore
+            .collection(chatsCollection)
+            .doc(doc.id)
+            .collection('participants')
+            .where('removed', isEqualTo: false)
+            .get();
+
+        final participants = participantsSnapshot.docs
+            .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+            .toList();
+
+        if (participants.length == 2) {
+          final userIds = participants.map((p) => p.userId).toSet();
+          if (userIds.contains(userId1) && userIds.contains(userId2)) {
+            return doc.id;
+          }
+        }
+      }
+
+      return null; // No existing direct chat found
+    } catch (e) {
+      log("Error checking for existing direct chat: $e");
+      return null;
+    }
   }
 
   Future<ChatModel?> getChat(String chatId) async {

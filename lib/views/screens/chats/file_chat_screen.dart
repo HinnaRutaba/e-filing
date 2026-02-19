@@ -208,6 +208,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             fileId: widget.fileId,
             subject: subject,
             participants: participants,
+            chatType: ChatType.group,
           );
 
       chat = await chatService.getChat(chatId);

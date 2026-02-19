@@ -6,7 +6,9 @@ import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/services/record_audio_service.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/chats/new_chat_bottom_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -19,6 +21,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
 
+  void _showNewChatBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const NewChatBottomSheet(),
+    );
+  }
+
   void _showCreateChatDialog(BuildContext context, UserModel currentUser) {
     final TextEditingController chatNameController = TextEditingController();
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -28,7 +39,7 @@ class ChatsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Create New Chat'),
+          title: const Text('Create New Group Chat'),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -37,12 +48,12 @@ class ChatsScreen extends ConsumerWidget {
                 children: [
                   AppTextField(
                     controller: chatNameController,
-                    labelText: 'Chat Name',
-                    hintText: 'Enter chat name',
+                    labelText: 'Group Chat Name',
+                    hintText: 'Enter group chat name',
                     showLabel: false,
                     validator: (text) {
                       if (text == null || text.trim().isEmpty) {
-                        return 'Chat name cannot be empty';
+                        return 'Group chat name cannot be empty';
                       }
                       return null;
                     },
@@ -86,6 +97,7 @@ class ChatsScreen extends ConsumerWidget {
                             String chatId = await ChatService().createChatRoom(
                               fileId: null,
                               subject: chatName,
+                              chatType: ChatType.group,
                               participants: [
                                 ChatParticipantModel(
                                   userDesignationId: currentUser
@@ -125,7 +137,7 @@ class ChatsScreen extends ConsumerWidget {
       enableBackButton: true,
       actions: [
         InkWell(
-          onTap: () => _showCreateChatDialog(context, currentUser),
+          onTap: () => _showNewChatBottomSheet(context),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -298,10 +310,8 @@ class ChatsListView extends StatelessWidget {
                               final hasAudio = chat.lastMessage!.attachments
                                   .any((attachment) =>
                                       attachment != null &&
-                                      (attachment.endsWith('.m4a') ||
-                                          attachment.endsWith('.aac') ||
-                                          attachment.endsWith('.mp3') ||
-                                          attachment.endsWith('.wav')));
+                                      AudioRecordService.audioExtensions.any(
+                                          (ext) => attachment.endsWith(ext)));
 
                               if (hasAudio) {
                                 lastMsg = "$senderName sent an audio";
@@ -354,7 +364,7 @@ class ChatsListView extends StatelessWidget {
                                     ),
                                   ),
                                   title: AppText.titleMedium(
-                                      "${chat?.fileBarCode ?? chat.fileId}"),
+                                      _getChatTitle(chat, userId)),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -439,6 +449,20 @@ class ChatsListView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _getChatTitle(ChatModel chat, int currentUserId) {
+    if (chat.type == ChatType.direct) {
+      final otherParticipant = chat.activeParticipants
+          .where((participant) => participant.userId != currentUserId)
+          .firstOrNull;
+
+      if (otherParticipant != null) {
+        return otherParticipant.userTitle ?? 'Unknown User';
+      }
+    }
+
+    return chat.fileBarCode ?? chat.fileId?.toString() ?? 'Chat';
   }
 
   String _formatTime(DateTime dt) {
