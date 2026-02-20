@@ -373,7 +373,10 @@ class ChatsListView extends StatelessWidget {
                                     ),
                                   ),
                                   title: AppText.titleMedium(
-                                      ChatService.getChatTitle(chat, userId)),
+                                    ChatService.getChatTitle(chat, userId),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
