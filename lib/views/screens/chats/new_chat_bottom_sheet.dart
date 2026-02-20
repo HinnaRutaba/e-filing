@@ -169,6 +169,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: MediaQuery.sizeOf(context).height * 0.90,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(

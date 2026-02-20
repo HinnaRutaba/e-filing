@@ -481,59 +481,139 @@ class ChatService {
     required int userId,
     required int userDesignationId,
   }) {
-    return _firestore
-        .collectionGroup('participants')
-        .where('user_designation_id', isEqualTo: userDesignationId)
-        .snapshots()
-        .asyncMap((participantSnapshot) async {
-      // Get unique chat IDs from participant documents
-      final chatIds = participantSnapshot.docs
-          .map((doc) => doc.reference.parent.parent!.id)
-          .toSet()
-          .toList();
+    return Stream.multi((controller) {
+      StreamSubscription? currentSubscription;
 
-      if (chatIds.isEmpty) return <ChatModel>[];
+      final participantSubscription = _firestore
+          .collectionGroup('participants')
+          .where('user_designation_id', isEqualTo: userDesignationId)
+          .snapshots()
+          .listen((participantSnapshot) {
+        // Cancel previous subscription to avoid duplicates
+        currentSubscription?.cancel();
 
-      List<ChatModel> chats = [];
-      for (final chatId in chatIds) {
-        try {
-          final chatDoc =
-              await _firestore.collection(chatsCollection).doc(chatId).get();
-          if (!chatDoc.exists) continue;
+        // Get unique chat IDs from participant documents
+        final chatIds = participantSnapshot.docs
+            .map((doc) => doc.reference.parent.parent!.id)
+            .toSet()
+            .toList();
 
-          // Fetch participants from subcollection
-          final participantsSnapshot = await _firestore
-              .collection(chatsCollection)
-              .doc(chatId)
-              .collection('participants')
-              .get();
+        if (chatIds.isEmpty) {
+          controller.add(<ChatModel>[]);
+          return;
+        }
 
-          final participants = participantsSnapshot.docs
-              .map((doc) => ChatParticipantModel.fromJson(doc.data()))
-              .toList();
+        // Create individual streams for each chat
+        final chatStreams = chatIds.map((chatId) {
+          return _createChatStream(chatId);
+        }).toList();
 
-          final chat = ChatModel.fromJson(
-            chatDoc.data()!,
-            chatDoc.id,
-            participants: participants,
-          );
-          chats.add(chat);
-        } catch (e) {
-          // Skip this chat if there's an error
-          continue;
+        // Subscribe to the combined stream
+        currentSubscription = _combineLatestList(chatStreams).listen(
+          (chats) {
+            final validChats =
+                chats.where((chat) => chat != null).cast<ChatModel>().toList();
+
+            // Sort by last message time, fallback to created_at if no last message
+            validChats.sort((a, b) {
+              final aTime = a.lastMessage?.sentAt ??
+                  a.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              final bTime = b.lastMessage?.sentAt ??
+                  b.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              return bTime.compareTo(aTime); // newest first
+            });
+
+            controller.add(validChats);
+          },
+          onError: controller.addError,
+        );
+      }, onError: controller.addError);
+
+      controller.onCancel = () {
+        participantSubscription.cancel();
+        currentSubscription?.cancel();
+      };
+    });
+  }
+
+  Stream<ChatModel?> _createChatStream(String chatId) {
+    // Create separate streams for chat document and participants
+    final chatDocStream =
+        _firestore.collection(chatsCollection).doc(chatId).snapshots();
+
+    final participantsStream = _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection('participants')
+        .snapshots();
+
+    // Combine both streams to get real-time updates
+    return Stream.multi((controller) {
+      Map<String, dynamic>? latestChatData;
+      String? latestChatId;
+      List<ChatParticipantModel>? latestParticipants;
+
+      final subscriptions = <StreamSubscription>[];
+
+      void tryEmitChatModel() {
+        if (latestChatData != null &&
+            latestChatId != null &&
+            latestParticipants != null) {
+          try {
+            final chatModel = ChatModel.fromJson(
+              latestChatData!,
+              latestChatId!,
+              participants: latestParticipants!,
+            );
+            controller.add(chatModel);
+          } catch (e) {
+            // If there's an error creating the chat model, emit null
+            controller.add(null);
+          }
         }
       }
 
-      // Sort by last message time
-      chats.sort((a, b) {
-        final aTime =
-            a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bTime =
-            b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bTime.compareTo(aTime); // newest first
-      });
+      // Listen to chat document changes
+      subscriptions.add(chatDocStream.listen(
+        (doc) {
+          if (!doc.exists) {
+            controller.add(null);
+            return;
+          }
+          final data = doc.data();
+          if (data == null) {
+            controller.add(null);
+            return;
+          }
+          latestChatData = data;
+          latestChatId = doc.id;
+          tryEmitChatModel();
+        },
+        onError: (error) {
+          controller.add(null);
+        },
+      ));
 
-      return chats;
+      // Listen to participants collection changes
+      subscriptions.add(participantsStream.listen(
+        (snapshot) {
+          latestParticipants = snapshot.docs
+              .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+              .toList();
+          tryEmitChatModel();
+        },
+        onError: (error) {
+          controller.add(null);
+        },
+      ));
+
+      controller.onCancel = () {
+        for (final sub in subscriptions) {
+          sub.cancel();
+        }
+      };
     });
   }
 
@@ -616,7 +696,7 @@ class ChatService {
           .toList();
 
       return _combineLatestList(chatStreams).map((unreadCounts) {
-        return unreadCounts.fold(0, (sum, count) => sum + count);
+        return unreadCounts.fold<int>(0, (sum, count) => sum + count);
       });
     });
   }
