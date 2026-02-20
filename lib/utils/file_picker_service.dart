@@ -1,6 +1,8 @@
+import 'dart:developer';
 import 'dart:io';
 
 //import 'package:file_picker/file_picker.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -217,48 +219,56 @@ class FilePickerService {
   Future<void> downloadFile(
       BuildContext context, fileUrl, String fileName) async {
     try {
-      final permission = Permission.mediaLibrary;
+      // For Android 10+ (API 29+), storage permission is not needed for app-specific directories
+      // or the Downloads folder. Only request permission for older Android versions.
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkInt = androidInfo.version.sdkInt;
 
-      PermissionStatus status = await permission.status;
+        if (sdkInt < 29) {
+          // Android 9 and below: need storage permission
+          final permission = Permission.storage;
+          PermissionStatus status = await permission.status;
 
-      if (status.isGranted) {
-        print("Permission already granted, proceeding with download");
-      } else if (status.isDenied || status.isLimited) {
-        final result = await permission.request();
-
-        if (!result.isGranted) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content:
-                    Text('Storage permission is required to download files'),
-                backgroundColor: Colors.red,
-              ),
-            );
+          if (status.isDenied || status.isLimited) {
+            final result = await permission.request();
+            if (!result.isGranted) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Storage permission is required to download files'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              return;
+            }
+          } else if (status.isPermanentlyDenied) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                      'Storage permission is permanently denied. Please enable it in app settings.'),
+                  backgroundColor: Colors.red,
+                  action: SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  ),
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            }
+            return;
           }
-          return;
         }
-      } else if (status.isPermanentlyDenied) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                  'Storage permission is permanently denied. Please enable it in app settings.'),
-              backgroundColor: Colors.red,
-              action: SnackBarAction(
-                label: 'Settings',
-                textColor: Colors.white,
-                onPressed: () => openAppSettings(),
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        }
-        return;
+        // Android 10+: No permission needed for Downloads folder
       }
 
       Directory? downloadsDir;
       if (Platform.isAndroid) {
+        // Use Downloads directory - works without permission on Android 10+
         downloadsDir = Directory('/storage/emulated/0/Download');
         if (!await downloadsDir.exists()) {
           downloadsDir = await getExternalStorageDirectory();
@@ -301,15 +311,17 @@ class FilePickerService {
             content: Text('Downloaded $fileName to E-Filing folder'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
-              label: 'Open File',
+              label: 'Open Folder',
               textColor: Colors.white,
               onPressed: () async {
-                final result = await OpenFile.open(filePath);
+                final folderPath = File(filePath).parent.path;
+                final result = await OpenFile.open(folderPath);
                 if (result.type != ResultType.done) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Could not open file: ${result.message}'),
+                        content:
+                            Text('Could not open folder: ${result.message}'),
                         backgroundColor: Colors.orange,
                       ),
                     );
@@ -321,14 +333,14 @@ class FilePickerService {
           ),
         );
       }
-    } catch (e) {
-      print('Download error: $e');
+    } catch (e, s) {
+      log('Download error: ${e}______$s');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to download $fileName: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
           ),
         );
       }
