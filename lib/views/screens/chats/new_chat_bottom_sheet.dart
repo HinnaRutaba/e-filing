@@ -169,7 +169,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -358,7 +357,10 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                         Icons.add_circle_outline,
                                         color: AppColors.textSecondary,
                                       ),
-                                onTap: () => _selectParticipant(participant),
+                                onTap: () {
+                                  HelperUtils.hideKeyboard(context);
+                                  _selectParticipant(participant);
+                                },
                               ),
                             ),
                           );

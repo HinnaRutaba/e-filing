@@ -143,18 +143,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
               )
-            ]
-                .animate(
-                  interval: const Duration(milliseconds: 20),
-                )
-                .slideY(
-                  begin: 3.8,
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOutQuad,
-                )
-                .fade(
-                  duration: const Duration(milliseconds: 600),
-                ),
+            ],
+            // .animate(
+            //   interval: const Duration(milliseconds: 20),
+            // )
+            // .slideY(
+            //   begin: 3.8,
+            //   duration: const Duration(milliseconds: 600),
+            //   curve: Curves.easeInOutQuad,
+            // )
+            // .fade(
+            //   duration: const Duration(milliseconds: 600),
+            // ),
           ),
         ),
       ),

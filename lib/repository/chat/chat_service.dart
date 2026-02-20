@@ -485,58 +485,55 @@ class ChatService {
         .collectionGroup('participants')
         .where('user_designation_id', isEqualTo: userDesignationId)
         .snapshots()
-        .asyncExpand((participantSnapshot) {
+        .asyncMap((participantSnapshot) async {
       // Get unique chat IDs from participant documents
       final chatIds = participantSnapshot.docs
           .map((doc) => doc.reference.parent.parent!.id)
           .toSet()
           .toList();
 
-      if (chatIds.isEmpty) return Stream.value(<ChatModel>[]);
+      if (chatIds.isEmpty) return <ChatModel>[];
 
-      // Create streams for each chat document to listen to real-time changes
-      final chatStreams = chatIds
-          .map((chatId) => _firestore
-                  .collection(chatsCollection)
-                  .doc(chatId)
-                  .snapshots()
-                  .asyncMap((doc) async {
-                if (!doc.exists) return null;
+      List<ChatModel> chats = [];
+      for (final chatId in chatIds) {
+        try {
+          final chatDoc =
+              await _firestore.collection(chatsCollection).doc(chatId).get();
+          if (!chatDoc.exists) continue;
 
-                // Fetch participants from subcollection
-                final participantsSnapshot = await _firestore
-                    .collection(chatsCollection)
-                    .doc(chatId)
-                    .collection('participants')
-                    .get();
+          // Fetch participants from subcollection
+          final participantsSnapshot = await _firestore
+              .collection(chatsCollection)
+              .doc(chatId)
+              .collection('participants')
+              .get();
 
-                final participants = participantsSnapshot.docs
-                    .map((participantDoc) =>
-                        ChatParticipantModel.fromJson(participantDoc.data()))
-                    .toList();
+          final participants = participantsSnapshot.docs
+              .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+              .toList();
 
-                final chat = ChatModel.fromJson(doc.data()!, doc.id,
-                    participants: participants);
-                return chat;
-              }))
-          .toList();
+          final chat = ChatModel.fromJson(
+            chatDoc.data()!,
+            chatDoc.id,
+            participants: participants,
+          );
+          chats.add(chat);
+        } catch (e) {
+          // Skip this chat if there's an error
+          continue;
+        }
+      }
 
-      // Combine all chat streams and filter out nulls
-      return _combineLatestList(chatStreams).map((chats) {
-        final validChats =
-            chats.where((chat) => chat != null).cast<ChatModel>().toList();
-
-        // Sort by last message time
-        validChats.sort((a, b) {
-          final aTime =
-              a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime =
-              b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return bTime.compareTo(aTime); // newest first
-        });
-
-        return validChats;
+      // Sort by last message time
+      chats.sort((a, b) {
+        final aTime =
+            a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime =
+            b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bTime.compareTo(aTime); // newest first
       });
+
+      return chats;
     });
   }
 

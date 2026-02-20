@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
@@ -218,13 +219,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 dense: true,
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
-                  radius: 14,
-                  child: Icon(
-                    Icons.person,
+                  radius: 16,
+                  child: AppText.titleLarge(
+                    HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
                     color: Colors.white,
-                    size: 14,
+                    fontSize: 14,
                   ),
                 ),
                 horizontalTitleGap: 10,
@@ -322,13 +323,13 @@ class _AddedParticipantsWidget extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 dense: true,
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
-                  radius: 14,
-                  child: Icon(
-                    Icons.person,
+                  radius: 16,
+                  child: AppText.titleLarge(
+                    HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
                     color: Colors.white,
-                    size: 14,
+                    fontSize: 14,
                   ),
                 ),
                 horizontalTitleGap: 10,
