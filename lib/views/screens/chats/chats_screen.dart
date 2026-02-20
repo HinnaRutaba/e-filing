@@ -376,6 +376,7 @@ class ChatsListView extends StatelessWidget {
                                     ChatService.getChatTitle(chat, userId),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
+                                    fontSize: 15,
                                   ),
                                   subtitle: Column(
                                     crossAxisAlignment:
