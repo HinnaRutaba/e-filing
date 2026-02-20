@@ -34,6 +34,40 @@ class FilePickerService {
     'mov',
   ];
 
+  static const List<String> allowedExtensions = [
+    'mp3',
+    'wav',
+    'ogg',
+    'm4a',
+    'aac',
+    'mp4',
+    'mpeg',
+    'mpga',
+    'webm',
+    'avi',
+    'mov',
+    'mkv',
+    'flv',
+    'wmv',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'svg',
+    'webp',
+    'bmp',
+    'heic',
+    'pdf',
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'ppt',
+    'pptx',
+    'txt',
+    'csv'
+  ];
+
   Future<bool> checkPermission(Permission perm) async {
     if (await perm.isGranted) return true;
     PermissionStatus permission = await perm.request();
@@ -117,37 +151,33 @@ class FilePickerService {
     List<XFile> pickedFiles = [];
 
     try {
-      // EasyLoading.show(status: "Selecting files...");
-
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
-        type: FileType.any,
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
       );
 
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 200));
 
       List<XFile> files = result?.xFiles ?? [];
-      print('MEDIA_______${files.length}');
 
       EasyLoading.dismiss();
 
-      // Filter files under 20MB
+      // Filter files under 60MB (61440 KB)
       final validFiles = <XFile>[];
       for (final file in files) {
         final fileLength = await file.length();
-        if (bytesToMB(fileLength) <= 20) {
+        if (fileLength <= 61440 * 1024) {
           validFiles.add(file);
         }
       }
 
-      print('VALID_______${validFiles.length}');
-
       if (validFiles.length != files.length) {
         Toast.error(
-            message: "Some files exceeded the 20MB limit and were not added.");
+            message: "Some files exceeded the 60MB limit and were not added.");
       }
 
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 200));
 
       pickedFiles.addAll(validFiles);
     } catch (e, s) {
