@@ -1,3 +1,5 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
@@ -43,7 +45,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   labelText: 'Current Password',
                   hintText: "Current Password",
                   obscureText: obscureCurrentPassword,
-                  showLabel: false,
+                  showLabel: true,
                   // labelColor: AppColors.white,
                   prefix: const Icon(Icons.lock),
                   suffixIcon: IconButton(
@@ -66,7 +68,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   labelText: 'New Password',
                   hintText: "New Password",
                   obscureText: obscureNewPassword,
-                  showLabel: false,
+                  showLabel: true,
                   // labelColor: AppColors.white,
                   prefix: const Icon(Icons.lock),
                   suffixIcon: IconButton(
@@ -89,7 +91,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   labelText: 'Confirm Password',
                   hintText: "Confirm Password",
                   obscureText: obscureConfirmPassword,
-                  showLabel: false,
+                  showLabel: true,
                   // labelColor: AppColors.white,
                   prefix: const Icon(Icons.lock),
                   suffixIcon: IconButton(
@@ -113,13 +115,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 ),
                 const SizedBox(height: 24),
                 AppSolidButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-                    ref.read(authController.notifier).changePassword(
-                          currentPassword: currentPasswordController.text,
-                          newPassword: newPasswordController.text,
-                          confirmPassword: confirmPasswordController.text,
-                        );
+                    bool success =
+                        await ref.read(authController.notifier).changePassword(
+                              currentPassword: currentPasswordController.text,
+                              newPassword: newPasswordController.text,
+                              confirmPassword: confirmPasswordController.text,
+                            );
+                    if (success) {
+                      RouteHelper.navigateTo(Routes.dashboard);
+                    }
                   },
                   text: "Save Changes",
                   backgroundColor: AppColors.secondaryDark,
