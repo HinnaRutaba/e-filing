@@ -1110,7 +1110,70 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
           ),
         ),
-        if (!nextMessageInGroup && uploadStatus != 'sending')
+        // Show failed message indicator with retry/delete buttons
+        if (uploadStatus == 'failed' && isMe)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 14,
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  'Failed to send',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    if (chat != null) {
+                      await chatService.retryFailedMessage(
+                        chat: chat!,
+                        messageId: message.id,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    if (chat != null) {
+                      await chatService.deleteFailedMessage(
+                        chatId: chat!.id,
+                        messageId: message.id,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (!nextMessageInGroup &&
+            uploadStatus != 'sending' &&
+            uploadStatus != 'failed')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
             child: Row(
