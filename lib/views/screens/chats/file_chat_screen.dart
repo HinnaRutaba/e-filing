@@ -105,7 +105,8 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         if (url.endsWith(".m4a") ||
             url.endsWith(".aac") ||
             url.endsWith(".mp3") ||
-            url.endsWith(".wav")) {
+            url.endsWith(".wav") ||
+            url.endsWith(".weba")) {
           return types.AudioMessage(
             id: message.id,
             author: types.User(
