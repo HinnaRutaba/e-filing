@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
+import 'package:keyboard_detection/keyboard_detection.dart';
 
 class StickyTagDrawer extends StatefulWidget {
   final Widget mainContent; // main page content
@@ -23,8 +24,10 @@ class StickyTagDrawer extends StatefulWidget {
 class _StickyTagDrawerState extends State<StickyTagDrawer>
     with SingleTickerProviderStateMixin {
   bool _isOpen = false;
+  bool _isKeyboardVisible = false;
   late AnimationController _controller;
   late Animation<double> _widthAnimation;
+  late KeyboardDetectionController _keyboardDetectionController;
 
   @override
   void initState() {
@@ -35,6 +38,13 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
     );
     _widthAnimation =
         Tween<double>(begin: 0, end: widget.panelWidth).animate(_controller);
+    _keyboardDetectionController = KeyboardDetectionController(
+      onChanged: (value) {
+        setState(() {
+          _isKeyboardVisible = value == KeyboardState.visible;
+        });
+      },
+    );
   }
 
   void _togglePanel() {
@@ -56,85 +66,90 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        /// Main content of the page
-        widget.mainContent,
+    return KeyboardDetection(
+      controller: _keyboardDetectionController,
+      child: Stack(
+        children: [
+          /// Main content of the page
+          widget.mainContent,
 
-        /// Side panel
-        AnimatedBuilder(
-          animation: _widthAnimation,
-          builder: (context, child) {
-            return Positioned(
-              top: 0,
-              bottom: 0,
-              right: 0,
-              width: _widthAnimation.value,
-              child: Material(
-                elevation: 8,
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: AppTextLinkButton(
-                          onPressed: _togglePanel,
-                          text: "Close",
-                          icon: Icons.close,
+          /// Side panel
+          AnimatedBuilder(
+            animation: _widthAnimation,
+            builder: (context, child) {
+              return Positioned(
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: _widthAnimation.value,
+                child: Material(
+                  elevation: 8,
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: AppTextLinkButton(
+                            onPressed: _togglePanel,
+                            text: "Close",
+                            icon: Icons.close,
+                          ),
                         ),
                       ),
-                    ),
-                    if (_isOpen) Expanded(child: widget.panelContent),
-                  ],
+                      if (_isOpen) Expanded(child: widget.panelContent),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
 
-        /// Sticky flag
-        Positioned(
-          right: 0,
-          top: MediaQuery.of(context).size.height / 2 - 40,
-          child: _isOpen
-              ? const SizedBox.shrink()
-              : GestureDetector(
-                  onTap: _togglePanel,
-                  child: Container(
-                    width: 32,
-                    constraints: const BoxConstraints(minHeight: 80),
-                    //height: 80,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 8,
-                          offset: Offset(2, 2),
+          /// Sticky flag
+          Positioned(
+            right: 0,
+            top: _isKeyboardVisible
+                ? 100
+                : MediaQuery.of(context).size.height / 2 - 40,
+            child: _isOpen
+                ? const SizedBox.shrink()
+                : GestureDetector(
+                    onTap: _togglePanel,
+                    child: Container(
+                      width: 32,
+                      constraints: const BoxConstraints(minHeight: 80),
+                      //height: 80,
+                      decoration: const BoxDecoration(
+                        color: AppColors.secondaryDark,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
                         ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: RotatedBox(
-                      quarterTurns: 1,
-                      child: Text(
-                        widget.flagText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 8,
+                            offset: Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: RotatedBox(
+                        quarterTurns: 1,
+                        child: Text(
+                          widget.flagText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
