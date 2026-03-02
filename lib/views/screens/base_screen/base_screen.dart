@@ -29,6 +29,7 @@ class BaseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
         title: const SizedBox(),
@@ -164,7 +165,7 @@ class BaseScreen extends ConsumerWidget {
               onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
               icon: const Icon(
                 Icons.clear,
-                color: AppColors.secondaryDark,
+                color: Colors.black87,
               ),
             ),
         ],

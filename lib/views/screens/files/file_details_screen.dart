@@ -239,7 +239,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
         body: loading
             ? const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: LoadingCard(),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
               )
             : SafeArea(
                 child: StickyTagDrawer(

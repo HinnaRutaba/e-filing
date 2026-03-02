@@ -6,7 +6,9 @@ import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/services/record_audio_service.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/chats/new_chat_bottom_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -19,6 +21,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
 
+  void _showNewChatBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const NewChatBottomSheet(),
+    );
+  }
+
   void _showCreateChatDialog(BuildContext context, UserModel currentUser) {
     final TextEditingController chatNameController = TextEditingController();
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -28,32 +39,41 @@ class ChatsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Create New Chat'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppTextField(
-                    controller: chatNameController,
-                    labelText: 'Chat Name',
-                    hintText: 'Enter chat name',
-                    showLabel: false,
-                    validator: (text) {
-                      if (text == null || text.trim().isEmpty) {
-                        return 'Chat name cannot be empty';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+          title: AppText.titleMedium(
+            'Create New Group Chat',
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppTextField(
+                      controller: chatNameController,
+                      labelText: 'Group Chat Name',
+                      hintText: 'Enter group chat name',
+                      showLabel: false,
+                      validator: (text) {
+                        if (text == null || text.trim().isEmpty) {
+                          return 'Group chat name cannot be empty';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           actions: [
             SizedBox(
-              width: 100,
+              width: 124,
               child: AppOutlineButton(
                 onPressed: () {
                   RouteHelper.pop();
@@ -63,7 +83,7 @@ class ChatsScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             SizedBox(
-              width: 100,
+              width: 124,
               child: StatefulBuilder(builder: (context, dState) {
                 return creating
                     ? const Center(
@@ -86,6 +106,7 @@ class ChatsScreen extends ConsumerWidget {
                             String chatId = await ChatService().createChatRoom(
                               fileId: null,
                               subject: chatName,
+                              chatType: ChatType.group,
                               participants: [
                                 ChatParticipantModel(
                                   userDesignationId: currentUser
@@ -125,9 +146,43 @@ class ChatsScreen extends ConsumerWidget {
       title: "Chats",
       enableBackButton: true,
       actions: [
-        AppTextLinkButton(
-            onPressed: () => _showCreateChatDialog(context, currentUser),
-            text: "+ New Chat"),
+        InkWell(
+          onTap: () => _showNewChatBottomSheet(context),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.add,
+                color: AppColors.secondaryDark,
+                size: 20,
+              ),
+              AppText.labelMedium(
+                "New Chat",
+                color: AppColors.secondaryDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        InkWell(
+          onTap: () => _showCreateChatDialog(context, currentUser),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.group_add_outlined,
+                color: AppColors.secondaryDark,
+                size: 20,
+              ),
+              AppText.labelMedium(
+                "New Group",
+                color: AppColors.secondaryDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
+        ),
       ],
       body: ChatsListView(
         userId: currentUser.id!,
@@ -265,10 +320,8 @@ class ChatsListView extends StatelessWidget {
                               final hasAudio = chat.lastMessage!.attachments
                                   .any((attachment) =>
                                       attachment != null &&
-                                      (attachment.endsWith('.m4a') ||
-                                          attachment.endsWith('.aac') ||
-                                          attachment.endsWith('.mp3') ||
-                                          attachment.endsWith('.wav')));
+                                      AudioRecordService.audioExtensions.any(
+                                          (ext) => attachment.endsWith(ext)));
 
                               if (hasAudio) {
                                 lastMsg = "$senderName sent an audio";
@@ -321,7 +374,11 @@ class ChatsListView extends StatelessWidget {
                                     ),
                                   ),
                                   title: AppText.titleMedium(
-                                      "${chat?.fileBarCode ?? chat.fileId}"),
+                                    ChatService.getChatTitle(chat, userId),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 15,
+                                  ),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,

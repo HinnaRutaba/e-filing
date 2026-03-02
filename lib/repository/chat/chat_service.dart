@@ -24,6 +24,7 @@ class ChatService {
     required int? fileId,
     required String? subject,
     required List<ChatParticipantModel> participants,
+    required ChatType chatType,
   }) async {
     String? chatId;
 
@@ -40,8 +41,8 @@ class ChatService {
     final chatRef = await _firestore.collection(chatsCollection).add({
       'file_id': fileId,
       'file_barcode': subject,
+      'type': chatType.name,
       'created_at': DateTime.now(),
-      'participants': participants.map((p) => p.toJson()).toList(),
       'last_message': null,
     });
 
@@ -73,18 +74,67 @@ class ChatService {
     return null;
   }
 
+  Future<String?> getDirectChatBetweenUsers(int userId1, int userId2) async {
+    try {
+      // Query all direct chats
+      final query = await _firestore
+          .collection(chatsCollection)
+          .where('type', isEqualTo: 'direct')
+          .get();
+
+      for (final doc in query.docs) {
+        final participantsSnapshot = await _firestore
+            .collection(chatsCollection)
+            .doc(doc.id)
+            .collection('participants')
+            .where('removed', isEqualTo: false)
+            .get();
+
+        final participants = participantsSnapshot.docs
+            .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+            .toList();
+
+        if (participants.length == 2) {
+          final userIds = participants.map((p) => p.userId).toSet();
+          if (userIds.contains(userId1) && userIds.contains(userId2)) {
+            return doc.id;
+          }
+        }
+      }
+
+      return null; // No existing direct chat found
+    } catch (e) {
+      log("Error checking for existing direct chat: $e");
+      return null;
+    }
+  }
+
   Future<ChatModel?> getChat(String chatId) async {
     DocumentSnapshot ds =
         await _firestore.collection(chatsCollection).doc(chatId).get();
     if (!ds.exists) {
       return null;
     }
-    return ChatModel.fromJson(ds.data() as Map<String, dynamic>, ds.id);
+
+    // Fetch participants from subcollection
+    final participantsSnapshot = await _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection('participants')
+        .get();
+
+    final participants = participantsSnapshot.docs
+        .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+        .toList();
+
+    return ChatModel.fromJson(ds.data() as Map<String, dynamic>, ds.id,
+        participants: participants);
   }
 
   Future<void> addParticipants({
     required String chatId,
     required List<ChatParticipantModel> newParticipants,
+    required int addedByUserId,
   }) async {
     final chatDoc =
         await _firestore.collection(chatsCollection).doc(chatId).get();
@@ -93,10 +143,15 @@ class ChatService {
       throw Exception("Chat not found");
     }
 
-    final chatData = chatDoc.data()!;
-    final existingParticipants = (chatData['participants'] as List<dynamic>? ??
-            [])
-        .map((p) => ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+    // Fetch existing participants from subcollection
+    final participantsSnapshot = await _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection('participants')
+        .get();
+
+    final existingParticipants = participantsSnapshot.docs
+        .map((doc) => ChatParticipantModel.fromJson(doc.data()))
         .toList();
 
     final updatedParticipants =
@@ -135,10 +190,6 @@ class ChatService {
     // Only update if something changed
     if (updatedParticipants.length != existingParticipants.length ||
         !_listEquals(existingParticipants, updatedParticipants)) {
-      await _firestore.collection(chatsCollection).doc(chatId).update({
-        'participants': updatedParticipants.map((p) => p.toJson()).toList(),
-      });
-
       // Update participants subcollection for added/restored participants
       final batch = _firestore.batch();
 
@@ -163,15 +214,23 @@ class ChatService {
       await batch.commit();
 
       // Create system messages for added participants
-      final chat = ChatModel.fromJson(chatData, chatId);
+      final chat = await getChat(chatId);
+      if (chat == null) return;
+
+      // Find the user who added the participants
+      final addedByUser = updatedParticipants.firstWhere(
+        (p) => p.userId == addedByUserId,
+        orElse: () => ChatParticipantModel(userTitle: 'Someone'),
+      );
+      final adderName = addedByUser.userTitle ?? 'Someone';
 
       for (final name in addedParticipantNames) {
         final systemMessage = MessageModel(
           id: const Uuid().v4(),
-          text: "$name was added to the chat",
+          text: "$adderName added $name to the chat",
           userId: null,
           userDesignationId: 0,
-          userName: name,
+          userName: "System",
           sentAt: DateTime.now(),
           messageType: MessageType.info,
         );
@@ -186,10 +245,10 @@ class ChatService {
       for (final name in restoredParticipantNames) {
         final systemMessage = MessageModel(
           id: const Uuid().v4(),
-          text: "$name rejoined the chat",
+          text: "$adderName added $name back to the chat",
           userId: null,
           userDesignationId: 0,
-          userName: name,
+          userName: "System",
           sentAt: DateTime.now(),
           messageType: MessageType.info,
         );
@@ -216,6 +275,7 @@ class ChatService {
   Future<void> removeParticipant({
     required String chatId,
     required int userId,
+    required int removedByUserId,
   }) async {
     final chatDoc =
         await _firestore.collection(chatsCollection).doc(chatId).get();
@@ -224,9 +284,15 @@ class ChatService {
       throw Exception("Chat not found");
     }
 
-    final chatData = chatDoc.data()!;
-    final participants = (chatData['participants'] as List<dynamic>? ?? [])
-        .map((p) => ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+    // Fetch participants from subcollection
+    final participantsSnapshot = await _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection('participants')
+        .get();
+
+    final participants = participantsSnapshot.docs
+        .map((doc) => ChatParticipantModel.fromJson(doc.data()))
         .toList();
 
     String? removedUserName;
@@ -250,11 +316,6 @@ class ChatService {
       return p;
     }).toList();
 
-    // Save back to Firestore
-    await _firestore.collection(chatsCollection).doc(chatId).update({
-      'participants': updatedParticipants.map((p) => p.toJson()).toList(),
-    });
-
     // Update participants subcollection if a participant was removed
     if (removedUserDesignationId != null) {
       final removedParticipant = updatedParticipants.firstWhere(
@@ -274,11 +335,26 @@ class ChatService {
 
     // Create system message if a participant was actually removed
     if (removedUserName != null) {
-      final chat = ChatModel.fromJson(chatData, chatId);
+      final chat = await getChat(chatId);
+      if (chat == null) return;
+
+      String messageText;
+      if (userId == removedByUserId) {
+        // Self-removal
+        messageText = "$removedUserName left the chat";
+      } else {
+        // Removed by someone else
+        final removedByUser = participants.firstWhere(
+          (p) => p.userId == removedByUserId && !p.removed,
+          orElse: () => ChatParticipantModel(userTitle: 'Someone'),
+        );
+        final removerName = removedByUser.userTitle ?? 'Someone';
+        messageText = "$removerName removed $removedUserName from the chat";
+      }
 
       final systemMessage = MessageModel(
         id: const Uuid().v4(),
-        text: "$removedUserName left the chat",
+        text: messageText,
         userId: null,
         userDesignationId: 0,
         userName: "System",
@@ -336,16 +412,68 @@ class ChatService {
   }
 
   Stream<ChatModel> readChatStream(String chatId) {
-    return _firestore
+    // Create separate streams for chat document and participants
+    final chatDocStream =
+        _firestore.collection(chatsCollection).doc(chatId).snapshots();
+
+    final participantsStream = _firestore
         .collection(chatsCollection)
         .doc(chatId)
-        .snapshots()
-        .map((doc) {
-      final data = doc.data();
-      if (data == null) {
-        throw Exception("Chat not found");
+        .collection('participants')
+        .snapshots();
+
+    // Combine both streams to get real-time updates for both chat and participants
+    return Stream.multi((controller) {
+      Map<String, dynamic>? latestChatData;
+      String? latestChatId;
+      List<ChatParticipantModel>? latestParticipants;
+
+      final subscriptions = <StreamSubscription>[];
+
+      void tryEmitChatModel() {
+        if (latestChatData != null &&
+            latestChatId != null &&
+            latestParticipants != null) {
+          final chatModel = ChatModel.fromJson(
+            latestChatData!,
+            latestChatId!,
+            participants: latestParticipants!,
+          );
+          controller.add(chatModel);
+        }
       }
-      return ChatModel.fromJson(data, doc.id);
+
+      // Listen to chat document changes
+      subscriptions.add(chatDocStream.listen(
+        (doc) {
+          final data = doc.data();
+          if (data == null) {
+            controller.addError(Exception("Chat not found"));
+            return;
+          }
+          latestChatData = data;
+          latestChatId = doc.id;
+          tryEmitChatModel();
+        },
+        onError: controller.addError,
+      ));
+
+      // Listen to participants collection changes
+      subscriptions.add(participantsStream.listen(
+        (snapshot) {
+          latestParticipants = snapshot.docs
+              .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+              .toList();
+          tryEmitChatModel();
+        },
+        onError: controller.addError,
+      ));
+
+      controller.onCancel = () {
+        for (final sub in subscriptions) {
+          sub.cancel();
+        }
+      };
     });
   }
 
@@ -353,49 +481,139 @@ class ChatService {
     required int userId,
     required int userDesignationId,
   }) {
-    return _firestore
-        .collectionGroup('participants')
-        .where('user_designation_id', isEqualTo: userDesignationId)
-        .snapshots()
-        .asyncExpand((participantSnapshot) {
-      // Get unique chat IDs from participant documents
-      final chatIds = participantSnapshot.docs
-          .map((doc) => doc.reference.parent.parent!.id)
-          .toSet()
-          .toList();
+    return Stream.multi((controller) {
+      StreamSubscription? currentSubscription;
 
-      if (chatIds.isEmpty) return Stream.value(<ChatModel>[]);
+      final participantSubscription = _firestore
+          .collectionGroup('participants')
+          .where('user_designation_id', isEqualTo: userDesignationId)
+          .snapshots()
+          .listen((participantSnapshot) {
+        // Cancel previous subscription to avoid duplicates
+        currentSubscription?.cancel();
 
-      // Create streams for each chat document to listen to real-time changes
-      final chatStreams = chatIds
-          .map((chatId) => _firestore
-                  .collection(chatsCollection)
-                  .doc(chatId)
-                  .snapshots()
-                  .map((doc) {
-                if (!doc.exists) return null;
+        // Get unique chat IDs from participant documents
+        final chatIds = participantSnapshot.docs
+            .map((doc) => doc.reference.parent.parent!.id)
+            .toSet()
+            .toList();
 
-                final chat = ChatModel.fromJson(doc.data()!, doc.id);
-                return chat;
-              }))
-          .toList();
+        if (chatIds.isEmpty) {
+          controller.add(<ChatModel>[]);
+          return;
+        }
 
-      // Combine all chat streams and filter out nulls
-      return _combineLatestList(chatStreams).map((chats) {
-        final validChats =
-            chats.where((chat) => chat != null).cast<ChatModel>().toList();
+        // Create individual streams for each chat
+        final chatStreams = chatIds.map((chatId) {
+          return _createChatStream(chatId);
+        }).toList();
 
-        // Sort by last message time
-        validChats.sort((a, b) {
-          final aTime =
-              a.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime =
-              b.lastMessage?.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return bTime.compareTo(aTime); // newest first
-        });
+        // Subscribe to the combined stream
+        currentSubscription = _combineLatestList(chatStreams).listen(
+          (chats) {
+            final validChats =
+                chats.where((chat) => chat != null).cast<ChatModel>().toList();
 
-        return validChats;
-      });
+            // Sort by last message time, fallback to created_at if no last message
+            validChats.sort((a, b) {
+              final aTime = a.lastMessage?.sentAt ??
+                  a.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              final bTime = b.lastMessage?.sentAt ??
+                  b.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              return bTime.compareTo(aTime); // newest first
+            });
+
+            controller.add(validChats);
+          },
+          onError: controller.addError,
+        );
+      }, onError: controller.addError);
+
+      controller.onCancel = () {
+        participantSubscription.cancel();
+        currentSubscription?.cancel();
+      };
+    });
+  }
+
+  Stream<ChatModel?> _createChatStream(String chatId) {
+    // Create separate streams for chat document and participants
+    final chatDocStream =
+        _firestore.collection(chatsCollection).doc(chatId).snapshots();
+
+    final participantsStream = _firestore
+        .collection(chatsCollection)
+        .doc(chatId)
+        .collection('participants')
+        .snapshots();
+
+    // Combine both streams to get real-time updates
+    return Stream.multi((controller) {
+      Map<String, dynamic>? latestChatData;
+      String? latestChatId;
+      List<ChatParticipantModel>? latestParticipants;
+
+      final subscriptions = <StreamSubscription>[];
+
+      void tryEmitChatModel() {
+        if (latestChatData != null &&
+            latestChatId != null &&
+            latestParticipants != null) {
+          try {
+            final chatModel = ChatModel.fromJson(
+              latestChatData!,
+              latestChatId!,
+              participants: latestParticipants!,
+            );
+            controller.add(chatModel);
+          } catch (e) {
+            // If there's an error creating the chat model, emit null
+            controller.add(null);
+          }
+        }
+      }
+
+      // Listen to chat document changes
+      subscriptions.add(chatDocStream.listen(
+        (doc) {
+          if (!doc.exists) {
+            controller.add(null);
+            return;
+          }
+          final data = doc.data();
+          if (data == null) {
+            controller.add(null);
+            return;
+          }
+          latestChatData = data;
+          latestChatId = doc.id;
+          tryEmitChatModel();
+        },
+        onError: (error) {
+          controller.add(null);
+        },
+      ));
+
+      // Listen to participants collection changes
+      subscriptions.add(participantsStream.listen(
+        (snapshot) {
+          latestParticipants = snapshot.docs
+              .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+              .toList();
+          tryEmitChatModel();
+        },
+        onError: (error) {
+          controller.add(null);
+        },
+      ));
+
+      controller.onCancel = () {
+        for (final sub in subscriptions) {
+          sub.cancel();
+        }
+      };
     });
   }
 
@@ -478,7 +696,7 @@ class ChatService {
           .toList();
 
       return _combineLatestList(chatStreams).map((unreadCounts) {
-        return unreadCounts.fold(0, (sum, count) => sum + count);
+        return unreadCounts.fold<int>(0, (sum, count) => sum + count);
       });
     });
   }
@@ -610,7 +828,25 @@ class ChatService {
         .collection(chatsCollection)
         .doc(chatId)
         .snapshots()
-        .map((doc) => ChatModel.fromJson(doc.data()!, doc.id));
+        .asyncMap((doc) async {
+      if (!doc.exists) {
+        throw Exception("Chat not found");
+      }
+
+      // Fetch participants from subcollection
+      final participantsSnapshot = await _firestore
+          .collection(chatsCollection)
+          .doc(chatId)
+          .collection('participants')
+          .get();
+
+      final participants = participantsSnapshot.docs
+          .map((doc) => ChatParticipantModel.fromJson(doc.data()))
+          .toList();
+
+      return ChatModel.fromJson(doc.data() as Map<String, dynamic>, doc.id,
+          participants: participants);
+    });
   }
 
   Future<void> startVoiceRecording() async {
@@ -795,5 +1031,19 @@ class ChatService {
 
   Future<void> disposeRecorder() async {
     await audioRecorder.dispose();
+  }
+
+  static String getChatTitle(ChatModel chat, int currentUserId) {
+    if (chat.type == ChatType.direct) {
+      final otherParticipant = chat.activeParticipants
+          .where((participant) => participant.userId != currentUserId)
+          .firstOrNull;
+
+      if (otherParticipant != null) {
+        return otherParticipant.userTitle ?? 'Unknown User';
+      }
+    }
+
+    return chat.fileBarCode ?? chat.fileId?.toString() ?? 'Chat';
   }
 }

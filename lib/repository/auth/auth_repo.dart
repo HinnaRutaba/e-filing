@@ -85,7 +85,7 @@ class AuthRepo extends AuthInterface {
     try {
       Map<String, dynamic> data = await dioClient.post(
         url: changePasswordUrl,
-        options: await options(authRequired: false),
+        options: await options(authRequired: true),
         data: {
           'current_password': currentPassword,
           'new_password': newPassword,

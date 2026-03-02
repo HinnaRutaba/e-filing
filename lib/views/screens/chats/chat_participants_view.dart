@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
@@ -218,13 +219,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 dense: true,
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
-                  radius: 14,
-                  child: Icon(
-                    Icons.person,
+                  radius: 16,
+                  child: AppText.titleLarge(
+                    HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
                     color: Colors.white,
-                    size: 14,
+                    fontSize: 14,
                   ),
                 ),
                 horizontalTitleGap: 10,
@@ -239,15 +240,32 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     if (isCurrentUser) AppText.labelSmall("(You)")
                   ],
                 ),
-                subtitle: AppText.labelMedium(
-                  participant.designation ?? '',
-                  fontSize: 12,
+                subtitle: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: AppText.labelMedium(
+                          participant.designation ?? '',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 trailing: AppTextLinkButton(
                   onPressed: () {
                     chatService.addParticipants(
                       chatId: chatId,
                       newParticipants: [participant],
+                      addedByUserId: uid,
                     );
                   },
                   text: "Add +",
@@ -305,13 +323,13 @@ class _AddedParticipantsWidget extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 dense: true,
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
-                  radius: 14,
-                  child: Icon(
-                    Icons.person,
+                  radius: 16,
+                  child: AppText.titleLarge(
+                    HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
                     color: Colors.white,
-                    size: 14,
+                    fontSize: 14,
                   ),
                 ),
                 horizontalTitleGap: 10,
@@ -326,15 +344,32 @@ class _AddedParticipantsWidget extends StatelessWidget {
                     if (isCurrentUser) AppText.labelSmall("(You)")
                   ],
                 ),
-                subtitle: AppText.labelMedium(
-                  participant.designation ?? '',
-                  fontSize: 12,
+                subtitle: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: AppText.labelMedium(
+                          participant.designation ?? '',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 trailing: AppTextLinkButton(
                   onPressed: () {
                     chatService.removeParticipant(
                       chatId: chatId,
                       userId: participant.userId!,
+                      removedByUserId: uid,
                     );
                     // Navigate to chats screen if current user leaves
                     if (isCurrentUser) {

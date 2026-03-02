@@ -9,7 +9,23 @@ import 'package:record/record.dart';
 class AudioRecordService {
   final AudioRecorder _recorder = AudioRecorder();
 
-  String? _filePath; // full path to the recording (when using start -> file)
+  static List<String> audioExtensions = [
+    '.m4a',
+    '.opus',
+    '.flac',
+    '.wav',
+    '.amr',
+    '.ogg',
+    '.oga',
+    '.mp3',
+    '.aac',
+    '.3gp',
+    '.3gpp',
+    '.webm',
+    '.weba'
+  ];
+
+  String? _filePath;
   bool _disposed = false;
 
   Future<bool> hasPermission() async {

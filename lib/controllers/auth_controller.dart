@@ -111,6 +111,7 @@ class AuthController extends BaseControllerState<UserModel> {
         newPassword: newPassword,
         confirmPassword: confirmPassword,
       );
+      Toast.success(message: "Password changed successfully");
       success = true;
     } catch (e) {
       Toast.error(message: handleException(e));

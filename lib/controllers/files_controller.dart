@@ -180,7 +180,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
           ref.read(authController).currentDesignation?.userDesgId;
       return await repo.generateFileMovNumber(designationId) ?? '';
     } catch (e) {
-      Toast.error(message: handleException(e));
+      // Toast.error(message: handleException(e));
       return '';
     }
   }
@@ -196,7 +196,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       state = state.copyWith(sections: sections, loadingSections: false);
     } catch (e, s) {
       print("SECTIONS ERROR______${e}____$s");
-      Toast.error(message: handleException(e));
+      // Toast.error(message: handleException(e));
       state = state.copyWith(loadingSections: false);
     } finally {
       EasyLoading.dismiss();
@@ -241,7 +241,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       state = state.copyWith(flags: flags, loadingFlag: false);
     } catch (e, s) {
       print("FLAGS ERROR______${e}____$s");
-      Toast.error(message: handleException(e));
+      // Toast.error(message: handleException(e));
       state = state.copyWith(loadingFlag: false);
     } finally {
       EasyLoading.dismiss();
@@ -357,7 +357,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       state = state.copyWith(newFileData: data, loadingNewFileData: false);
     } catch (e, s) {
       print("FILE DATA ERROR______${e}____$s");
-      Toast.error(message: handleException(e));
+      //Toast.error(message: handleException(e));
       state = state.copyWith(loadingNewFileData: false);
     } finally {
       EasyLoading.dismiss();

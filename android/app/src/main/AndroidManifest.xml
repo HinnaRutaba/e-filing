@@ -10,7 +10,6 @@
     
 
 
-
     <application
         android:label="@string/appName"
         android:name="${applicationName}"
