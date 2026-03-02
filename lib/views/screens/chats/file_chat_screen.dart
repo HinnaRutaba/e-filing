@@ -99,6 +99,29 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       );
     }
 
+    // Check for voice message type (including sending state)
+    if (message.messageType == MessageType.voice) {
+      final url =
+          message.attachments.isNotEmpty ? message.attachments.first ?? '' : '';
+      return types.AudioMessage(
+        id: message.id,
+        author: types.User(
+          id: message.userId.toString(),
+          firstName: message.userName,
+        ),
+        createdAt: message.sentAt.millisecondsSinceEpoch,
+        name: url.isNotEmpty ? url.split('/').last : 'voice_message.m4a',
+        size: 0,
+        uri: url,
+        duration: const Duration(),
+        metadata: {
+          'messageType': message.messageType.name,
+          'upload_status': message.metadata?['upload_status'],
+          'local_files': message.metadata?['local_files'],
+        },
+      );
+    }
+
     if (message.attachments.isNotEmpty) {
       final url = message.attachments.first;
       if (url != null) {
@@ -120,6 +143,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             duration: const Duration(),
             metadata: {
               'messageType': message.messageType.name,
+              'upload_status': message.metadata?['upload_status'],
             },
           );
         }
@@ -1096,7 +1120,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           ),
                         )
                 else if (message is types.AudioMessage)
-                  _buildAudioPlayer(message, isMe)
+                  uploadStatus == 'sending'
+                      ? _buildAudioSendingIndicator()
+                      : _buildAudioPlayer(message, isMe)
                 else
                   Text(
                     'Message',
@@ -1198,6 +1224,42 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildAudioSendingIndicator() {
+    return const SizedBox(
+      width: 150,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.mic,
+                size: 18,
+                color: AppColors.white,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Sending...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LinearProgressIndicator(
+            backgroundColor: AppColors.cardColor,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryDark),
+          ),
+        ],
+      ),
     );
   }
 
