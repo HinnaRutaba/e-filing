@@ -859,13 +859,20 @@ class ChatService {
     required int userDesignationId,
     required String userTitle,
   }) async {
+    final File? audioFile = await audioRecorder.stop();
+    if (audioFile == null) return;
+
+    final messageId = const Uuid().v4();
+    final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+
+    // Define docRef outside try block for access in catch
+    final docRef = _firestore
+        .collection(chatsCollection)
+        .doc(chat.id)
+        .collection(messagesCollection)
+        .doc(messageId);
+
     try {
-      final File? audioFile = await audioRecorder.stop();
-      if (audioFile == null) return;
-
-      final messageId = const Uuid().v4();
-      final fileName = "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
-
       // First, create a "sending" message with placeholder
       final sendingMsg = MessageModel(
         id: messageId,
@@ -877,13 +884,6 @@ class ChatService {
         attachments: [], // Empty during upload to avoid player errors
         seenBy: [userDesignationId],
       );
-
-      // Add the "sending" message to Firestore immediately
-      final docRef = _firestore
-          .collection(chatsCollection)
-          .doc(chat.id)
-          .collection(messagesCollection)
-          .doc(messageId);
 
       await docRef.set({
         ...sendingMsg.toJson(chat),
@@ -940,11 +940,37 @@ class ChatService {
         log("Voice message upload failed - no URL returned");
         await docRef.update({
           'upload_status': 'failed',
+          'local_files': [audioFile.path],
+          'original_file_name': fileName,
         });
       }
     } catch (e, s) {
       log("ERRR________${e}_______$s");
-      // TODO: Update message status to 'failed' on error
+      // Update message status to 'failed' on error
+      try {
+        await docRef.update({
+          'upload_status': 'failed',
+          'local_files': [audioFile.path],
+          'original_file_name': fileName,
+        });
+      } catch (_) {
+        // If update fails, try to set the failed status
+        await docRef.set({
+          'text': '🎙️ Voice message',
+          'sent_by': {
+            'user_id': userId,
+            'user_designation_id': userDesignationId,
+            'user_name': userTitle,
+          },
+          'sent_at': DateTime.now(),
+          'attachments': [],
+          'message_type': 'voice',
+          'seen_by': [userDesignationId],
+          'upload_status': 'failed',
+          'local_files': [audioFile.path],
+          'original_file_name': fileName,
+        });
+      }
     }
   }
 
@@ -955,9 +981,18 @@ class ChatService {
     required String userTitle,
     required List<XFile> attachments,
   }) async {
-    try {
-      final messageId = const Uuid().v4();
+    final messageId = const Uuid().v4();
+    final localFilePaths = attachments.map((e) => e.path).toList();
+    final fileNames = attachments.map((e) => e.name).toList();
 
+    // Define docRef outside try block for access in catch
+    final docRef = _firestore
+        .collection(chatsCollection)
+        .doc(chat.id)
+        .collection(messagesCollection)
+        .doc(messageId);
+
+    try {
       // First, create a "sending" message with local file paths
       final sendingMsg = MessageModel(
         id: messageId,
@@ -966,21 +1001,15 @@ class ChatService {
         userName: userTitle,
         userDesignationId: userDesignationId,
         sentAt: DateTime.now(),
-        attachments: attachments.map((e) => e.path).toList(),
+        attachments: localFilePaths,
         seenBy: [userDesignationId],
       );
-
-      // Add the "sending" message to Firestore immediately
-      final docRef = _firestore
-          .collection(chatsCollection)
-          .doc(chat.id)
-          .collection(messagesCollection)
-          .doc(messageId);
 
       await docRef.set({
         ...sendingMsg.toJson(chat),
         'upload_status': 'sending',
-        'local_files': attachments.map((e) => e.path).toList(),
+        'local_files': localFilePaths,
+        'original_file_names': fileNames,
       });
 
       // Update last_message with sending status
@@ -1002,6 +1031,17 @@ class ChatService {
         }
       }
 
+      // Check if any uploads failed
+      if (attachmentUrls.length != attachments.length) {
+        log("Some attachments failed to upload");
+        await docRef.update({
+          'upload_status': 'failed',
+          'local_files': localFilePaths,
+          'original_file_names': fileNames,
+        });
+        return;
+      }
+
       // Update the message with uploaded URLs
       final completedMsg = sendingMsg.copyWith(
         attachments: attachmentUrls,
@@ -1021,7 +1061,167 @@ class ChatService {
       });
     } catch (e, s) {
       log("ERRR________${e}_______$s");
-      // TODO: Update message status to 'failed' on error
+      // Update message status to 'failed' on error
+      try {
+        await docRef.update({
+          'upload_status': 'failed',
+          'local_files': localFilePaths,
+          'original_file_names': fileNames,
+        });
+      } catch (_) {
+        // If update fails, try to set the failed status
+        await docRef.set({
+          'text': '',
+          'sent_by': {
+            'user_id': userId,
+            'user_designation_id': userDesignationId,
+            'user_name': userTitle,
+          },
+          'sent_at': DateTime.now(),
+          'attachments': localFilePaths,
+          'message_type': 'message',
+          'seen_by': [userDesignationId],
+          'upload_status': 'failed',
+          'local_files': localFilePaths,
+          'original_file_names': fileNames,
+        });
+      }
+    }
+  }
+
+  /// Retry sending a failed message (voice or attachment)
+  Future<void> retryFailedMessage({
+    required ChatModel chat,
+    required String messageId,
+  }) async {
+    final docRef = _firestore
+        .collection(chatsCollection)
+        .doc(chat.id)
+        .collection(messagesCollection)
+        .doc(messageId);
+
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      log("Message not found for retry: $messageId");
+      return;
+    }
+
+    final data = doc.data()!;
+    final uploadStatus = data['upload_status'];
+
+    if (uploadStatus != 'failed') {
+      log("Message is not in failed state: $uploadStatus");
+      return;
+    }
+
+    final localFiles = List<String>.from(data['local_files'] ?? []);
+    final messageType = data['message_type'];
+    final userId = data['sent_by']?['user_id'] as int?;
+    final userDesignationId = data['sent_by']?['user_designation_id'] as int?;
+    final userTitle = data['sent_by']?['user_name'] as String?;
+
+    if (localFiles.isEmpty ||
+        userId == null ||
+        userDesignationId == null ||
+        userTitle == null) {
+      log("Missing required data for retry");
+      return;
+    }
+
+    // Mark as sending again
+    await docRef.update({'upload_status': 'sending'});
+
+    try {
+      if (messageType == 'voice') {
+        // Retry voice message
+        final originalFileName = data['original_file_name'] as String? ??
+            "voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+
+        ChatFileModel model = await chatRepo.saveChatFile(
+            filePath: localFiles.first, fileName: originalFileName);
+
+        if (model.fileUrl != null) {
+          await docRef.update({
+            'text': model.fileUrl!,
+            'attachments': [model.fileUrl!],
+            'upload_status': 'sent',
+          });
+
+          // Update last_message with completed status
+          final updatedDoc = await docRef.get();
+          await _firestore.collection(chatsCollection).doc(chat.id).update({
+            'last_message': {
+              ...updatedDoc.data()!,
+              'upload_status': 'sent',
+            },
+          });
+
+          log("Voice message retry successful: ${model.fileUrl}");
+        } else {
+          await docRef.update({'upload_status': 'failed'});
+          log("Voice message retry failed - no URL returned");
+        }
+      } else {
+        // Retry attachment message
+        final originalFileNames =
+            List<String>.from(data['original_file_names'] ?? []);
+        List<String> attachmentUrls = [];
+
+        for (int i = 0; i < localFiles.length; i++) {
+          final fileName = i < originalFileNames.length
+              ? originalFileNames[i]
+              : localFiles[i].split('/').last;
+
+          ChatFileModel model = await chatRepo.saveChatFile(
+              filePath: localFiles[i], fileName: fileName);
+          if (model.fileUrl != null) {
+            attachmentUrls.add(model.fileUrl!);
+          }
+        }
+
+        if (attachmentUrls.length != localFiles.length) {
+          await docRef.update({'upload_status': 'failed'});
+          log("Attachment retry failed - some files couldn't be uploaded");
+          return;
+        }
+
+        await docRef.update({
+          'attachments': attachmentUrls,
+          'upload_status': 'sent',
+        });
+
+        // Update last_message with completed status
+        final updatedDoc = await docRef.get();
+        await _firestore.collection(chatsCollection).doc(chat.id).update({
+          'last_message': {
+            ...updatedDoc.data()!,
+            'upload_status': 'sent',
+          },
+        });
+
+        log("Attachment message retry successful");
+      }
+    } catch (e, s) {
+      log("Retry failed: $e\n$s");
+      await docRef.update({'upload_status': 'failed'});
+    }
+  }
+
+  /// Delete a failed message
+  Future<void> deleteFailedMessage({
+    required String chatId,
+    required String messageId,
+  }) async {
+    try {
+      await _firestore
+          .collection(chatsCollection)
+          .doc(chatId)
+          .collection(messagesCollection)
+          .doc(messageId)
+          .delete();
+      log("Deleted failed message: $messageId");
+    } catch (e, s) {
+      log("Failed to delete message: $e\n$s");
     }
   }
 

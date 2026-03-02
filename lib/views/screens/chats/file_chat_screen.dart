@@ -99,6 +99,29 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       );
     }
 
+    // Check for voice message type (including sending state)
+    if (message.messageType == MessageType.voice) {
+      final url =
+          message.attachments.isNotEmpty ? message.attachments.first ?? '' : '';
+      return types.AudioMessage(
+        id: message.id,
+        author: types.User(
+          id: message.userId.toString(),
+          firstName: message.userName,
+        ),
+        createdAt: message.sentAt.millisecondsSinceEpoch,
+        name: url.isNotEmpty ? url.split('/').last : 'voice_message.m4a',
+        size: 0,
+        uri: url,
+        duration: const Duration(),
+        metadata: {
+          'messageType': message.messageType.name,
+          'upload_status': message.metadata?['upload_status'],
+          'local_files': message.metadata?['local_files'],
+        },
+      );
+    }
+
     if (message.attachments.isNotEmpty) {
       final url = message.attachments.first;
       if (url != null) {
@@ -120,6 +143,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             duration: const Duration(),
             metadata: {
               'messageType': message.messageType.name,
+              'upload_status': message.metadata?['upload_status'],
             },
           );
         }
@@ -1096,7 +1120,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           ),
                         )
                 else if (message is types.AudioMessage)
-                  _buildAudioPlayer(message, isMe)
+                  uploadStatus == 'sending'
+                      ? _buildAudioSendingIndicator()
+                      : _buildAudioPlayer(message, isMe)
                 else
                   Text(
                     'Message',
@@ -1110,7 +1136,70 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
           ),
         ),
-        if (!nextMessageInGroup && uploadStatus != 'sending')
+        // Show failed message indicator with retry/delete buttons
+        if (uploadStatus == 'failed' && isMe)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 14,
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  'Failed to send',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    if (chat != null) {
+                      await chatService.retryFailedMessage(
+                        chat: chat!,
+                        messageId: message.id,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    if (chat != null) {
+                      await chatService.deleteFailedMessage(
+                        chatId: chat!.id,
+                        messageId: message.id,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (!nextMessageInGroup &&
+            uploadStatus != 'sending' &&
+            uploadStatus != 'failed')
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
             child: Row(
@@ -1135,6 +1224,42 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildAudioSendingIndicator() {
+    return const SizedBox(
+      width: 150,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.mic,
+                size: 18,
+                color: AppColors.white,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Sending...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LinearProgressIndicator(
+            backgroundColor: AppColors.cardColor,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryDark),
+          ),
+        ],
+      ),
     );
   }
 

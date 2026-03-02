@@ -32,17 +32,15 @@ class BaseScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: const SizedBox(),
-        flexibleSpace: SafeArea(
-          child: Center(
-            child: title != null
-                ? AppText.headlineSmall(title!)
-                : const SizedBox(),
-          ),
-        ),
+        title: title != null
+            ? AppText.headlineSmall(
+                title!,
+                textAlign: TextAlign.left,
+              )
+            : const SizedBox(),
         titleSpacing: 0,
         leadingWidth: isdash ? 190 : 50,
-        centerTitle: true,
+        centerTitle: false,
         leading: Row(
           children: [
             Builder(

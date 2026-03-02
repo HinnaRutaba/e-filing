@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/chat/chat_model.dart';
 enum MessageType {
   message,
   info,
+  voice,
 }
 
 class MessageModel {
@@ -37,6 +38,8 @@ class MessageModel {
     switch (type) {
       case 'info':
         return MessageType.info;
+      case 'voice':
+        return MessageType.voice;
       case 'message':
       default:
         return MessageType.message;
