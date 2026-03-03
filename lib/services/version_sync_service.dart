@@ -124,7 +124,7 @@ class VersionSyncService {
                 const Icon(
                   Icons.system_update,
                   size: 48,
-                  color: AppColors.primary,
+                  color: AppColors.primaryDark,
                 ),
                 const SizedBox(height: 16),
                 AppText.headlineSmall(title),

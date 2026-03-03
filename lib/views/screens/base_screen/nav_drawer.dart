@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
+import 'package:efiling_balochistan/services/version_sync_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
@@ -186,6 +187,24 @@ class NavDrawer extends ConsumerWidget {
                 ],
               ),
             )),
+            const SizedBox(height: 16),
+            FutureBuilder(
+              future: VersionSyncService().getAppVersionString(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox();
+                } else {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 48.0),
+                    child: AppText.bodySmall(
+                      "Version: ${snapshot.data}",
+                      textAlign: TextAlign.center,
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                }
+              },
+            ),
             const SizedBox(height: 16),
             AppTextLinkButton(
               onPressed: () {
