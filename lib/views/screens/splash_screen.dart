@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
+import 'package:efiling_balochistan/services/version_sync_service.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/web_view/file_support_web_view.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -47,6 +48,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   fetchData() async {
+    bool versionAvailable = await VersionSyncService().showUpdateDialog();
+    if (versionAvailable) return;
     final ctrl = ref.read(authController.notifier);
     final loggedIn = await ctrl.isLoggedIn();
     if (!loggedIn) {

@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/services/version_sync_service.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -142,6 +143,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                 ),
+              ),
+
+              FutureBuilder(
+                future: VersionSyncService().getAppVersionString(),
+                builder: (context, snapshot) {
+                
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox();
+                  } else {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 48.0),
+                      child: AppText.bodySmall(
+                        "Version: ${snapshot.data}",
+                        textAlign: TextAlign.center,
+                        color: AppColors.textSecondary,
+                      ),
+                    );
+                  }
+                },
               )
             ],
             // .animate(
