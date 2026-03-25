@@ -38,9 +38,9 @@ class DaakController extends BaseControllerState<DaakState> {
       department: 'Finance',
       letterNumber: 'L-2026-001',
       daakNumber: 'D-1001',
-      letterDate: '2026-03-20',
+      letterDate: DateTime(2026, 3, 15),
       receivedBy: 'Ali Khan',
-      receivedDate: '2026-03-21',
+      receivedDate: DateTime(2026, 3, 21),
       pdfUrl: null,
     ),
     DaakModel(
@@ -50,23 +50,26 @@ class DaakController extends BaseControllerState<DaakState> {
       department: 'Admin',
       letterNumber: 'L-2026-002',
       daakNumber: 'D-1002',
-      letterDate: '2026-03-18',
+      letterDate: DateTime(2026, 3, 18),
       receivedBy: 'Sara Baloch',
-      receivedDate: '2026-03-19',
+      receivedDate: DateTime(2026, 3, 19),
       pdfUrl: null,
     ),
     // Add more dummy data as needed
   ];
 
-  DaakState get daakState => state ?? DaakState(allDaak: _dummyDaakList);
+  loadData() {
+    state =
+        state.copyWith(allDaak: _dummyDaakList, filteredDaak: _dummyDaakList);
+  }
 
-  List<DaakModel> get allDaak => daakState.allDaak;
+  List<DaakModel> get allDaak => state.allDaak;
 
-  String get searchText => daakState.searchText;
+  String get searchText => state.searchText;
   set searchText(String value) {
-    state = daakState.copyWith(
+    state = state.copyWith(
       searchText: value,
-      filteredDaak: daakState.allDaak.where((daak) {
+      filteredDaak: state.allDaak.where((daak) {
         final query = value.toLowerCase();
         return daak.title.toLowerCase().contains(query) ||
             daak.department.toLowerCase().contains(query) ||
@@ -77,5 +80,5 @@ class DaakController extends BaseControllerState<DaakState> {
     );
   }
 
-  List<DaakModel> get filteredDaak => daakState.filteredDaak;
+  List<DaakModel> get filteredDaak => state.filteredDaak;
 }

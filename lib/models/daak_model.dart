@@ -7,9 +7,9 @@ class DaakModel {
   final String department;
   final String letterNumber;
   final String daakNumber;
-  final String letterDate;
+  final DateTime letterDate;
   final String receivedBy;
-  final String receivedDate;
+  final DateTime receivedDate;
   final String? pdfUrl;
 
   DaakModel({

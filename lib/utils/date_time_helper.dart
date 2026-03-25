@@ -9,6 +9,7 @@ class DateTimeHelper {
   static const String _dateFormatterddMMMyyyySpaces = "dd MMM yyyy";
   static const String _dateFormatterSlash = "dd/MM/yyyy";
   static const String _dateFormatterSlashWithTime = "dd/MM/yyyy hh:mm aa";
+    static const String _dateFormatterddMMYYWithTime = "dd MMM yy hh:mm aa";
   static const String _dateFormatterSlashShort = "dd/MM/yy";
   static const String _dateFormatterEEEE = "EEEE";
   static const String _dateFormatterEEE = "EEE";
@@ -86,6 +87,13 @@ class DateTimeHelper {
       return 'Date unspecified';
     }
     return DateFormat(_dateFormatterSlash).format(dateTime);
+  }
+
+  static String dateFormatddMMYYWithTime(DateTime? dateTime) {
+    if (dateTime == null) {
+      return 'Date unspecified';
+    }
+    return DateFormat(_dateFormatterddMMYYWithTime).format(dateTime);
   }
 
   static String datFormatSlashShort(DateTime? dateTime) {

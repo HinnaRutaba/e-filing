@@ -1,7 +1,6 @@
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
-import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,17 +13,17 @@ class DaakListViewScreen extends ConsumerStatefulWidget {
 }
 
 class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
-
   final TextEditingController _searchController = TextEditingController();
-  
 
   @override
   void initState() {
     super.initState();
-
-    _searchController.addListener(() {
-      ref.read(daakController.notifier).searchText = _searchController.text;
-      setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(daakController.notifier).loadData();
+      _searchController.addListener(() {
+        ref.read(daakController.notifier).searchText = _searchController.text;
+        setState(() {});
+      });
     });
   }
 
@@ -36,7 +35,8 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredDaak = ref.watch(daakController.select((state) => state.filteredDaak));
+    final filteredDaak =
+        ref.watch(daakController.select((state) => state.filteredDaak));
     return BaseScreen(
       title: "Daak Inbox",
       isdash: false,
