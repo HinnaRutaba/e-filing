@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
+import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/archived_files_screen.dart';
@@ -178,6 +179,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.daak,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const DaakListViewScreen(),
       ),
     ),
   ];

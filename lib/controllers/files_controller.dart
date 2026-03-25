@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
@@ -166,7 +168,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
         file = await repo.viewArchivedFileDetails(fileId, designationId);
       }
     } catch (e, s) {
-      print("FILE DETAILS DETAILS______${e}____$s");
       Toast.error(message: handleException(e));
     } finally {
       EasyLoading.dismiss();

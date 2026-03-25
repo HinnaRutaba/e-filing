@@ -22,6 +22,7 @@ class Routes {
   static const String sections = '/sections';
   static const String designations = '/designations';
   static const String changePassword = '/changePassword';
+    static const String daak = '/daak';
 
   // Sub Routes
   static const String profile = 'profile';

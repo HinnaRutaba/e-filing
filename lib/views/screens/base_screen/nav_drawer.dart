@@ -93,6 +93,11 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.lock_reset,
         routeName: Routes.changePassword,
       ),
+      DrawerMenu(
+        title: "Daak",
+        icon: Icons.mark_email_unread_outlined,
+        routeName: Routes.daak,
+      ),
     ];
     return Padding(
       padding:

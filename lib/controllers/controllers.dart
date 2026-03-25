@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/controllers/auth_controller.dart';
 import 'package:efiling_balochistan/controllers/connectivity_controller.dart';
+import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/files_controller.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
@@ -33,4 +34,8 @@ final authController = StateNotifierProvider<AuthController, UserModel>(
 final dashboardController =
     StateNotifierProvider<DashboardController, DashboardModel>(
   (ref) => DashboardController(DashboardModel(), ref),
+);
+
+final daakController = StateNotifierProvider<DaakController, DaakState>(
+  (ref) => DaakController(DaakState(allDaak: []), ref),
 );
