@@ -22,7 +22,10 @@ class Routes {
   static const String sections = '/sections';
   static const String designations = '/designations';
   static const String changePassword = '/changePassword';
-    static const String daak = '/daak';
+  static const String daak = '/daak';
+    static String daakDetails([daakId]) =>
+      '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
+
 
   // Sub Routes
   static const String profile = 'profile';
@@ -36,6 +39,7 @@ class PathParams {
 
   static const String fileId = 'fileId';
   static const String chatId = 'chatId';
+  static const String daakId = 'daakId';
 
   static const String complainId = 'complainId';
 }

@@ -18,7 +18,6 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/shimmer_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/chips/selection_chips.dart';
-import 'package:efiling_balochistan/views/widgets/loading_card.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';

@@ -406,7 +406,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   separatorBuilder: (_, i) => Divider(
                     height: 40,
-                    color: AppColors.secondaryLight.withOpacity(0.5),
+                    color: AppColors.secondaryLight.withValues(alpha: .5),
                   ),
                   itemBuilder: (ctx, i) {
                     final model = attachments[i];
