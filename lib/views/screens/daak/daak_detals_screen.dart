@@ -272,7 +272,6 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
           );
         },
         child: ListTile(
-          visualDensity: VisualDensity.compact,
           leading: Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Icon(
