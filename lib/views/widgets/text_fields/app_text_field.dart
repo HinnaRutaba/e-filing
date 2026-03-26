@@ -71,14 +71,14 @@ class AppTextField extends StatelessWidget {
             children: [
               AppText.labelLarge(
                 labelText,
-                color: enabled == false ? Colors.grey : null,
+                color: enabled == false ? Colors.grey : Colors.grey[800],
                 fontWeight: FontWeight.w500,
-                fontSize: 10,
+                fontSize: 12,
               ),
               if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
         ],
         TextFormField(
           controller: controller,

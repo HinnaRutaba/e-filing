@@ -1,7 +1,12 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:slide_up_panel/slide_up_panel.dart';
@@ -15,6 +20,8 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController remarksController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     double minHeight = MediaQuery.of(context).size.height * 0.11;
@@ -32,10 +39,178 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.headlineSmall(
+                'Next Actions',
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryDark,
+              ),
+              const SizedBox(height: 8),
+              Card(
+                margin: const EdgeInsets.all(0),
+                elevation: 3,
+                shadowColor: AppColors.secondaryDark.withValues(alpha: .1),
+                color: AppColors.white,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Expanded(
+                            //   child:
+                            //       AppSolidButton(onPressed: () {}, text: "Forward"),
+                            // ),
+                            // const SizedBox(width: 8),
+                            Expanded(
+                              child: AppOutlineButton(
+                                onPressed: () {},
+                                text: "Mark NFA",
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AppOutlineButton(
+                                  onPressed: () {}, text: "Create File"),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        AppText.titleMedium(
+                          'Forward Letter',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(height: 4),
+                        AppDropDownField<String>(
+                          items: const [
+                            "Section A",
+                            "Section B",
+                            "Section C",
+                            "Section D",
+                          ],
+                          onChanged: (item) async {},
+                          labelText: "Forward this file to",
+                          hintText: "Forward To",
+
+                          //buttonHeight: forwardTo == null ? null : 57,
+                          itemBuilder: (item) {
+                            return AppText.titleMedium(
+                              item ?? '',
+                              fontWeight: FontWeight.w600,
+                            );
+                            // return Column(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     AppText.titleMedium(item?.userTitle ?? ''),
+
+                            //     Container(
+                            //       padding: const EdgeInsets.symmetric(
+                            //           horizontal: 6, vertical: 1),
+                            //       decoration: BoxDecoration(
+                            //         color: Colors.yellow[400],
+                            //         borderRadius: BorderRadius.circular(8),
+                            //         border: Border.all(
+                            //           color: Colors.yellow[600]!.withOpacity(0.3),
+                            //           width: 0.5,
+                            //         ),
+                            //       ),
+                            //       child: AppText.labelSmall(
+                            //         item?.designationTitle ?? '',
+                            //         color: Colors.black,
+                            //         fontWeight: FontWeight.w500,
+                            //         fontSize: 10, // Smaller font
+                            //       ),
+                            //     )
+                            //   ],
+                            // );
+                          },
+
+                          validator: (item) {
+                            // if (forwardTo == null || item == null) {
+                            //   return 'Please select a value';
+                            // }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        AppTextField(
+                          controller: remarksController,
+                          labelText: "Remarks",
+                          hintText: "Optional forwarding remarks",
+                          maxLines: 3,
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              remarksController.clear();
+                            },
+                            icon: const Icon(
+                              Icons.mic,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText.labelLarge(
+                          "Attachment",
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () {
+                            // Handle file selection
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.appBarColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.attach_file_outlined,
+                                  color: AppColors.primaryDark,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                    child: AppText.titleSmall(
+                                  'Select file to attach',
+                                ))
+                              ],
+                            ),
+                          ),
+                        ),
+                        AppText.labelSmall(
+                          "pdf, docx, jpg, jpeg, png. Max size: 10MB",
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 6),
+                        AppSolidButton(
+                          onPressed: () {},
+                          text: "Forward",
+                          width: double.infinity,
+                          backgroundColor: AppColors.primaryDark,
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppText.headlineSmall(
                 'Previous Correspondences',
                 fontWeight: FontWeight.w600,
                 color: AppColors.secondaryDark,
               ),
+              const SizedBox(height: 4),
               ...List.generate(
                 2,
                 (index) => DaakCorrespondenceCard(

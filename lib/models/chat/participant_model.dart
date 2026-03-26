@@ -55,7 +55,7 @@ class ChatParticipantModel {
       'user_id': userId,
       'user_title': userTitle,
       'designation': designation,
-      'removed': removed ?? false,
+      'removed': removed  ,
       if (joinedAt != null) 'joined_at': Timestamp.fromDate(joinedAt!),
       if (removedAt != null) 'removed_at': Timestamp.fromDate(removedAt!),
     };

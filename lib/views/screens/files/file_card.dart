@@ -187,7 +187,7 @@ class FileCard extends StatelessWidget {
                                         title: "Archived on",
                                         value:
                                             DateTimeHelper.datFormatSlashShort(
-                                                data?.createdAt),
+                                                data?.archivedAt),
                                         icon: Icons.calendar_month,
                                       )
                                     : fileType == FileType.forwarded

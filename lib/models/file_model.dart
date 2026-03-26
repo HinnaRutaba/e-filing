@@ -54,6 +54,7 @@ class FileModel {
   final DateTime? createdAt;
   final DateTime? latestDate;
   final int? forwardedCount;
+  final DateTime? archivedAt;
 
   FileModel({
     this.trackId,
@@ -73,6 +74,7 @@ class FileModel {
     this.createdAt,
     this.latestDate,
     this.forwardedCount,
+    this.archivedAt,
   });
 
   factory FileModel.fromJson(Map<String, dynamic> json, {FileStatus? status}) {
@@ -110,6 +112,9 @@ class FileModel {
           ? DateTime.tryParse(json[FileSchema.latestDate])
           : null,
       forwardedCount: json[FileSchema.forwardedCount] as int?,
+      archivedAt: json[FileSchema.archivedDate] != null
+          ? DateTime.tryParse(json[FileSchema.archivedDate])
+          : null,
     );
   }
 
@@ -170,6 +175,7 @@ class FileSchema {
   static const String status = "status";
   static const String fileStatus = "file_status";
   static const String receivedAt = "receiving_date";
+  static const String archivedDate = "archive_date";
   static const String tag = "tag";
   static const String tagColor = "tag_color";
   static const String sender = "sender";

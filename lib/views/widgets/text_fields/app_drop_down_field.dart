@@ -54,14 +54,14 @@ class AppDropDownField<T> extends StatelessWidget {
             children: [
               AppText.labelLarge(
                 labelText,
-                color: enabled ? null : Colors.grey,
+                color: enabled ? Colors.grey[800] : Colors.grey,
                 fontWeight: FontWeight.w500,
-                fontSize: 14,
+                fontSize: 12,
               ),
               if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
         ],
         DropdownButtonFormField2<T>(
           isExpanded: true,
