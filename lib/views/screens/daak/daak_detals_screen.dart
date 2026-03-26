@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
+import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -28,7 +29,6 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double minHeight = MediaQuery.of(context).size.height * 0.11;
     double maxHeight = MediaQuery.of(context).size.height * 0.8;
     return SlideUpPanel(
       overLay: false,
@@ -230,23 +230,47 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                   isBold: index % 2 == 0,
                 ),
               ),
+              const SizedBox(height: 116),
             ],
           ),
         ),
       ),
-      sliderWidget: Container(
-        margin: const EdgeInsets.only(top: 12),
-        decoration: BoxDecoration(
-          color: AppColors.appBarColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.secondaryDark.withValues(alpha: .2),
-              blurRadius: 8,
-              offset: const Offset(0, -2.5),
-            ),
-          ],
-        ),
+      sliderWidget: collapsedPDFViewer(),
+      maxHeight: maxHeight,
+      minHeight: 108,
+      collapseOnBackgroundTap: true,
+    );
+  }
+
+  Widget collapsedPDFViewer() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: AppColors.appBarColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondaryDark.withValues(alpha: .2),
+            blurRadius: 8,
+            offset: const Offset(0, -2.5),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) {
+              return SizedBox(
+                height: MediaQuery.of(ctx).size.height * 0.86,
+                child: expandedPDFViewer(ctx),
+              );
+            },
+          );
+        },
         child: ListTile(
           visualDensity: VisualDensity.compact,
           leading: Padding(
@@ -267,13 +291,34 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
             'Received on: 2024-06-15',
           ),
           trailing: AppTextLinkButton(
-            onPressed: () {},
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => SizedBox(
+                  height: MediaQuery.of(ctx).size.height * 0.86,
+                  child: expandedPDFViewer(ctx),
+                ),
+              );
+            },
             text: "Open",
           ),
         ),
       ),
-      maxHeight: maxHeight,
-      minHeight: minHeight,
+    );
+  }
+
+  Widget expandedPDFViewer(BuildContext ctx) {
+    return const ClipRRect(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      ),
+      child: PdfViewer(
+        url: "https://icseindia.org/document/sample.pdf",
+        title: "Daak PDF title",
+      ),
     );
   }
 }
