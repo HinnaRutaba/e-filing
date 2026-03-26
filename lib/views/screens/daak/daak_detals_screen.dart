@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
+import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -9,6 +10,7 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_fiel
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:slide_up_panel/slide_up_panel.dart';
 
 class DaakDetailsScreen extends ConsumerStatefulWidget {
@@ -22,6 +24,8 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
+  XFile? attachment;
+
   @override
   Widget build(BuildContext context) {
     double minHeight = MediaQuery.of(context).size.height * 0.11;
@@ -161,8 +165,9 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         ),
                         const SizedBox(height: 4),
                         InkWell(
-                          onTap: () {
-                            // Handle file selection
+                          onTap: () async {
+                            attachment = await FilePickerService().pickPdf();
+                            setState(() {});
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -181,7 +186,9 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                 const SizedBox(width: 4),
                                 Expanded(
                                     child: AppText.titleSmall(
-                                  'Select file to attach',
+                                  attachment != null
+                                      ? attachment!.name
+                                      : 'Select file to attach',
                                 ))
                               ],
                             ),
