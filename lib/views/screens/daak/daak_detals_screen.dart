@@ -29,7 +29,6 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double maxHeight = MediaQuery.of(context).size.height * 0.8;
     return SlideUpPanel(
       overLay: false,
       rounded: true,
@@ -236,7 +235,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
         ),
       ),
       sliderWidget: collapsedPDFViewer(),
-      maxHeight: maxHeight,
+      maxHeight: 108,
       minHeight: 108,
       collapseOnBackgroundTap: true,
     );
