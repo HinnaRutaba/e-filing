@@ -85,6 +85,7 @@ dependencies:
   keyboard_detection: ^0.8.1
   package_info_plus: ^9.0.0
   slide_up_panel: ^1.1.0
+  pdfrx:
 
 dev_dependencies:
   flutter_test:

@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
@@ -14,9 +15,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:slide_up_panel/slide_up_panel.dart';
 
+class DaakDetailsInfo {
+  DaakModel? daak;
+  bool? openPDF;
+
+  DaakDetailsInfo({this.daak, this.openPDF});
+}
+
 class DaakDetailsScreen extends ConsumerStatefulWidget {
   final int? daakId;
-  const DaakDetailsScreen({super.key, required this.daakId});
+  final DaakDetailsInfo daakDetailsInfo;
+  const DaakDetailsScreen(
+      {super.key, required this.daakDetailsInfo, required this.daakId});
 
   @override
   ConsumerState<DaakDetailsScreen> createState() => _DaakDetailsScreenState();
@@ -26,6 +36,39 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
   XFile? attachment;
+
+  openPDFSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.86,
+          child: const ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            child: PdfViewer(
+              url: "https://icseindia.org/document/sample.pdf",
+              title: "Daak PDF title",
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    if (widget.daakDetailsInfo.openPDF == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        openPDFSheet();
+      });
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -257,19 +300,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (ctx) {
-              return SizedBox(
-                height: MediaQuery.of(ctx).size.height * 0.86,
-                child: expandedPDFViewer(ctx),
-              );
-            },
-          );
-        },
+        onTap: openPDFSheet,
         child: ListTile(
           leading: Padding(
             padding: const EdgeInsets.only(top: 8.0),
@@ -289,33 +320,10 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
             'Received on: 2024-06-15',
           ),
           trailing: AppTextLinkButton(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (ctx) => SizedBox(
-                  height: MediaQuery.of(ctx).size.height * 0.86,
-                  child: expandedPDFViewer(ctx),
-                ),
-              );
-            },
+            onPressed: openPDFSheet,
             text: "Open",
           ),
         ),
-      ),
-    );
-  }
-
-  Widget expandedPDFViewer(BuildContext ctx) {
-    return const ClipRRect(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
-      ),
-      child: PdfViewer(
-        url: "https://icseindia.org/document/sample.pdf",
-        title: "Daak PDF title",
       ),
     );
   }

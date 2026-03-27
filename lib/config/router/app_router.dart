@@ -195,6 +195,7 @@ class AppRouter {
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => DaakDetailsScreen(
           daakId: int.tryParse(state.pathParameters[PathParams.daakId] ?? '-1'),
+          daakDetailsInfo: state.extra as DaakDetailsInfo,
         ),
       ),
       redirect: (context, state) {
