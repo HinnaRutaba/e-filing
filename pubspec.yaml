@@ -86,7 +86,6 @@ dependencies:
   package_info_plus: ^9.0.0
   slide_up_panel: ^1.1.0
   pdfrx:
-  zo_animated_border: ^1.0.6
 
 dev_dependencies:
   flutter_test:
