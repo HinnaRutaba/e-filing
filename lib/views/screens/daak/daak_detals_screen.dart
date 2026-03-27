@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
@@ -45,14 +46,25 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
       builder: (ctx) {
         return SizedBox(
           height: MediaQuery.of(ctx).size.height * 0.86,
-          child: const ClipRRect(
-            borderRadius: BorderRadius.only(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),
             child: PdfViewer(
               url: "https://icseindia.org/document/sample.pdf",
               title: "Daak PDF title",
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: AppTextLinkButton(
+                    onPressed: () {
+                      RouteHelper.pop();
+                    },
+                    text: "Process",
+                  ),
+                )
+              ],
             ),
           ),
         );

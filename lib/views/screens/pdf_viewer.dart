@@ -7,6 +7,7 @@ class PdfViewer extends StatefulWidget {
   final String? title;
   final List<Widget>? actions;
   final bool fullScreen;
+
   const PdfViewer(
       {super.key,
       required this.url,
