@@ -36,7 +36,8 @@ class DaakCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: daak.statusColor, width: 1),
+            border: Border.all(
+                color: daak.status?.color ?? AppColors.secondaryDark, width: 1),
           ),
           padding: const EdgeInsets.all(12.0),
           child: Column(
@@ -46,21 +47,24 @@ class DaakCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppText.labelMedium(
-                      "Daak - ${daak.daakNumber}",
+                      "${daak?.diaryNo}",
                       color: AppColors.secondaryDark,
                     ),
                   ),
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(50),
-                      color: daak.statusColor.withValues(alpha: .2),
-                      border: Border.all(color: daak.statusColor),
+                      color: daak.status?.color.withOpacity(0.2) ??
+                          AppColors.secondaryDark.withOpacity(0.2),
+                      border: Border.all(
+                          color: daak.status?.color ?? AppColors.secondaryDark,
+                          width: 1),
                     ),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     child: AppText.labelLarge(
-                      daak.status,
-                      color: daak.statusColor,
+                      daak.status?.label ?? "Unknown",
+                      color: daak.status?.color ?? AppColors.secondaryDark,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -98,14 +102,13 @@ class DaakCard extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: const Stack(
+                        child: Stack(
                           children: [
                             PdfViewer(
-                              url:
-                                  "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf",
+                              url: daak.incomingScanUrl,
                               fullScreen: false,
                             ),
-                            Align(
+                            const Align(
                               alignment: Alignment.topRight,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 4.0),
@@ -128,7 +131,7 @@ class DaakCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         AppText.titleLarge(
-                          daak.title,
+                          daak.subject ?? "No Subject",
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -139,7 +142,7 @@ class DaakCard extends StatelessWidget {
                                 size: 16, color: AppColors.secondaryDark),
                             const SizedBox(width: 4),
                             AppText.bodyMedium(
-                              "${daak.department} Department",
+                              daak.sourceDepartment ?? "Unknown Department",
                             ),
                           ],
                         ),
@@ -154,19 +157,52 @@ class DaakCard extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
                   Wrap(
-                    spacing: 16,
+                    spacing: 8,
                     runSpacing: 4,
                     children: [
-                      _infoTile('Letter No', daak.letterNumber),
                       _infoTile('Letter Date',
                           DateTimeHelper.datFormatSlash(daak.letterDate)),
+                      const SizedBox(height: 4),
+                      _infoTile('Letter No', daak.letterNo ?? "Unknown"),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  AppText.bodySmall(
-                    'Received by ${daak.receivedBy} on ${DateTimeHelper.dateFormatddMMYYWithTime(daak.receivedDate)}',
-                    color: AppColors.secondaryDark,
-                    fontWeight: FontWeight.w600,
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Received by ',
+                          style: TextStyle(
+                            color: AppColors.secondaryDark,
+                            fontSize: 14,
+                          ),
+                        ),
+                        TextSpan(
+                          text: daak.receivedBy ?? "Unknown",
+                          style: const TextStyle(
+                            color: AppColors.secondaryDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: ' on ',
+                          style: TextStyle(
+                            color: AppColors.secondaryDark,
+                            fontSize: 14,
+                          ),
+                        ),
+                        TextSpan(
+                          text: DateTimeHelper.dateFormatddMMYYWithTime(
+                              daak.receivedAt),
+                          style: const TextStyle(
+                            color: AppColors.secondaryDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -181,7 +217,9 @@ class DaakCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppText.bodySmall('$label: ', fontWeight: FontWeight.w600),
+        const Icon(Icons.circle, size: 6, color: AppColors.secondaryDark),
+        const SizedBox(width: 4),
+        AppText.bodySmall('$label: ', fontWeight: FontWeight.w800),
         AppText.bodySmall(value),
       ],
     );

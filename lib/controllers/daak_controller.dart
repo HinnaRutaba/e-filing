@@ -1,28 +1,48 @@
 import 'package:efiling_balochistan/controllers/base_controller.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 
-import 'package:flutter/material.dart';
+enum DaakViewFilter { inbox, nfa, forwarded }
 
 class DaakState {
   final List<DaakModel> allDaak;
   final String searchText;
   final List<DaakModel> filteredDaak;
+  final bool isLoading;
+  final DaakMeta? daakMeta;
+  final DaakStatus? selectedStatus;
+  final DaakViewFilter selectedFilter;
 
   DaakState({
     required this.allDaak,
     this.searchText = '',
     List<DaakModel>? filteredDaak,
+    this.daakMeta,
+    this.selectedStatus,
+    this.selectedFilter = DaakViewFilter.inbox,
+    this.isLoading = false,
   }) : filteredDaak = filteredDaak ?? allDaak;
 
   DaakState copyWith({
     List<DaakModel>? allDaak,
     String? searchText,
     List<DaakModel>? filteredDaak,
+    DaakMeta? daakMeta,
+    DaakStatus? selectedStatus,
+    DaakViewFilter? selectedFilter,
+    bool? isLoading,
   }) {
     return DaakState(
       allDaak: allDaak ?? this.allDaak,
       searchText: searchText ?? this.searchText,
       filteredDaak: filteredDaak ?? this.filteredDaak,
+      daakMeta: daakMeta ?? this.daakMeta,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
+      selectedFilter: selectedFilter ?? this.selectedFilter,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -30,37 +50,20 @@ class DaakState {
 class DaakController extends BaseControllerState<DaakState> {
   DaakController(super.state, super.ref);
 
-  static final List<DaakModel> _dummyDaakList = [
-    DaakModel(
-      title: 'Letter regarding annual report',
-      status: 'Pending',
-      statusColor: const Color(0xFF336699),
-      department: 'Finance',
-      letterNumber: 'L-2026-001',
-      daakNumber: 'D-1001',
-      letterDate: DateTime(2026, 3, 15),
-      receivedBy: 'Ali Khan',
-      receivedDate: DateTime(2026, 3, 21),
-      pdfUrl: null,
-    ),
-    DaakModel(
-      title: 'Meeting Invitation',
-      status: 'Approved',
-      statusColor: const Color(0xFF1D9165),
-      department: 'Admin',
-      letterNumber: 'L-2026-002',
-      daakNumber: 'D-1002',
-      letterDate: DateTime(2026, 3, 18),
-      receivedBy: 'Sara Baloch',
-      receivedDate: DateTime(2026, 3, 19),
-      pdfUrl: null,
-    ),
-    // Add more dummy data as needed
-  ];
+  DaakRepo get repo => ref.read(daakRepo);
 
-  loadData() {
-    state =
-        state.copyWith(allDaak: _dummyDaakList, filteredDaak: _dummyDaakList);
+  Future<void> loadData() async {
+    state = state.copyWith(isLoading: true);
+    int? desId = ref.read(authController).currentDesignation?.userDesgId;
+    fetchDaakMeta(desId);
+    if (state.selectedFilter == DaakViewFilter.inbox) {
+      fetchDaakInbox(desId: desId);
+    } else if (state.selectedFilter == DaakViewFilter.nfa) {
+      fetchDaakMyNfa(desId: desId);
+    } else if (state.selectedFilter == DaakViewFilter.forwarded) {
+      fetchDaakForwardedHistory(desId: desId);
+    }
+    state = state.copyWith(isLoading: false);
   }
 
   List<DaakModel> get allDaak => state.allDaak;
@@ -71,14 +74,62 @@ class DaakController extends BaseControllerState<DaakState> {
       searchText: value,
       filteredDaak: state.allDaak.where((daak) {
         final query = value.toLowerCase();
-        return daak.title.toLowerCase().contains(query) ||
-            daak.department.toLowerCase().contains(query) ||
-            daak.letterNumber.toLowerCase().contains(query) ||
-            daak.daakNumber.toLowerCase().contains(query) ||
-            daak.receivedBy.toLowerCase().contains(query);
+        return daak.subject?.toLowerCase().contains(query) == true ||
+            daak.sourceDepartment?.toLowerCase().contains(query) == true ||
+            daak.letterNo?.toLowerCase().contains(query) == true ||
+            daak.diaryNo?.toLowerCase().contains(query) == true ||
+            daak.receivedBy?.toLowerCase().contains(query) == true;
       }).toList(),
     );
   }
 
   List<DaakModel> get filteredDaak => state.filteredDaak;
+
+  Future<DaakMeta?> fetchDaakMeta(int? desId) async {
+    try {
+      DaakMeta meta = await repo.fetchDaakMeta(desId);
+      state = state.copyWith(daakMeta: meta);
+      return meta;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future<List<DaakModel>?> fetchDaakInbox({required int? desId}) async {
+    try {
+      List<DaakModel> daakList = await repo.fetchDaakInbox(
+          desId: desId, status: state.selectedStatus, query: state.searchText);
+      state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
+      return daakList;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
+
+  Future<List<DaakModel>?> fetchDaakMyNfa({required int? desId}) async {
+    try {
+      List<DaakModel> daakList = await repo.fetchDaakMyNfa(
+          desId: desId, status: state.selectedStatus, query: state.searchText);
+      state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
+      return daakList;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
+
+  Future<List<DaakModel>?> fetchDaakForwardedHistory(
+      {required int? desId}) async {
+    try {
+      List<DaakModel> daakList = await repo.fetchDaakForwardedHistory(
+          desId: desId, status: state.selectedStatus, query: state.searchText);
+      state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
+      return daakList;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
 }

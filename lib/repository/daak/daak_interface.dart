@@ -1,0 +1,52 @@
+import 'package:efiling_balochistan/config/network/network_base.dart';
+import 'package:efiling_balochistan/models/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
+
+abstract class DaakInterface extends NetworkBase {
+  String metaUrl(int desId) => '${baseUrl}daak/meta?userDesgID=$desId';
+
+  String daakInboxUrl({required int desId, DaakStatus? status, String? query}) {
+    String url = '${baseUrl}daak/inbox?userDesgID=$desId';
+    if (status != null) {
+      url += '&status=${status.value}';
+    }
+    if (query != null && query.isNotEmpty) {
+      url += '&q=$query';
+    }
+    return url;
+  }
+
+  String daakMyNfaUrl({required int desId, DaakStatus? status, String? query}) {
+    String url = '${baseUrl}daak/my-nfa?userDesgID=$desId';
+    if (status != null) {
+      url += '&status=${status.value}';
+    }
+    if (query != null && query.isNotEmpty) {
+      url += '&q=$query';
+    }
+    return url;
+  }
+
+  String daakForwardedHistoryUrl(
+      {required int desId, DaakStatus? status, String? query}) {
+    String url = '${baseUrl}daak/forwarded-history?userDesgID=$desId';
+    if (status != null) {
+      url += '&status=${status.value}';
+    }
+    if (query != null && query.isNotEmpty) {
+      url += '&q=$query';
+    }
+    return url;
+  }
+
+  Future<DaakMeta> fetchDaakMeta(int? desId);
+
+  Future<List<DaakModel>> fetchDaakInbox(
+      {required int? desId, DaakStatus? status, String? query});
+
+  Future<List<DaakModel>> fetchDaakMyNfa(
+      {required int? desId, DaakStatus? status, String? query});
+
+  Future<List<DaakModel>> fetchDaakForwardedHistory(
+      {required int? desId, DaakStatus? status, String? query});
+}

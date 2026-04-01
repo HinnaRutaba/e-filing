@@ -35,6 +35,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = ref.watch(daakController);
     final filteredDaak =
         ref.watch(daakController.select((state) => state.filteredDaak));
     return BaseScreen(
@@ -55,14 +56,19 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
             ),
           ),
           Expanded(
-            child: filteredDaak.isEmpty
-                ? const Center(child: Text('No daak found.'))
-                : ListView.builder(
-                    itemCount: filteredDaak.length,
-                    itemBuilder: (context, index) {
-                      return DaakCard(daak: filteredDaak[index]);
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.read(daakController.notifier).loadData();
+              },
+              child: filteredDaak.isEmpty
+                  ? const Center(child: Text('No daak found.'))
+                  : ListView.builder(
+                      itemCount: filteredDaak.length,
+                      itemBuilder: (context, index) {
+                        return DaakCard(daak: filteredDaak[index]);
+                      },
+                    ),
+            ),
           ),
         ],
       ),

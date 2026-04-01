@@ -66,7 +66,6 @@ class AuthController extends BaseControllerState<UserModel> {
       }
       return model;
     } catch (e, s) {
-      print("ME ERROR_______${e}______$s");
       Toast.error(message: handleException(e));
       return null;
     }
