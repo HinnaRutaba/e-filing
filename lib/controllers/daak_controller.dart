@@ -52,18 +52,25 @@ class DaakController extends BaseControllerState<DaakState> {
 
   DaakRepo get repo => ref.read(daakRepo);
 
-  Future<void> loadData() async {
-    state = state.copyWith(isLoading: true);
+  Future<void> loadData({bool isInitailLoad = false}) async {
+    if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
     fetchDaakMeta(desId);
     if (state.selectedFilter == DaakViewFilter.inbox) {
-      fetchDaakInbox(desId: desId);
+      await fetchDaakInbox(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.nfa) {
-      fetchDaakMyNfa(desId: desId);
+      await fetchDaakMyNfa(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.forwarded) {
-      fetchDaakForwardedHistory(desId: desId);
+      await fetchDaakForwardedHistory(desId: desId);
     }
-    state = state.copyWith(isLoading: false);
+    if (isInitailLoad) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> applyStatusFilter(DaakStatus? status) async {
+    state = state.copyWith(selectedStatus: status);
+    await loadData();
   }
 
   List<DaakModel> get allDaak => state.allDaak;
