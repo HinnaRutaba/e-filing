@@ -70,7 +70,7 @@ class DaakController extends BaseControllerState<DaakState> {
 
   Future<void> applyStatusFilter(DaakStatus? status) async {
     state = state.copyWith(selectedStatus: status);
-    await loadData();
+    await loadData(isInitailLoad: true);
   }
 
   List<DaakModel> get allDaak => state.allDaak;
