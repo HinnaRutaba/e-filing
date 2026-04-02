@@ -122,6 +122,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.appBarColor,
         title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(72),
           child: Container(
@@ -316,10 +318,16 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                 color: AppColors.secondaryDark,
               ),
               const SizedBox(height: 4),
-              ...List.generate(
-                daakDetails?.movements?.length ?? 0,
-                (index) => DaakCorrespondenceCard(
-                  movement: daakDetails?.movements?[index],
+              Container(
+                height: 300,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: daakDetails?.movements?.length ?? 0,
+                  itemBuilder: (context, index) => DaakCorrespondenceCard(
+                    movement: daakDetails?.movements?[index],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
