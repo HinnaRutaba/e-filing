@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
@@ -160,50 +161,91 @@ class DaakCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 4,
                     children: [
-                      _infoTile('Letter Date',
-                          DateTimeHelper.datFormatSlash(daak.letterDate)),
-                      const SizedBox(height: 4),
+                      if (daak.letterDate != null)
+                        _infoTile('Letter Date',
+                            DateTimeHelper.datFormatSlash(daak.letterDate)),
                       _infoTile('Letter No', daak.letterNo ?? "Unknown"),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Received by ',
-                          style: TextStyle(
-                            color: AppColors.secondaryDark,
-                            fontSize: 14,
+                  daak.status == DaakStatus.forwarded
+                      ? RichText(
+                          text: TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'Forwarded to ',
+                                style: TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextSpan(
+                                text: daak.forwardDetails?.lastForward
+                                        ?.forwardedTo ??
+                                    "Unknown",
+                                style: const TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' on ',
+                                style: TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextSpan(
+                                text: DateTimeHelper.dateFormatddMMYYWithTime(
+                                    daak.forwardDetails?.lastForward
+                                        ?.forwardedAt),
+                                style: const TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RichText(
+                          text: TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'Received by ',
+                                style: TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextSpan(
+                                text: daak.receivedBy ?? "Unknown",
+                                style: const TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' on ',
+                                style: TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextSpan(
+                                text: DateTimeHelper.dateFormatddMMYYWithTime(
+                                    daak.receivedAt),
+                                style: const TextStyle(
+                                  color: AppColors.secondaryDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        TextSpan(
-                          text: daak.receivedBy ?? "Unknown",
-                          style: const TextStyle(
-                            color: AppColors.secondaryDark,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const TextSpan(
-                          text: ' on ',
-                          style: TextStyle(
-                            color: AppColors.secondaryDark,
-                            fontSize: 14,
-                          ),
-                        ),
-                        TextSpan(
-                          text: DateTimeHelper.dateFormatddMMYYWithTime(
-                              daak.receivedAt),
-                          style: const TextStyle(
-                            color: AppColors.secondaryDark,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ],

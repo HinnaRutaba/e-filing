@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/config/network/api_client.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
@@ -53,6 +55,7 @@ abstract class NetworkBase {
     );
     if (authRequired) {
       TokenModel? token = await LocalStorageController().getToken();
+      log("TOKEN______${token?.token}");
       if (token != null) {
         options.headers!["Authorization"] = "Bearer ${token.token}";
       }

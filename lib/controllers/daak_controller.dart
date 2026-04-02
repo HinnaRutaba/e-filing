@@ -26,12 +26,14 @@ class DaakState {
     this.isLoading = false,
   }) : filteredDaak = filteredDaak ?? allDaak;
 
+  static const _unset = Object();
+
   DaakState copyWith({
     List<DaakModel>? allDaak,
     String? searchText,
     List<DaakModel>? filteredDaak,
     DaakMeta? daakMeta,
-    DaakStatus? selectedStatus,
+    Object? selectedStatus = _unset,
     DaakViewFilter? selectedFilter,
     bool? isLoading,
   }) {
@@ -40,7 +42,9 @@ class DaakState {
       searchText: searchText ?? this.searchText,
       filteredDaak: filteredDaak ?? this.filteredDaak,
       daakMeta: daakMeta ?? this.daakMeta,
-      selectedStatus: selectedStatus ?? this.selectedStatus,
+      selectedStatus: selectedStatus == _unset
+          ? this.selectedStatus
+          : selectedStatus as DaakStatus?,
       selectedFilter: selectedFilter ?? this.selectedFilter,
       isLoading: isLoading ?? this.isLoading,
     );
@@ -66,6 +70,11 @@ class DaakController extends BaseControllerState<DaakState> {
     if (isInitailLoad) {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  Future<void> setViewFilter(DaakViewFilter filter) async {
+    state = state.copyWith(selectedFilter: filter);
+    await loadData(isInitailLoad: true);
   }
 
   Future<void> applyStatusFilter(DaakStatus? status) async {

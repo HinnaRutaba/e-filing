@@ -1,6 +1,5 @@
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 
-
 class DaakModel {
   final int? id;
   final String? diaryNo;
@@ -24,6 +23,7 @@ class DaakModel {
   final String? closureActionType;
   final String? closureRemarks;
   final List<dynamic>? issuedCorrespondence;
+  final DaakForwardDetails? forwardDetails;
 
   DaakModel({
     this.id,
@@ -48,6 +48,7 @@ class DaakModel {
     this.closureActionType,
     this.closureRemarks,
     this.issuedCorrespondence,
+    this.forwardDetails,
   });
 
   factory DaakModel.fromJson(Map<String, dynamic> json) {
@@ -55,10 +56,14 @@ class DaakModel {
       id: json['id'],
       diaryNo: json['diary_no'],
       letterNo: json['letter_no'],
-      letterDate: json['letter_date'] != null ? DateTime.tryParse(json['letter_date']) : null,
+      letterDate: json['letter_date'] != null
+          ? DateTime.tryParse(json['letter_date'])
+          : null,
       subject: json['subject'],
       sourceDepartment: json['source_department'],
-      status: json['status_code'] != null ? DaakStatus.fromValue(json['status_code']) : null,
+      status: json['status_code'] != null
+          ? DaakStatus.fromValue(json['status_code'])
+          : null,
       statusCode: json['status_code'],
       statusLabel: json['status_label'],
       statusBadge: json['status_badge'],
@@ -66,15 +71,66 @@ class DaakModel {
       currentHolderDesignation: json['current_holder_designation'],
       currentHolderSection: json['current_holder_section'],
       receivedBy: json['received_by'],
-      receivedAt: json['received_at'] != null ? DateTime.tryParse(json['received_at']) : null,
+      receivedAt: json['received_at'] != null
+          ? DateTime.tryParse(json['received_at'])
+          : null,
       incomingScanUrl: json['incoming_scan_url'],
       convertedFileId: json['converted_file_id'],
-      latestMovement: json['latest_movement'] != null ? LatestMovement.fromJson(json['latest_movement']) : null,
-      closedAt: json['closed_at'] != null && json['closed_at'] != '' ? DateTime.tryParse(json['closed_at']) : null,
+      latestMovement: json['latest_movement'] != null
+          ? LatestMovement.fromJson(json['latest_movement'])
+          : null,
+      closedAt: json['closed_at'] != null && json['closed_at'] != ''
+          ? DateTime.tryParse(json['closed_at'])
+          : null,
       closureActionType: json['closure_action_type'],
       closureRemarks: json['closure_remarks'],
       issuedCorrespondence: json['issued_correspondence'],
     );
+  }
+
+  factory DaakModel.fromFwd(Map<String, dynamic> json) {
+    return DaakModel(
+      id: json['id'],
+      diaryNo: json['diary_no'],
+      letterNo: json['letter_no'],
+      letterDate: json['letter_date'] != null
+          ? DateTime.tryParse(json['letter_date'])
+          : null,
+      subject: json['subject'],
+      sourceDepartment: json['source_department'],
+      status: json['current_status_code'] != null
+          ? DaakStatus.fromValue(json['current_status_code'])
+          : null,
+      statusCode: json['current_status_code'],
+      statusLabel: json['current_status_label'],
+      statusBadge: json['current_status_badge'],
+      currentHolder: json['current_holder'],
+      currentHolderDesignation: json['current_holder_designation'],
+      currentHolderSection: json['current_holder_section'],
+      receivedBy: json['received_by'],
+      receivedAt: json['received_at'] != null
+          ? DateTime.tryParse(json['received_at'])
+          : null,
+      incomingScanUrl: json['incoming_scan_url'],
+      convertedFileId: json['converted_file_id'],
+      latestMovement: json['latest_movement'] != null
+          ? LatestMovement.fromJson(json['latest_movement'])
+          : null,
+      closedAt: json['closed_at'] != null && json['closed_at'] != ''
+          ? DateTime.tryParse(json['closed_at'])
+          : null,
+      closureActionType: json['closure_action_type'],
+      closureRemarks: json['closure_remarks'],
+      issuedCorrespondence: json['issued_correspondence'],
+    );
+  }
+
+  factory DaakModel.fromFwdJson(Map<String, dynamic> json) {
+    DaakModel model = DaakModel.fromFwd(json['letter']);
+    model = model.copyWith(
+      forwardDetails: DaakForwardDetails.fromJson(json),
+    );
+    return model;
   }
 
   Map<String, dynamic> toJson() {
@@ -102,6 +158,59 @@ class DaakModel {
       'issued_correspondence': issuedCorrespondence,
     };
   }
+
+  DaakModel copyWith({
+    int? id,
+    String? diaryNo,
+    String? letterNo,
+    DateTime? letterDate,
+    String? subject,
+    String? sourceDepartment,
+    DaakStatus? status,
+    int? statusCode,
+    String? statusLabel,
+    String? statusBadge,
+    String? currentHolder,
+    String? currentHolderDesignation,
+    String? currentHolderSection,
+    String? receivedBy,
+    DateTime? receivedAt,
+    String? incomingScanUrl,
+    int? convertedFileId,
+    LatestMovement? latestMovement,
+    DateTime? closedAt,
+    String? closureActionType,
+    String? closureRemarks,
+    List<dynamic>? issuedCorrespondence,
+    DaakForwardDetails? forwardDetails,
+  }) {
+    return DaakModel(
+      id: id ?? this.id,
+      diaryNo: diaryNo ?? this.diaryNo,
+      letterNo: letterNo ?? this.letterNo,
+      letterDate: letterDate ?? this.letterDate,
+      subject: subject ?? this.subject,
+      sourceDepartment: sourceDepartment ?? this.sourceDepartment,
+      status: status ?? this.status,
+      statusCode: statusCode ?? this.statusCode,
+      statusLabel: statusLabel ?? this.statusLabel,
+      statusBadge: statusBadge ?? this.statusBadge,
+      currentHolder: currentHolder ?? this.currentHolder,
+      currentHolderDesignation:
+          currentHolderDesignation ?? this.currentHolderDesignation,
+      currentHolderSection: currentHolderSection ?? this.currentHolderSection,
+      receivedBy: receivedBy ?? this.receivedBy,
+      receivedAt: receivedAt ?? this.receivedAt,
+      incomingScanUrl: incomingScanUrl ?? this.incomingScanUrl,
+      convertedFileId: convertedFileId ?? this.convertedFileId,
+      latestMovement: latestMovement ?? this.latestMovement,
+      closedAt: closedAt ?? this.closedAt,
+      closureActionType: closureActionType ?? this.closureActionType,
+      closureRemarks: closureRemarks ?? this.closureRemarks,
+      issuedCorrespondence: issuedCorrespondence ?? this.issuedCorrespondence,
+      forwardDetails: forwardDetails ?? this.forwardDetails,
+    );
+  }
 }
 
 class LatestMovement {
@@ -121,7 +230,8 @@ class LatestMovement {
     return LatestMovement(
       actionType: json['action_type'],
       remarks: json['remarks'],
-      actedAt: json['acted_at'] != null ? DateTime.tryParse(json['acted_at']) : null,
+      actedAt:
+          json['acted_at'] != null ? DateTime.tryParse(json['acted_at']) : null,
       actor: json['actor'],
     );
   }
@@ -132,6 +242,80 @@ class LatestMovement {
       'remarks': remarks,
       'acted_at': actedAt?.toIso8601String(),
       'actor': actor,
+    };
+  }
+}
+
+class DaakLastForward {
+  final int? movementId;
+  final DateTime? forwardedAt;
+  final String? yourRemarks;
+  final String? forwardedTo;
+  final String? forwardedToDesignation;
+
+  DaakLastForward({
+    this.movementId,
+    this.forwardedAt,
+    this.yourRemarks,
+    this.forwardedTo,
+    this.forwardedToDesignation,
+  });
+
+  factory DaakLastForward.fromJson(Map<String, dynamic> json) {
+    return DaakLastForward(
+      movementId: json['movement_id'],
+      forwardedAt: json['forwarded_at'] != null
+          ? DateTime.tryParse(json['forwarded_at'])
+          : null,
+      yourRemarks: json['your_remarks'],
+      forwardedTo: json['forwarded_to'],
+      forwardedToDesignation: json['forwarded_to_designation'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'movement_id': movementId,
+      'forwarded_at': forwardedAt?.toIso8601String(),
+      'your_remarks': yourRemarks,
+      'forwarded_to': forwardedTo,
+      'forwarded_to_designation': forwardedToDesignation,
+    };
+  }
+}
+
+class DaakForwardDetails {
+  final DateTime? latestForwardedAt;
+  final int? yourForwardCount;
+  final int? totalMovementCount;
+  final DaakLastForward? lastForward;
+
+  DaakForwardDetails({
+    this.latestForwardedAt,
+    this.yourForwardCount,
+    this.totalMovementCount,
+    this.lastForward,
+  });
+
+  factory DaakForwardDetails.fromJson(Map<String, dynamic> json) {
+    return DaakForwardDetails(
+      latestForwardedAt: json['latest_forwarded_at'] != null
+          ? DateTime.tryParse(json['latest_forwarded_at'])
+          : null,
+      yourForwardCount: json['your_forward_count'],
+      totalMovementCount: json['total_movement_count'],
+      lastForward: json['last_forward'] != null
+          ? DaakLastForward.fromJson(json['last_forward'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'latest_forwarded_at': latestForwardedAt?.toIso8601String(),
+      'your_forward_count': yourForwardCount,
+      'total_movement_count': totalMovementCount,
+      'last_forward': lastForward?.toJson(),
     };
   }
 }

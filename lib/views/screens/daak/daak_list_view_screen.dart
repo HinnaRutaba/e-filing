@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
@@ -54,126 +55,178 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
     return BaseScreen(
       title: "Daak Inbox",
       isdash: false,
-      body: controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Row(
+      body: Column(
+        children: [
+          Builder(builder: (context) {
+            Color segmentColor(DaakViewFilter filter) =>
+                controller.selectedFilter == filter
+                    ? Colors.white
+                    : Colors.black54;
+
+            return SegmentedButton<DaakViewFilter>(
+              style: SegmentedButton.styleFrom(
+                backgroundColor: AppColors.cardColorLight,
+                selectedForegroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              segments: [
+                ButtonSegment(
+                  value: DaakViewFilter.inbox,
+                  label: AppText.titleSmall('Inbox',
+                      color: segmentColor(DaakViewFilter.inbox)),
+                  icon: Icon(Icons.inbox_rounded,
+                      color: segmentColor(DaakViewFilter.inbox)),
+                ),
+                ButtonSegment(
+                  value: DaakViewFilter.nfa,
+                  label: AppText.titleSmall('My NFA',
+                      color: segmentColor(DaakViewFilter.nfa)),
+                  icon: Icon(Icons.folder_open_rounded,
+                      color: segmentColor(DaakViewFilter.nfa)),
+                ),
+                ButtonSegment(
+                  value: DaakViewFilter.forwarded,
+                  label: AppText.titleSmall('Forwarded',
+                      color: segmentColor(DaakViewFilter.forwarded)),
+                  icon: Icon(Icons.forward_to_inbox_rounded,
+                      color: segmentColor(DaakViewFilter.forwarded)),
+                ),
+              ],
+              selected: {controller.selectedFilter},
+              onSelectionChanged: (selection) {
+                ref
+                    .read(daakController.notifier)
+                    .setViewFilter(selection.first);
+              },
+            );
+          }),
+          const SizedBox(height: 8),
+          Expanded(
+            child: controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
                     children: [
-                      Expanded(
-                        child: AppTextField(
-                          controller: _searchController,
-                          hintText: 'Search daak...',
-                          labelText: '',
-                          showLabel: false,
-                          onChanged: (value) {
-                            ref.read(daakController.notifier).searchText =
-                                value;
-                          },
-                          prefix: const Icon(Icons.search_rounded),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? InkWell(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    ref
-                                        .read(daakController.notifier)
-                                        .searchText = '';
-                                  },
-                                  child: const Icon(Icons.close_rounded),
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<DaakStatus?>(
-                        tooltip: 'Filter by status',
-                        onSelected: (status) {
-                          if (status == DaakStatus.inProgress4) {
-                            status = null;
-                          }
-                          ref
-                              .read(daakController.notifier)
-                              .applyStatusFilter(status);
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem<DaakStatus?>(
-                            value: DaakStatus.inProgress4,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.circle,
-                                  size: 8,
-                                  color: AppColors.black,
-                                ),
-                                const SizedBox(width: 8),
-                                AppText.titleSmall(
-                                  'All Statuses',
-                                )
-                              ],
-                            ),
-                          ),
-                          ...menuStatuses.map(
-                            (status) => PopupMenuItem<DaakStatus?>(
-                              value: status,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.circle,
-                                    size: 8,
-                                    color: status.color,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  AppText.titleSmall(
-                                    status.label,
-                                  ),
-                                ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: AppTextField(
+                                controller: _searchController,
+                                hintText: 'Search daak...',
+                                labelText: '',
+                                showLabel: false,
+                                onChanged: (value) {
+                                  ref.read(daakController.notifier).searchText =
+                                      value;
+                                },
+                                prefix: const Icon(Icons.search_rounded),
+                                suffixIcon: _searchController.text.isNotEmpty
+                                    ? InkWell(
+                                        onTap: () {
+                                          _searchController.clear();
+                                          ref
+                                              .read(daakController.notifier)
+                                              .searchText = '';
+                                        },
+                                        child: const Icon(Icons.close_rounded),
+                                      )
+                                    : null,
                               ),
                             ),
-                          ),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: controller.selectedStatus == null
-                                  ? Colors.grey[300]!
-                                  : controller.selectedStatus!.color,
+                            const SizedBox(width: 8),
+                            PopupMenuButton<DaakStatus?>(
+                              tooltip: 'Filter by status',
+                              onSelected: (status) {
+                                if (status == DaakStatus.inProgress3) {
+                                  status = null;
+                                }
+                                ref
+                                    .read(daakController.notifier)
+                                    .applyStatusFilter(status);
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem<DaakStatus?>(
+                                  value: DaakStatus.inProgress3,
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.circle,
+                                        size: 8,
+                                        color: AppColors.black,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      AppText.titleSmall(
+                                        'All Statuses',
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                ...menuStatuses.map(
+                                  (status) => PopupMenuItem<DaakStatus?>(
+                                    value: status,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.circle,
+                                          size: 8,
+                                          color: status.color,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        AppText.titleSmall(
+                                          status.label,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: controller.selectedStatus == null
+                                        ? Colors.grey[300]!
+                                        : controller.selectedStatus!.color,
+                                  ),
+                                  color: controller.selectedStatus == null
+                                      ? Colors.white
+                                      : controller.selectedStatus!.color
+                                          .withValues(alpha: 0.12),
+                                ),
+                                child: Icon(
+                                  Icons.filter_list_rounded,
+                                  color: controller.selectedStatus?.color ??
+                                      Colors.black54,
+                                ),
+                              ),
                             ),
-                            color: controller.selectedStatus == null
-                                ? Colors.white
-                                : controller.selectedStatus!.color
-                                    .withValues(alpha: 0.12),
-                          ),
-                          child: Icon(
-                            Icons.filter_list_rounded,
-                            color: controller.selectedStatus?.color ??
-                                Colors.black54,
-                          ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            ref.read(daakController.notifier).loadData();
+                          },
+                          child: filteredDaak.isEmpty
+                              ? const Center(child: Text('No daak found.'))
+                              : ListView.builder(
+                                  itemCount: filteredDaak.length,
+                                  itemBuilder: (context, index) {
+                                    return DaakCard(daak: filteredDaak[index]);
+                                  },
+                                ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      ref.read(daakController.notifier).loadData();
-                    },
-                    child: filteredDaak.isEmpty
-                        ? const Center(child: Text('No daak found.'))
-                        : ListView.builder(
-                            itemCount: filteredDaak.length,
-                            itemBuilder: (context, index) {
-                              return DaakCard(daak: filteredDaak[index]);
-                            },
-                          ),
-                  ),
-                ),
-              ],
-            ),
+          ),
+        ],
+      ),
     );
   }
 }

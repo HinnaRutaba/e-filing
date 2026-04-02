@@ -31,6 +31,8 @@ class DaakRepo extends DaakInterface {
         throw Exception("Designation ID is required to fetch user details");
       }
 
+      log("INBOX____${daakInboxUrl(desId: desId, status: status, query: query)}");
+
       Map<String, dynamic> data = await dioClient.get(
         url: daakInboxUrl(desId: desId, status: status, query: query),
         options: await options(authRequired: true),
@@ -55,6 +57,8 @@ class DaakRepo extends DaakInterface {
         throw Exception("Designation ID is required to fetch user details");
       }
 
+      log("FWD HISTORY____${daakForwardedHistoryUrl(desId: desId, status: status, query: query)}");
+
       Map<String, dynamic> data = await dioClient.get(
         url:
             daakForwardedHistoryUrl(desId: desId, status: status, query: query),
@@ -65,7 +69,7 @@ class DaakRepo extends DaakInterface {
         return [];
       }
       return (data['data']['items'] as List)
-          .map((e) => DaakModel.fromJson(e))
+          .map((e) => DaakModel.fromFwdJson(e))
           .toList();
     } catch (e) {
       rethrow;
@@ -79,6 +83,8 @@ class DaakRepo extends DaakInterface {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
       }
+
+      log("MY NFA____${daakMyNfaUrl(desId: desId, status: status, query: query)}");
 
       Map<String, dynamic> data = await dioClient.get(
         url: daakMyNfaUrl(desId: desId, status: status, query: query),
