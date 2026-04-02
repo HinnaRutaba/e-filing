@@ -8,7 +8,6 @@ import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
@@ -16,6 +15,20 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+
+enum DaakAction {
+  forward,
+  markNfa,
+  disposeOff,
+  createFile;
+
+  String get label => switch (this) {
+        DaakAction.forward => 'Forward',
+        DaakAction.markNfa => 'Mark NFA',
+        DaakAction.disposeOff => 'Dispose Off',
+        DaakAction.createFile => 'Create File',
+      };
+}
 
 class DaakDetailsInfo {
   DaakModel daak;
@@ -43,6 +56,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   DaakModel? daakDetails;
 
   DepartmentUser? forwardTo;
+  DaakAction selectedAction = DaakAction.forward;
 
   openPDFSheet() {
     showGeneralDialog(
@@ -163,26 +177,39 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Expanded(
-                            //   child:
-                            //       AppSolidButton(onPressed: () {}, text: "Forward"),
-                            // ),
-                            // const SizedBox(width: 8),
-                            Expanded(
-                              child: AppOutlineButton(
-                                onPressed: () {},
-                                text: "Mark NFA",
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: DaakAction.values.map((action) {
+                            final isSelected = selectedAction == action;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => selectedAction = action),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primaryDark
+                                      : AppColors.appBarColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.primaryDark
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: AppText.bodySmall(
+                                  action.label,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AppOutlineButton(
-                                  onPressed: () {}, text: "Create File"),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 6),
                         AppText.titleMedium(

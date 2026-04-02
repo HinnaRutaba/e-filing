@@ -45,6 +45,8 @@ abstract class DaakInterface extends NetworkBase {
   String daakFwdShowUrl(int daakId, int desId) =>
       '${baseUrl}daak/forwarded-history/$daakId?userDesgID=$desId';
 
+  String daakFwdUrl(int daakId) => '${baseUrl}daak/$daakId/forward';
+
   Future<DaakMeta> fetchDaakMeta(int? desId);
 
   Future<List<DaakModel>> fetchDaakInbox(
@@ -56,9 +58,11 @@ abstract class DaakInterface extends NetworkBase {
   Future<List<DaakModel>> fetchDaakForwardedHistory(
       {required int? desId, DaakStatus? status, String? query});
 
-  Future<DaakModel?> fetchDaakInboxShow({required int daakId, required int desId});    
+  Future<DaakModel?> fetchDaakInboxShow(
+      {required int daakId, required int desId});
 
   Future<DaakModel?> fetchDaakFwdShow(
-      {required int daakId, required int desId});    
+      {required int daakId, required int desId});
 
+      
 }
