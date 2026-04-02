@@ -100,7 +100,8 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                   ),
                   InkWell(
                     onTap: () async {
-                      m.attachment = await FilePickerService().pickPdf();
+                     final files  = await FilePickerService().pickFiles();
+                      m.attachment = files.isNotEmpty ? files.first : null;
                       setState(() {});
                     },
                     child: Container(

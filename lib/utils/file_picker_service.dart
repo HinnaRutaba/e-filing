@@ -125,21 +125,38 @@ class FilePickerService {
     return images;
   }
 
-  Future<XFile?> pickPdf() async {
-    XFile? picked;
+  Future<List<XFile>> pickFiles(
+      {List<String> allowedExtensions = const ['pdf'],
+      bool allowMultiple = false}) async {
+    List<XFile> picked = [];
     try {
       EasyLoading.show(status: "Selecting files...");
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
+        allowMultiple: allowMultiple,
         type: FileType.custom,
-        allowedExtensions: ['pdf'],
+        allowedExtensions: allowedExtensions,
       );
 
       EasyLoading.dismiss();
 
       if (result != null && result.files.isNotEmpty) {
-        picked = result.xFiles.first;
+        int oversizedCount = 0;
+        for (final file in result.xFiles) {
+          final fileLength = await file.length();
+          if (fileLength > 10 * 1024 * 1024) {
+            oversizedCount++;
+          } else {
+            picked.add(file);
+          }
+        }
+        if (oversizedCount > 0) {
+          Toast.error(
+            message: oversizedCount == 1
+                ? "1 file exceeded the 10MB limit and was not added."
+                : "$oversizedCount files exceeded the 10MB limit and were not added.",
+          );
+        }
       }
     } catch (e, s) {
       EasyLoading.dismiss();

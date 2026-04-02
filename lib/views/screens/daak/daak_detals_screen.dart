@@ -42,6 +42,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   XFile? attachment;
   DaakModel? daakDetails;
 
+  DepartmentUser? forwardTo;
+
   openPDFSheet() {
     showGeneralDialog(
       context: context,
@@ -189,54 +191,52 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           color: Colors.black87,
                         ),
                         const SizedBox(height: 4),
-                        AppDropDownField<String>(
-                          items: const [
-                            "Section A",
-                            "Section B",
-                            "Section C",
-                            "Section D",
-                          ],
-                          onChanged: (item) async {},
+                        AppDropDownField<DepartmentUser>(
+                          items: ref
+                                  .read(daakController)
+                                  .daakMeta
+                                  ?.departmentUsers ??
+                              [],
+                          onChanged: (item) async {
+                            forwardTo = item;
+                            setState(() {});
+                          },
                           labelText: "Forward this file to",
                           hintText: "Forward To",
 
                           //buttonHeight: forwardTo == null ? null : 57,
                           itemBuilder: (item) {
-                            return AppText.titleMedium(
-                              item ?? '',
-                              fontWeight: FontWeight.w600,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText.titleMedium(item?.name ?? ''),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.yellow[400],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color:
+                                          Colors.yellow[600]!.withOpacity(0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: AppText.labelSmall(
+                                    item?.designation ?? '',
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 10, // Smaller font
+                                  ),
+                                )
+                              ],
                             );
-                            // return Column(
-                            //   crossAxisAlignment: CrossAxisAlignment.start,
-                            //   children: [
-                            //     AppText.titleMedium(item?.userTitle ?? ''),
-
-                            //     Container(
-                            //       padding: const EdgeInsets.symmetric(
-                            //           horizontal: 6, vertical: 1),
-                            //       decoration: BoxDecoration(
-                            //         color: Colors.yellow[400],
-                            //         borderRadius: BorderRadius.circular(8),
-                            //         border: Border.all(
-                            //           color: Colors.yellow[600]!.withOpacity(0.3),
-                            //           width: 0.5,
-                            //         ),
-                            //       ),
-                            //       child: AppText.labelSmall(
-                            //         item?.designationTitle ?? '',
-                            //         color: Colors.black,
-                            //         fontWeight: FontWeight.w500,
-                            //         fontSize: 10, // Smaller font
-                            //       ),
-                            //     )
-                            //   ],
-                            // );
                           },
 
                           validator: (item) {
-                            // if (forwardTo == null || item == null) {
-                            //   return 'Please select a value';
-                            // }
+                            if (forwardTo == null || item == null) {
+                              return 'Please select a value';
+                            }
                             return null;
                           },
                         ),
@@ -266,7 +266,16 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         const SizedBox(height: 4),
                         InkWell(
                           onTap: () async {
-                            attachment = await FilePickerService().pickPdf();
+                            final files = await FilePickerService().pickFiles(
+                              allowedExtensions: [
+                                'pdf',
+                                'docx',
+                                'jpg',
+                                'jpeg',
+                                'png',
+                              ],
+                            );
+                            attachment = files.isNotEmpty ? files.first : null;
                             setState(() {});
                           },
                           child: Container(
