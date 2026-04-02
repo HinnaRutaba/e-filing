@@ -16,16 +16,20 @@ class DaakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool noDetails =
+        daak.status == DaakStatus.disposedOff || daak.status == DaakStatus.nfa;
     return InkWell(
-      onTap: () {
-        RouteHelper.push(
-          Routes.daakDetails(6),
-          extra: DaakDetailsInfo(
-            daak: daak,
-            openPDF: false,
-          ),
-        );
-      },
+      onTap: noDetails
+          ? null
+          : () {
+              RouteHelper.push(
+                Routes.daakDetails(daak.id),
+                extra: DaakDetailsInfo(
+                  daak: daak,
+                  openPDF: false,
+                ),
+              );
+            },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         elevation: 5,
@@ -48,7 +52,7 @@ class DaakCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppText.labelMedium(
-                      "${daak?.diaryNo}",
+                      "${daak.diaryNo}",
                       color: AppColors.secondaryDark,
                     ),
                   ),
@@ -69,24 +73,27 @@ class DaakCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Icon(
-                    Icons.arrow_right,
-                    color: AppColors.secondaryDark,
-                  )
+                  if (!noDetails)
+                    const Icon(
+                      Icons.arrow_right,
+                      color: AppColors.secondaryDark,
+                    )
                 ],
               ),
               Row(
                 children: [
                   InkWell(
-                    onTap: () {
-                      RouteHelper.push(
-                        Routes.daakDetails(6),
-                        extra: DaakDetailsInfo(
-                          daak: daak,
-                          openPDF: true,
-                        ),
-                      );
-                    },
+                    onTap: noDetails
+                        ? null
+                        : () {
+                            RouteHelper.push(
+                              Routes.daakDetails(daak.id),
+                              extra: DaakDetailsInfo(
+                                daak: daak,
+                                openPDF: true,
+                              ),
+                            );
+                          },
                     child: Container(
                       width: 40,
                       height: 54,
@@ -109,17 +116,19 @@ class DaakCard extends StatelessWidget {
                               url: daak.incomingScanUrl,
                               fullScreen: false,
                             ),
-                            const Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                child: Icon(
-                                  Icons.remove_red_eye,
-                                  size: 18,
-                                  color: AppColors.secondary,
+                            if (!noDetails)
+                              const Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 4.0),
+                                  child: Icon(
+                                    Icons.remove_red_eye,
+                                    size: 18,
+                                    color: AppColors.secondary,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
