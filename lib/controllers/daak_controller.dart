@@ -85,18 +85,10 @@ class DaakController extends BaseControllerState<DaakState> {
   List<DaakModel> get allDaak => state.allDaak;
 
   String get searchText => state.searchText;
-  set searchText(String value) {
-    state = state.copyWith(
-      searchText: value,
-      filteredDaak: state.allDaak.where((daak) {
-        final query = value.toLowerCase();
-        return daak.subject?.toLowerCase().contains(query) == true ||
-            daak.sourceDepartment?.toLowerCase().contains(query) == true ||
-            daak.letterNo?.toLowerCase().contains(query) == true ||
-            daak.diaryNo?.toLowerCase().contains(query) == true ||
-            daak.receivedBy?.toLowerCase().contains(query) == true;
-      }).toList(),
-    );
+  Future<void> setSearchText(String value) async {
+    state = state.copyWith(searchText: value, isLoading: true);
+    await loadData();
+    state = state.copyWith(isLoading: false);
   }
 
   List<DaakModel> get filteredDaak => state.filteredDaak;

@@ -1,5 +1,4 @@
-import 'dart:developer';
-
+import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/daak_controller.dart';
@@ -20,16 +19,13 @@ class DaakListViewScreen extends ConsumerStatefulWidget {
 
 class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final TypingDetector _typingDetector = TypingDetector(milliseconds: 500);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(daakController.notifier).loadData(isInitailLoad: true);
-      _searchController.addListener(() {
-        ref.read(daakController.notifier).searchText = _searchController.text;
-        setState(() {});
-      });
     });
   }
 
@@ -103,110 +99,109 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
             );
           }),
           const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    controller: _searchController,
+                    hintText: 'Search daak...',
+                    labelText: '',
+                    showLabel: false,
+                    onChanged: (value) {
+                      setState(() {});
+                      _typingDetector.run(() {
+                        ref.read(daakController.notifier).setSearchText(value);
+                      });
+                    },
+                    prefix: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? InkWell(
+                            onTap: () {
+                              _searchController.clear();
+                              ref
+                                  .read(daakController.notifier)
+                                  .setSearchText('');
+                            },
+                            child: const Icon(Icons.close_rounded),
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<DaakStatus?>(
+                  tooltip: 'Filter by status',
+                  onSelected: (status) {
+                    if (status == DaakStatus.inProgress3) {
+                      status = null;
+                    }
+                    ref.read(daakController.notifier).applyStatusFilter(status);
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<DaakStatus?>(
+                      value: DaakStatus.inProgress3,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: AppColors.black,
+                          ),
+                          const SizedBox(width: 8),
+                          AppText.titleSmall(
+                            'All Statuses',
+                          )
+                        ],
+                      ),
+                    ),
+                    ...menuStatuses.map(
+                      (status) => PopupMenuItem<DaakStatus?>(
+                        value: status,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: status.color,
+                            ),
+                            const SizedBox(width: 8),
+                            AppText.titleSmall(
+                              status.label,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: controller.selectedStatus == null
+                            ? Colors.grey[300]!
+                            : controller.selectedStatus!.color,
+                      ),
+                      color: controller.selectedStatus == null
+                          ? Colors.white
+                          : controller.selectedStatus!.color
+                              .withValues(alpha: 0.12),
+                    ),
+                    child: Icon(
+                      Icons.filter_list_rounded,
+                      color: controller.selectedStatus?.color ?? Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: controller.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: AppTextField(
-                                controller: _searchController,
-                                hintText: 'Search daak...',
-                                labelText: '',
-                                showLabel: false,
-                                onChanged: (value) {
-                                  ref.read(daakController.notifier).searchText =
-                                      value;
-                                },
-                                prefix: const Icon(Icons.search_rounded),
-                                suffixIcon: _searchController.text.isNotEmpty
-                                    ? InkWell(
-                                        onTap: () {
-                                          _searchController.clear();
-                                          ref
-                                              .read(daakController.notifier)
-                                              .searchText = '';
-                                        },
-                                        child: const Icon(Icons.close_rounded),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            PopupMenuButton<DaakStatus?>(
-                              tooltip: 'Filter by status',
-                              onSelected: (status) {
-                                if (status == DaakStatus.inProgress3) {
-                                  status = null;
-                                }
-                                ref
-                                    .read(daakController.notifier)
-                                    .applyStatusFilter(status);
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem<DaakStatus?>(
-                                  value: DaakStatus.inProgress3,
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.circle,
-                                        size: 8,
-                                        color: AppColors.black,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      AppText.titleSmall(
-                                        'All Statuses',
-                                      )
-                                    ],
-                                  ),
-                                ),
-                                ...menuStatuses.map(
-                                  (status) => PopupMenuItem<DaakStatus?>(
-                                    value: status,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.circle,
-                                          size: 8,
-                                          color: status.color,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        AppText.titleSmall(
-                                          status.label,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: controller.selectedStatus == null
-                                        ? Colors.grey[300]!
-                                        : controller.selectedStatus!.color,
-                                  ),
-                                  color: controller.selectedStatus == null
-                                      ? Colors.white
-                                      : controller.selectedStatus!.color
-                                          .withValues(alpha: 0.12),
-                                ),
-                                child: Icon(
-                                  Icons.filter_list_rounded,
-                                  color: controller.selectedStatus?.color ??
-                                      Colors.black54,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () async {
