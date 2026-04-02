@@ -3,7 +3,6 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
-import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
@@ -104,7 +103,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daak Details - ID: ${widget.daakId}'),
+        title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
       ),
       body: Stack(
         children: [

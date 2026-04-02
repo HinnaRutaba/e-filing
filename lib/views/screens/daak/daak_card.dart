@@ -83,59 +83,60 @@ class DaakCard extends StatelessWidget {
               ),
               Row(
                 children: [
-                  InkWell(
-                    onTap: noDetails
-                        ? null
-                        : () {
-                            RouteHelper.push(
-                              Routes.daakDetails(daak.id),
-                              extra: DaakDetailsInfo(
-                                daak: daak,
-                                openPDF: true,
-                                status: daak.status ?? DaakStatus.inProgress1,
-                              ),
-                            );
-                          },
-                    child: Container(
-                      width: 40,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                AppColors.secondaryDark.withValues(alpha: 0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: Stack(
-                          children: [
-                            PdfViewer(
-                              url: daak.incomingScanUrl,
-                              fullScreen: false,
+                  if (daak.incomingScanUrl != null)
+                    InkWell(
+                      onTap: noDetails
+                          ? null
+                          : () {
+                              RouteHelper.push(
+                                Routes.daakDetails(daak.id),
+                                extra: DaakDetailsInfo(
+                                  daak: daak,
+                                  openPDF: true,
+                                  status: daak.status ?? DaakStatus.inProgress1,
+                                ),
+                              );
+                            },
+                      child: Container(
+                        width: 40,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.secondaryDark
+                                  .withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             ),
-                            if (!noDetails)
-                              const Align(
-                                alignment: Alignment.topRight,
-                                child: Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 4.0),
-                                  child: Icon(
-                                    Icons.remove_red_eye,
-                                    size: 18,
-                                    color: AppColors.secondary,
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Stack(
+                            children: [
+                              PdfViewer(
+                                url: daak.incomingScanUrl,
+                                fullScreen: false,
+                              ),
+                              if (!noDetails)
+                                const Align(
+                                  alignment: Alignment.topRight,
+                                  child: Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 4.0),
+                                    child: Icon(
+                                      Icons.remove_red_eye,
+                                      size: 18,
+                                      color: AppColors.secondary,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
