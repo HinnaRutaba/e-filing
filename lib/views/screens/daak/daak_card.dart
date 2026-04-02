@@ -27,6 +27,7 @@ class DaakCard extends StatelessWidget {
                 extra: DaakDetailsInfo(
                   daak: daak,
                   openPDF: false,
+                  status: daak.status ?? DaakStatus.inProgress1,
                 ),
               );
             },
@@ -91,6 +92,7 @@ class DaakCard extends StatelessWidget {
                               extra: DaakDetailsInfo(
                                 daak: daak,
                                 openPDF: true,
+                                status: daak.status ?? DaakStatus.inProgress1,
                               ),
                             );
                           },

@@ -84,7 +84,6 @@ dependencies:
   chewie: ^1.4.0
   keyboard_detection: ^0.8.1
   package_info_plus: ^9.0.0
-  slide_up_panel: ^1.1.0
   pdfrx:
   speech_to_text: ^7.3.0
 

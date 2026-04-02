@@ -101,4 +101,47 @@ class DaakRepo extends DaakInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<DaakModel?> fetchDaakFwdShow(
+      {required int? daakId, required int? desId}) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (daakId == null) {
+        throw Exception("Daak ID is required to fetch daak details");
+      }
+
+      Map<String, dynamic> data = await dioClient.get(
+        url: daakFwdShowUrl(daakId!, desId),
+        options: await options(authRequired: true),
+      );
+      return DaakModel.fromDetails(data['data']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DaakModel?> fetchDaakInboxShow(
+      {required int? daakId, required int? desId}) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+
+      if (daakId == null) {
+        throw Exception("Daak ID is required to fetch daak details");
+      }
+
+      Map<String, dynamic> data = await dioClient.get(
+        url: daakInboxShowUrl(daakId, desId),
+        options: await options(authRequired: true),
+      );
+      return DaakModel.fromDetails(data['data']);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -1,41 +1,29 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 class DaakCorrespondenceCard extends StatefulWidget {
-  final String status; // "Forwarded" or "Received"
-  final Color statusColor;
-  final String dateTime;
-  final String sender;
-  final String department;
-  final String message;
-  final bool isBold;
+  final DaakMovementModel? movement;
 
-  const DaakCorrespondenceCard({
-    super.key,
-    required this.status,
-    required this.statusColor,
-    required this.dateTime,
-    required this.sender,
-    required this.department,
-    required this.message,
-    this.isBold = false,
-  });
+  const DaakCorrespondenceCard({super.key, required this.movement});
   @override
   State<DaakCorrespondenceCard> createState() => _DaakCorrespondenceCardState();
 }
 
 class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   void _toggle() => setState(() => _isExpanded = !_isExpanded);
 
   @override
   Widget build(BuildContext context) {
+    if (widget.movement == null) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: widget.statusColor.withValues(alpha: 0.5),
+        color: widget.movement?.actionType?.color.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Container(
@@ -70,11 +58,11 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.titleSmall(
-                widget.sender,
+                widget.movement?.fromUser ?? 'Unknown',
                 fontWeight: FontWeight.w600,
               ),
               Text(
-                widget.message,
+                widget.movement?.remarks ?? '---',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -106,20 +94,13 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppText.titleSmall(
-                    widget.sender,
+                    widget.movement?.fromUser ?? 'Unknown',
                     fontWeight: FontWeight.w600,
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.apartment,
-                          size: 16, color: Colors.black45),
-                      const SizedBox(width: 4),
-                      AppText.labelLarge(
-                        "${widget.department} Department",
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ],
+                  AppText.labelLarge(
+                    "To: ${widget.movement?.toUser ?? 'Unknown'}",
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
                 ],
               ),
@@ -127,25 +108,26 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: widget.statusColor.withValues(alpha: 0.15),
+                color:
+                    widget.movement?.statusAfter?.color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: AppText.labelMedium(
-                widget.status,
-                color: widget.statusColor,
+                widget.movement?.statusAfter?.label ?? 'Unknown',
+                color: widget.movement?.statusAfter?.color,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: _toggle,
-              child: Icon(Icons.expand_less, color: Colors.black54),
+              child: const Icon(Icons.expand_less, color: Colors.black54),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
-          widget.message,
+          widget.movement?.remarks ?? '---',
           style: const TextStyle(
             fontStyle: FontStyle.italic,
             fontWeight: FontWeight.normal,
@@ -155,15 +137,17 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Text(
-              widget.dateTime,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
-              ),
+            AppText.labelSmall(
+              widget.movement?.actionType?.value.toUpperCase() ?? 'Unknown',
+              color: widget.movement?.actionType?.color,
+              fontWeight: FontWeight.w500,
             ),
             const Spacer(),
+            AppText.labelMedium(
+              DateTimeHelper.dateFormatddMMYYWithTime(widget.movement?.actedAt),
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
           ],
         ),
       ],

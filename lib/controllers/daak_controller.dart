@@ -148,4 +148,46 @@ class DaakController extends BaseControllerState<DaakState> {
       return [];
     }
   }
+
+  Future<DaakModel?> fetchDaakDetails(
+      {required int? daakId, required DaakStatus status}) async {
+    try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      DaakModel? daak;
+      if (status == DaakStatus.inProgress1 ||
+          status == DaakStatus.inProgress2) {
+        daak = await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
+      } else if (status == DaakStatus.forwarded) {
+        daak = await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);
+      }
+      return daak;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future<DaakModel?> fetchDaakInboxShow(
+      {required int daakId, required int desId}) async {
+    try {
+      DaakModel? daak =
+          await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
+      return daak;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future<DaakModel?> fetchDaakFwdShow(
+      {required int daakId, required int desId}) async {
+    try {
+      DaakModel? daak =
+          await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);
+      return daak;
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
 }
