@@ -43,34 +43,51 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   DaakModel? daakDetails;
 
   openPDFSheet() {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return SizedBox(
-          height: MediaQuery.of(ctx).size.height * 0.86,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            child: PdfViewer(
-              url: daakDetails?.incomingScanUrl,
-              title: "Daak PDF title",
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: AppTextLinkButton(
-                    onPressed: () {
-                      RouteHelper.pop();
-                    },
-                    text: "Process",
-                  ),
-                )
-              ],
+      barrierDismissible: true,
+      barrierLabel: "PDF Sheet",
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.86,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              child: PdfViewer(
+                url: daakDetails?.incomingScanUrl,
+                title: "Daak PDF title",
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: AppTextLinkButton(
+                      onPressed: () {
+                        RouteHelper.pop();
+                      },
+                      text: "Process",
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
+        );
+      },
+      transitionBuilder: (ctx, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, -1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          )),
+          child: child,
         );
       },
     );
@@ -103,230 +120,230 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.appBarColor,
         title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(72),
+          child: Container(
+            color: AppColors.appBarColor,
+            // height: 120,
+            child: collapsedPDFViewer(),
+          ),
+        ),
       ),
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: fetchDetails,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText.headlineSmall(
-                    'Next Actions',
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.secondaryDark,
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    margin: const EdgeInsets.all(0),
-                    elevation: 3,
-                    shadowColor: AppColors.secondaryDark.withValues(alpha: .1),
-                    color: AppColors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
-                      child: Form(
-                        key: formKey,
-                        child: Column(
+      body: RefreshIndicator(
+        onRefresh: fetchDetails,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //const SizedBox(height: 108),
+              AppText.headlineSmall(
+                'Next Actions',
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryDark,
+              ),
+              const SizedBox(height: 8),
+              Card(
+                margin: const EdgeInsets.all(0),
+                elevation: 3,
+                shadowColor: AppColors.secondaryDark.withValues(alpha: .1),
+                color: AppColors.white,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Expanded(
-                                //   child:
-                                //       AppSolidButton(onPressed: () {}, text: "Forward"),
-                                // ),
-                                // const SizedBox(width: 8),
-                                Expanded(
-                                  child: AppOutlineButton(
-                                    onPressed: () {},
-                                    text: "Mark NFA",
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: AppOutlineButton(
-                                      onPressed: () {}, text: "Create File"),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            AppText.titleMedium(
-                              'Forward Letter',
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 4),
-                            AppDropDownField<String>(
-                              items: const [
-                                "Section A",
-                                "Section B",
-                                "Section C",
-                                "Section D",
-                              ],
-                              onChanged: (item) async {},
-                              labelText: "Forward this file to",
-                              hintText: "Forward To",
-
-                              //buttonHeight: forwardTo == null ? null : 57,
-                              itemBuilder: (item) {
-                                return AppText.titleMedium(
-                                  item ?? '',
-                                  fontWeight: FontWeight.w600,
-                                );
-                                // return Column(
-                                //   crossAxisAlignment: CrossAxisAlignment.start,
-                                //   children: [
-                                //     AppText.titleMedium(item?.userTitle ?? ''),
-
-                                //     Container(
-                                //       padding: const EdgeInsets.symmetric(
-                                //           horizontal: 6, vertical: 1),
-                                //       decoration: BoxDecoration(
-                                //         color: Colors.yellow[400],
-                                //         borderRadius: BorderRadius.circular(8),
-                                //         border: Border.all(
-                                //           color: Colors.yellow[600]!.withOpacity(0.3),
-                                //           width: 0.5,
-                                //         ),
-                                //       ),
-                                //       child: AppText.labelSmall(
-                                //         item?.designationTitle ?? '',
-                                //         color: Colors.black,
-                                //         fontWeight: FontWeight.w500,
-                                //         fontSize: 10, // Smaller font
-                                //       ),
-                                //     )
-                                //   ],
-                                // );
-                              },
-
-                              validator: (item) {
-                                // if (forwardTo == null || item == null) {
-                                //   return 'Please select a value';
-                                // }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            AppTextField(
-                              controller: remarksController,
-                              labelText: "Remarks",
-                              hintText: "Optional forwarding remarks",
-                              maxLines: 3,
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  remarksController.clear();
-                                },
-                                icon: const Icon(
-                                  Icons.mic,
-                                  color: AppColors.secondary,
-                                ),
+                            // Expanded(
+                            //   child:
+                            //       AppSolidButton(onPressed: () {}, text: "Forward"),
+                            // ),
+                            // const SizedBox(width: 8),
+                            Expanded(
+                              child: AppOutlineButton(
+                                onPressed: () {},
+                                text: "Mark NFA",
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            AppText.labelLarge(
-                              "Attachment",
-                              color: Colors.grey[800],
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AppOutlineButton(
+                                  onPressed: () {}, text: "Create File"),
                             ),
-                            const SizedBox(height: 4),
-                            InkWell(
-                              onTap: () async {
-                                attachment =
-                                    await FilePickerService().pickPdf();
-                                setState(() {});
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.appBarColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.attach_file_outlined,
-                                      color: AppColors.primaryDark,
-                                      size: 28,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                        child: AppText.titleSmall(
-                                      attachment != null
-                                          ? attachment!.name
-                                          : 'Select file to attach',
-                                    ))
-                                  ],
-                                ),
-                              ),
-                            ),
-                            AppText.labelSmall(
-                              "pdf, docx, jpg, jpeg, png. Max size: 10MB",
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(height: 6),
-                            AppSolidButton(
-                              onPressed: () {},
-                              text: "Forward",
-                              width: double.infinity,
-                              backgroundColor: AppColors.primaryDark,
-                            ),
-                            const SizedBox(height: 4),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        AppText.titleMedium(
+                          'Forward Letter',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(height: 4),
+                        AppDropDownField<String>(
+                          items: const [
+                            "Section A",
+                            "Section B",
+                            "Section C",
+                            "Section D",
+                          ],
+                          onChanged: (item) async {},
+                          labelText: "Forward this file to",
+                          hintText: "Forward To",
+
+                          //buttonHeight: forwardTo == null ? null : 57,
+                          itemBuilder: (item) {
+                            return AppText.titleMedium(
+                              item ?? '',
+                              fontWeight: FontWeight.w600,
+                            );
+                            // return Column(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     AppText.titleMedium(item?.userTitle ?? ''),
+
+                            //     Container(
+                            //       padding: const EdgeInsets.symmetric(
+                            //           horizontal: 6, vertical: 1),
+                            //       decoration: BoxDecoration(
+                            //         color: Colors.yellow[400],
+                            //         borderRadius: BorderRadius.circular(8),
+                            //         border: Border.all(
+                            //           color: Colors.yellow[600]!.withOpacity(0.3),
+                            //           width: 0.5,
+                            //         ),
+                            //       ),
+                            //       child: AppText.labelSmall(
+                            //         item?.designationTitle ?? '',
+                            //         color: Colors.black,
+                            //         fontWeight: FontWeight.w500,
+                            //         fontSize: 10, // Smaller font
+                            //       ),
+                            //     )
+                            //   ],
+                            // );
+                          },
+
+                          validator: (item) {
+                            // if (forwardTo == null || item == null) {
+                            //   return 'Please select a value';
+                            // }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        AppTextField(
+                          controller: remarksController,
+                          labelText: "Remarks",
+                          hintText: "Optional forwarding remarks",
+                          maxLines: 3,
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              remarksController.clear();
+                            },
+                            icon: const Icon(
+                              Icons.mic,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText.labelLarge(
+                          "Attachment",
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            attachment = await FilePickerService().pickPdf();
+                            setState(() {});
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.appBarColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.attach_file_outlined,
+                                  color: AppColors.primaryDark,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                    child: AppText.titleSmall(
+                                  attachment != null
+                                      ? attachment!.name
+                                      : 'Select file to attach',
+                                ))
+                              ],
+                            ),
+                          ),
+                        ),
+                        AppText.labelSmall(
+                          "pdf, docx, jpg, jpeg, png. Max size: 10MB",
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 6),
+                        AppSolidButton(
+                          onPressed: () {},
+                          text: "Forward",
+                          width: double.infinity,
+                          backgroundColor: AppColors.primaryDark,
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  AppText.headlineSmall(
-                    'Previous Correspondences',
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.secondaryDark,
-                  ),
-                  const SizedBox(height: 4),
-                  ...List.generate(
-                    daakDetails?.movements?.length ?? 0,
-                    (index) => DaakCorrespondenceCard(
-                      movement: daakDetails?.movements?[index],
-                    ),
-                  ),
-                  const SizedBox(height: 116),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              AppText.headlineSmall(
+                'Previous Correspondences',
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryDark,
+              ),
+              const SizedBox(height: 4),
+              ...List.generate(
+                daakDetails?.movements?.length ?? 0,
+                (index) => DaakCorrespondenceCard(
+                  movement: daakDetails?.movements?[index],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              color: AppColors.appBarColor,
-              height: 120,
-              child: collapsedPDFViewer(),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget collapsedPDFViewer() {
     return Container(
-      margin: const EdgeInsets.only(top: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.appBarColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.secondaryDark.withValues(alpha: .2),
-            blurRadius: 8,
-            offset: const Offset(0, -2.5),
+            blurRadius: 2,
+            offset: const Offset(0, 2.5),
           ),
         ],
       ),
