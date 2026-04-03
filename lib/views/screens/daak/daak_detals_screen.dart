@@ -244,6 +244,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           color: Colors.black87,
                         ),
                         const SizedBox(height: 4),
+
                         SearchDropDownField<ChatParticipantModel>(
                           suggestionsCallback: (pattern) {
                             return usersForChat
@@ -254,17 +255,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           },
                           onSelected: (item) {
                             forwardTo = item;
-                            if ((item.userTitle ?? '').isNotEmpty &&
-                                (item.designation ?? '').isNotEmpty) {
-                              forwardToController.text =
-                                  "${item.userTitle} (${item.designation})";
-                            } else if ((item.userTitle ?? '').isNotEmpty) {
-                              forwardToController.text = item.userTitle!;
-                            } else if ((item.designation ?? '').isNotEmpty) {
-                              forwardToController.text = item.designation!;
-                            } else {
-                              forwardToController.text = '';
-                            }
+                            forwardToController.text = item.userTitle ?? '';
                             setState(() {});
                           },
                           labelText: "Forward this file to",
@@ -307,8 +298,43 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           },
                           value: forwardTo,
                           controller: forwardToController,
-                          suffixIcon: null,
+                          suffixIcon: (forwardTo != null &&
+                                  (forwardTo!.designation ?? '').isNotEmpty)
+                              ? Container(
+                                  width: 120,
+                                  padding:
+                                      const EdgeInsets.only(left: 8, right: 8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: Colors.yellow[400],
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: Colors.yellow[600]!
+                                                .withOpacity(0.3),
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: AppText.labelSmall(
+                                          forwardTo!.designation ?? '',
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : null,
                         ),
+
                         const SizedBox(height: 8),
                         AppTextField(
                           controller: remarksController,
