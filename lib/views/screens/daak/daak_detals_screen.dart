@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
+import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -124,7 +125,11 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
         daakDetails = widget.daakDetailsInfo.daak;
       });
       fetchDetails();
-      if (widget.daakDetailsInfo.openPDF == true) {
+      if (widget.daakDetailsInfo.openPDF == true &&
+          daakDetails?.incomingScanUrl != null &&
+          daakDetails?.status != DaakStatus.disposedOff &&
+          daakDetails?.status != DaakStatus.nfa &&
+          daakDetails?.status != DaakStatus.forwarded) {
         openPDFSheet();
       }
     });
@@ -177,40 +182,40 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: DaakAction.values.map((action) {
-                            final isSelected = selectedAction == action;
-                            return GestureDetector(
-                              onTap: () =>
-                                  setState(() => selectedAction = action),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.primaryDark
-                                      : AppColors.appBarColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.primaryDark
-                                        : Colors.grey.shade300,
-                                  ),
-                                ),
-                                child: AppText.bodySmall(
-                                  action.label,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                        //const SizedBox(height: 4),
+                        // Wrap(
+                        //   spacing: 8,
+                        //   runSpacing: 8,
+                        //   children: DaakAction.values.map((action) {
+                        //     final isSelected = selectedAction == action;
+                        //     return GestureDetector(
+                        //       onTap: () =>
+                        //           setState(() => selectedAction = action),
+                        //       child: Container(
+                        //         padding: const EdgeInsets.symmetric(
+                        //             horizontal: 12, vertical: 8),
+                        //         decoration: BoxDecoration(
+                        //           color: isSelected
+                        //               ? AppColors.primaryDark
+                        //               : AppColors.appBarColor,
+                        //           borderRadius: BorderRadius.circular(8),
+                        //           border: Border.all(
+                        //             color: isSelected
+                        //                 ? AppColors.primaryDark
+                        //                 : Colors.grey.shade300,
+                        //           ),
+                        //         ),
+                        //         child: AppText.bodySmall(
+                        //           action.label,
+                        //           color: isSelected
+                        //               ? Colors.white
+                        //               : Colors.black87,
+                        //           fontWeight: FontWeight.w500,
+                        //         ),
+                        //       ),
+                        //     );
+                        //   }).toList(),
+                        // ),
                         const SizedBox(height: 6),
                         AppText.titleMedium(
                           'Forward Letter',
@@ -354,15 +359,32 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                 color: AppColors.secondaryDark,
               ),
               const SizedBox(height: 4),
-              Container(
-                height: 300,
-                clipBehavior: Clip.hardEdge,
-                decoration: const BoxDecoration(),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
                 child: ListView.builder(
                   padding: EdgeInsets.zero,
+                  shrinkWrap: true,
                   itemCount: daakDetails?.movements?.length ?? 0,
                   itemBuilder: (context, index) => DaakCorrespondenceCard(
                     movement: daakDetails?.movements?[index],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppText.headlineSmall(
+                'Attachments',
+                fontWeight: FontWeight.w600,
+                color: AppColors.secondaryDark,
+              ),
+              const SizedBox(height: 4),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: daakDetails?.attachments?.length ?? 0,
+                  itemBuilder: (context, index) => DaakAttachmentCard(
+                    attachment: daakDetails?.attachments?[index],
                   ),
                 ),
               ),

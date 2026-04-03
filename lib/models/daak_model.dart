@@ -365,6 +365,22 @@ class DaakAttachmentModel {
     );
   }
 
+  String? get fileSizeText {
+    if (fileSize == null) return null;
+    const kb = 1024;
+    const mb = kb * 1024;
+    const gb = mb * 1024;
+    if (fileSize! >= gb) {
+      return '${(fileSize! / gb).toStringAsFixed(2)} GB';
+    } else if (fileSize! >= mb) {
+      return '${(fileSize! / mb).toStringAsFixed(2)} MB';
+    } else if (fileSize! >= kb) {
+      return '${(fileSize! / kb).toStringAsFixed(1)} KB';
+    } else {
+      return '$fileSize B';
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

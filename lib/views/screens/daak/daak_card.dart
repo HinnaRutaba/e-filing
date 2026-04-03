@@ -26,7 +26,7 @@ class DaakCard extends StatelessWidget {
                 Routes.daakDetails(daak.id),
                 extra: DaakDetailsInfo(
                   daak: daak,
-                  openPDF: false,
+                  openPDF: true,
                   status: daak.status ?? DaakStatus.inProgress1,
                 ),
               );
