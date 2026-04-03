@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
@@ -11,8 +12,9 @@ import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
-import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -53,11 +55,13 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
+  List<ChatParticipantModel> usersForChat = [];
   String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
 
-  DepartmentUser? forwardTo;
+  ChatParticipantModel? forwardTo;
+  final TextEditingController forwardToController = TextEditingController();
   DaakAction selectedAction = DaakAction.forward;
 
   openPDFSheet() {
@@ -112,6 +116,14 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   }
 
   Future<void> fetchDetails() async {
+    int? desgId = ref.read(authController).currentDesignation?.userDesgId;
+    List<ChatParticipantModel> users = await ref.read(chatRepo).getUsersForChat(
+          desgId,
+        );
+    users.removeWhere((element) => element.userDesignationId == desgId);
+    setState(() {
+      usersForChat = users;
+    });
     DaakModel? model = await ref.read(daakController.notifier).fetchDaakDetails(
         daakId: widget.daakId, status: widget.daakDetailsInfo.status);
     setState(() {
@@ -232,55 +244,70 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           color: Colors.black87,
                         ),
                         const SizedBox(height: 4),
-                        AppDropDownField<DepartmentUser>(
-                          items: ref
-                                  .read(daakController)
-                                  .daakMeta
-                                  ?.departmentUsers ??
-                              [],
-                          onChanged: (item) async {
+                        SearchDropDownField<ChatParticipantModel>(
+                          suggestionsCallback: (pattern) {
+                            return usersForChat
+                                .where((user) => (user.userTitle ?? '')
+                                    .toLowerCase()
+                                    .contains(pattern.toLowerCase()))
+                                .toList();
+                          },
+                          onSelected: (item) {
                             forwardTo = item;
+                            if ((item.userTitle ?? '').isNotEmpty &&
+                                (item.designation ?? '').isNotEmpty) {
+                              forwardToController.text =
+                                  "${item.userTitle} (${item.designation})";
+                            } else if ((item.userTitle ?? '').isNotEmpty) {
+                              forwardToController.text = item.userTitle!;
+                            } else if ((item.designation ?? '').isNotEmpty) {
+                              forwardToController.text = item.designation!;
+                            } else {
+                              forwardToController.text = '';
+                            }
                             setState(() {});
                           },
                           labelText: "Forward this file to",
-                          buttonHeight: forwardTo == null ? null : 42,
                           hintText: "Forward To",
-
-                          //buttonHeight: forwardTo == null ? null : 57,
-                          itemBuilder: (item) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                AppText.titleMedium(item?.name ?? ''),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: Colors.yellow[400],
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color:
-                                          Colors.yellow[600]!.withOpacity(0.3),
-                                      width: 0.5,
+                          itemBuilder: (context, item) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppText.titleMedium(item.userTitle ?? ''),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.yellow[400],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.yellow[600]!
+                                            .withOpacity(0.3),
+                                        width: 0.5,
+                                      ),
                                     ),
-                                  ),
-                                  child: AppText.labelSmall(
-                                    item?.designation ?? '',
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 10, // Smaller font
-                                  ),
-                                )
-                              ],
+                                    child: AppText.labelSmall(
+                                      item.designation ?? '',
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 10,
+                                    ),
+                                  )
+                                ],
+                              ),
                             );
                           },
-
-                          validator: (item) {
-                            if (forwardTo == null || item == null) {
+                          validator: (value) {
+                            if (forwardTo == null) {
                               return 'Forward to user is required';
                             }
                             return null;
                           },
+                          value: forwardTo,
+                          controller: forwardToController,
+                          suffixIcon: null,
                         ),
                         const SizedBox(height: 8),
                         AppTextField(
@@ -388,13 +415,19 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                             if (formKey.currentState?.validate() != true) {
                               return;
                             }
-                            // await ref.read(daakController.notifier).forwardDaak(
-                            //       daakId: widget.daakId,
-                            //       fwdToDesId: forwardTo?.,
-                            //       remarks: remarksController.text.trim().isEmpty
-                            //           ? null
-                            //           : remarksController.text.trim(),
-                            //     );
+                            if (forwardTo == null) {
+                              Toast.error(
+                                  message: "Forward to user is required");
+                              return;
+                            }
+                            await ref.read(daakController.notifier).forwardDaak(
+                                  daakId: widget.daakId,
+                                  fwdToDesId: forwardTo?.userDesignationId,
+                                  remarks: remarksController.text.trim().isEmpty
+                                      ? null
+                                      : remarksController.text.trim(),
+                                  supportingAttachment: attachment,
+                                );
                           },
                           text: "Forward",
                           width: double.infinity,

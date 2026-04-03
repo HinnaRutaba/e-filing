@@ -48,6 +48,8 @@ abstract class DaakInterface extends NetworkBase {
 
   String daakFwdUrl(int daakId) => '${baseUrl}daak/$daakId/forward';
 
+    String daakFwdSecretaryUrl(int daakId) => '${baseUrl}daak/$daakId/secretary-return';
+
   Future<DaakMeta> fetchDaakMeta(int? desId);
 
   Future<List<DaakModel>> fetchDaakInbox(
@@ -68,6 +70,14 @@ abstract class DaakInterface extends NetworkBase {
   Future<void> forwardDaak({
     required int daakId,
     required int fwdToDesId,
+    required int desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  });
+
+  Future<void> forwardDaakSecretary({
+    required int daakId,
+    required int returnToDesId,
     required int desId,
     String? remarks,
     XFile? supportingAttachment,

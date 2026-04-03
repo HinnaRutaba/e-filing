@@ -171,6 +171,58 @@ class DaakRepo extends DaakInterface {
         if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
       };
 
+      print("JSON_______${json}");
+
+      final FormData formData = FormData.fromMap(json);
+
+      if (supportingAttachment != null) {
+        formData.files.add(
+          MapEntry(
+            'supporting_attachments',
+            await MultipartFile.fromFile(
+              supportingAttachment.path,
+              filename: supportingAttachment.name,
+            ),
+          ),
+        );
+      }
+
+      await dioClient.post(
+        url: daakFwdUrl(daakId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> forwardDaakSecretary(
+      {required int? daakId,
+      required int? returnToDesId,
+      required int? desId,
+      String? remarks,
+      XFile? supportingAttachment}) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (daakId == null) {
+        throw Exception("Daak ID is required to fetch daak details");
+      }
+      if (returnToDesId == null) {
+        throw Exception(
+            "Return To Designation ID is required to fetch daak details");
+      }
+      final Map<String, dynamic> json = {
+        'userDesgID': desId,
+        'return_to_user_desg_id': returnToDesId,
+        if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
+      };
+
+      print("JSON_______${json}");
+
       final FormData formData = FormData.fromMap(json);
 
       if (supportingAttachment != null) {

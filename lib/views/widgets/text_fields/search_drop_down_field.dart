@@ -54,9 +54,11 @@ class SearchDropDownField<T> extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AppText.bodySmall(
+              AppText.labelLarge(
                 labelText,
-                color: enabled == false ? Colors.grey : Colors.black,
+                color: enabled ? Colors.grey[800] : Colors.grey,
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
               ),
               if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
             ],

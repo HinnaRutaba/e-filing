@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -195,9 +197,9 @@ class DaakController extends BaseControllerState<DaakState> {
     try {
       EasyLoading.show();
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
-      await repo.forwardDaak(
+      await repo.forwardDaakSecretary(
         daakId: daakId,
-        fwdToDesId: fwdToDesId,
+        returnToDesId: fwdToDesId,
         desId: desId,
         remarks: remarks,
         supportingAttachment: supportingAttachment,
@@ -205,7 +207,8 @@ class DaakController extends BaseControllerState<DaakState> {
       Toast.success(message: "Daak forwarded successfully");
       EasyLoading.dismiss();
       RouteHelper.pop(DaakViewFilter.forwarded);
-    } catch (e) {
+    } catch (e, s) {
+      log("ERRR_____${e}______$s");
       EasyLoading.dismiss();
       Toast.error(message: handleException(e));
     }
