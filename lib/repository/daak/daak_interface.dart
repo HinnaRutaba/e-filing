@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:image_picker/image_picker.dart';
 
 abstract class DaakInterface extends NetworkBase {
   String metaUrl(int desId) => '${baseUrl}daak/meta?userDesgID=$desId';
@@ -64,5 +65,11 @@ abstract class DaakInterface extends NetworkBase {
   Future<DaakModel?> fetchDaakFwdShow(
       {required int daakId, required int desId});
 
-      
+  Future<void> forwardDaak({
+    required int daakId,
+    required int fwdToDesId,
+    required int desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  });
 }

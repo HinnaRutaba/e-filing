@@ -212,7 +212,14 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                               : ListView.builder(
                                   itemCount: filteredDaak.length,
                                   itemBuilder: (context, index) {
-                                    return DaakCard(daak: filteredDaak[index]);
+                                    return DaakCard(
+                                      daak: filteredDaak[index],
+                                      onStatusChange: (status) {
+                                        ref
+                                            .read(daakController.notifier)
+                                            .setViewFilter(status);
+                                      },
+                                    );
                                   },
                                 ),
                         ),

@@ -53,6 +53,7 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
+  String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
 
@@ -138,7 +139,15 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   }
 
   @override
+  void dispose() {
+    ref.read(speechToTextController.notifier).stopListening();
+    remarksController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sttState = ref.watch(speechToTextController);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.appBarColor,
@@ -234,6 +243,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                             setState(() {});
                           },
                           labelText: "Forward this file to",
+                          buttonHeight: forwardTo == null ? null : 42,
                           hintText: "Forward To",
 
                           //buttonHeight: forwardTo == null ? null : 57,
@@ -267,7 +277,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
                           validator: (item) {
                             if (forwardTo == null || item == null) {
-                              return 'Please select a value';
+                              return 'Forward to user is required';
                             }
                             return null;
                           },
@@ -280,11 +290,41 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           maxLines: 3,
                           suffixIcon: IconButton(
                             onPressed: () {
-                              remarksController.clear();
+                              final notifier =
+                                  ref.read(speechToTextController.notifier);
+                              if (sttState.isListening) {
+                                notifier.stopListening();
+                              } else {
+                                _speechBaseText = remarksController.text.trim();
+                                notifier.startListening(
+                                  onWordsRecognized: (words) {
+                                    if (!mounted) return;
+                                    final prefix = _speechBaseText.isEmpty
+                                        ? ''
+                                        : '$_speechBaseText ';
+                                    remarksController.text = '$prefix$words';
+                                    remarksController.selection =
+                                        TextSelection.collapsed(
+                                      offset: remarksController.text.length,
+                                    );
+                                  },
+                                  onError: (message) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(message),
+                                        backgroundColor: Colors.red[700],
+                                      ),
+                                    );
+                                  },
+                                );
+                              }
                             },
-                            icon: const Icon(
-                              Icons.mic,
-                              color: AppColors.secondary,
+                            icon: Icon(
+                              sttState.isListening ? Icons.mic : Icons.mic_none,
+                              color: sttState.isListening
+                                  ? Colors.red
+                                  : AppColors.secondary,
                             ),
                           ),
                         ),
@@ -341,7 +381,21 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         ),
                         const SizedBox(height: 6),
                         AppSolidButton(
-                          onPressed: () {},
+                          onPressed: () async {
+                            ref
+                                .read(speechToTextController.notifier)
+                                .stopListening();
+                            if (formKey.currentState?.validate() != true) {
+                              return;
+                            }
+                            // await ref.read(daakController.notifier).forwardDaak(
+                            //       daakId: widget.daakId,
+                            //       fwdToDesId: forwardTo?.,
+                            //       remarks: remarksController.text.trim().isEmpty
+                            //           ? null
+                            //           : remarksController.text.trim(),
+                            //     );
+                          },
                           text: "Forward",
                           width: double.infinity,
                           backgroundColor: AppColors.primaryDark,

@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
@@ -11,8 +12,9 @@ import 'package:efiling_balochistan/models/daak_model.dart';
 
 class DaakCard extends StatelessWidget {
   final DaakModel daak;
+  final Function(DaakViewFilter)? onStatusChange;
 
-  const DaakCard({super.key, required this.daak});
+  const DaakCard({super.key, required this.daak, this.onStatusChange});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,11 @@ class DaakCard extends StatelessWidget {
                   openPDF: true,
                   status: daak.status ?? DaakStatus.inProgress1,
                 ),
-              );
+              ).then((value) {
+                if (value != null && value is DaakViewFilter) {
+                  onStatusChange?.call(value);
+                }
+              });
             },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),

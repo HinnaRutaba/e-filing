@@ -268,27 +268,23 @@ class FileRepo extends FilesInterface {
       required int designationId,
       required List<FlagAndAttachmentModel>? flags}) async {
     try {
-      try {
-        Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
-            jsonData = await FileContentModel.toSubmitJson(
-          fileId: fileId,
-          userId: userId,
-          content: content,
-          forwardTo: forwardTo,
-          choice: choice,
-          flags: flags,
-          designationId: designationId,
-        );
-        FormData formData = FormData.fromMap(jsonData.item1);
-        formData.files.addAll(jsonData.item2);
-        Map<String, dynamic> data = await dioClient.post(
-          url: submitActionUrl,
-          options: await options(),
-          formData: formData,
-        );
-      } catch (e) {
-        rethrow;
-      }
+      Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+          jsonData = await FileContentModel.toSubmitJson(
+        fileId: fileId,
+        userId: userId,
+        content: content,
+        forwardTo: forwardTo,
+        choice: choice,
+        flags: flags,
+        designationId: designationId,
+      );
+      FormData formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      Map<String, dynamic> data = await dioClient.post(
+        url: submitActionUrl,
+        options: await options(),
+        formData: formData,
+      );
     } catch (e) {
       rethrow;
     }

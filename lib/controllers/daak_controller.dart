@@ -1,9 +1,12 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image_picker/image_picker.dart';
 
 enum DaakViewFilter { inbox, nfa, forwarded }
 
@@ -180,6 +183,31 @@ class DaakController extends BaseControllerState<DaakState> {
     } catch (e) {
       Toast.error(message: handleException(e));
       return null;
+    }
+  }
+
+  Future<void> forwardDaak({
+    required int? daakId,
+    required int? fwdToDesId,
+    String? remarks,
+    XFile? supportingAttachment,
+  }) async {
+    try {
+      EasyLoading.show();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.forwardDaak(
+        daakId: daakId,
+        fwdToDesId: fwdToDesId,
+        desId: desId,
+        remarks: remarks,
+        supportingAttachment: supportingAttachment,
+      );
+      Toast.success(message: "Daak forwarded successfully");
+      EasyLoading.dismiss();
+      RouteHelper.pop(DaakViewFilter.forwarded);
+    } catch (e) {
+      EasyLoading.dismiss();
+      Toast.error(message: handleException(e));
     }
   }
 }
