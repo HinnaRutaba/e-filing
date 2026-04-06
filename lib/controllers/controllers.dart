@@ -40,7 +40,7 @@ final dashboardController =
   (ref) => DashboardController(DashboardModel(), ref),
 );
 
-final daakController = StateNotifierProvider.autoDispose<DaakController, DaakState>(
+final daakController = StateNotifierProvider<DaakController, DaakState>(
   (ref) => DaakController(DaakState(allDaak: []), ref),
 );
 

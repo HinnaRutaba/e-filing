@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 
@@ -14,9 +17,12 @@ class DashboardModel {
   final List<FileModel> pendingFiles;
   final List<FileModel> forwardedFiles;
 
+  final List<DaakModel> daakLetters;
+
   final bool loadingActionFiles;
   final bool loadingPendingFiles;
   final bool loadingForwardedFiles;
+  final bool loadingDaakLetters;
 
   DashboardModel({
     this.actionRequiredCount = 0,
@@ -30,6 +36,8 @@ class DashboardModel {
     this.loadingActionFiles = false,
     this.loadingPendingFiles = false,
     this.loadingForwardedFiles = false,
+    this.daakLetters = const [],
+    this.loadingDaakLetters = false,
   });
 
   DashboardModel copyWith({
@@ -41,9 +49,11 @@ class DashboardModel {
     List<FileModel>? actionRequiredFiles,
     List<FileModel>? pendingFiles,
     List<FileModel>? forwardedFiles,
+    List<DaakModel>? daakLetters,
     bool? loadingActionFiles,
     bool? loadingPendingFiles,
     bool? loadingForwardedFiles,
+    bool? loadingDaakLetters,
   }) {
     return DashboardModel(
       actionRequiredCount: actionRequiredCount ?? this.actionRequiredCount,
@@ -58,6 +68,8 @@ class DashboardModel {
       loadingPendingFiles: loadingPendingFiles ?? this.loadingPendingFiles,
       loadingForwardedFiles:
           loadingForwardedFiles ?? this.loadingForwardedFiles,
+      daakLetters: daakLetters ?? this.daakLetters,
+      loadingDaakLetters: loadingDaakLetters ?? this.loadingDaakLetters,
     );
   }
 }
@@ -144,6 +156,26 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     } catch (e) {
       state = state.copyWith(
         loadingForwardedFiles: false,
+      );
+    }
+  }
+
+  Future<void> fetchDaakLetters() async {
+    state = state.copyWith(loadingDaakLetters: true);
+
+    try {
+      final daakCtrl = ref.read(daakController.notifier);
+      daakCtrl.resetData();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      final List<DaakModel>? daak = await daakCtrl.fetchDaakInbox(desId: desId);
+
+      state = state.copyWith(
+        daakLetters: daak ?? [],
+        loadingDaakLetters: false,
+      );
+    } catch (e, s) {
+      state = state.copyWith(
+        loadingDaakLetters: false,
       );
     }
   }

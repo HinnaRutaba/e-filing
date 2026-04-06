@@ -54,6 +54,18 @@ class DaakState {
       isLoading: isLoading ?? this.isLoading,
     );
   }
+
+  resetData() {
+    return copyWith(
+      allDaak: [],
+      searchText: '',
+      filteredDaak: [],
+      daakMeta: null,
+      selectedStatus: null,
+      selectedFilter: DaakViewFilter.inbox,
+      isLoading: false,
+    );
+  }
 }
 
 class DaakController extends BaseControllerState<DaakState> {
@@ -64,7 +76,7 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
-    fetchDaakMeta(desId);
+    //fetchDaakMeta(desId);
     if (state.selectedFilter == DaakViewFilter.inbox) {
       await fetchDaakInbox(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.nfa) {
@@ -75,6 +87,10 @@ class DaakController extends BaseControllerState<DaakState> {
     if (isInitailLoad) {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  resetData() {
+    state = state.resetData();
   }
 
   Future<void> setViewFilter(DaakViewFilter filter) async {
@@ -115,7 +131,8 @@ class DaakController extends BaseControllerState<DaakState> {
           desId: desId, status: state.selectedStatus, query: state.searchText);
       state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
       return daakList;
-    } catch (e) {
+    } catch (e, s) {
+      log("ERRR________${e}______$s");
       Toast.error(message: handleException(e));
       return [];
     }

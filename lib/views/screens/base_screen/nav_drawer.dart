@@ -94,7 +94,7 @@ class NavDrawer extends ConsumerWidget {
         routeName: Routes.changePassword,
       ),
       DrawerMenu(
-        title: "Daak",
+        title: "Daak Letters",
         icon: Icons.mark_email_unread_outlined,
         routeName: Routes.daak,
       ),

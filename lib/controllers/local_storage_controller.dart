@@ -52,6 +52,15 @@ class LocalStorageController {
     return DesignationModel.fromJson(jsonDecode(desStr));
   }
 
+  Future<void> daakDialogShown() async {
+    await LocalStorage.save(LocalStorageKeys.daakDialogShown, true);
+  }
+
+  Future<bool> isDaakDialogShown() async {
+    return await LocalStorage.get(LocalStorageKeys.daakDialogShown) as bool? ??
+        false;
+  }
+
   Future<void> removeAll() async {
     return await LocalStorage.clear();
   }
@@ -62,4 +71,5 @@ class LocalStorageKeys {
   static const String userId = 'user_id';
   static const String token = 'token';
   static const String designation = 'designation';
+  static const String daakDialogShown = 'daak_dialog_shown';
 }

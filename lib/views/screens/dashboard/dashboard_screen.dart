@@ -2,12 +2,16 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/notification_service.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
+import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/loading_card.dart';
@@ -54,10 +58,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       setState(() {
         _isLoading = false;
       });
+
+      await _showDaakAchievementDialogIfNeeded();
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _showDaakAchievementDialogIfNeeded() async {
+    final localStorageCtrl = ref.read(localStorageController);
+    final isDaakShown = await localStorageCtrl.isDaakDialogShown();
+
+    if (!isDaakShown && mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AchievementDialog(
+          title: "Daak Letters has been added",
+          message:
+              "You can now receive and manage Daak letters directly in your inbox. Keep track of all incoming official correspondence in one place.",
+          icon: Icons.mail_outline,
+          iconColor: Colors.green,
+        ),
+      );
+      await localStorageCtrl.daakDialogShown();
     }
   }
 
@@ -67,10 +93,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         await ref.read(dashboardController.notifier).fetchPendingFiles();
         break;
       case 1:
-        await ref.read(dashboardController.notifier).fetchForwardedFiles();
+        await ref.read(dashboardController.notifier).fetchDaakLetters();
         break;
       case 2:
-        await ref.read(dashboardController.notifier).fetchActionRequiredFiles();
+        await ref.read(dashboardController.notifier).fetchForwardedFiles();
         break;
     }
   }
@@ -250,17 +276,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 2),
-                                  backgroundColor: AppColors.secondaryDark,
-                                  alignment: Alignment.topRight,
-                                  offset: const Offset(-54, 19),
+                                  backgroundColor: Colors.green,
+                                  alignment: Alignment.topLeft,
+                                  offset: const Offset(-2, -2),
                                   child: DashboardCard(
                                     cardColor:
                                         Colors.teal[100]!, // lighter card color
                                     iconColor: Colors.teal[800]!,
-                                    title: "Daak",
+                                    title: "Daak Letters",
                                     value: "",
                                     onTap: () {
-                                      RouteHelper.navigateTo(Routes.daak);
+                                      _tabController.animateTo(1);
                                     },
                                     loading: dashboardState.loading,
                                   ),
@@ -285,8 +311,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               labelStyle: const TextStyle(fontSize: 12),
                               tabs: const [
                                 Tab(text: 'Pending Files'),
+                                Tab(text: 'Daak Letters'),
                                 Tab(text: 'Processed Files'),
-                                Tab(text: 'Action Required'),
                               ],
                             ),
                           ),
@@ -297,26 +323,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 _buildFileList(
                                   files: dashboardState.pendingFiles,
                                   fileType: FileType.pending,
-                                  loading: dashboardState.loadingPendingFiles,
+                                  loading: dashboardState.loadingPendingFiles &&
+                                      dashboardState.pendingFiles.isEmpty,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
                                       .fetchPendingFiles(),
                                 ),
+                                _buildDaakList(
+                                  daakLetters: dashboardState.daakLetters,
+                                  loading: dashboardState.loadingDaakLetters &&
+                                      dashboardState.daakLetters.isEmpty,
+                                  onRefresh: () => ref
+                                      .read(dashboardController.notifier)
+                                      .fetchDaakLetters(),
+                                ),
                                 _buildFileList(
                                   files: dashboardState.forwardedFiles,
                                   fileType: FileType.forwarded,
-                                  loading: dashboardState.loadingForwardedFiles,
+                                  loading:
+                                      dashboardState.loadingForwardedFiles &&
+                                          dashboardState.forwardedFiles.isEmpty,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
                                       .fetchForwardedFiles(),
-                                ),
-                                _buildFileList(
-                                  files: dashboardState.actionRequiredFiles,
-                                  fileType: FileType.actionRequired,
-                                  loading: dashboardState.loadingActionFiles,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchActionRequiredFiles(),
                                 ),
                               ],
                             ),
@@ -369,6 +398,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           fileType: fileType,
           data: files[i],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDaakList({
+    required List<DaakModel> daakLetters,
+    required bool loading,
+    required Future<void> Function() onRefresh,
+  }) {
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (daakLetters.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const NotFound(),
+            const SizedBox(height: 16),
+            AppText.bodyMedium('No Daak letters found'),
+            const SizedBox(height: 16),
+            AppSolidButton(
+              onPressed: onRefresh,
+              text: "Reload",
+              width: 120,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      itemCount: daakLetters.length,
+      itemBuilder: (ctx, i) => DaakCard(
+        daak: daakLetters[i],
       ),
     );
   }

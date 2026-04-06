@@ -84,11 +84,11 @@ class DioClient {
           logger.d("-------URL---------");
           logger.d(error.requestOptions.uri.toString());
           logger.d("-------ERROR CODE---------");
-          logger.d(error.response?.statusCode?.toString());
+          logger.d(error.response?.statusCode ?? error.type.name);
           logger.d("-------ERROR RESP---------");
-          logger.d(error.response?.data);
+          logger.d(error.response?.data ?? "No response data");
           logger.d("-------ERROR---------");
-          logger.d(error);
+          logger.d(error.message ?? "Unknown error");
           if (error.response?.statusCode == 401) {
             SessionExpiredHandler.handleExpiration();
           }
