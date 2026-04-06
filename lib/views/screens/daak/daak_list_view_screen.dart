@@ -53,51 +53,55 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
       isdash: false,
       body: Column(
         children: [
-          Builder(builder: (context) {
-            Color segmentColor(DaakViewFilter filter) =>
-                controller.selectedFilter == filter
-                    ? Colors.white
-                    : Colors.black54;
-
-            return SegmentedButton<DaakViewFilter>(
-              style: SegmentedButton.styleFrom(
-                backgroundColor: AppColors.cardColorLight,
-                selectedForegroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: _FilterTile(
+                    label: 'Inbox',
+                    icon: Icons.inbox_rounded,
+                    selected: controller.selectedFilter == DaakViewFilter.inbox,
+                    onTap: () {
+                      ref
+                          .read(daakController.notifier)
+                          .setViewFilter(DaakViewFilter.inbox);
+                    },
+                  ),
                 ),
-              ),
-              segments: [
-                ButtonSegment(
-                  value: DaakViewFilter.inbox,
-                  label: AppText.titleSmall('Inbox',
-                      color: segmentColor(DaakViewFilter.inbox)),
-                  icon: Icon(Icons.inbox_rounded,
-                      color: segmentColor(DaakViewFilter.inbox)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _FilterTile(
+                    label: 'My NFA',
+                    icon: Icons.folder_open_rounded,
+                    selected: controller.selectedFilter == DaakViewFilter.nfa,
+                    onTap: () {
+                      ref
+                          .read(daakController.notifier)
+                          .setViewFilter(DaakViewFilter.nfa);
+                    },
+                  ),
                 ),
-                ButtonSegment(
-                  value: DaakViewFilter.nfa,
-                  label: AppText.titleSmall('My NFA',
-                      color: segmentColor(DaakViewFilter.nfa)),
-                  icon: Icon(Icons.folder_open_rounded,
-                      color: segmentColor(DaakViewFilter.nfa)),
-                ),
-                ButtonSegment(
-                  value: DaakViewFilter.forwarded,
-                  label: AppText.titleSmall('Forwarded',
-                      color: segmentColor(DaakViewFilter.forwarded)),
-                  icon: Icon(Icons.forward_to_inbox_rounded,
-                      color: segmentColor(DaakViewFilter.forwarded)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _FilterTile(
+                    label: 'Forwarded',
+                    icon: Icons.forward_to_inbox_rounded,
+                    selected:
+                        controller.selectedFilter == DaakViewFilter.forwarded,
+                    onTap: () {
+                      ref
+                          .read(daakController.notifier)
+                          .setViewFilter(DaakViewFilter.forwarded);
+                    },
+                  ),
                 ),
               ],
-              selected: {controller.selectedFilter},
-              onSelectionChanged: (selection) {
-                ref
-                    .read(daakController.notifier)
-                    .setViewFilter(selection.first);
-              },
-            );
-          }),
+            ),
+          ),
+          // Custom filter tile widget for selection
+
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -228,6 +232,64 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterTile({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.secondary : AppColors.cardColorLight,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? AppColors.secondary : Colors.grey[300]!,
+            width: 1.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.secondary.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: selected ? Colors.white : Colors.black54,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: AppText.bodySmall(
+                label,
+                color: selected ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

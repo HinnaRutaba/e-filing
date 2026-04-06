@@ -206,7 +206,7 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak forwarded successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.forwarded);
+      RouteHelper.pop(DaakViewFilter.inbox);
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();

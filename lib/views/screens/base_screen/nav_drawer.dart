@@ -98,6 +98,11 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.mark_email_unread_outlined,
         routeName: Routes.daak,
       ),
+      DrawerMenu(
+        title: "Summaries",
+        icon: Icons.summarize_outlined,
+        routeName: null,
+      ),
     ];
     return Padding(
       padding:
@@ -152,9 +157,17 @@ class NavDrawer extends ConsumerWidget {
                                     ? AppColors.primaryDark
                                     : AppColors.secondaryDark,
                               ),
+                          subtitle: e.routeName == null
+                              ? AppText.bodyMedium(
+                                  "Coming Soon",
+                                  color: Colors.black38,
+                                )
+                              : null,
                           onTap: e.onTap ??
                               () {
-                                RouteHelper.navigateTo(e.routeName);
+                                if (e.routeName != null) {
+                                  RouteHelper.navigateTo(e.routeName!);
+                                }
                                 // Navigate to Dashboard
                               },
                         ),
@@ -230,7 +243,7 @@ class DrawerMenu {
   final String title;
   final IconData icon;
   final VoidCallback? onTap;
-  final String routeName;
+  final String? routeName;
   final Widget? titleWidget;
 
   DrawerMenu({

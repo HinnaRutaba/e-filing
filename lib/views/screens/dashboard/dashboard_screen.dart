@@ -242,16 +242,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: DashboardCard(
-                                  cardColor: Colors.teal[500]!,
-                                  iconColor: Colors.teal[800]!,
-                                  title: "Processed Files",
-                                  value:
-                                      "${dashboardState.forwardedFiles.length}",
-                                  onTap: () {
-                                    RouteHelper.push(Routes.forwarded);
-                                  },
-                                  loading: dashboardState.loading,
+                                child: Badge(
+                                  label: AppText.labelSmall(
+                                    "New",
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  backgroundColor: AppColors.secondaryDark,
+                                  alignment: Alignment.topRight,
+                                  offset: const Offset(-54, 19),
+                                  child: DashboardCard(
+                                    cardColor:
+                                        Colors.teal[100]!, // lighter card color
+                                    iconColor: Colors.teal[800]!,
+                                    title: "Daak",
+                                    value: "",
+                                    onTap: () {
+                                      RouteHelper.navigateTo(Routes.daak);
+                                    },
+                                    loading: dashboardState.loading,
+                                  ),
                                 ),
                               ),
                             ],

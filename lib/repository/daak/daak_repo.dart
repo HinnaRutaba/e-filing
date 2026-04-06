@@ -238,7 +238,7 @@ class DaakRepo extends DaakInterface {
       }
 
       await dioClient.post(
-        url: daakFwdUrl(daakId),
+        url: daakFwdSecretaryUrl(daakId),
         options: await options(authRequired: true),
         formData: formData,
       );
