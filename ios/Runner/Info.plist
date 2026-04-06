@@ -46,14 +46,14 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-    <string>E-Filing need your camera to upload photos.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>E-Filing needs your photo library to upload photos.</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>E-Filing needs face id to authenticate</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>E-Filing needs to record audio for voice messages</string>
+	<string>E-Filing need your camera to upload photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>E-Filing needs your photo library to upload photos.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>E-Filing needs face id to authenticate</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>E-Filing needs to record audio for voice messages</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-    <string>E-Filing needs to use speech recognition for voice commands</string>
+	<string>E-Filing needs to use speech recognition for voice commands</string>
 </dict>
 </plist>

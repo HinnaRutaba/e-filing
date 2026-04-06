@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.lrm.efiling_balochistan"
     compileSdk = 36
-    ndkVersion = "29.0.14206865"
+    ndkVersion = "27.0.12077973"
     
     // Add CMake version to fix native build issues
     externalNativeBuild {
@@ -68,7 +68,7 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             ndk {
-                debugSymbolLevel 'NONE'
+                debugSymbolLevel 'symbol_table'
             }
         }
         
