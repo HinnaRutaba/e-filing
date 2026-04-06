@@ -7,13 +7,13 @@ import 'package:openai_dart/openai_dart.dart';
 
 enum ChatRole { user, assistant }
 
-class ChatMessage {
+class AIMessage {
   final ChatRole role;
   final String content;
   final bool isError;
   final bool toShow;
 
-  ChatMessage({
+  AIMessage({
     required this.role,
     required this.content,
     this.isError = false,
@@ -30,14 +30,15 @@ class AIAgent {
 
   AIAgent._internal();
 
-  final client = OpenAIClient(apiKey: Keys.openAIKey);
+  final OpenAIClient client = OpenAIClient.withApiKey(Keys.openAIKey);
+
   static const aiModel = 'gpt-4o-mini';
   static const responseKey = 'Suggested Response: ';
 
-  final List<ChatMessage> _messageHistory = [];
-  final _messageController = StreamController<List<ChatMessage>>.broadcast();
+  final List<AIMessage> _messageHistory = [];
+  final _messageController = StreamController<List<AIMessage>>.broadcast();
 
-  List<ChatMessage> get messageHistory => _messageHistory;
+  List<AIMessage> get messageHistory => _messageHistory;
   static const String _reportFormat = '''Subject: {{subject}}
 
 {{program_code}}
@@ -94,7 +95,7 @@ Submitted for approval and further directions please.
   - Must write output in HTML with using only HTML tags — do not wrap the response in backticks.
   - Use official, professional English''';
 
-  Stream<List<ChatMessage>> get messagesStream => _messageController.stream;
+  Stream<List<AIMessage>> get messagesStream => _messageController.stream;
 
   /// Internal: notify listeners of updated messages
   void _notifyListeners() {
@@ -105,7 +106,7 @@ Submitted for approval and further directions please.
   void _addMessage(ChatRole role, String content,
       {bool error = false, bool toShow = true}) {
     _messageHistory.add(
-      ChatMessage(
+      AIMessage(
         role: role,
         content: content,
         isError: error,
@@ -122,24 +123,21 @@ Submitted for approval and further directions please.
 
       _addMessage(ChatRole.assistant, "Reading file...");
 
-      final res = await client.createChatCompletion(
-        request: CreateChatCompletionRequest(
-          model: const ChatCompletionModel.modelId(aiModel),
+      final res = await client.chat.completions.create(
+        ChatCompletionCreateRequest(
+          model: aiModel,
           messages: [
-            ChatCompletionMessage.system(content: reportContext(fileStr)),
+            ChatMessage.system(reportContext(fileStr)),
             for (final m in _messageHistory)
               m.role == ChatRole.user
-                  ? ChatCompletionMessage.user(
-                      content:
-                          ChatCompletionUserMessageContent.string(m.content),
-                    )
-                  : ChatCompletionMessage.assistant(content: m.content),
+                  ? ChatMessage.user(m.content)
+                  : ChatMessage.assistant(content: m.content),
           ],
           temperature: 0,
         ),
       );
 
-      final aiResponse = res.choices.first.message.content ?? '';
+      final aiResponse = res.text ?? '';
       log(aiResponse);
       _messageHistory.removeWhere((m) =>
           m.role == ChatRole.assistant && m.content == "Reading file...");
@@ -194,25 +192,22 @@ Submitted for approval and further directions please.
       _addMessage(ChatRole.assistant, "Reading file...", error: true);
       yield "Reading file...";
 
-      final stream = client.createChatCompletionStream(
-        request: CreateChatCompletionRequest(
-          model: const ChatCompletionModel.modelId(aiModel),
+      final stream = client.chat.completions.createStream(
+        ChatCompletionCreateRequest(
+          model: aiModel,
           messages: [
-            ChatCompletionMessage.system(content: systemMessage),
+            ChatMessage.system(systemMessage),
             for (final m in _messageHistory)
               m.role == ChatRole.user
-                  ? ChatCompletionMessage.user(
-                      content:
-                          ChatCompletionUserMessageContent.string(m.content),
-                    )
-                  : ChatCompletionMessage.assistant(content: m.content),
+                  ? ChatMessage.user(m.content)
+                  : ChatMessage.assistant(content: m.content),
           ],
         ),
       );
 
       final buffer = StringBuffer();
-      await for (final res in stream) {
-        final chunk = res.choices.first.delta.content ?? '';
+      await for (final event in stream) {
+        final chunk = event.textDelta ?? '';
         if (chunk.isNotEmpty) {
           buffer.write(chunk);
           yield buffer.toString(); // Emit partial content

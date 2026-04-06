@@ -38,10 +38,10 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
   final Uuid _uuid = const Uuid();
 
   final AIAgent _aiAgent = AIAgent();
-  late final Stream<List<ChatMessage>> _aiStream;
+  late final Stream<List<AIMessage>> _aiStream;
   bool loading = false;
 
-  types.TextMessage parseTextMessage(ChatMessage msg) {
+  types.TextMessage parseTextMessage(AIMessage msg) {
     return types.TextMessage(
       author: msg.role == ChatRole.user ? _currentUser : _chatPartner,
       createdAt: DateTime.now().millisecondsSinceEpoch,
