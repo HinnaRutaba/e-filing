@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,11 +101,8 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
               ],
             ),
           ),
-          // Custom filter tile widget for selection
-
-          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Row(
               children: [
                 Expanded(
@@ -212,9 +210,27 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                             ref.read(daakController.notifier).loadData();
                           },
                           child: filteredDaak.isEmpty
-                              ? const Center(child: Text('No daak found.'))
+                              ? Center(
+                                  child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('No daak found.'),
+                                    AppTextLinkButton(
+                                      onPressed: () {
+                                        ref
+                                            .read(daakController.notifier)
+                                            .loadData();
+                                      },
+                                      text: 'Retry',
+                                      icon: Icons.refresh,
+                                    )
+                                  ],
+                                ))
                               : ListView.builder(
                                   itemCount: filteredDaak.length,
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
                                   itemBuilder: (context, index) {
                                     return DaakCard(
                                       daak: filteredDaak[index],

@@ -152,7 +152,8 @@ class DaakController extends BaseControllerState<DaakState> {
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       DaakModel? daak;
       if (status == DaakStatus.inProgress1 ||
-          status == DaakStatus.inProgress2) {
+          status == DaakStatus.inProgress2 ||
+          status == DaakStatus.inProgress3) {
         daak = await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
       } else if (status == DaakStatus.forwarded) {
         daak = await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);

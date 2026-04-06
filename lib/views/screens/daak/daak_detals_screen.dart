@@ -87,11 +87,11 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                 actions: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: AppTextLinkButton(
+                    child: OutlinedButton(
                       onPressed: () {
                         RouteHelper.pop();
                       },
-                      text: "Process",
+                      child: const Text("Process"),
                     ),
                   )
                 ],
@@ -419,11 +419,24 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
-                                    child: AppText.titleSmall(
-                                  attachment != null
-                                      ? attachment!.name
-                                      : 'Select file to attach',
-                                ))
+                                  child: AppText.titleSmall(
+                                    attachment != null
+                                        ? attachment!.name
+                                        : 'Select file to attach',
+                                  ),
+                                ),
+                                if (attachment != null)
+                                  GestureDetector(
+                                    onTap: () {
+                                      attachment = null;
+                                      setState(() {});
+                                    },
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 20,
+                                      color: Colors.red,
+                                    ),
+                                  )
                               ],
                             ),
                           ),
