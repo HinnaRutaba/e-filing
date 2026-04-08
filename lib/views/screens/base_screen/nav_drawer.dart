@@ -59,25 +59,37 @@ class NavDrawer extends ConsumerWidget {
         ),
       ),
       DrawerMenu(
-        title: "Create New File",
-        icon: Icons.add_link,
-        routeName: Routes.createFile,
-      ),
-      DrawerMenu(
         title: "Pending Files",
         icon: Icons.event_repeat_rounded,
         routeName: Routes.pendingFiles,
-      ),
-      DrawerMenu(
-        title: "My Files",
-        icon: Icons.receipt_long,
-        routeName: Routes.myFiles,
       ),
       DrawerMenu(
         title: "Action Required",
         icon: Icons.file_open,
         routeName: Routes.actionRequiredFiles,
       ),
+      DrawerMenu(
+        title: "Daak Letters",
+        icon: Icons.mark_email_unread_outlined,
+        routeName: Routes.daak,
+      ),
+      DrawerMenu(
+        title: "Summaries",
+        icon: Icons.summarize_outlined,
+        routeName: null,
+      ),
+      DrawerMenu(
+        title: "Create New File",
+        icon: Icons.add_link,
+        routeName: Routes.createFile,
+      ),
+
+      DrawerMenu(
+        title: "My Files",
+        icon: Icons.receipt_long,
+        routeName: Routes.myFiles,
+      ),
+
       DrawerMenu(
         title: "Archived",
         icon: Icons.archive_sharp,
@@ -93,20 +105,11 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.lock_reset,
         routeName: Routes.changePassword,
       ),
-      DrawerMenu(
-        title: "Daak Letters",
-        icon: Icons.mark_email_unread_outlined,
-        routeName: Routes.daak,
-      ),
-      DrawerMenu(
-        title: "Summaries",
-        icon: Icons.summarize_outlined,
-        routeName: null,
-      ),
     ];
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewPadding.bottom,
+      ),
       child: Drawer(
         width: 240,
         backgroundColor: AppColors.cardColor,
@@ -118,94 +121,99 @@ class NavDrawer extends ConsumerWidget {
             Image.asset(AssetsConstants.logo, width: 100, height: 100),
             const SizedBox(height: 16),
             Expanded(
+              child: Scrollbar(
+                thumbVisibility: true,
+                trackVisibility: true,
+                interactive: true,
                 child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  ...menus.map(
-                    (e) {
-                      bool isSelected =
-                          e.routeName == RouteHelper.currentLocation;
-                      return Container(
-                        margin: const EdgeInsets.only(right: 24),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.secondaryLight.withOpacity(0.2)
-                              : Colors.transparent,
-                          borderRadius: const BorderRadius.only(
-                            topRight: Radius.circular(12),
-                            bottomRight: Radius.circular(12),
-                          ),
-                        ),
-                        child: ListTile(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
+                  child: Column(
+                    children: [
+                      ...menus.map((e) {
+                        bool isSelected =
+                            e.routeName == RouteHelper.currentLocation;
+                        return Container(
+                          margin: const EdgeInsets.only(right: 24),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.secondaryLight.withOpacity(0.2)
+                                : Colors.transparent,
+                            borderRadius: const BorderRadius.only(
                               topRight: Radius.circular(12),
                               bottomRight: Radius.circular(12),
                             ),
                           ),
-                          leading: Icon(
-                            e.icon,
-                            color: isSelected
-                                ? AppColors.primaryDark
-                                : AppColors.secondaryDark,
-                          ),
-                          horizontalTitleGap: 12,
-                          title: e.titleWidget ??
-                              AppText.titleMedium(
-                                e.title,
-                                color: isSelected
-                                    ? AppColors.primaryDark
-                                    : AppColors.secondaryDark,
-                              ),
-                          subtitle: e.routeName == null
-                              ? AppText.bodyMedium(
-                                  "Coming Soon",
-                                  color: Colors.black38,
-                                )
-                              : null,
-                          onTap: e.onTap ??
-                              () {
-                                if (e.routeName != null) {
-                                  RouteHelper.navigateTo(e.routeName!);
-                                }
-                                // Navigate to Dashboard
-                              },
-                        ),
-                      );
-                    },
-                  ).toList(),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        AppText.titleSmall("Powered By"),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.asset(
-                                AssetsConstants.cmduLogo,
-                                height: 48,
+                          child: ListTile(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(12),
+                                bottomRight: Radius.circular(12),
                               ),
                             ),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(1.0),
-                              child: Image.asset(
-                                AssetsConstants.govtLogo,
-                                height: 40,
-                              ),
-                            )
+                            leading: Icon(
+                              e.icon,
+                              color: isSelected
+                                  ? AppColors.primaryDark
+                                  : AppColors.secondaryDark,
+                            ),
+                            horizontalTitleGap: 12,
+                            title:
+                                e.titleWidget ??
+                                AppText.titleMedium(
+                                  e.title,
+                                  color: isSelected
+                                      ? AppColors.primaryDark
+                                      : AppColors.secondaryDark,
+                                ),
+                            subtitle: e.routeName == null
+                                ? AppText.bodyMedium(
+                                    "Coming Soon",
+                                    color: Colors.black38,
+                                  )
+                                : null,
+                            onTap:
+                                e.onTap ??
+                                () {
+                                  if (e.routeName != null) {
+                                    RouteHelper.navigateTo(e.routeName!);
+                                  }
+                                  // Navigate to Dashboard
+                                },
+                          ),
+                        );
+                      }).toList(),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            AppText.titleSmall("Powered By"),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.asset(
+                                    AssetsConstants.cmduLogo,
+                                    height: 38,
+                                  ),
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(1.0),
+                                  child: Image.asset(
+                                    AssetsConstants.govtLogo,
+                                    height: 32,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
-                    ),
-                  )
-                ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            )),
-            const SizedBox(height: 16),
+            ),
             FutureBuilder(
               future: VersionSyncService().getAppVersionString(),
               builder: (context, snapshot) {
@@ -213,7 +221,7 @@ class NavDrawer extends ConsumerWidget {
                   return const SizedBox();
                 } else {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 48.0),
+                    padding: const EdgeInsets.only(top: 24.0),
                     child: AppText.bodySmall(
                       "Version: ${snapshot.data}",
                       textAlign: TextAlign.center,
@@ -223,7 +231,7 @@ class NavDrawer extends ConsumerWidget {
                 }
               },
             ),
-            const SizedBox(height: 16),
+
             AppTextLinkButton(
               onPressed: () {
                 ref.read(authController.notifier).logout();

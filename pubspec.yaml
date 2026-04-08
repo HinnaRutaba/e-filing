@@ -64,7 +64,7 @@ dependencies:
   flutter_chat_types: ^3.6.1
   flutter_sliding_panel: ^0.0.5
   openai_dart: 4.0.1
-  flutter_widget_from_html_core: 0.16.1
+  flutter_widget_from_html_core: 0.17.2
   syncfusion_flutter_pdfviewer: 33.1.46
   device_preview_plus: 2.5.0
   tuple: ^2.0.0
