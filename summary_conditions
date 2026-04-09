@@ -1,0 +1,1096 @@
+# Summary Module — Mobile Developer Documentation
+
+> **Audience:** Android (Java/Kotlin) developer building a mobile app that mirrors the web summary module behavior.
+> **Purpose:** Complete reference for screens, role-based UI conditions, DB rules, status flow, and API contract so the mobile UI behaves identically to the web app.
+
+---
+
+## 1. Domain Glossary
+
+| Term | Meaning |
+|------|---------|
+| **Summary** | An inter-departmental document drafted by a department, signed by its secretary, and forwarded to other department secretaries for review/action. |
+| **Section Draft** | A summary drafted by a junior officer (DEO / Section Officer) on behalf of the secretary. Goes to the secretary for review/sign before being forwarded externally. |
+| **External Summary** | A summary that has been signed and forwarded out of the originating department (or was created directly by a secretary). |
+| **Internal Forward / Share** | Within a department, the secretary can share an incoming summary with department members for their feedback. Each member can submit remarks back or forward to another member (chain forwarding). |
+| **Remarks Added (Drafted Remarks)** | A junior officer in a non-originating department drafts a rich response (with attachments/links) on behalf of their secretary. Treated like an internal section-draft cycle. |
+| **Returned to Section** | Secretary sends a draft (or drafted remarks) back to the originator/submitter for amendments. |
+| **Movement** | A row in `summary_movements` representing a single action (sent, signed, returned, remarks added, etc.). Used to render the printed summary document. |
+| **Local Correspondence** | Internal Daak letters or internal e-Files linked to the summary. Visible only to users in the linking department. **Never** travels to other departments. |
+| **Flag Attachment** | A supporting file uploaded under a categorical "flag" label (e.g. Flag A, Flag B). |
+
+---
+
+## 2. User Roles
+
+The system uses `users.role_id`:
+
+| role_id | Role | Capabilities |
+|---------|------|--------------|
+| **1** | Admin | Full access; treated as secretary in the secretary checks. |
+| **2** | DEO / Section Officer | Can create section drafts; can receive internal forwards and submit remarks. |
+| **3** | (other clerical) | Same as DEO for summary purposes. |
+| **4** | Acting Secretary (Admin sub-role) | Treated as a secretary candidate. |
+| **5** | Secretary | Owner of a department's summary inbox; can sign, forward, return, share. |
+
+**Acting-secretary detection:** A user is *also* treated as a secretary if their **designation title** contains the string `additional secretary` or `special secretary` (case-insensitive). See `isSecretaryOrActing()` in [SummaryController.php](app/Http/Controllers/SummaryController.php#L40).
+
+```php
+// Pseudocode for "is this user a secretary in this department?"
+isSecretary(user, deptId) =
+    user.role_id IN (1, 5) OR
+    designation_title CONTAINS "additional secretary" OR
+    designation_title CONTAINS "special secretary"
+    AND
+    user belongs to deptId
+```
+
+The mobile app should fetch and store the role_id and designation title for the logged-in user at login.
+
+---
+
+## 3. Permissions (server-side `can()` checks)
+
+| Permission Slug | Used By | Mobile Action Restriction |
+|-----------------|---------|---------------------------|
+| `summary_create` | Create summary, create draft, store, store-draft | Hide "Create Draft" / "New Summary" buttons if missing |
+| `summary_secretary_inbox` | Index page access for secretary | Hide secretary tabs if missing |
+| `summary_internal_view` | View summaries assigned via internal forward | Hide pending action tab if missing |
+| `summary_internal_remarks` | Submit remarks via internal-action page | Hide remarks submission UI if missing |
+
+**Module gate:** Any of the four above permissions allows access to the module (`canAccessSummaryModule`). Always check before showing the summary navigation entry.
+
+---
+
+## 4. Database Schema (relevant tables)
+
+### 4.1 `summaries`
+| Column | Type | Notes |
+|--------|------|-------|
+| id | bigint | PK |
+| summary_no | string(50) | Unique. Format `SUM/{ABBR}/{YEAR}/{6-digit-seq}` |
+| subject | text | |
+| summary_date | date | |
+| body | longtext | The main summary content (HTML from rich editor) |
+| originating_department_id | FK departments | Department that created the summary |
+| current_department_id | FK departments | Where the summary currently lives |
+| originating_user_desg_id | FK user_desgs | User who originally created it (DEO or Secretary) |
+| current_holder_user_desg_id | FK user_desgs | Who currently has it on their desk |
+| current_status | tinyint | See **Status Codes** below |
+| summary_type | enum | `external` (default) or `section_draft` |
+| draft_target_department_id | FK departments (nullable) | For section drafts: target dept the secretary will forward to |
+| created_at, updated_at | timestamps | |
+
+#### Status Codes (`current_status`)
+| Code | Constant | Label | Badge |
+|------|----------|-------|-------|
+| 1 | STATUS_PENDING_SECRETARY | Pending with Secretary | warning (yellow) |
+| 2 | STATUS_SHARED_INTERNALLY | Shared Internally for Feedback | info (cyan) |
+| 3 | STATUS_COLLECTING_REMARKS | Collecting Internal Remarks | primary (blue) |
+| 4 | STATUS_READY_TO_FORWARD | Ready to Forward | success (green) |
+| 5 | STATUS_FORWARDED_NEXT_DEPARTMENT | Forwarded to Next Department | secondary (grey) |
+| 6 | STATUS_CLOSED | Closed / Final | dark |
+| 7 | STATUS_SECTION_DRAFT | Draft from Section | danger (red/orange) |
+
+### 4.2 `summary_attachments`
+| Column | Notes |
+|--------|-------|
+| id, summary_id, uploaded_by_user_desg_id | |
+| attachment_type | enum: `supporting` |
+| original_name | If a flag is set, prefixed `[Flag: <FlagTitle>] filename.pdf`. The first attachment per summary is treated as the **main PDF** (no flag prefix). |
+| stored_name, file_path, mime_type, file_size | |
+
+**The first attachment is always the Main Summary PDF.** All others are flag attachments.
+
+### 4.3 `summary_movements`
+| Column | Notes |
+|--------|-------|
+| id, summary_id | |
+| from_department_id, to_department_id | |
+| from_user_desg_id, to_user_desg_id | |
+| acted_by_user_desg_id | The actual logged-in user that performed the action |
+| action_type | enum: `created`, `sent_to_department`, `shared_internally`, `remarks_added`, `signed_and_forwarded`, `closed`, `returned_to_section` |
+| remarks | Text (HTML) — content shown on the summary document for that movement |
+| secretary_signature_path | NULL when unsigned (draft remarks). Set to a `storage/...png` path when signed. |
+| acted_at | datetime |
+
+**Action type meaning:**
+
+| action_type | Created when | from_dept == to_dept ? |
+|-------------|--------------|------------------------|
+| `created` | Reserved (not currently used) | |
+| `sent_to_department` | (a) Secretary creates summary and sends to target dept, OR (b) DEO submits a section draft to own secretary | (b) **same dept** |
+| `shared_internally` | Secretary shares with internal users (not currently used as a movement; uses `summary_internal_forwards`) | |
+| `remarks_added` | A user inside a department drafts rich remarks (via internal-action page). Stays unsigned until the secretary signs. | **same dept** |
+| `signed_and_forwarded` | Secretary signs and forwards externally. **If an unsigned `remarks_added` from this dept exists, it is updated in place (action_type changed) instead of creating a new row** — so the document shows ONE row with the drafted content + signature. | **different dept** |
+| `returned_to_section` | Secretary returns a draft/remarks to the originator/submitter | **same dept** |
+| `closed` | Reserved | |
+
+### 4.4 `summary_internal_forwards`
+| Column | Notes |
+|--------|-------|
+| id, summary_id | |
+| forwarded_by_user_desg_id | Who shared/forwarded |
+| forwarded_to_user_desg_id | Who received |
+| instruction | Optional text from the sender |
+| submitted_remarks | Set when the recipient submits remarks back (status 2) |
+| status | tinyint: `1=Pending`, `2=Remarks Submitted`, `3=Closed` |
+| submitted_at | datetime when status changed to 2 |
+
+### 4.5 `summary_remarks`
+| Column | Notes |
+|--------|-------|
+| id, summary_id, internal_forward_id | |
+| submitted_by_user_desg_id | |
+| remark_type | enum: `forwarding` (a single forwarding remark) or `para` (a numbered paragraph) |
+| para_number | Sequential when remark_type=para |
+| heading | Optional heading for a para |
+| content | Rich HTML |
+
+### 4.6 `summary_local_links`
+| Column | Notes |
+|--------|-------|
+| id, summary_id | |
+| link_type | `daak` or `file` |
+| daak_letter_id (nullable) | When type=daak |
+| file_id (nullable) | When type=file |
+| linked_by_user_desg_id | Used to filter visibility — only users in the same department as the linker see this link |
+
+### 4.7 `summary_internal_files`
+| Column | Notes |
+|--------|-------|
+| id, summary_id, internal_forward_id, file_id, created_by_user_desg_id | Links a generated internal e-file to a particular internal forward |
+
+---
+
+## 5. Status Lifecycle Diagram
+
+```
+                ┌────────────────────────────────────────────┐
+                │  DEO creates section draft (storeDraft)    │
+                │  → STATUS=SECTION_DRAFT, type=section_draft│
+                │  → holder = own dept secretary             │
+                └─────────────────┬──────────────────────────┘
+                                  │
+                                  ▼
+   ┌───────────────────────────────────────────────────────────┐
+   │ Secretary opens it (showDraftActions = true)              │
+   │ Choices:                                                  │
+   │  ① Edit drafted content (updateDraftContent)              │
+   │  ② Sign & Forward (forwardToNextDepartment)               │
+   │       → unsigned remarks_added converted in-place to      │
+   │         signed_and_forwarded                              │
+   │       → type=external, current_dept=target,               │
+   │         status=PENDING_SECRETARY                          │
+   │  ③ Return to Section (returnToSection)                    │
+   │       → holder=DEO, status=SECTION_DRAFT                  │
+   │       → DEO sees it in My Drafts (returned card)          │
+   │  ④ Share Internally (shareInternally)                     │
+   │       → status=SHARED_INTERNALLY, internal_forwards rows  │
+   └─────────────────┬─────────────────────────────────────────┘
+                     │
+                     ▼  (after sign & forward)
+   ┌───────────────────────────────────────────────────────────┐
+   │ Receiving Dept Secretary's INBOX                          │
+   │ status=PENDING_SECRETARY                                  │
+   │ Can:                                                      │
+   │  ① Add Remarks & Forward (forwardToNextDepartment)        │
+   │  ② Share Internally (shareInternally) → status=SHARED_INT │
+   └─────────────────┬─────────────────────────────────────────┘
+                     │ (Share Internally)
+                     ▼
+   ┌───────────────────────────────────────────────────────────┐
+   │ Internal users see "Pending Action"                       │
+   │ Each can:                                                 │
+   │  ① Open Action Page → draft remarks + flags + links       │
+   │     (submitInternalAction) → creates remarks_added (un-   │
+   │     signed) movement, updates internal_forward.status=2   │
+   │     → status=READY_TO_FORWARD or SECTION_DRAFT (if origin │
+   │       dept) and holder back to secretary                  │
+   │  ② Forward to Another User (forwardInternally) → chain   │
+   └─────────────────┬─────────────────────────────────────────┘
+                     │ (after remarks submitted)
+                     ▼
+   ┌───────────────────────────────────────────────────────────┐
+   │ Secretary sees "Drafted Remarks" pending in their tab     │
+   │ showDraftActions = true (because hasUnsignedDeptRemarks)  │
+   │ Same 4 actions as the section-draft secretary view        │
+   │ ──> Sign & Forward will finalize the unsigned remarks_    │
+   │     added in place → one signed row on the document       │
+   └───────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. The Five Top-Level Tabs (Index Screen)
+
+The web index page shows different tab sets depending on role:
+
+| Visible to | Tab | Query (what it shows) |
+|------------|-----|----------------------|
+| **DEO (role 2)** | My Drafts | All section drafts created by me (regardless of who holds them now). Includes returned ones. |
+| **DEO** | Pending Action | Internal forwards `to_user=me, status=1` OR returned remarks where I'm the holder. |
+| **DEO** | Internal Forwarded | Internal forwards I sent OR forwards I previously responded to. |
+| **Secretary/Admin** | My Inbox | `current_dept=mine, current_holder=me, status NOT IN (SHARED_INTERNALLY, COLLECTING_REMARKS, SECTION_DRAFT)` |
+| **Secretary/Admin** | Pending Action | Same as DEO |
+| **Secretary/Admin** | Internal Forwarded | Same as DEO |
+| **Secretary/Admin** | Draft from Sections | `type=section_draft, current_dept=mine, holder=me, status=SECTION_DRAFT`. Cards distinguish "Section Draft" vs "Remarks Drafted" (when a `remarks_added` movement exists). |
+| **Secretary/Admin** | Sent Summaries | `originating_dept=mine` AND (type != section_draft OR (type=section_draft AND current_dept != originating_dept)). Excludes drafts still in own dept. |
+
+### 6.1 Default tab
+```
+defaultTab = (role_id == 2) ? "my_drafts" : "inbox"
+```
+
+### 6.2 SQL queries (each tab)
+
+```sql
+-- INBOX
+SELECT * FROM summaries
+WHERE current_department_id = :myDeptId
+  AND current_holder_user_desg_id = :myUserDesgId
+  AND current_status != 7              -- not SECTION_DRAFT
+  AND current_status NOT IN (2, 3)     -- not SHARED_INTERNALLY, COLLECTING_REMARKS
+ORDER BY id DESC;
+
+-- PENDING ACTION (internal)
+SELECT * FROM summaries
+WHERE id IN (
+    SELECT summary_id FROM summary_internal_forwards
+    WHERE forwarded_to_user_desg_id = :me AND status = 1
+)
+OR (
+    current_holder_user_desg_id = :me
+    AND originating_user_desg_id != :me
+    AND id IN (
+        SELECT summary_id FROM summary_movements
+        WHERE action_type='returned_to_section' AND to_user_desg_id = :me
+    )
+)
+ORDER BY id DESC;
+
+-- INTERNAL FORWARDED
+SELECT * FROM summaries
+WHERE id IN (
+    SELECT summary_id FROM summary_internal_forwards
+    WHERE forwarded_by_user_desg_id = :me
+)
+OR id IN (
+    SELECT summary_id FROM summary_internal_forwards
+    WHERE forwarded_to_user_desg_id = :me AND status != 1
+)
+OR (
+    current_department_id = :myDeptId
+    AND current_status IN (2, 3)
+)
+ORDER BY id DESC;
+
+-- SENT
+SELECT * FROM summaries
+WHERE originating_department_id = :myDeptId
+  AND (
+    summary_type != 'section_draft'
+    OR (summary_type = 'section_draft' AND current_department_id != originating_department_id)
+  )
+ORDER BY id DESC;
+
+-- DRAFT FROM SECTIONS
+SELECT * FROM summaries
+WHERE summary_type = 'section_draft'
+  AND current_department_id = :myDeptId
+  AND current_holder_user_desg_id = :me
+  AND current_status = 7
+ORDER BY id DESC;
+
+-- MY DRAFTS (DEO)
+SELECT * FROM summaries
+WHERE summary_type = 'section_draft'
+  AND originating_user_desg_id = :me
+ORDER BY id DESC;
+```
+
+### 6.3 Card metadata
+Each list card shows:
+- Summary number chip
+- Status badge (mapped from status code)
+- Type pill (Section Draft / External / Remarks Drafted / Returned for Amendments)
+- Subject (2-line clamp)
+- Department / sender / section / target / current holder (varies per tab)
+- Days-ago badge (green ≤2d, yellow ≤7d, red >7d)
+- Date + created time
+- Action button (View / Take Action / Edit / Review)
+
+#### Special card states:
+- **Returned to me (DEO viewing My Drafts):** Red left border, exclamation icon, red "Returned for Amendments" pill, "Edit" button (red) → links to edit-draft or edit-remarks page.
+- **Has drafted remarks (Secretary viewing Draft from Sections):** Purple left border, comment icon, purple "Remarks Drafted" pill, shows "Remarks by: <name>".
+- **Pending Action card:** Yellow left border, bell icon, "Pending Your Action" badge, shows the forwarder's name and instruction snippet, amber "Take Action" button.
+
+---
+
+## 7. Detail Screen — `GET /summaries/{id}` (Show)
+
+This is the most complex screen. Below are **all** the variables that the controller computes and the UI conditions that depend on them.
+
+### 7.1 Controller-computed flags (passed to view)
+
+| Variable | Definition |
+|----------|------------|
+| `$isSectionDraft` | `summary.summary_type == 'section_draft'` |
+| `$isInCurrentDepartment` | `summary.current_department_id == myDeptId` |
+| `$isCurrentHolder` | `isInCurrentDepartment AND current_holder == me` |
+| `$isCurrentSecretaryHolder` | `isCurrentHolder AND isSecretary(me, myDeptId)` |
+| `$isOriginatingDepartment` | `summary.originating_department_id == myDeptId` |
+| `$isDraftReturnedToMe` | `isCurrentHolder AND NOT isCurrentSecretaryHolder AND there exists a returned_to_section movement with to_user_desg_id == me` |
+| `$myInternalForward` | The `summary_internal_forwards` row where `forwarded_to == me AND status == 1` (pending) |
+| `$myAnyInternalForward` | Same but any status |
+| `$visibleInternalForwards` | All internal forwards where `forwardedBy.dept == myDeptId OR forwardedTo.dept == myDeptId` |
+| `$visibleInternalFiles` | Internal files attached to one of `$visibleInternalForwards` |
+| `$localLinks` | Local links where `linked_by_user_desg_id` belongs to a user in **my** department |
+| `$canSeeLocalLinks` | Always true (kept for legacy) |
+| `$canPrintRemarks` | `current_status == READY_TO_FORWARD AND any visible internal forward has status=2` |
+| `$hasUnsignedDeptRemarks` | There exists a `remarks_added` movement with `from_dept == myDeptId AND secretary_signature_path IS NULL` |
+| `$showDraftActions` | `(isSectionDraft AND isOriginatingDepartment AND isCurrentSecretaryHolder) OR (isCurrentSecretaryHolder AND hasUnsignedDeptRemarks)` |
+
+### 7.2 Access guard (403 abort)
+
+The user must satisfy at least one of:
+```
+isInCurrentDepartment
+OR isOriginatingDepartment
+OR myAnyInternalForward != null
+OR hasEverActed (any movement with acted_by == me)
+OR wasEverInMyDept (any movement where from_dept == myDeptId OR to_dept == myDeptId)
+```
+
+### 7.3 Sections of the Detail screen
+
+#### A. Header bar
+- Back button → go to index
+- Print Summary button (always visible)
+
+#### B. Summary Document Sheet (left, ~9 cols)
+The "printed" representation of the summary, built from movement rows.
+
+##### Movement row builder algorithm
+```
+allMovements = summary.movements ORDER BY acted_at ASC
+firstSent   = first movement with action_type='sent_to_department'
+wasSectionDraft = isSectionDraft OR (firstSent.from_dept == firstSent.to_dept)
+
+if wasSectionDraft:
+    signingMovement = first movement where
+        action_type='signed_and_forwarded' AND from_dept == originating_dept
+    row1.sender_user_desg = signingMovement?.actor OR currentHolder
+    row1.signature_path  = signingMovement?.secretary_signature_path
+    row1.receiver        = signingMovement?.toUserDesg OR draftTargetDepartment.title
+else:
+    row1.sender_user_desg = originatingUserDesg
+    row1.signature_path  = firstSent.secretary_signature_path
+    row1.receiver        = firstSent.toUserDesg
+
+push row1 = {
+    summary.body,
+    sender, designation, dept,
+    receiver, signature_path
+}
+
+for each subsequent movement:
+    skip if remarks IS NULL
+    skip if action_type NOT IN (sent_to_department, signed_and_forwarded, remarks_added)
+    skip if action_type='sent_to_department' AND from_dept == to_dept (internal routing)
+    skip if movement == signingMovement (already row 1)
+
+    if action_type == 'remarks_added':
+        sender = movement.toUserDesg     // show the secretary, not the DEO
+        receiver = "" (none)
+        is_draft = (signature_path IS NULL)
+    else:
+        sender = movement.actor
+        receiver = movement.toUserDesg
+        is_draft = false
+
+    push row
+```
+
+##### Row rendering
+For each row:
+- If `is_draft` → show **yellow "Draft — Pending Secretary Signature"** tag above content + amber left border on the content cell
+- Show movement number, date, content (HTML), signature image (if any), sender name + designation + department, sending date, receiver (only for non-remarks_added)
+- Horizontal divider between rows
+
+#### C. Right Sidebar (~3 cols, sticky)
+
+##### C.1 Attachments card
+- **Main Summary PDF**: shown first with "View" button (opens PDF in popup/iframe)
+- **Flag attachments** (rest): each shows file-type icon + flag name (extracted from `[Flag: X]` prefix) + View/Download button
+- **Draft attachments highlighted in yellow** (when `showDraftActions` is true and the attachment was added in the current cycle)
+- **Remove (×) button** appears only on attachments where:
+  - User is `isCurrentSecretaryHolder` OR `isDraftReturnedToMe`
+  - AND attachment was uploaded by the current user OR user is the secretary
+  - AND attachment.created_at >= last arrival time of summary in this dept (or no arrival = same dept always)
+  - AND it's not the main PDF
+
+##### C.2 Movement Timeline card
+- For each `signed_and_forwarded` and `sent_to_department` movement (excluding same-dept returns), show:
+  - From dept → To dept
+  - Action label, date, actor name
+- Plus a "Current Pending" item with status badge, current dept, current holder
+
+##### C.3 Action card (only shown to specific users)
+Three mutually exclusive blocks based on `$isDraftReturnedToMe`, `$isCurrentSecretaryHolder`, and `$showDraftActions`:
+
+**Block 1 — `isDraftReturnedToMe` (DEO with returned draft/remarks):**
+- Red header "Returned for Amendments"
+- Yellow box showing secretary's instructions + timestamp
+- If `originating_user_desg_id == me AND summary_type == section_draft`:
+  - Button: **"Edit & Resubmit Draft"** → `GET /summaries/{id}/edit-draft`
+- Else (returned remarks user):
+  - Button: **"Edit & Resubmit Remarks"** → `GET /summaries/{id}/edit-remarks`
+
+**Block 2 — `isCurrentSecretaryHolder AND showDraftActions` (Secretary with draft-able remarks):**
+- Orange info box explaining
+- Button: **"Edit Drafted Remarks"** → opens edit modal (POST `update-draft-content`)
+- Button: **"Sign & Forward"** → opens forward modal (POST `forward`)
+- Button: **"Return to Section"** → opens return modal (POST `return-to-section`)
+- Button: **"Share Internally"** → opens share modal (POST `share-internally`)
+
+**Block 3 — `isCurrentSecretaryHolder AND !showDraftActions` (Secretary with regular external summary):**
+- Button: **"Add Remarks & Forward"** → forward modal (with required remarks textarea)
+- Button: **"Share Internally"** → share modal
+- Button: **"Print Remarks on Summary"** (only if `canPrintRemarks` is true)
+
+##### C.4 Local Correspondence card
+Always rendered when `localLinks` is non-empty (filtered to user's own department only).
+- Each daak/file shows icon + title + truncated subject + View button
+- Daak: blue background; File: green background
+
+##### C.5 Internal Forwards card
+Only when `current_status IN (SHARED_INTERNALLY, COLLECTING_REMARKS, READY_TO_FORWARD)`.
+- For each `visibleInternalForward`: forwardedTo name, designation, "Assigned by", status pill (Pending / Remarks Submitted / Closed)
+
+#### D. Internal Correspondence card (below sheet)
+**Visible only to current secretary OR draft-returned user OR users with local links visible.**
+
+A unified, time-sorted timeline of:
+- Internal forwards (`visibleInternalForwards`) — color-coded by status (yellow=pending, green=submitted, grey=closed). Shows forwardedBy → forwardedTo with badges, instruction, response remarks (forwarding remark + paras), "Use In Forward" buttons (only for the secretary).
+- Returned-to-section movements **filtered to my dept only** (`from_dept == to_dept == myDept`). Red border, "Returned" badge, secretary's name, return remarks.
+
+#### E. Internal Files card
+Inside the `isCurrentSecretaryHolder` block. Lists internal e-files attached to internal forwards, with View buttons that open a styled file preview modal.
+
+#### F. Your Action Required card
+Only shown when `$myInternalForward != null` (user has a pending internal forward to act on).
+- Shows the secretary's instruction
+- Two tabs:
+  - **Draft Remarks & Return**: link to `/summaries/{id}/internal-action/{forwardId}` (full-page form) + "Create Internal E-File" link
+  - **Forward to Another User**: dropdown of dept users, instruction textarea, "Forward to Selected User" button → POST `forward-internally`
+- **Previous Internal Correspondence card** (above the action card) — shows submitted remarks from this user's chain so they have context.
+
+---
+
+## 8. Other Screens
+
+### 8.1 Create Summary `GET /summaries/create` & `POST /summaries`
+- Permission: `summary_create`
+- Form fields: subject, summary_date, body (rich), target_department_id, main_summary_pdf (PDF only, max 20MB), flag_name[] + supporting_attachments[], creator_signature_data (base64 PNG)
+- On submit: creates summary, signature stored as PNG file, all attachments saved, sent_to_department movement created, status=PENDING_SECRETARY in target dept
+
+### 8.2 Create Section Draft `GET /summaries/create-draft` & `POST /summaries/store-draft`
+- Permission: `summary_create`
+- Same form fields PLUS local correspondence linking (linked_daak_ids[], linked_file_ids[])
+- **No signature required** (DEO doesn't sign)
+- Validation rule: if a flag is selected, an attachment file is required for that flag
+- On submit: type=section_draft, holder=own dept secretary, status=SECTION_DRAFT, draft_target_department_id=target. Movement: `sent_to_department` with from_dept = to_dept = own dept (this is how we detect it later).
+
+### 8.3 Edit Returned Draft `GET /summaries/{id}/edit-draft`
+- Only the **original draft creator** can access
+- Loads the same `create_draft.blade.php` view in edit mode
+- Pre-fills all fields including linked correspondence
+- Main PDF is **optional** (already uploaded; can replace by uploading new)
+- Shows the secretary's return instructions in a red banner at the top
+- Shows existing attachments in a green "Already Uploaded" section with Remove buttons (only for the user's own uploads added in current cycle)
+- Submit button: "Resubmit to Secretary"
+- POST `/summaries/{id}/update-draft`: appends new attachments, replaces local links, creates new `sent_to_department` movement, sets holder back to secretary
+
+### 8.4 Edit Returned Remarks `GET /summaries/{id}/edit-remarks`
+- Only the user whose `remarks_added` was returned (latest `returned_to_section` to me)
+- Loads `internal_action.blade.php` in `isEditRemarks=true` mode
+- Pre-fills the rich body from the latest unsigned `remarks_added` movement
+- Shows the secretary's return instructions
+- POST `/submit-internal-action` with `action_type='resubmit_remarks'` (no internal_forward_id needed)
+- The transaction **updates the existing unsigned `remarks_added` movement** (overwrites content + acted_at), then sends back to secretary
+
+### 8.5 Internal Action Page `GET /summaries/{id}/internal-action/{forwardId}`
+- Internal user (recipient of an internal forward) drafts remarks
+- Sections:
+  1. Summary Context (read-only): summary number, date, subject, instruction from forwarder
+  2. **Step 1**: Rich Jodit editor for remarks body (required)
+  3. **Existing Attachments** (green card): main PDF + existing flags. Flags uploaded by **current user in current cycle** show "YOUR UPLOAD" badge + remove button. Other flags only have View.
+  4. **Step 2**: Add new flag attachments (Add Attachment button, mutual-exclusive flag dropdown — already-attached flags disabled)
+  5. **Step 3**: Local Correspondence (search & link Daak letters and internal Files for the user's department only)
+- Submit button: **"Submit Remarks to Secretary"**
+- POST `/submit-internal-action` with `action_type='return_to_secretary'`
+- Side effects: creates `summary_remarks` row + `summary_movements` row (`remarks_added`, unsigned), marks the internal_forward as status=2, sets holder back to secretary
+
+---
+
+## 9. Server-side Action Rules (DB Transactions Summary)
+
+Each action in the controller wraps a `DB::transaction(...)` block. Below is the **state diff** for each.
+
+### 9.1 `store()` — Secretary creates external summary
+```
+INSERT summaries: type=external, status=PENDING_SECRETARY,
+                  holder = target dept secretary
+INSERT summary_attachments (main PDF + flag files)
+INSERT summary_movements: action=sent_to_department,
+                          from=originating dept, to=target dept,
+                          signature=secretary's signature
+```
+
+### 9.2 `storeDraft()` — DEO creates section draft
+```
+INSERT summaries: type=section_draft, status=SECTION_DRAFT,
+                  holder = OWN dept secretary,
+                  draft_target_department_id = target
+INSERT summary_attachments (main PDF + flag files)
+INSERT summary_local_links (daak/file links)
+INSERT summary_movements: action=sent_to_department,
+                          from=own dept, to=own dept (same dept)
+```
+
+### 9.3 `forwardToNextDepartment()` — Secretary signs and forwards
+**Validation:**
+- `requiresSecretary($summary)` — must be in current dept, must be a secretary, must be the current holder
+- target_department_id ≠ current_department_id
+- Target dept must have a secretary (role 4 or 5)
+
+**Transaction:**
+```
+UPDATE summaries SET
+    current_status = PENDING_SECRETARY,
+    current_department_id = target,
+    current_holder_user_desg_id = target_secretary,
+    summary_type = external (if was section_draft)
+
+IF an unsigned remarks_added movement exists from current dept:
+    UPDATE that movement SET
+        action_type = signed_and_forwarded,
+        from_user_desg_id = me,
+        to_department_id = target,
+        to_user_desg_id = target_secretary,
+        secretary_signature_path = uploaded path,
+        acted_by_user_desg_id = me,
+        acted_at = now
+ELSE:
+    INSERT summary_movements: action=signed_and_forwarded, with signature
+```
+
+### 9.4 `shareInternally()` — Secretary shares with dept members
+**Validation:** requiresSecretary; all selected user_desg_ids must be in same dept and ≠ me
+
+**Transaction:**
+```
+For each target user_desg_id:
+    INSERT summary_internal_forwards: by=me, to=target, status=1
+UPDATE summaries SET current_status = SHARED_INTERNALLY
+```
+
+### 9.5 `submitRemarks()` — Internal user submits remarks via inline form (legacy)
+**Validation:** must have a pending internal_forward to me
+
+**Transaction:**
+```
+INSERT summary_remarks (forwarding + paras)
+UPDATE the internal_forward SET status=2, submitted_at=now
+UPDATE summaries SET status =
+    READY_TO_FORWARD (if no more pending forwards)
+    OR COLLECTING_REMARKS
+```
+
+### 9.6 `submitInternalAction()` — Full-page rich submission
+**Validation:**
+- For new: must have pending internal_forward to me
+- For resubmit: must be current_holder
+
+**Transaction:**
+```
+IF resubmit:
+    UPDATE existing unsigned remarks_added movement SET
+        remarks = new content, acted_at = now
+ELSE (new submission):
+    INSERT summary_remarks (forwarding type, full body)
+    INSERT summary_movements: action=remarks_added,
+        from=my dept, to=my dept (same), to_user_desg=dept secretary,
+        signature_path=NULL
+    UPDATE the internal_forward SET status=2, submitted_at=now
+
+INSERT new summary_attachments (any new flag files)
+INSERT new summary_local_links (any new daak/file links)
+
+UPDATE summaries SET
+    current_status = SECTION_DRAFT (if originating_dept == my dept)
+                     ELSE READY_TO_FORWARD
+    current_holder = my dept secretary
+```
+
+### 9.7 `forwardInternally()` — Chain forwarding
+**Validation:** must have pending internal_forward to me; target must be in my dept; target ≠ me
+
+**Transaction:**
+```
+IF forwarding_remark provided:
+    INSERT summary_remarks (forwarding type, content)
+UPDATE my internal_forward SET status=2, submitted_at=now
+INSERT new summary_internal_forwards: by=me, to=target, status=1
+UPDATE summaries SET current_status = COLLECTING_REMARKS
+```
+
+### 9.8 `returnToSection()` — Secretary returns draft/remarks for amendments
+**Validation:** requiresSecretary
+
+**Transaction:**
+```
+returnToUserDesgId =
+    actor of latest unsigned remarks_added (in this dept)
+    OR originating_user_desg_id
+
+UPDATE summaries SET
+    current_holder_user_desg_id = returnToUserDesgId,
+    current_status = SECTION_DRAFT
+INSERT summary_movements: action=returned_to_section,
+    from_dept = to_dept = current dept,
+    to_user_desg = returnToUserDesgId,
+    remarks = secretary's instructions
+```
+
+### 9.9 `updateDraftContent()` — Secretary edits draft remarks before signing
+**Validation:** requiresSecretary
+
+**Transaction:**
+```
+latestRemarks = first unsigned remarks_added movement from this dept
+IF latestRemarks exists:
+    UPDATE that movement SET remarks = new body
+ELSE IF type == section_draft AND originating_dept == my dept:
+    UPDATE summaries SET body = new body
+ELSE:
+    422 error — no editable draft
+```
+
+### 9.10 `updateDraft()` — DEO resubmits an edited returned draft
+**Validation:**
+- Must be the originating user
+- Must be the current holder
+- type must be section_draft
+
+**Transaction:**
+```
+UPDATE summaries SET
+    subject, summary_date, body, draft_target_department_id,
+    current_holder = own dept secretary,
+    current_status = SECTION_DRAFT
+APPEND new summary_attachments (new uploads only)
+DELETE all summary_local_links AND re-INSERT from posted IDs
+INSERT summary_movements: action=sent_to_department,
+    from=own dept, to=own dept,
+    remarks="Draft resubmitted after amendments."
+```
+
+### 9.11 `deleteAttachment()` — Remove a flag attachment
+**Validation cascade:**
+1. Summary must be in user's current department
+2. Cannot delete the main PDF (first attachment by id)
+3. Find `lastArrival` = latest `signed_and_forwarded` or `sent_to_department` TO this dept FROM a different dept
+4. If `lastArrival` exists: attachment.created_at must be ≥ lastArrival.acted_at
+5. If summary originated here AND was ever forwarded externally: attachment.created_at must be ≥ last return time
+6. User must be a secretary OR the original uploader
+
+If all pass → delete the storage file, delete the DB row.
+
+### 9.12 `saveSignature()` — Persist drawn signature image
+**Validation:** requiresSecretary; signature must start with `data:image/png;base64,`
+- Decodes base64, writes to `storage/summary_signatures/{summaryId}_{userDesgId}_{timestamp}.png`
+- Returns the relative path; client uses it as `secretary_signature_path` in the next forward call.
+
+---
+
+## 10. API Endpoint Map
+
+> The web app is currently HTML-based; for the mobile app you will need to build a JSON API. The table below maps each existing route to the action and expected payload. The mobile API can wrap each in a JSON resource.
+
+| Method | Path | Controller method | Auth | Body / Query |
+|--------|------|-------------------|------|--------------|
+| GET | `/summaries` | `index` | session | `?tab=inbox|internal|internal_forwarded|sent|draft|my_drafts` |
+| GET | `/summaries/create` | `create` | `summary_create` | (form data) |
+| POST | `/summaries` | `store` | `summary_create` | subject, summary_date, body, target_department_id, main_summary_pdf, flag_name[], supporting_attachments[], creator_signature_data |
+| GET | `/summaries/create-draft` | `createDraft` | `summary_create` | |
+| POST | `/summaries/store-draft` | `storeDraft` | `summary_create` | subject, summary_date, body, target_department_id, main_summary_pdf, flag_name[], supporting_attachments[], linked_daak_ids[], linked_file_ids[] |
+| GET | `/summaries/search-daak?q=...` | `searchDaakForDraft` | module | returns `[{id,diary_no,letter_no,subject,date,source}]` |
+| GET | `/summaries/search-files?q=...` | `searchFilesForDraft` | module | returns `[{id,reference_no,barcode,subject,date}]` |
+| GET | `/summaries/internal-users/{deptId}` | `getInternalUsers` | module | dept users for share/forward dropdowns |
+| GET | `/summaries/department-secretaries/{deptId}` | `getDepartmentSecretaries` | module | secretary candidates for forward target |
+| GET | `/summaries/{id}` | `show` | module + access guard | full summary detail |
+| POST | `/summaries/{id}/forward` | `forwardToNextDepartment` | requiresSecretary | remarks?, target_department_id, target_user_desg_id?, secretary_signature_path |
+| POST | `/summaries/{id}/share-internally` | `shareInternally` | requiresSecretary | user_desg_ids[], instruction? |
+| POST | `/summaries/{id}/submit-remarks` | `submitRemarks` | `summary_internal_remarks` | internal_forward_id, forwarding_remark?, paras[]? |
+| POST | `/summaries/{id}/sign` | `saveSignature` | requiresSecretary | signature (base64 PNG) |
+| POST | `/summaries/{id}/return-to-section` | `returnToSection` | requiresSecretary | return_remarks |
+| POST | `/summaries/{id}/update-draft-content` | `updateDraftContent` | requiresSecretary | body |
+| GET | `/summaries/{id}/edit-draft` | `editDraft` | originator only | (form data) |
+| POST | `/summaries/{id}/update-draft` | `updateDraft` | originator only | full draft fields + attachments + linked ids |
+| POST | `/summaries/{id}/forward-internally` | `forwardInternally` | module + has pending forward | internal_forward_id, target_user_desg_id, forwarding_remark?, instruction? |
+| GET | `/summaries/{id}/internal-action/{forwardId}` | `internalActionPage` | module + has pending forward | (form data) |
+| POST | `/summaries/{id}/submit-internal-action` | `submitInternalAction` | module | internal_forward_id?, action_type, body, flag_name[], supporting_attachments[], linked_daak_ids[], linked_file_ids[] |
+| GET | `/summaries/{id}/edit-remarks` | `editRemarks` | current_holder | (form data) |
+| DELETE | `/summaries/attachment/{attachmentId}` | `deleteAttachment` | module + cascade rules | |
+
+---
+
+## 11. Mobile UI Recommendations
+
+### 11.1 Tab bar
+Use a bottom tab bar with the role-appropriate tabs (max 5). For DEO: My Drafts, Pending Action, Internal Forwarded. For Secretary: My Inbox, Pending Action, Drafts from Sections, Sent, plus Internal Forwarded under a "More" menu.
+
+### 11.2 Detail screen
+Use a `BottomSheet` for the action area (Sign, Return, Edit, Share, Forward modals) since the secretary actions are mutually-exclusive sets. The summary document itself is a long scrollable card with the movement rows.
+
+### 11.3 Status colors (consistent with web)
+| Status | Color |
+|--------|-------|
+| PENDING_SECRETARY | `#fef3c7` bg / `#92400e` text (warning) |
+| SHARED_INTERNALLY | `#dbeafe` / `#1e40af` (info) |
+| COLLECTING_REMARKS | `#ede9fe` / `#5b21b6` (primary) |
+| READY_TO_FORWARD | `#d1fae5` / `#065f46` (success) |
+| FORWARDED_NEXT_DEPARTMENT | `#e5e7eb` / `#374151` (secondary) |
+| CLOSED | `#1f2937` / `#f9fafb` (dark) |
+| SECTION_DRAFT | `#fee2e2` / `#991b1b` (danger) |
+
+### 11.4 Signature capture
+The mobile app should provide a signature pad widget that exports a PNG as base64. POST it to `/summaries/{id}/sign` first to get back a `path`, then include that `path` in the `forward` payload as `secretary_signature_path`.
+
+### 11.5 Document rendering
+The "summary sheet" is a vertical list of movement rows. Each row contains:
+1. Optional yellow draft tag
+2. Movement number/date label (rotated -90deg in web; on mobile show as a small label above the content)
+3. Rich HTML content (use a WebView or HTML-rendering widget)
+4. Signature image (if present)
+5. Sender block (centered text)
+6. Sending timestamp
+7. Receiver block (only for non-`remarks_added` rows)
+8. Divider
+
+### 11.6 Print
+For mobile, "Print Summary" should generate a PDF of the summary sheet (use Android's print framework or WebView.createPrintDocumentAdapter on the rendered document).
+
+### 11.7 Local correspondence preview
+Daak letter preview = PDF iframe + sidebar with metadata + correspondence timeline.
+Internal file preview = uses a green-themed document view (matches the e-file styling). For mobile, render as a styled card list.
+
+### 11.8 Filtering rules to mirror server-side
+The mobile app must apply the same filters when rendering data fetched from the API (in case the API returns more than necessary):
+- **Internal forwards** visible to me: `forwardedBy.dept == myDept OR forwardedTo.dept == myDept`
+- **Local links** visible: `linked_by_user_desg_id IN myDept users`
+- **Returned-to-section in Internal Correspondence card**: filter by `from_dept == to_dept == myDept`
+- **Internal Files** visible: those linked to a visible internal_forward
+
+### 11.9 Empty states
+Each tab should show a friendly empty state with the matching icon (inbox, share, layers, paper-plane, file-alt, bell).
+
+---
+
+## 12. Critical Business Rules (do not violate)
+
+1. **The first attachment of every summary is the Main Summary PDF.** It can never be deleted.
+2. **Section drafts stay in their originating department until the secretary signs.** A DEO never sends a draft to another department directly.
+3. **Once a summary is forwarded out of a department, that department's secretary cannot edit any remarks/attachments from previous in-department cycles.** Only attachments added after the summary returns can be removed.
+4. **The drafted remarks (`remarks_added`) movement is finalized in place when signed.** The action_type changes to `signed_and_forwarded`. This ensures the document shows ONE row, not two.
+5. **A flag can only be selected ONCE per summary.** Already-attached flag IDs are passed to the form and disabled in the dropdown.
+6. **When secretary signs a section draft, summary_type changes from `section_draft` to `external`.** When she returns it, type stays `section_draft`.
+7. **The "wasSectionDraft" detection** for printing the document uses the heuristic: `summary_type == 'section_draft'` OR the first `sent_to_department` movement has `from_dept == to_dept`.
+8. **`returned_to_section` movements show the secretary as the actor** but are routed to the original draft creator OR the latest remarks submitter (whichever is most recent unsigned).
+9. **A movement with `action_type='remarks_added'` and NULL signature_path is always considered a "draft remarks"** and is rendered with the yellow draft tag.
+10. **The `getInternalUsers` endpoint is open to any authenticated user in the same department** (not just secretary), so any chain-forwarding user can pick another colleague.
+
+---
+
+## 13. Summary Number Generation
+
+```
+SUM/{ABBR}/{YEAR}/{6-digit-zero-padded-sequence}
+
+Where:
+  ABBR = uppercase initials of each word in the originating department title
+         (e.g. "Information Department" → "ID")
+  YEAR = current year (4 digits)
+  Sequence = next available integer for this dept+year combination
+
+The sequence is generated inside a transaction with lockForUpdate
+to prevent collisions.
+```
+
+---
+
+## 14. Permissions Matrix (Quick Reference)
+
+| Action | Required Permission | Required Role/Position | UI shown when |
+|--------|---------------------|------------------------|---------------|
+| See summary nav entry | Any of 4 perms | Any | always (if has perm) |
+| Create new external summary | summary_create | Secretary (typically) | hero button on index |
+| Create section draft | summary_create | DEO/Secretary | hero button on index |
+| View detail | module access + access guard | depends on movement history | always within constraints |
+| Sign & Forward | requiresSecretary | Secretary, current holder | sidebar action card |
+| Edit Drafted Remarks | requiresSecretary | Secretary, $showDraftActions | sidebar action card |
+| Return to Section | requiresSecretary | Secretary, $showDraftActions | sidebar action card |
+| Share Internally | requiresSecretary | Secretary | sidebar action card (always for inbox or draft secretary) |
+| Submit Remarks (legacy paras form) | summary_internal_remarks | recipient of pending forward | "Your Action Required" card |
+| Submit Remarks (full action page) | module access | recipient of pending forward | link in "Your Action Required" |
+| Forward to Another User | module access | recipient of pending forward | "Your Action Required" tab |
+| Resubmit Returned Draft | (originator check) | DEO who created the draft | red "Returned for Amendments" card |
+| Resubmit Returned Remarks | (current holder check) | user whose remarks were returned | red "Returned for Amendments" card |
+| Edit Draft Content (modal) | requiresSecretary | Secretary, $showDraftActions | inside Edit modal |
+| Delete Attachment | cascade rules in `deleteAttachment` | secretary or uploader, current cycle only | hover/long-press on flag attachment |
+
+---
+
+## 15. Edge Cases & Gotchas
+
+- **A user can be in only one department at a time** for a given user_desg. Mobile login should fetch the active user_desg and resolve `currentDepartmentId` from it.
+- **A summary can be in the same dept twice** (forwarded out, then the next dept returns it via signed_and_forwarded). The "arrival cutoff" logic handles this — the most recent arrival is what defines "current cycle".
+- **Resubmit Remarks does not create a new movement** — it updates the existing unsigned `remarks_added` so the timestamps reflect the latest version.
+- **The DEO never sees a "Sign" button** because the `isSecretaryOrActing` check fails for role 2.
+- **Acting Secretary detection is by designation title string match**, so be careful with translations or case differences when reading the field on mobile.
+- **The "Submitted Internal Remarks" card is now called "Internal Correspondence"** and shows a unified timeline of forwards + returns.
+- **Local links are filtered per-viewer-department** (a user in dept B does not see dept A's linked daak/files even if they can view the summary).
+- **The yellow "Draft" tag on the document** indicates an unsigned `remarks_added` row that the secretary still needs to sign.
+
+---
+
+## 16. Suggested Mobile-side Models (Kotlin)
+
+```kotlin
+data class Summary(
+    val id: Long,
+    val summaryNo: String,
+    val subject: String,
+    val summaryDate: LocalDate,
+    val body: String?,                       // HTML
+    val originatingDepartmentId: Long,
+    val currentDepartmentId: Long,
+    val originatingUserDesgId: Long,
+    val currentHolderUserDesgId: Long?,
+    val currentStatus: SummaryStatus,
+    val summaryType: SummaryType,
+    val draftTargetDepartmentId: Long?,
+    // expanded relations
+    val originatingDepartment: Department?,
+    val currentDepartment: Department?,
+    val originatingUser: UserDesg?,
+    val currentHolder: UserDesg?,
+    val draftTargetDepartment: Department?,
+    val attachments: List<SummaryAttachment>,
+    val movements: List<SummaryMovement>,
+    val internalForwards: List<SummaryInternalForward>,
+    val localLinks: List<SummaryLocalLink>,
+)
+
+enum class SummaryStatus(val code: Int) {
+    PendingSecretary(1),
+    SharedInternally(2),
+    CollectingRemarks(3),
+    ReadyToForward(4),
+    ForwardedNextDept(5),
+    Closed(6),
+    SectionDraft(7);
+    companion object { fun from(code: Int) = values().first { it.code == code } }
+}
+
+enum class SummaryType { External, SectionDraft }
+
+enum class MovementAction {
+    Created,
+    SentToDepartment,
+    SharedInternally,
+    RemarksAdded,
+    SignedAndForwarded,
+    Closed,
+    ReturnedToSection
+}
+
+data class SummaryMovement(
+    val id: Long,
+    val summaryId: Long,
+    val fromDepartmentId: Long?,
+    val toDepartmentId: Long?,
+    val fromUserDesgId: Long?,
+    val toUserDesgId: Long?,
+    val actedByUserDesgId: Long,
+    val actionType: MovementAction,
+    val remarks: String?,
+    val secretarySignaturePath: String?,
+    val actedAt: LocalDateTime
+)
+
+data class SummaryInternalForward(
+    val id: Long,
+    val summaryId: Long,
+    val forwardedByUserDesgId: Long,
+    val forwardedToUserDesgId: Long,
+    val instruction: String?,
+    val submittedRemarks: String?,
+    val status: Int,        // 1=Pending, 2=Submitted, 3=Closed
+    val submittedAt: LocalDateTime?
+)
+
+data class SummaryAttachment(
+    val id: Long,
+    val summaryId: Long,
+    val uploadedByUserDesgId: Long,
+    val originalName: String,    // [Flag: X] filename.pdf
+    val storedName: String,
+    val filePath: String,
+    val mimeType: String?,
+    val fileSize: Long?,
+    val createdAt: LocalDateTime
+)
+
+data class SummaryLocalLink(
+    val id: Long,
+    val summaryId: Long,
+    val linkType: String,        // "daak" or "file"
+    val daakLetterId: Long?,
+    val fileId: Long?,
+    val linkedByUserDesgId: Long
+)
+```
+
+### Computed flags (replicate in the mobile app for the detail screen)
+
+```kotlin
+data class SummaryViewState(
+    val isSectionDraft: Boolean,
+    val isInCurrentDepartment: Boolean,
+    val isCurrentHolder: Boolean,
+    val isCurrentSecretaryHolder: Boolean,
+    val isOriginatingDepartment: Boolean,
+    val isDraftReturnedToMe: Boolean,
+    val myInternalForward: SummaryInternalForward?,
+    val visibleInternalForwards: List<SummaryInternalForward>,
+    val visibleInternalFiles: List<SummaryInternalFile>,
+    val localLinks: List<SummaryLocalLink>,
+    val canPrintRemarks: Boolean,
+    val hasUnsignedDeptRemarks: Boolean,
+    val showDraftActions: Boolean
+) {
+    companion object {
+        fun build(summary: Summary, me: UserDesg, myDeptId: Long, myDeptUserDesgIds: Set<Long>): SummaryViewState {
+            val isSectionDraft = summary.summaryType == SummaryType.SectionDraft
+            val isInCurrentDepartment = summary.currentDepartmentId == myDeptId
+            val isCurrentHolder = isInCurrentDepartment && summary.currentHolderUserDesgId == me.id
+            val isCurrentSecretaryHolder = isCurrentHolder && me.isSecretaryOrActing(myDeptId)
+            val isOriginatingDepartment = summary.originatingDepartmentId == myDeptId
+
+            val latestReturnToMe = if (isCurrentHolder && !isCurrentSecretaryHolder) {
+                summary.movements
+                    .filter { it.actionType == MovementAction.ReturnedToSection && it.toUserDesgId == me.id }
+                    .maxByOrNull { it.actedAt }
+            } else null
+
+            val isDraftReturnedToMe = isCurrentHolder && !isCurrentSecretaryHolder && latestReturnToMe != null
+
+            val myInternalForward = summary.internalForwards
+                .firstOrNull { it.forwardedToUserDesgId == me.id && it.status == 1 }
+
+            val visibleInternalForwards = summary.internalForwards.filter { fwd ->
+                /* by-dept or to-dept matches myDept */
+                /* server already filters; mobile re-filters defensively */
+                true
+            }
+
+            val hasUnsignedDeptRemarks = summary.movements.any {
+                it.actionType == MovementAction.RemarksAdded
+                && it.secretarySignaturePath.isNullOrEmpty()
+                && it.fromDepartmentId == myDeptId
+            }
+
+            val showDraftActions = (isSectionDraft && isOriginatingDepartment && isCurrentSecretaryHolder)
+                || (isCurrentSecretaryHolder && hasUnsignedDeptRemarks)
+
+            val localLinks = summary.localLinks.filter { it.linkedByUserDesgId in myDeptUserDesgIds }
+
+            // ... etc
+        }
+    }
+}
+```
+
+---
+
+## 17. Recommended API Wrapper (for the backend team)
+
+The mobile app should call a JSON API rather than the HTML routes. Recommend creating an `/api/v1/summaries/...` mirror of each route that:
+1. Returns JSON resources (e.g. `SummaryResource`, `SummaryDetailResource`)
+2. Authenticates via Sanctum/Passport tokens
+3. Returns the **computed view state flags** alongside the data so the mobile app doesn't have to recompute every time
+4. Returns enums as integer codes (status, action_type) and English labels (for display)
+5. Pre-resolves URLs (signed `?-expiring URLs for attachments`)
+6. Returns paginated cursor-based lists for the inbox/tabs
+
+A sample detail response:
+```json
+{
+  "data": {
+    "id": 12,
+    "summary_no": "SUM/ID/2026/000005",
+    "subject": "...",
+    "summary_date": "2026-04-05",
+    "body": "<p>...</p>",
+    "originating_department": {"id": 17, "title": "Information Department"},
+    "current_department": {"id": 18, "title": "Finance Department"},
+    "originating_user": {"id": 404, "name": "Asad Magsi", "designation": "DEO"},
+    "current_holder": {"id": 405, "name": "Imran Khan", "designation": "Secretary"},
+    "current_status": {"code": 1, "label": "Pending with Secretary"},
+    "summary_type": "external",
+    "draft_target_department": null,
+    "attachments": [...],
+    "movements": [...],
+    "internal_forwards": [...],
+    "local_links": [...],
+    "view_state": {
+      "is_section_draft": false,
+      "is_current_secretary_holder": true,
+      "is_draft_returned_to_me": false,
+      "show_draft_actions": false,
+      "has_unsigned_dept_remarks": false,
+      "can_print_remarks": false,
+      "available_actions": ["forward", "share", "print"]
+    }
+  }
+}
+```
+
+---
+
+## 18. Quick Glossary of Variables Used in show.blade.php
+
+| Blade variable | Computed in | Used to control visibility of |
+|----------------|-------------|-------------------------------|
+| `$isSectionDraft` | controller | document row builder, hero button, edit modal |
+| `$isCurrentSecretaryHolder` | controller | sidebar action card, internal correspondence, modals |
+| `$isDraftReturnedToMe` | controller | "Returned for Amendments" red card |
+| `$isOriginatingDepartment` | controller | edit body permission |
+| `$showDraftActions` | controller | sign-and-forward button mode (with vs without remarks) |
+| `$hasUnsignedDeptRemarks` | controller | enabling edit-remarks/sign for non-originating secretaries |
+| `$myInternalForward` | controller | "Your Action Required" card |
+| `$visibleInternalForwards` | controller | Internal Correspondence + Internal Forwards card |
+| `$visibleInternalFiles` | controller | Internal Files card |
+| `$localLinks` | controller | Local Correspondence card (filtered to viewer's dept) |
+| `$canPrintRemarks` | controller | "Print Remarks on Summary" button |
+| `$canSeeLocalLinks` | controller | always true (legacy) |
+| `$wasSectionDraft` | inline blade | document row builder (heuristic for first row) |
+| `$signingMovement` | inline blade | document row 1 sender + signature |
+| `$arrivalCutoff` | inline blade | which attachments can show remove button |
+
+---
+
+**End of document.** This should give the mobile developer all the information needed to faithfully replicate the web behavior.
