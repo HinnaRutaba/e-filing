@@ -59,6 +59,11 @@ class NavDrawer extends ConsumerWidget {
         ),
       ),
       DrawerMenu(
+        title: "Daak Letters",
+        icon: Icons.mark_email_unread_outlined,
+        routeName: Routes.daak,
+      ),
+      DrawerMenu(
         title: "Pending Files",
         icon: Icons.event_repeat_rounded,
         routeName: Routes.pendingFiles,
@@ -68,10 +73,11 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.file_open,
         routeName: Routes.actionRequiredFiles,
       ),
+
       DrawerMenu(
-        title: "Daak Letters",
-        icon: Icons.mark_email_unread_outlined,
-        routeName: Routes.daak,
+        title: "Forwarded Files",
+        icon: Icons.send_time_extension_rounded,
+        routeName: Routes.forwarded,
       ),
       DrawerMenu(
         title: "Summaries",
@@ -95,11 +101,7 @@ class NavDrawer extends ConsumerWidget {
         icon: Icons.archive_sharp,
         routeName: Routes.archived,
       ),
-      DrawerMenu(
-        title: "Forwarded Files",
-        icon: Icons.send_time_extension_rounded,
-        routeName: Routes.forwarded,
-      ),
+
       DrawerMenu(
         title: "Change Password",
         icon: Icons.lock_reset,
@@ -135,7 +137,9 @@ class NavDrawer extends ConsumerWidget {
                           margin: const EdgeInsets.only(right: 24),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.secondaryLight.withOpacity(0.2)
+                                ? AppColors.secondaryLight.withValues(
+                                    alpha: 0.2,
+                                  )
                                 : Colors.transparent,
                             borderRadius: const BorderRadius.only(
                               topRight: Radius.circular(12),
@@ -143,6 +147,7 @@ class NavDrawer extends ConsumerWidget {
                             ),
                           ),
                           child: ListTile(
+                            visualDensity: VisualDensity.compact,
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.only(
                                 topRight: Radius.circular(12),
@@ -154,6 +159,7 @@ class NavDrawer extends ConsumerWidget {
                               color: isSelected
                                   ? AppColors.primaryDark
                                   : AppColors.secondaryDark,
+                              size: 20,
                             ),
                             horizontalTitleGap: 12,
                             title:

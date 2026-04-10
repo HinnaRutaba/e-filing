@@ -28,8 +28,11 @@ abstract class DaakInterface extends NetworkBase {
     return url;
   }
 
-  String daakForwardedHistoryUrl(
-      {required int desId, DaakStatus? status, String? query}) {
+  String daakForwardedHistoryUrl({
+    required int desId,
+    DaakStatus? status,
+    String? query,
+  }) {
     String url = '${baseUrl}daak/forwarded-history?userDesgID=$desId';
     if (status != null) {
       url += '&status=${status.value}';
@@ -48,24 +51,42 @@ abstract class DaakInterface extends NetworkBase {
 
   String daakFwdUrl(int daakId) => '${baseUrl}daak/$daakId/forward';
 
-    String daakFwdSecretaryUrl(int daakId) => '${baseUrl}daak/$daakId/secretary-return';
+  String daakFwdSecretaryUrl(int daakId) =>
+      '${baseUrl}daak/$daakId/secretary-return';
+
+  String daakDisposeOffUrl(int daakId) => '${baseUrl}daak/$daakId/dispose';
+
+  String daakNFAUrl(int daakId) => '${baseUrl}daak/$daakId/nfa';
 
   Future<DaakMeta> fetchDaakMeta(int? desId);
 
-  Future<List<DaakModel>> fetchDaakInbox(
-      {required int? desId, DaakStatus? status, String? query});
+  Future<List<DaakModel>> fetchDaakInbox({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  });
 
-  Future<List<DaakModel>> fetchDaakMyNfa(
-      {required int? desId, DaakStatus? status, String? query});
+  Future<List<DaakModel>> fetchDaakMyNfa({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  });
 
-  Future<List<DaakModel>> fetchDaakForwardedHistory(
-      {required int? desId, DaakStatus? status, String? query});
+  Future<List<DaakModel>> fetchDaakForwardedHistory({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  });
 
-  Future<DaakModel?> fetchDaakInboxShow(
-      {required int daakId, required int desId});
+  Future<DaakModel?> fetchDaakInboxShow({
+    required int daakId,
+    required int desId,
+  });
 
-  Future<DaakModel?> fetchDaakFwdShow(
-      {required int daakId, required int desId});
+  Future<DaakModel?> fetchDaakFwdShow({
+    required int daakId,
+    required int desId,
+  });
 
   Future<void> forwardDaak({
     required int daakId,
@@ -81,5 +102,20 @@ abstract class DaakInterface extends NetworkBase {
     required int desId,
     String? remarks,
     XFile? supportingAttachment,
+  });
+
+  Future<void> markNFA({
+    required int daakId,
+    required int desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  });
+
+  Future<void> disposeOff({
+    required int daakId,
+    required int desId,
+    String? remarks,
+    XFile? supportingAttachment,
+    XFile? issuedLetter,
   });
 }

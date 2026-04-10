@@ -48,8 +48,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   fetchData() async {
-    bool versionAvailable = await VersionSyncService().showUpdateDialog();
-    if (versionAvailable) return;
+    bool laterPressed = await VersionSyncService().showUpdateDialog();
+    if (!laterPressed) return;
     final ctrl = ref.read(authController.notifier);
     final loggedIn = await ctrl.isLoggedIn();
     if (!loggedIn) {

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -62,6 +64,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
+  XFile? disposeOffLetter;
 
   ChatParticipantModel? forwardTo;
   final TextEditingController forwardToController = TextEditingController();
@@ -164,6 +167,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final sttState = ref.watch(speechToTextController);
+    DaakMeta? meta = ref.watch(daakController).daakMeta;
+    final bool showOtherAction = meta?.activeUserDesg?.role == 'deo';
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.appBarColor,
@@ -210,48 +215,49 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: DaakAction.values.map((action) {
-                            final isSelected = selectedAction == action;
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() => selectedAction = action);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInSine,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.primaryDark.withValues(
-                                          alpha: 0.2,
-                                        )
-                                      : AppColors.appBarColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
+                        if (showOtherAction)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: DaakAction.values.map((action) {
+                              final isSelected = selectedAction == action;
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() => selectedAction = action);
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInSine,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primaryDark.withValues(
+                                            alpha: 0.2,
+                                          )
+                                        : AppColors.appBarColor,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primaryDark
+                                          : Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  child: AppText.bodySmall(
+                                    action.label,
                                     color: isSelected
                                         ? AppColors.primaryDark
-                                        : Colors.grey.shade300,
+                                        : Colors.black87,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
                                   ),
                                 ),
-                                child: AppText.bodySmall(
-                                  action.label,
-                                  color: isSelected
-                                      ? AppColors.primaryDark
-                                      : Colors.black87,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                              );
+                            }).toList(),
+                          ),
                         const SizedBox(height: 6),
                         AppText.titleMedium(
                           selectedAction == DaakAction.forward
@@ -421,67 +427,41 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        AppText.labelLarge(
-                          "Attachment",
-                          color: Colors.grey[800],
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () async {
-                            final files = await FilePickerService().pickFiles(
-                              allowedExtensions: [
-                                'pdf',
-                                'docx',
-                                'jpg',
-                                'jpeg',
-                                'png',
-                              ],
-                            );
-                            attachment = files.isNotEmpty ? files.first : null;
-                            setState(() {});
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.appBarColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.attach_file_outlined,
-                                  color: AppColors.primaryDark,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: AppText.titleSmall(
-                                    attachment != null
-                                        ? attachment!.name
-                                        : 'Select file to attach',
-                                  ),
-                                ),
-                                if (attachment != null)
-                                  GestureDetector(
-                                    onTap: () {
-                                      attachment = null;
-                                      setState(() {});
-                                    },
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 20,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                              ],
-                            ),
+                        if (selectedAction == DaakAction.disposeOff) ...[
+                          const SizedBox(height: 12),
+                          attachmentCard(
+                            title: "Issued Letter (Correspondence)",
+                            attachment: disposeOffLetter,
+                            onAttachmentChanged: (file) {
+                              setState(() {
+                                disposeOffLetter = file;
+                              });
+                            },
+                            onAttachmentRemoved: () {
+                              setState(() {
+                                disposeOffLetter = null;
+                              });
+                            },
                           ),
+                          AppText.labelSmall(
+                            "This is optional",
+                            color: Colors.grey[600],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        attachmentCard(
+                          title: "Attachment",
+                          attachment: attachment,
+                          onAttachmentChanged: (file) {
+                            setState(() {
+                              attachment = file;
+                            });
+                          },
+                          onAttachmentRemoved: () {
+                            setState(() {
+                              attachment = null;
+                            });
+                          },
                         ),
                         AppText.labelSmall(
                           "pdf, docx, jpg, jpeg, png. Max size: 10MB",
@@ -531,10 +511,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
                                   await ref
                                       .read(daakController.notifier)
-                                      .forwardDaak(
+                                      .markNFA(
                                         daakId: widget.daakId,
-                                        fwdToDesId:
-                                            forwardTo?.userDesignationId,
                                         remarks:
                                             remarksController.text
                                                 .trim()
@@ -556,10 +534,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
                                   await ref
                                       .read(daakController.notifier)
-                                      .forwardDaak(
+                                      .disposeOff(
                                         daakId: widget.daakId,
-                                        fwdToDesId:
-                                            forwardTo?.userDesignationId,
                                         remarks:
                                             remarksController.text
                                                 .trim()
@@ -567,6 +543,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ? null
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
+                                        issuedLetter: disposeOffLetter,
                                       );
                                 },
                               )
@@ -662,6 +639,80 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
           trailing: AppTextLinkButton(onPressed: openPDFSheet, text: "Open"),
         ),
       ),
+    );
+  }
+
+  Widget attachmentCard({
+    required String title,
+    required XFile? attachment,
+    required Function(XFile? file) onAttachmentChanged,
+    required Function() onAttachmentRemoved,
+    List<String> allowedExtensions = const [
+      'pdf',
+      'docx',
+      'jpg',
+      'jpeg',
+      'png',
+    ],
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText.labelLarge(
+          title,
+          color: Colors.grey[800],
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final files = await FilePickerService().pickFiles(
+              allowedExtensions: allowedExtensions,
+            );
+            attachment = files.isNotEmpty ? files.first : null;
+            onAttachmentChanged(attachment);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.appBarColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: attachment != null
+                    ? AppColors.primaryDark
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.attach_file_outlined,
+                  color: AppColors.primaryDark,
+                  size: 28,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: AppText.titleSmall(
+                    attachment != null
+                        ? attachment!.name
+                        : 'Select file to attach',
+                  ),
+                ),
+                if (attachment != null)
+                  GestureDetector(
+                    onTap: () {
+                      attachment = null;
+                      onAttachmentRemoved();
+                    },
+                    child: const Icon(Icons.close, size: 20, color: Colors.red),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

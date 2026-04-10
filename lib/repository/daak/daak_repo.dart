@@ -18,7 +18,7 @@ class DaakRepo extends DaakInterface {
         url: metaUrl(desId),
         options: await options(authRequired: true),
       );
-      log("META DETAILS_________${data}");
+
       return DaakMeta.fromJson(data['data']);
     } catch (e) {
       rethrow;
@@ -26,20 +26,20 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<List<DaakModel>> fetchDaakInbox(
-      {required int? desId, DaakStatus? status, String? query}) async {
+  Future<List<DaakModel>> fetchDaakInbox({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
       }
 
-      log("INBOX____${daakInboxUrl(desId: desId, status: status, query: query)}");
-
       Map<String, dynamic> data = await dioClient.get(
         url: daakInboxUrl(desId: desId, status: status, query: query),
         options: await options(authRequired: true),
       );
-      log("INBOX DAAK DETAILS_________${data}");
       if (data['data'] == null || data['data']['items'] == null) {
         return [];
       }
@@ -52,21 +52,24 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<List<DaakModel>> fetchDaakForwardedHistory(
-      {required int? desId, DaakStatus? status, String? query}) async {
+  Future<List<DaakModel>> fetchDaakForwardedHistory({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
       }
 
-      log("FWD HISTORY____${daakForwardedHistoryUrl(desId: desId, status: status, query: query)}");
-
       Map<String, dynamic> data = await dioClient.get(
-        url:
-            daakForwardedHistoryUrl(desId: desId, status: status, query: query),
+        url: daakForwardedHistoryUrl(
+          desId: desId,
+          status: status,
+          query: query,
+        ),
         options: await options(authRequired: true),
       );
-      log("FWD DAAK DETAILS_________${data}");
       if (data['data'] == null || data['data']['items'] == null) {
         return [];
       }
@@ -79,20 +82,20 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<List<DaakModel>> fetchDaakMyNfa(
-      {required int? desId, DaakStatus? status, String? query}) async {
+  Future<List<DaakModel>> fetchDaakMyNfa({
+    required int? desId,
+    DaakStatus? status,
+    String? query,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
       }
 
-      log("MY NFA____${daakMyNfaUrl(desId: desId, status: status, query: query)}");
-
       Map<String, dynamic> data = await dioClient.get(
         url: daakMyNfaUrl(desId: desId, status: status, query: query),
         options: await options(authRequired: true),
       );
-      log("MY NFA DAAK DETAILS_________${data}");
       if (data['data'] == null || data['data']['items'] == null) {
         return [];
       }
@@ -105,8 +108,10 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<DaakModel?> fetchDaakFwdShow(
-      {required int? daakId, required int? desId}) async {
+  Future<DaakModel?> fetchDaakFwdShow({
+    required int? daakId,
+    required int? desId,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -126,8 +131,10 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<DaakModel?> fetchDaakInboxShow(
-      {required int? daakId, required int? desId}) async {
+  Future<DaakModel?> fetchDaakInboxShow({
+    required int? daakId,
+    required int? desId,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -148,12 +155,13 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<void> forwardDaak(
-      {required int? daakId,
-      required int? fwdToDesId,
-      required int? desId,
-      String? remarks,
-      XFile? supportingAttachment}) async {
+  Future<void> forwardDaak({
+    required int? daakId,
+    required int? fwdToDesId,
+    required int? desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -163,7 +171,8 @@ class DaakRepo extends DaakInterface {
       }
       if (fwdToDesId == null) {
         throw Exception(
-            "Forward To Designation ID is required to fetch daak details");
+          "Forward To Designation ID is required to fetch daak details",
+        );
       }
       final Map<String, dynamic> json = {
         'userDesgID': desId,
@@ -198,12 +207,13 @@ class DaakRepo extends DaakInterface {
   }
 
   @override
-  Future<void> forwardDaakSecretary(
-      {required int? daakId,
-      required int? returnToDesId,
-      required int? desId,
-      String? remarks,
-      XFile? supportingAttachment}) async {
+  Future<void> forwardDaakSecretary({
+    required int? daakId,
+    required int? returnToDesId,
+    required int? desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -213,7 +223,8 @@ class DaakRepo extends DaakInterface {
       }
       if (returnToDesId == null) {
         throw Exception(
-            "Return To Designation ID is required to fetch daak details");
+          "Return To Designation ID is required to fetch daak details",
+        );
       }
       final Map<String, dynamic> json = {
         'userDesgID': desId,
@@ -239,6 +250,112 @@ class DaakRepo extends DaakInterface {
 
       await dioClient.post(
         url: daakFwdSecretaryUrl(daakId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> disposeOff({
+    required int? daakId,
+    required int? desId,
+    String? remarks,
+    XFile? supportingAttachment,
+    XFile? issuedLetter,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (daakId == null) {
+        throw Exception("Daak ID is required to fetch daak details");
+      }
+
+      final Map<String, dynamic> json = {
+        'userDesgID': desId,
+
+        if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
+      };
+
+      print("JSON_______${json}");
+
+      final FormData formData = FormData.fromMap(json);
+
+      if (supportingAttachment != null) {
+        formData.files.add(
+          MapEntry(
+            'supporting_attachments',
+            await MultipartFile.fromFile(
+              supportingAttachment.path,
+              filename: supportingAttachment.name,
+            ),
+          ),
+        );
+      }
+
+      if (issuedLetter != null) {
+        formData.files.add(
+          MapEntry(
+            'issued_letter',
+            await MultipartFile.fromFile(
+              issuedLetter.path,
+              filename: issuedLetter.name,
+            ),
+          ),
+        );
+      }
+
+      await dioClient.post(
+        url: daakDisposeOffUrl(daakId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> markNFA({
+    required int? daakId,
+    required int? desId,
+    String? remarks,
+    XFile? supportingAttachment,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (daakId == null) {
+        throw Exception("Daak ID is required to fetch daak details");
+      }
+
+      final Map<String, dynamic> json = {
+        'userDesgID': desId,
+        if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
+      };
+
+      print("JSON_______${json}");
+
+      final FormData formData = FormData.fromMap(json);
+
+      if (supportingAttachment != null) {
+        formData.files.add(
+          MapEntry(
+            'supporting_attachments',
+            await MultipartFile.fromFile(
+              supportingAttachment.path,
+              filename: supportingAttachment.name,
+            ),
+          ),
+        );
+      }
+
+      await dioClient.post(
+        url: daakNFAUrl(daakId),
         options: await options(authRequired: true),
         formData: formData,
       );
