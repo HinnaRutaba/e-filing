@@ -72,6 +72,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isDaakShown = await localStorageCtrl.isDaakDialogShown();
 
     if (!isDaakShown && mounted) {
+       localStorageCtrl.daakDialogShown();
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -83,7 +84,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           iconColor: Colors.green,
         ),
       );
-      await localStorageCtrl.daakDialogShown();
+      
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:efiling_balochistan/config/router/app_router.dart';
@@ -13,7 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class VersionSyncService {
   static final String _appStoreUrl =
-      "https://apps.apple.com/pk/app/balochistan-e-filing-system/id6758300893Balochistan E-Filing System";
+      "https://apps.apple.com/pk/app/balochistan-e-filing-system/id6758300893";
   static final String _playStoreUrl =
       "https://play.google.com/store/apps/details?id=com.lrm.efiling_balochistan&pcampaignid=web_share";
 
@@ -26,17 +27,11 @@ class VersionSyncService {
   VersionSyncService._internal();
 
   VersionSyncModel? _versionSyncModel;
-  double? _currentAppVersion;
 
   VersionSyncModel? get versionSyncModel => _versionSyncModel;
-  double? get currentAppVersion => _currentAppVersion;
 
   set versionSyncModel(VersionSyncModel? model) {
     _versionSyncModel = model;
-  }
-
-  set currentAppVersion(double? version) {
-    _currentAppVersion = version;
   }
 
   VersionSyncRepo _versionSyncRepo = VersionSyncRepo();
@@ -45,16 +40,6 @@ class VersionSyncService {
     try {
       versionSyncModel = await _versionSyncRepo.getSyncVersion();
     } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<double?> getCurrentAppVersion() async {
-    try {
-      String versionStr = await getAppVersionString();
-      currentAppVersion = _parseVersion(versionStr);
-      return currentAppVersion;
-    } catch (e, s) {
       rethrow;
     }
   }
@@ -68,26 +53,44 @@ class VersionSyncService {
     }
   }
 
-  double _parseVersion(String versionStr) {
-    final parts = versionStr.split('.');
-    double version = 0;
-    for (int i = 0; i < parts.length; i++) {
-      final part = int.tryParse(parts[i]) ?? 0;
-      version += part / (i == 0 ? 1 : (100.0 * i));
+  /// Compares two semantic version strings
+  /// Returns: -1 if version1 < version2, 0 if equal, 1 if version1 > version2
+  int _compareVersions(String version1, String version2) {
+    final parts1 = version1
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+    final parts2 = version2
+        .split('.')
+        .map((e) => int.tryParse(e) ?? 0)
+        .toList();
+
+    // Pad with zeros to match length
+    final maxLength = (parts1.length > parts2.length)
+        ? parts1.length
+        : parts2.length;
+    while (parts1.length < maxLength) parts1.add(0);
+    while (parts2.length < maxLength) parts2.add(0);
+
+    // Compare each part
+    for (int i = 0; i < maxLength; i++) {
+      if (parts1[i] < parts2[i]) return -1;
+      if (parts1[i] > parts2[i]) return 1;
     }
-    return version;
+    return 0;
   }
 
   Future<bool> isAppVersionOutdated() async {
     if (versionSyncModel == null) {
       await fetchVersionSync();
     }
-    if (currentAppVersion == null) {
-      await getCurrentAppVersion();
-    }
     if (versionSyncModel != null && versionSyncModel!.latestVersion != null) {
-      return currentAppVersion! <
-          _parseVersion(_versionSyncModel!.latestVersion!);
+      final currentVersion = await getAppVersionString();
+      return _compareVersions(
+            currentVersion,
+            _versionSyncModel!.latestVersion!,
+          ) <
+          0;
     }
     return false;
   }
@@ -98,18 +101,18 @@ class VersionSyncService {
 
     final bool isOutdated = await isAppVersionOutdated();
 
-    print(
-        "IS OUTDATED______${isOutdated}_____${currentAppVersion}____${versionSyncModel?.latestVersion}");
-
-    if (!isOutdated) return false;
+    if (!isOutdated) return true;
 
     final title = versionSyncModel?.title ?? "Update Available";
-    final message = versionSyncModel?.message ??
+    final message =
+        versionSyncModel?.message ??
         "A new version of the app is available. Please update to continue.";
 
-    showDialog(
+    if (!context.mounted) return true;
+
+    return await showDialog(
       context: context,
-      barrierDismissible: !(versionSyncModel?.forceUpdate ?? false),
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -129,19 +132,18 @@ class VersionSyncService {
                 const SizedBox(height: 16),
                 AppText.headlineSmall(title),
                 const SizedBox(height: 8),
-                AppText.bodyMedium(
-                  message,
-                  textAlign: TextAlign.center,
-                ),
+                AppText.bodyMedium(message, textAlign: TextAlign.center),
                 const SizedBox(height: 24),
                 AppSolidButton(
                   onPressed: () async {
                     final String url = Platform.isIOS
-                        ? versionSyncModel?.playStoreUrl ?? _appStoreUrl
-                        : versionSyncModel?.playStoreUrl ?? _playStoreUrl;
+                        ? _appStoreUrl
+                        : _playStoreUrl;
 
-                    await launchUrl(Uri.parse(url),
-                        mode: LaunchMode.externalApplication);
+                    await launchUrl(
+                      Uri.parse(url),
+                      mode: LaunchMode.externalApplication,
+                    );
                   },
                   text: "Update Now",
                   width: double.infinity,
@@ -150,7 +152,7 @@ class VersionSyncService {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
-                      RouteHelper.pop();
+                      RouteHelper.pop(true);
                     },
                     child: AppText.bodyMedium("Later"),
                   ),
@@ -161,6 +163,5 @@ class VersionSyncService {
         );
       },
     );
-    return true;
   }
 }

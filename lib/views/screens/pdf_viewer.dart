@@ -8,12 +8,13 @@ class PdfViewer extends StatefulWidget {
   final List<Widget>? actions;
   final bool fullScreen;
 
-  const PdfViewer(
-      {super.key,
-      required this.url,
-      this.title,
-      this.actions,
-      this.fullScreen = true});
+  const PdfViewer({
+    super.key,
+    required this.url,
+    this.title,
+    this.actions,
+    this.fullScreen = true,
+  });
 
   @override
   State<PdfViewer> createState() => _PdfViewerState();
@@ -39,9 +40,6 @@ class _PdfViewerState extends State<PdfViewer> {
                     controller: pdfViewerController,
                   ),
           )
-        : pdfrx.PdfViewer.uri(
-            Uri.parse(
-                "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf"),
-          );
+        : pdfrx.PdfViewer.uri(Uri.parse(widget.url ?? ""));
   }
 }

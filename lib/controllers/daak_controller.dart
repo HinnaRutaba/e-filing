@@ -76,7 +76,7 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
-    //fetchDaakMeta(desId);
+    fetchDaakMeta(desId);
     if (state.selectedFilter == DaakViewFilter.inbox) {
       await fetchDaakInbox(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.nfa) {
@@ -128,7 +128,10 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<List<DaakModel>?> fetchDaakInbox({required int? desId}) async {
     try {
       List<DaakModel> daakList = await repo.fetchDaakInbox(
-          desId: desId, status: state.selectedStatus, query: state.searchText);
+        desId: desId,
+        status: state.selectedStatus,
+        query: state.searchText,
+      );
       state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
       return daakList;
     } catch (e, s) {
@@ -141,7 +144,10 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<List<DaakModel>?> fetchDaakMyNfa({required int? desId}) async {
     try {
       List<DaakModel> daakList = await repo.fetchDaakMyNfa(
-          desId: desId, status: state.selectedStatus, query: state.searchText);
+        desId: desId,
+        status: state.selectedStatus,
+        query: state.searchText,
+      );
       state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
       return daakList;
     } catch (e) {
@@ -150,11 +156,15 @@ class DaakController extends BaseControllerState<DaakState> {
     }
   }
 
-  Future<List<DaakModel>?> fetchDaakForwardedHistory(
-      {required int? desId}) async {
+  Future<List<DaakModel>?> fetchDaakForwardedHistory({
+    required int? desId,
+  }) async {
     try {
       List<DaakModel> daakList = await repo.fetchDaakForwardedHistory(
-          desId: desId, status: state.selectedStatus, query: state.searchText);
+        desId: desId,
+        status: state.selectedStatus,
+        query: state.searchText,
+      );
       state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
       return daakList;
     } catch (e) {
@@ -163,8 +173,10 @@ class DaakController extends BaseControllerState<DaakState> {
     }
   }
 
-  Future<DaakModel?> fetchDaakDetails(
-      {required int? daakId, required DaakStatus status}) async {
+  Future<DaakModel?> fetchDaakDetails({
+    required int? daakId,
+    required DaakStatus status,
+  }) async {
     try {
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       DaakModel? daak;
@@ -182,11 +194,15 @@ class DaakController extends BaseControllerState<DaakState> {
     }
   }
 
-  Future<DaakModel?> fetchDaakInboxShow(
-      {required int daakId, required int desId}) async {
+  Future<DaakModel?> fetchDaakInboxShow({
+    required int daakId,
+    required int desId,
+  }) async {
     try {
-      DaakModel? daak =
-          await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
+      DaakModel? daak = await repo.fetchDaakInboxShow(
+        daakId: daakId,
+        desId: desId,
+      );
       return daak;
     } catch (e) {
       Toast.error(message: handleException(e));
@@ -194,11 +210,15 @@ class DaakController extends BaseControllerState<DaakState> {
     }
   }
 
-  Future<DaakModel?> fetchDaakFwdShow(
-      {required int daakId, required int desId}) async {
+  Future<DaakModel?> fetchDaakFwdShow({
+    required int daakId,
+    required int desId,
+  }) async {
     try {
-      DaakModel? daak =
-          await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);
+      DaakModel? daak = await repo.fetchDaakFwdShow(
+        daakId: daakId,
+        desId: desId,
+      );
       return daak;
     } catch (e) {
       Toast.error(message: handleException(e));
@@ -213,6 +233,8 @@ class DaakController extends BaseControllerState<DaakState> {
     XFile? supportingAttachment,
   }) async {
     try {
+      log("FWD DAAK____${daakId}____${fwdToDesId}_____${daakId}");
+
       EasyLoading.show();
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       await repo.forwardDaakSecretary(
@@ -225,6 +247,56 @@ class DaakController extends BaseControllerState<DaakState> {
       Toast.success(message: "Daak forwarded successfully");
       EasyLoading.dismiss();
       RouteHelper.pop(DaakViewFilter.inbox);
+    } catch (e, s) {
+      log("ERRR_____${e}______$s");
+      EasyLoading.dismiss();
+      Toast.error(message: handleException(e));
+    }
+  }
+
+  Future<void> disposeOff({
+    required int? daakId,
+    String? remarks,
+    XFile? supportingAttachment,
+    XFile? issuedLetter,
+  }) async {
+    try {
+      EasyLoading.show();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.disposeOff(
+        daakId: daakId,
+        desId: desId,
+        remarks: remarks,
+        supportingAttachment: supportingAttachment,
+        issuedLetter: issuedLetter,
+      );
+      Toast.success(message: "Daak disposed off successfully");
+      EasyLoading.dismiss();
+      RouteHelper.pop(DaakViewFilter.nfa);
+    } catch (e, s) {
+      log("ERRR_____${e}______$s");
+      EasyLoading.dismiss();
+      Toast.error(message: handleException(e));
+    }
+  }
+
+  Future<void> markNFA({
+    required int? daakId,
+    String? remarks,
+    XFile? supportingAttachment,
+  }) async {
+    try {
+      EasyLoading.show();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.markNFA(
+        daakId: daakId,
+        desId: desId,
+        remarks: remarks,
+        supportingAttachment: supportingAttachment,
+      );
+      Toast.success(message: "Daak marked as NFA successfully");
+      EasyLoading.dismiss();
+      RouteHelper.pop(DaakViewFilter.nfa);
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();

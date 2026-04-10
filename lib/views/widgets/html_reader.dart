@@ -10,8 +10,6 @@ class HtmlReader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return SingleChildScrollView(
       child: HtmlWidget(
         html,
@@ -22,11 +20,9 @@ class HtmlReader extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: HtmlWidget(
                 element.outerHtml,
-                textStyle: textStyle ??
-                    const TextStyle(
-                      fontSize: 14,
-                      fontFamily: fileFont,
-                    ),
+                textStyle:
+                    textStyle ??
+                    const TextStyle(fontSize: 14, fontFamily: fileFont),
                 customStylesBuilder: (element) {
                   if (element.localName == 'td' || element.localName == 'th') {
                     return {
@@ -36,9 +32,7 @@ class HtmlReader extends StatelessWidget {
                     };
                   }
                   if (element.localName == 'table') {
-                    return {
-                      'border-collapse': 'collapse',
-                    };
+                    return {'border-collapse': 'collapse'};
                   }
                   return null;
                 },
@@ -48,11 +42,8 @@ class HtmlReader extends StatelessWidget {
           return null;
         },
         renderMode: RenderMode.column,
-        textStyle: textStyle ??
-            const TextStyle(
-              fontSize: 14,
-              fontFamily: fileFont,
-            ),
+        textStyle:
+            textStyle ?? const TextStyle(fontSize: 14, fontFamily: fileFont),
       ),
     );
   }

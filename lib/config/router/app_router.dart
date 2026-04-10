@@ -70,12 +70,12 @@ class AppRouter {
     ),
     GoRoute(
       path: Routes.fileDetails(),
-      pageBuilder: GoTransitions.slide.toTop.build(
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => FileDetailsScreen(
           fileId:
               int.tryParse(state.pathParameters[PathParams.fileId] ?? '-1') ??
-                  -1,
+              -1,
           fileType: state.extra as FileType,
         ),
       ),
@@ -95,7 +95,7 @@ class AppRouter {
     ),
     GoRoute(
       path: Routes.fileChat(),
-      pageBuilder: GoTransitions.slide.toTop.build(
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => FileChatScreen(
           fileId: state.pathParameters[PathParams.fileId] != null
@@ -246,11 +246,7 @@ class AppRouter {
     // },
     errorPageBuilder: (context, state) => MaterialPage(
       key: state.pageKey,
-      child: const Scaffold(
-        body: Center(
-          child: Text('Page not found'),
-        ),
-      ),
+      child: const Scaffold(body: Center(child: Text('Page not found'))),
     ),
   );
 }
