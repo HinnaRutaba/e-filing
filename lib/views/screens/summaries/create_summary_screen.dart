@@ -9,7 +9,6 @@ import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_fil
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -83,6 +82,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         dateController.text = DateTimeHelper.datFormatSlash(picked);
       });
     }
+  }
+
+  addAttachement() {
+    setState(() {
+      attachments.add(FlagAndAttachmentModel());
+    });
   }
 
   Future<void> _pickMainPdf() async {
@@ -542,7 +547,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         const SizedBox(height: 6),
         _richTextEditor(),
         const SizedBox(height: 16),
-        _sectionActions(nextStep: 1, continueLabel: "Continue to Flags"),
+        _sectionActions(nextStep: 1, continueLabel: "Add Flags"),
       ],
     );
   }
@@ -567,27 +572,46 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               onDelete: attachments.length > 1
                   ? () => setState(() => attachments.removeAt(i))
                   : null,
+              onAdd: addAttachement,
             );
           },
         ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: AppOutlineButton(
-            onPressed: () {
-              setState(() {
-                attachments.add(FlagAndAttachmentModel());
-              });
-            },
-            text: "Add More",
-            color: AppColors.secondary,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        if (attachments.isEmpty)
+          Row(
+            children: [
+              InkWell(
+                onTap: addAttachement,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primaryDark),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Icon(
+                        Icons.add,
+                        color: AppColors.primaryDark,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      AppText.bodySmall(
+                        "Add More",
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 16),
+
         _sectionActions(
+          previousStep: 0,
           nextStep: 2,
-          continueLabel: "Continue to Correspondence",
+          continueLabel: "Add Correspondence",
         ),
       ],
     );
@@ -638,17 +662,29 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _sectionActions(),
+        _sectionActions(previousStep: 1),
       ],
     );
   }
 
-  Widget _sectionActions({int? nextStep, String? continueLabel}) {
+  Widget _sectionActions({
+    int? nextStep,
+    String? continueLabel,
+    int? previousStep,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
+            if (previousStep != null) ...[
+              InkWell(
+                onTap: () => setState(() => _openSection = previousStep),
+
+                child: const Icon(Icons.arrow_back_rounded),
+              ),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: AppOutlineButton(
                 onPressed: _onPreview,
@@ -663,13 +699,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             if (nextStep != null && continueLabel != null) ...[
               const SizedBox(width: 10),
               Expanded(
-                child: AppSolidButton(
+                child: AppOutlineButton(
                   onPressed: () => setState(() => _openSection = nextStep),
                   text: continueLabel,
-                  backgroundColor: AppColors.primaryDark,
+                  color: AppColors.secondaryDark,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 12,
+                    vertical: 8,
                   ),
                 ),
               ),
