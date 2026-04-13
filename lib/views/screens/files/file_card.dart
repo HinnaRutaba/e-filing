@@ -6,13 +6,7 @@ import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
-enum FileType {
-  pending,
-  my,
-  actionRequired,
-  archived,
-  forwarded,
-}
+enum FileType { pending, my, actionRequired, archived, forwarded }
 
 class FileCard extends StatelessWidget {
   final FileType fileType;
@@ -26,9 +20,7 @@ class FileCard extends StatelessWidget {
       color: AppColors.white,
       elevation: 3.5,
       shadowColor: AppColors.secondaryLight.withOpacity(0.5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(13),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       child: InkWell(
         onTap: () {
           RouteHelper.push(Routes.fileDetails(data?.fileId), extra: fileType);
@@ -38,13 +30,10 @@ class FileCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             color: AppColors.primaryDark,
             gradient: const LinearGradient(
-              colors: [
-                AppColors.primaryDark,
-                AppColors.secondaryLight,
-              ],
+              colors: [AppColors.primaryDark, AppColors.secondaryLight],
             ),
           ),
-          padding: const EdgeInsets.all(1.5),
+          padding: const EdgeInsets.fromLTRB(1, 1, 1, 1),
           child: Card(
             margin: EdgeInsets.zero,
             color: AppColors.white,
@@ -106,7 +95,9 @@ class FileCard extends StatelessWidget {
                               ),
                               margin: const EdgeInsets.only(right: 2),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               child: AppText.labelLarge(
                                 data?.tag?.title ?? '',
                                 color: AppColors.white,
@@ -118,10 +109,13 @@ class FileCard extends StatelessWidget {
                               data?.status != null)
                             Container(
                               decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  color: AppColors.secondary),
+                                borderRadius: BorderRadius.circular(50),
+                                color: AppColors.secondary,
+                              ),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               child: AppText.labelLarge(
                                 fileType == FileType.forwarded
                                     ? "Forwarded"
@@ -133,7 +127,7 @@ class FileCard extends StatelessWidget {
                           const Icon(
                             Icons.arrow_right,
                             color: AppColors.secondaryDark,
-                          )
+                          ),
                         ],
                       ),
                       // Row(
@@ -168,43 +162,46 @@ class FileCard extends StatelessWidget {
                             const SizedBox(width: 16),
                             Expanded(
                               child: infoTile(
-                                  title: "Receiver",
-                                  value: data?.receiver ?? '---'),
+                                title: "Receiver",
+                                value: data?.receiver ?? '---',
+                              ),
                             ),
                           ],
                           const SizedBox(width: 16),
                           Expanded(
-                            child: fileType == FileType.pending ||
+                            child:
+                                fileType == FileType.pending ||
                                     fileType == FileType.actionRequired
                                 ? infoTile(
                                     title: "Received on",
                                     value: DateTimeHelper.datFormatSlashShort(
-                                        data?.receivedAt),
+                                      data?.receivedAt,
+                                    ),
                                     icon: Icons.calendar_month,
                                   )
                                 : fileType == FileType.archived
-                                    ? infoTile(
-                                        title: "Archived on",
-                                        value:
-                                            DateTimeHelper.datFormatSlashShort(
-                                                data?.archivedAt),
-                                        icon: Icons.calendar_month,
-                                      )
-                                    : fileType == FileType.forwarded
-                                        ? infoTile(
-                                            title: "Forwarded on",
-                                            value: DateTimeHelper
-                                                .datFormatSlashShort(
-                                                    data?.latestDate),
-                                            icon: Icons.calendar_month,
-                                          )
-                                        : infoTile(
-                                            title: "Created on",
-                                            value: DateTimeHelper
-                                                .datFormatSlashShort(
-                                                    data?.createdAt),
-                                            icon: Icons.calendar_month,
-                                          ),
+                                ? infoTile(
+                                    title: "Archived on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.archivedAt,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : fileType == FileType.forwarded
+                                ? infoTile(
+                                    title: "Forwarded on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.latestDate,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : infoTile(
+                                    title: "Created on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.createdAt,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  ),
                           ),
                         ],
                       ),
@@ -237,7 +234,7 @@ class FileCard extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -249,35 +246,26 @@ class FileCard extends StatelessWidget {
     );
   }
 
-  Widget infoTile(
-      {required String title,
-      required String value,
-      IconData icon = Icons.person}) {
+  Widget infoTile({
+    required String title,
+    required String value,
+    IconData icon = Icons.person,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 10,
           backgroundColor: AppColors.secondary,
-          child: Icon(
-            icon,
-            color: AppColors.white,
-            size: 12,
-          ),
+          child: Icon(icon, color: AppColors.white, size: 12),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppText.labelSmall(
-                title,
-                color: AppColors.secondaryDark,
-              ),
-              AppText.bodySmall(
-                value,
-                color: AppColors.textPrimary,
-              ),
+              AppText.labelSmall(title, color: AppColors.secondaryDark),
+              AppText.bodySmall(value, color: AppColors.textPrimary),
             ],
           ),
         ),

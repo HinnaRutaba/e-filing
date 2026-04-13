@@ -9,6 +9,7 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DaakListViewScreen extends ConsumerStatefulWidget {
@@ -40,15 +41,18 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
   Widget build(BuildContext context) {
     final controller = ref.watch(daakController);
     final menuStatuses = DaakStatus.values.where((status) {
-      final sameLabelStatuses =
-          DaakStatus.values.where((s) => s.label == status.label);
-      final lowestValue =
-          sameLabelStatuses.map((s) => s.value).reduce((a, b) => a < b ? a : b);
+      final sameLabelStatuses = DaakStatus.values.where(
+        (s) => s.label == status.label,
+      );
+      final lowestValue = sameLabelStatuses
+          .map((s) => s.value)
+          .reduce((a, b) => a < b ? a : b);
       return status.value == lowestValue;
     }).toList();
 
-    final filteredDaak =
-        ref.watch(daakController.select((state) => state.filteredDaak));
+    final filteredDaak = ref.watch(
+      daakController.select((state) => state.filteredDaak),
+    );
     return BaseScreen(
       title: "Daak Inbox",
       isdash: false,
@@ -151,9 +155,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                             color: AppColors.black,
                           ),
                           const SizedBox(width: 8),
-                          AppText.titleSmall(
-                            'All Statuses',
-                          )
+                          AppText.titleSmall('All Statuses'),
                         ],
                       ),
                     ),
@@ -162,15 +164,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                         value: status,
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.circle,
-                              size: 8,
-                              color: status.color,
-                            ),
+                            Icon(Icons.circle, size: 8, color: status.color),
                             const SizedBox(width: 8),
-                            AppText.titleSmall(
-                              status.label,
-                            ),
+                            AppText.titleSmall(status.label),
                           ],
                         ),
                       ),
@@ -187,8 +183,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                       ),
                       color: controller.selectedStatus == null
                           ? Colors.white
-                          : controller.selectedStatus!.color
-                              .withValues(alpha: 0.12),
+                          : controller.selectedStatus!.color.withValues(
+                              alpha: 0.12,
+                            ),
                     ),
                     child: Icon(
                       Icons.filter_list_rounded,
@@ -212,21 +209,22 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                           child: filteredDaak.isEmpty
                               ? Center(
                                   child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('No daak found.'),
-                                    AppTextLinkButton(
-                                      onPressed: () {
-                                        ref
-                                            .read(daakController.notifier)
-                                            .loadData();
-                                      },
-                                      text: 'Retry',
-                                      icon: Icons.refresh,
-                                    )
-                                  ],
-                                ))
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('No daak found.'),
+                                      AppTextLinkButton(
+                                        onPressed: () {
+                                          ref
+                                              .read(daakController.notifier)
+                                              .loadData();
+                                        },
+                                        text: 'Retry',
+                                        icon: Icons.refresh,
+                                      ),
+                                    ],
+                                  ),
+                                )
                               : ListView.builder(
                                   itemCount: filteredDaak.length,
                                   physics:
@@ -271,41 +269,84 @@ class _FilterTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: selected ? AppColors.secondary : AppColors.cardColorLight,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? AppColors.secondary : Colors.grey[300]!,
-            width: 1.5,
-          ),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.15),
+                    color: AppColors.secondary.withValues(alpha: 0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ]
-              : [],
+              : const [],
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: selected ? Colors.white : Colors.black54,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: AppText.bodySmall(
-                label,
-                color: selected ? Colors.white : Colors.black87,
-              ),
-            ),
-          ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            children: [
+              _buildContent(filled: false),
+              if (selected)
+                _buildContent(filled: true).animate().custom(
+                  duration: 200.ms,
+                  curve: Curves.easeInOutSine,
+                  builder: (context, value, child) => ShaderMask(
+                    blendMode: BlendMode.dstIn,
+                    shaderCallback: (rect) {
+                      const softness = 0.4;
+                      final t = value * (1 + softness);
+                      final s1 = (t - softness).clamp(0.0, 0.999);
+                      final s2 = t.clamp(s1 + 0.001, 1.0);
+                      return LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        stops: [s1, s2],
+                        colors: const [Colors.white, Colors.transparent],
+                      ).createShader(rect);
+                    },
+                    child: child,
+                  ),
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent({required bool filled}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: filled ? null : AppColors.cardColorLight,
+        gradient: filled
+            ? LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  AppColors.secondary,
+                  AppColors.secondary.withValues(alpha: 0.75),
+                ],
+              )
+            : null,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: filled ? Colors.transparent : Colors.grey[300]!,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: filled ? Colors.white : Colors.black54, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: AppText.bodySmall(
+              label,
+              color: filled ? Colors.white : Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }

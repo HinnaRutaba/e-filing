@@ -12,8 +12,10 @@ enum DaakTags {
   const DaakTags(this.label, this.value, this.color);
 
   static DaakTags? fromValue(int value) {
-    return DaakTags.values
-        .firstWhere((e) => e.value == value, orElse: () => DaakTags.normal);
+    return DaakTags.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => DaakTags.normal,
+    );
   }
 }
 
@@ -22,7 +24,7 @@ enum DaakStatus {
   inProgress2("In Progress", 2, Colors.blue),
   inProgress3("In Progress", 3, Colors.blue),
   forwarded("Forwarded", 4, Colors.orange),
-  nfa("NFA", 5, AppColors.primary),
+  nfa("NFA", 5, AppColors.textSecondary),
   filePutup("In Progress (File Putup)", 6, AppColors.secondary),
   disposedOff("Disposed Off", 7, Colors.red);
 
@@ -32,8 +34,10 @@ enum DaakStatus {
   const DaakStatus(this.label, this.value, this.color);
 
   static DaakStatus? fromValue(int value) {
-    return DaakStatus.values.firstWhere((e) => e.value == value,
-        orElse: () => DaakStatus.inProgress1);
+    return DaakStatus.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => DaakStatus.inProgress1,
+    );
   }
 }
 
@@ -58,22 +62,24 @@ class DaakMeta {
     if (json == null) return DaakMeta();
     return DaakMeta(
       statusMap: json['status_map'] != null
-          ? Map<String, List<String>>.from(json['status_map'].map(
-              (k, v) => MapEntry(k, List<String>.from(v)),
-            ))
+          ? Map<String, List<String>>.from(
+              json['status_map'].map(
+                (k, v) => MapEntry(k, List<String>.from(v)),
+              ),
+            )
           : null,
       statusFilterOptions: json['status_filter_options'] != null
           ? Map<String, String>.from(json['status_filter_options'])
           : null,
       departmentUsers: json['department_users'] != null
           ? (json['department_users'] as List)
-              .map((i) => DepartmentUser.fromJson(i))
-              .toList()
+                .map((i) => DepartmentUser.fromJson(i))
+                .toList()
           : null,
       fileTypes: json['file_types'] != null
           ? (json['file_types'] as List)
-              .map((i) => FileType.fromJson(i))
-              .toList()
+                .map((i) => FileType.fromJson(i))
+                .toList()
           : null,
       tags: json['tags'] != null
           ? (json['tags'] as List).map((i) => Tag.fromJson(i)).toList()
@@ -120,10 +126,7 @@ class FileType {
 
   factory FileType.fromJson(Map<String, dynamic>? json) {
     if (json == null) return FileType();
-    return FileType(
-      id: json['id'],
-      title: json['title'],
-    );
+    return FileType(id: json['id'], title: json['title']);
   }
 }
 
@@ -135,10 +138,7 @@ class Tag {
 
   factory Tag.fromJson(Map<String, dynamic>? json) {
     if (json == null) return Tag();
-    return Tag(
-      id: json['id'],
-      title: json['title'],
-    );
+    return Tag(id: json['id'], title: json['title']);
   }
 }
 

@@ -16,6 +16,7 @@ class BaseScreen extends ConsumerWidget {
   final bool enableBackButton;
   final List<Widget>? actions;
   final bool isdash;
+  final Color? bgColor;
   const BaseScreen({
     super.key,
     required this.body,
@@ -24,110 +25,113 @@ class BaseScreen extends ConsumerWidget {
     this.showUserDetails = false,
     this.enableBackButton = true,
     this.actions,
+    this.bgColor,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor ?? AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
+        backgroundColor: bgColor,
         title: showUserDetails
             ? Container(
                 padding: const EdgeInsets.only(top: 12, bottom: 12),
                 child: Consumer(
-                    //future: ref.read(authRepo).fetchCurrentUserDetails(),
-                    builder: (context, ref, child) {
-                  final user = ref.watch(authController);
-                  bool multiDesignations = user.designations.length > 1;
-                  final DesignationModel? selectedDesignation =
-                      user.currentDesignation;
-                  return InkWell(
-                    onTap: !multiDesignations ? null : () {},
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Hero(
-                              tag: HeroTags.profile,
-                              child: CircleAvatar(
-                                backgroundColor:
-                                    AppColors.secondaryLight.withOpacity(0.2),
-                                radius: 15,
-                                child: const Icon(
-                                  Icons.person,
-                                  color: AppColors.secondary,
-                                  size: 20,
+                  //future: ref.read(authRepo).fetchCurrentUserDetails(),
+                  builder: (context, ref, child) {
+                    final user = ref.watch(authController);
+                    bool multiDesignations = user.designations.length > 1;
+                    final DesignationModel? selectedDesignation =
+                        user.currentDesignation;
+                    return InkWell(
+                      onTap: !multiDesignations ? null : () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Hero(
+                                tag: HeroTags.profile,
+                                child: CircleAvatar(
+                                  backgroundColor: AppColors.secondaryLight
+                                      .withOpacity(0.2),
+                                  radius: 15,
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: AppColors.secondary,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                AppText.titleMedium(
-                                  user.userTitle ?? '---',
-                                  fontSize: 15,
-                                ),
-                                AppText.bodySmall(
-                                  user.currentDesignation?.designation ?? '',
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ],
-                            ),
-                            if (user.designations.length > 1)
-                              PopupMenuButton(
-                                icon: const Icon(Icons.arrow_drop_down),
-                                itemBuilder: (context) {
-                                  return user.designations
-                                      .map((des) =>
-                                          PopupMenuItem<DesignationModel>(
-                                            value: des,
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: AppText.labelLarge(
-                                                    des.designation ?? '---',
-                                                  ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  AppText.titleMedium(
+                                    user.userTitle ?? '---',
+                                    fontSize: 15,
+                                  ),
+                                  AppText.bodySmall(
+                                    user.currentDesignation?.designation ?? '',
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ],
+                              ),
+                              if (user.designations.length > 1)
+                                PopupMenuButton(
+                                  icon: const Icon(Icons.arrow_drop_down),
+                                  itemBuilder: (context) {
+                                    return user.designations
+                                        .map(
+                                          (des) =>
+                                              PopupMenuItem<DesignationModel>(
+                                                value: des,
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: AppText.labelLarge(
+                                                        des.designation ??
+                                                            '---',
+                                                      ),
+                                                    ),
+                                                    if (des.userDesgId ==
+                                                        selectedDesignation
+                                                            ?.userDesgId)
+                                                      const Icon(
+                                                        Icons.check,
+                                                        color: Colors.green,
+                                                      ),
+                                                  ],
                                                 ),
-                                                if (des.userDesgId ==
-                                                    selectedDesignation
-                                                        ?.userDesgId)
-                                                  const Icon(
-                                                    Icons.check,
-                                                    color: Colors.green,
-                                                  )
-                                              ],
-                                            ),
-                                          ))
-                                      .toList();
-                                },
-                                onSelected: (DesignationModel des) async {
-                                  await ref
-                                      .read(authController.notifier)
-                                      .setDesignation(des);
-                                  ref
-                                      .read(dashboardController.notifier)
-                                      .initData();
-                                },
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                                              ),
+                                        )
+                                        .toList();
+                                  },
+                                  onSelected: (DesignationModel des) async {
+                                    await ref
+                                        .read(authController.notifier)
+                                        .setDesignation(des);
+                                    ref
+                                        .read(dashboardController.notifier)
+                                        .initData();
+                                  },
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               )
             : title != null
-                ? AppText.headlineSmall(
-                    title!,
-                    textAlign: TextAlign.left,
-                  )
-                : const SizedBox(),
+            ? AppText.headlineSmall(title!, textAlign: TextAlign.left)
+            : const SizedBox(),
         titleSpacing: 0,
         centerTitle: false,
         leading: Row(
@@ -157,10 +161,7 @@ class BaseScreen extends ConsumerWidget {
           if (enableBackButton)
             IconButton(
               onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
-              icon: const Icon(
-                Icons.clear,
-                color: Colors.black87,
-              ),
+              icon: const Icon(Icons.clear, color: Colors.black87),
             ),
         ],
       ),

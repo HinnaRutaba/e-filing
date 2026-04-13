@@ -82,7 +82,7 @@ class NavDrawer extends ConsumerWidget {
       DrawerMenu(
         title: "Summaries",
         icon: Icons.summarize_outlined,
-        routeName: null,
+        routeName: Routes.summaries,
       ),
       DrawerMenu(
         title: "Create New File",

@@ -23,6 +23,8 @@ import 'package:efiling_balochistan/views/screens/settings/sections_screen.dart'
 import 'package:efiling_balochistan/views/screens/settings/settings_screen.dart';
 import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -66,6 +68,20 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const CreateNewFileScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaries,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const SummariesListScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.createSummary,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const CreateSummaryScreen(),
       ),
     ),
     GoRoute(

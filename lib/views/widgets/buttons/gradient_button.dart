@@ -6,16 +6,23 @@ class GradientButton extends StatelessWidget {
   final VoidCallback onPressed;
   final double? width;
   final double? height;
+  final IconData? icon;
   const GradientButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.width = 180,
     this.height = 48,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
+    final title = Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 16, color: AppColors.white),
+    );
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -29,24 +36,24 @@ class GradientButton extends StatelessWidget {
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(50)),
+          borderRadius: BorderRadius.all(Radius.circular(12)),
           gradient: LinearGradient(
-            colors: [
-              AppColors.background,
-              AppColors.secondary,
-            ],
+            colors: [AppColors.secondaryDark, AppColors.secondaryLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 20,
-            color: AppColors.primary,
-          ),
-        ),
+        child: icon == null
+            ? title
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 18, color: AppColors.white),
+                  const SizedBox(width: 8),
+                  Flexible(child: title),
+                ],
+              ),
       ),
     );
   }
