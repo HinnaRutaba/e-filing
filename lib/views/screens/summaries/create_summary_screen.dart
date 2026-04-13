@@ -645,7 +645,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           _emptyLinkPlaceholder("No daak linked yet")
         else
           Column(children: [for (final d in linkedDaak) _linkedDaakTile(d)]),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _linkSubsectionHeader(
           icon: Icons.folder_outlined,
           title: "Link Files",
