@@ -11,6 +11,7 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summary_preview_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -134,83 +135,21 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.92,
       ),
-      builder: (ctx) {
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: AppText.headlineSmall("Summary Preview")),
-                    IconButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      icon: const Icon(
-                        Icons.close,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                _previewRow(
-                  "Subject",
-                  subjectController.text.isEmpty ? '-' : subjectController.text,
-                ),
-                _previewRow("Date", dateController.text),
-                _previewRow(
-                  "Target Department",
-                  selectedDepartment?.title ?? '-',
-                ),
-                _previewRow("Main PDF", mainPdf?.name ?? '-'),
-                const SizedBox(height: 12),
-                AppText.titleMedium(
-                  "Content",
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.w600,
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.secondaryLight.withOpacity(0.5),
-                    ),
-                  ),
-                  child: AppText.bodyMedium(
-                    content.trim().isEmpty ? '—' : content,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                AppOutlineButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  text: "Close",
-                  color: AppColors.primaryDark,
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) => SummaryPreviewSheet(
+        content: content,
+        department: selectedDepartment?.title,
+        summaryDate: summaryDate,
+        subject: subjectController.text.trim(),
+        mainPdf: mainPdf,
+        attachments: attachments,
+        linkedDaak: linkedDaak,
+        linkedFiles: linkedFiles,
+        onSubmit: _onSend,
+      ),
     );
   }
 
@@ -1053,26 +992,6 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       ],
     );
   }
-
-  Widget _previewRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: AppText.labelLarge(
-              label,
-              color: AppColors.secondaryDark,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Expanded(child: AppText.bodyMedium(value)),
-        ],
-      ),
-    );
-  }
 }
 
 class _LinkPickerSheet<T> extends ConsumerStatefulWidget {
@@ -1222,7 +1141,7 @@ class _LinkPickerSheetState<T> extends ConsumerState<_LinkPickerSheet<T>> {
                         .map((k) => byKey[k])
                         .whereType<T>()
                         .toList();
-                    Navigator.of(context).pop(selectedItems);
+                    RouteHelper.pop(selectedItems);
                   },
                   text: _selectedKeys.isEmpty
                       ? "Done"
