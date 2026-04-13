@@ -99,7 +99,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                         child: Container(
                           height: 48,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 8,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
@@ -133,21 +133,6 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                                   ],
                                 ),
                               ),
-                              if (m.attachment != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: InkWell(
-                                    onTap: () {
-                                      m.attachment = null;
-                                      setState(() {});
-                                    },
-                                    child: Icon(
-                                      Icons.cancel,
-                                      color: Colors.red[800],
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -157,7 +142,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             if (m.attachment != null)
               InkWell(
                 onTap: () async {
@@ -224,7 +209,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
