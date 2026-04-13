@@ -1,10 +1,15 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
@@ -53,6 +58,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   final List<FlagAndAttachmentModel> attachments = [FlagAndAttachmentModel()];
 
   bool get allAttachmentsValid => attachments.every((e) => e.isValid);
+
+  final List<DaakModel> linkedDaak = [];
+  final List<FileModel> linkedFiles = [];
 
   int _openSection = 0;
 
@@ -625,45 +633,364 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           "Link any earlier correspondence received locally that relates to this summary.",
           color: Colors.grey[700],
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.secondaryLight.withValues(alpha: 0.5),
-            ),
-            color: AppColors.cardColorLight,
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.folder_open_rounded,
-                size: 36,
-                color: AppColors.secondary,
-              ),
-              const SizedBox(height: 8),
-              AppText.bodyMedium(
-                "No correspondence linked yet",
-                color: Colors.grey[700],
-              ),
-              const SizedBox(height: 12),
-              AppOutlineButton(
-                onPressed: () {},
-                text: "Link Correspondence",
-                color: AppColors.secondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: 8),
+        _linkSubsectionHeader(
+          icon: Icons.mail_outline_rounded,
+          title: "Link Daak Letters",
+          actionLabel: "Add Daak",
+          onAdd: _openDaakPicker,
         ),
+        const SizedBox(height: 8),
+        if (linkedDaak.isEmpty)
+          _emptyLinkPlaceholder("No daak linked yet")
+        else
+          Column(children: [for (final d in linkedDaak) _linkedDaakTile(d)]),
+        const SizedBox(height: 20),
+        _linkSubsectionHeader(
+          icon: Icons.folder_outlined,
+          title: "Link Files",
+          actionLabel: "Add File",
+          onAdd: _openFilePicker,
+        ),
+        const SizedBox(height: 8),
+        if (linkedFiles.isEmpty)
+          _emptyLinkPlaceholder("No files linked yet")
+        else
+          Column(children: [for (final f in linkedFiles) _linkedFileTile(f)]),
         const SizedBox(height: 16),
         _sectionActions(previousStep: 1),
       ],
+    );
+  }
+
+  Widget _linkSubsectionHeader({
+    required IconData icon,
+    required String title,
+    required String actionLabel,
+    required VoidCallback onAdd,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 20, color: AppColors.secondaryDark),
+        const SizedBox(width: 6),
+        Expanded(
+          child: AppText.titleSmall(
+            title,
+            color: AppColors.secondaryDark,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        AppOutlineButton(
+          onPressed: onAdd,
+          text: actionLabel,
+          icon: Icons.add,
+          color: AppColors.secondary,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyLinkPlaceholder(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.4),
+        ),
+        color: AppColors.cardColorLight,
+      ),
+      alignment: Alignment.center,
+      child: AppText.bodySmall(text, color: Colors.grey[600]),
+    );
+  }
+
+  Widget _linkedDaakTile(DaakModel daak) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+        ),
+        color: AppColors.secondaryLight.withValues(alpha: 0.02),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.mail_outline_rounded,
+              size: 16,
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.bodyMedium(
+                  daak.diaryNo ?? daak.letterNo ?? '—',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                if ((daak.subject ?? '').isNotEmpty)
+                  AppText.bodySmall(
+                    daak.subject!,
+                    color: Colors.grey[700],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            onPressed: () => setState(() => linkedDaak.remove(daak)),
+            icon: Icon(Icons.cancel, color: Colors.red[700], size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _linkedFileTile(FileModel file) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+        ),
+        color: AppColors.secondaryLight.withValues(alpha: 0.02),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.folder_outlined,
+              size: 16,
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.bodyMedium(
+                  file.referenceNo ?? file.barcode ?? '—',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                if ((file.subject ?? '').isNotEmpty)
+                  AppText.bodySmall(
+                    file.subject!,
+                    color: Colors.grey[700],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            onPressed: () => setState(() => linkedFiles.remove(file)),
+            icon: Icon(Icons.cancel, color: Colors.red[700], size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openDaakPicker() async {
+    HelperUtils.hideKeyboard(context);
+    ref.read(daakController.notifier).loadData(isInitailLoad: true);
+    final result = await showModalBottomSheet<List<DaakModel>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
+      builder: (ctx) => _LinkPickerSheet<DaakModel>(
+        title: "Link Daak Letters",
+        itemsBuilder: (ref) => ref.watch(daakController).allDaak,
+        isLoadingBuilder: (ref) => ref.watch(daakController).isLoading,
+        alreadyLinked: List.of(linkedDaak),
+        keyOf: (d) => d.id,
+        match: (d, q) =>
+            (d.diaryNo ?? '').toLowerCase().contains(q) ||
+            (d.letterNo ?? '').toLowerCase().contains(q) ||
+            (d.subject ?? '').toLowerCase().contains(q) ||
+            (d.sourceDepartment ?? '').toLowerCase().contains(q),
+        tileBuilder: (ctx, d, selected) => _pickerTile(
+          icon: Icons.mail_outline_rounded,
+          primary: d.diaryNo ?? d.letterNo ?? '—',
+          secondary: d.subject ?? '',
+          tertiary: d.sourceDepartment,
+          selected: selected,
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        linkedDaak
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
+
+  Future<void> _openFilePicker() async {
+    HelperUtils.hideKeyboard(context);
+    ref
+        .read(filesController.notifier)
+        .fetchFiles(FileType.my, showLoader: false);
+    final result = await showModalBottomSheet<List<FileModel>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
+      builder: (ctx) => _LinkPickerSheet<FileModel>(
+        title: "Link Files",
+        itemsBuilder: (ref) => ref.watch(filesController).files,
+        isLoadingBuilder: (ref) => ref.watch(filesController).loadingFiles,
+        alreadyLinked: List.of(linkedFiles),
+        keyOf: (f) => f.fileId,
+        match: (f, q) =>
+            (f.referenceNo ?? '').toLowerCase().contains(q) ||
+            (f.barcode ?? '').toLowerCase().contains(q) ||
+            (f.subject ?? '').toLowerCase().contains(q) ||
+            (f.sender ?? '').toLowerCase().contains(q),
+        tileBuilder: (ctx, f, selected) => _pickerTile(
+          icon: Icons.folder_outlined,
+          primary: f.referenceNo ?? f.barcode ?? '—',
+          secondary: f.subject ?? '',
+          tertiary: f.sender,
+          selected: selected,
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        linkedFiles
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
+
+  Widget _pickerTile({
+    required IconData icon,
+    required String primary,
+    required String secondary,
+    String? tertiary,
+    required bool selected,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: selected
+              ? AppColors.secondary
+              : AppColors.secondaryLight.withValues(alpha: 0.4),
+          width: selected ? 1.6 : 1,
+        ),
+        color: selected
+            ? AppColors.secondary.withValues(alpha: 0.06)
+            : AppColors.white,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: AppColors.secondary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.bodyMedium(
+                  primary,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+                if (secondary.isNotEmpty)
+                  AppText.bodySmall(
+                    secondary,
+                    color: Colors.grey[700],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                if (tertiary != null && tertiary.isNotEmpty)
+                  AppText.bodySmall(
+                    tertiary,
+                    color: Colors.grey[500],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppColors.secondary : Colors.transparent,
+              border: Border.all(
+                color: selected
+                    ? AppColors.secondary
+                    : AppColors.secondaryLight,
+                width: 1.6,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : null,
+          ),
+        ],
+      ),
     );
   }
 
@@ -742,6 +1069,170 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             ),
           ),
           Expanded(child: AppText.bodyMedium(value)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinkPickerSheet<T> extends ConsumerStatefulWidget {
+  final String title;
+  final List<T> Function(WidgetRef ref) itemsBuilder;
+  final bool Function(WidgetRef ref) isLoadingBuilder;
+  final List<T> alreadyLinked;
+  final Object? Function(T item) keyOf;
+  final bool Function(T item, String query) match;
+  final Widget Function(BuildContext context, T item, bool selected)
+  tileBuilder;
+
+  const _LinkPickerSheet({
+    required this.title,
+    required this.itemsBuilder,
+    required this.isLoadingBuilder,
+    required this.alreadyLinked,
+    required this.keyOf,
+    required this.match,
+    required this.tileBuilder,
+  });
+
+  @override
+  ConsumerState<_LinkPickerSheet<T>> createState() =>
+      _LinkPickerSheetState<T>();
+}
+
+class _LinkPickerSheetState<T> extends ConsumerState<_LinkPickerSheet<T>> {
+  String _query = '';
+  late final Set<Object?> _selectedKeys;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedKeys = widget.alreadyLinked.map(widget.keyOf).toSet();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _isSelected(T item) => _selectedKeys.contains(widget.keyOf(item));
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.itemsBuilder(ref);
+    final isLoading = widget.isLoadingBuilder(ref);
+    final q = _query.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? items
+        : items.where((e) => widget.match(e, q)).toList();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: () => RouteHelper.pop(),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: AppColors.black,
+                  ),
+                ),
+                Expanded(child: AppText.headlineSmall(widget.title)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AppTextField(
+              controller: _searchController,
+              labelText: "Search",
+              hintText: "Search by reference, subject…",
+              showLabel: false,
+              autoFocus: true,
+              prefix: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(Icons.search, color: AppColors.secondary),
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Flexible(
+            child: isLoading && items.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : filtered.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: AppText.bodyMedium(
+                        "No results",
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (ctx, i) {
+                      final item = filtered[i];
+                      final selected = _isSelected(item);
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => setState(() {
+                          final k = widget.keyOf(item);
+                          if (selected) {
+                            _selectedKeys.remove(k);
+                          } else {
+                            _selectedKeys.add(k);
+                          }
+                        }),
+                        child: widget.tileBuilder(ctx, item, selected),
+                      );
+                    },
+                  ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: GradientButton(
+                  onPressed: () {
+                    final byKey = <Object?, T>{
+                      for (final i in items) widget.keyOf(i): i,
+                    };
+                    for (final i in widget.alreadyLinked) {
+                      byKey.putIfAbsent(widget.keyOf(i), () => i);
+                    }
+                    final selectedItems = _selectedKeys
+                        .map((k) => byKey[k])
+                        .whereType<T>()
+                        .toList();
+                    Navigator.of(context).pop(selectedItems);
+                  },
+                  text: _selectedKeys.isEmpty
+                      ? "Done"
+                      : "Link ${_selectedKeys.length} item${_selectedKeys.length == 1 ? '' : 's'}",
+                  width: double.infinity,
+                  height: 48,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

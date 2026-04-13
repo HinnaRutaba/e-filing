@@ -25,6 +25,7 @@ class FileViewModel {
   final bool loadingForwardList;
   final bool loadingFlag;
   final bool loadingNewFileData;
+  final bool loadingFiles;
 
   FileViewModel({
     this.files = const [],
@@ -36,6 +37,7 @@ class FileViewModel {
     this.loadingSections = true,
     this.newFileData,
     this.loadingNewFileData = true,
+    this.loadingFiles = false,
   });
 
   FileViewModel copyWith({
@@ -48,6 +50,7 @@ class FileViewModel {
     bool? loadingFlag,
     NewFileDataModel? newFileData,
     bool? loadingNewFileData,
+    bool? loadingFiles,
   }) {
     return FileViewModel(
       files: files ?? this.files,
@@ -59,6 +62,7 @@ class FileViewModel {
       loadingFlag: loadingFlag ?? this.loadingFlag,
       newFileData: newFileData ?? this.newFileData,
       loadingNewFileData: loadingNewFileData ?? this.loadingNewFileData,
+      loadingFiles: loadingFiles ?? this.loadingFiles,
     );
   }
 
@@ -73,6 +77,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
   Future<List<FileModel>> fetchFiles(FileType fileType,
       {bool showLoader = true}) async {
     List<FileModel> files = [];
+    state = state.copyWith(loadingFiles: true);
     try {
       Future.delayed(Duration.zero, () {
         state = state.copyWith(
@@ -102,6 +107,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       print("ERROR GETTING FILES______${e}____$s");
       Toast.error(message: handleException(e));
     } finally {
+      state = state.copyWith(loadingFiles: false);
       EasyLoading.dismiss();
     }
     return files;
