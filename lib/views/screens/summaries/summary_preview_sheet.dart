@@ -7,8 +7,8 @@ import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_fil
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -203,15 +203,7 @@ class SummaryPreviewSheet extends StatelessWidget {
                           'No content provided yet.',
                           color: AppColors.textSecondary,
                         )
-                      : HtmlWidget(
-                          content,
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textPrimary,
-                            height: 1.4,
-                          ),
-                          renderMode: RenderMode.column,
-                        ),
+                      : HtmlReader(html: content),
                 ),
                 const Divider(color: Colors.grey),
                 Padding(

@@ -25,6 +25,7 @@ import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summary_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -82,6 +83,29 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const CreateSummaryScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaryDetails,
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) {
+          final item = state.extra as SummaryListItem?;
+          if (item == null) {
+            return SummaryDetailsScreen();
+          }
+          return SummaryDetailsScreen(
+            barcode: item.reference,
+            summaryNumber: item.title,
+            subject: item.title,
+            summaryDate: item.createdAt,
+            department: item.section != null
+                ? '${item.section} Department'
+                : 'Home Department',
+            recipientTitle: item.remarksBy ?? 'Mr. Secretary',
+            recipientTimestamp: item.createdAt,
+          );
+        },
       ),
     ),
     GoRoute(

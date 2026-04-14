@@ -24,6 +24,7 @@ class Routes {
   static const String changePassword = '/changePassword';
   static const String summaries = '/summaries';
   static const String createSummary = '/createSummary';
+  static const String summaryDetails = '/summaryDetails';
   static const String daak = '/daak';
     static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';

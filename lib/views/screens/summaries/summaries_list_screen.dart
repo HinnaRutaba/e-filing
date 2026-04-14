@@ -307,7 +307,7 @@ class _SummaryCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: navigate to summary details screen.
+            RouteHelper.push(Routes.summaryDetails, extra: item);
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,7 +474,7 @@ class _SummaryCard extends StatelessWidget {
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () {
-                        // TODO: navigate to summary details screen.
+                        RouteHelper.push(Routes.summaryDetails, extra: item);
                       },
                       icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                       label: const Text('Review'),
