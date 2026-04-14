@@ -288,6 +288,7 @@ class FlagAndAttachmentModel {
   FlagAndAttachmentModel({this.flagType, this.attachment, this.usedFlags});
 
   bool get isValid {
+    if (flagType == null) return true;
     if (flagType != null && attachment == null) return false;
     return true;
   }

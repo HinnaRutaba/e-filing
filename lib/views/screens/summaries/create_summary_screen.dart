@@ -149,7 +149,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       Toast.error(message: "Please write the summary content");
       return;
     }
-    if (!allAttachmentsValid) {
+    final incompleteFlags = attachments.where(
+      (e) => e.flagType != null && e.attachment == null,
+    );
+    if (incompleteFlags.isNotEmpty) {
       Toast.error(
         message:
             "One or more flags are missing attachments. Add a file and try again.",
