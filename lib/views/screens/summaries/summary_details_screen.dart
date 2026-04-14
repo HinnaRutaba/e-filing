@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/views/screens/summaries/summary_document_car
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:flutter/material.dart';
@@ -148,6 +149,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final QuillEditorController _editDraftController = QuillEditorController();
   late String _currentHtml;
   ChatParticipantModel? _shareTarget;
+
+  final SignaturePadController _signaturePadController =
+      SignaturePadController();
+
+  static const List<String> _demoDepartments = [
+    'Agriculture Department',
+    'Home Department',
+    'Finance Department',
+    'Education Department',
+    'Health Department',
+  ];
+  String _destDepartment = 'Agriculture Department';
+  String? _destOfficer;
 
   static final List<ChatParticipantModel> _demoDeptMembers = [
     ChatParticipantModel(
@@ -528,6 +542,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     _returnToSectionBody(action)
                   else if (action == SummaryAction.shareInternally)
                     _shareInternallyBody(action)
+                  else if (action == SummaryAction.signForward)
+                    _signForwardBody(action)
                   else
                     AppTextField(
                       controller: _remarksController,
@@ -771,6 +787,194 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           maxLines: 4,
         ),
       ],
+    );
+  }
+
+  Widget _signForwardBody(SummaryAction action) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _stepCard(
+          stepLabel: 'STEP 1',
+          title: 'Signature',
+          child: SignaturePad(controller: _signaturePadController),
+        ),
+        const SizedBox(height: 12),
+        _stepCard(
+          stepLabel: 'STEP 2',
+          title: 'Forwarding',
+          child: _forwardingStep(action),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepCard({
+    required String stepLabel,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: AppText.labelSmall(
+                  stepLabel,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              AppText.titleMedium(title),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _forwardingStep(SummaryAction action) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _forwardingLabel('DESTINATION DEPARTMENT'),
+        const SizedBox(height: 6),
+        _departmentDropdown(),
+        const SizedBox(height: 4),
+        Text(
+          'Pre-filled from section draft. You may change if needed.',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _forwardingLabel('DESTINATION OFFICER'),
+        const SizedBox(height: 6),
+        _officerDropdown(),
+        const SizedBox(height: 4),
+        Text(
+          'No user found for selected department (required role_id: 4 or 5).',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _forwardingLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textPrimary,
+        letterSpacing: 0.6,
+      ),
+    );
+  }
+
+  Widget _departmentDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _destDepartment,
+      isExpanded: true,
+      decoration: _forwardingDropdownDecoration(),
+      items: _demoDepartments
+          .map(
+            (d) => DropdownMenuItem<String>(
+              value: d,
+              child: Text(
+                d,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          )
+          .toList(growable: false),
+      onChanged: (v) {
+        if (v == null) return;
+        setState(() {
+          _destDepartment = v;
+          _destOfficer = null;
+        });
+      },
+    );
+  }
+
+  Widget _officerDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _destOfficer,
+      isExpanded: true,
+      decoration: _forwardingDropdownDecoration(
+        hint: 'No secretary user found',
+      ),
+      items: const [],
+      onChanged: null,
+      disabledHint: const Text(
+        'No secretary user found',
+        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+      ),
+    );
+  }
+
+  InputDecoration _forwardingDropdownDecoration({String? hint}) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: AppColors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+        ),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: AppColors.secondaryLight.withValues(alpha: 0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+      ),
     );
   }
 
