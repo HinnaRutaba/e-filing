@@ -3,7 +3,6 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,9 +28,9 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
   FlagAndAttachmentModel get m => widget.model;
 
   final Widget fieldLoader = Container(
-    width: 12,
-    height: 12,
-    margin: const EdgeInsets.only(right: 8),
+    width: 6,
+    height: 6,
+    padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
 
@@ -47,8 +46,8 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Flag Type Dropdown - Expanded
-                Expanded(
-                  flex: 2,
+                Flexible(
+                  flex: 3,
                   child: AppDropDownField<FlagModel>(
                     items: m.usedFlags == null
                         ? state.flags
@@ -67,16 +66,18 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                     labelText: "Flag Type",
                     hintText: "Select flag type",
                     prefix: state.loadingFlag ? fieldLoader : null,
+                    padding: const EdgeInsets.fromLTRB(-7, 0, 0, 0),
                     itemBuilder: (item) {
                       return AppText.titleMedium(item?.title ?? '');
                     },
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
 
                 // Attachment Button - Expanded
-                Expanded(
+                Flexible(
+                  flex: 2,
                   child: Column(
                     children: [
                       Align(
@@ -104,10 +105,14 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: AppColors.secondaryLight.withOpacity(0.5),
+                              color: AppColors.secondaryLight.withValues(
+                                alpha: .5,
+                              ),
                             ),
                             borderRadius: BorderRadius.circular(10),
-                            color: AppColors.white,
+                            color: AppColors.secondaryLight.withValues(
+                              alpha: 0.1,
+                            ),
                           ),
                           child: Row(
                             children: [

@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
+import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -15,6 +16,7 @@ import 'package:efiling_balochistan/views/screens/summaries/summary_preview_shee
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -48,6 +50,8 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   DateTime summaryDate = DateTime.now();
   DepartmentModel? selectedDepartment;
   XFile? mainPdf;
+  List<FlagModel> allFlags = [];
+  final List<FlagAndAttachmentModel> attachments = [FlagAndAttachmentModel()];
 
   final List<DepartmentModel> departments = const [
     DepartmentModel(id: 1, title: 'Finance Department'),
@@ -55,8 +59,6 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     DepartmentModel(id: 3, title: 'Health Department'),
     DepartmentModel(id: 4, title: 'Home Department'),
   ];
-
-  final List<FlagAndAttachmentModel> attachments = [FlagAndAttachmentModel()];
 
   bool get allAttachmentsValid => attachments.every((e) => e.isValid);
 
@@ -66,9 +68,18 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   int _openSection = 0;
   String _summaryHtml = '';
 
+  Future fetchData() async {
+    final controller = ref.read(filesController.notifier);
+
+    allFlags = await controller.getFlags();
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     dateController.text = DateTimeHelper.datFormatSlash(summaryDate);
   }
 
@@ -96,7 +107,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   addAttachement() {
     setState(() {
-      attachments.add(FlagAndAttachmentModel());
+      attachments.add(
+        FlagAndAttachmentModel(
+          usedFlags: [...attachments.map((e) => e.flagType ?? FlagModel())],
+        ),
+      );
     });
   }
 
@@ -141,7 +156,147 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       );
       return;
     }
+    final confirmed = await _confirmSend();
+    if (!confirmed || !mounted) return;
     Toast.show(message: "Summary ready to send");
+  }
+
+  int get _addedFlagsCount =>
+      attachments.where((e) => e.flagType != null).length;
+
+  int get _correspondenceCount => linkedDaak.length + linkedFiles.length;
+
+  Future<bool> _confirmSend() async {
+    final flagsCount = _addedFlagsCount;
+    final correspondenceCount = _correspondenceCount;
+    final missing = <String>[];
+    if (flagsCount == 0) missing.add('Flags');
+    if (correspondenceCount == 0) missing.add('Local Correspondence');
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.send, color: AppColors.secondary),
+                  const SizedBox(width: 8),
+                  Expanded(child: AppText.headlineSmall("Send Summary?")),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      RouteHelper.pop();
+                    },
+                    child: const Icon(
+                      Icons.clear,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+
+              const Divider(color: Colors.grey, height: 40),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _confirmRow(
+                icon: Icons.flag_outlined,
+                label: 'Flags',
+                value: flagsCount == 0 ? 'None added' : '$flagsCount added',
+                muted: flagsCount == 0,
+              ),
+              const SizedBox(height: 12),
+              _confirmRow(
+                icon: Icons.folder_shared_outlined,
+                label: 'Local Correspondence',
+                value: correspondenceCount == 0
+                    ? 'None added'
+                    : '$correspondenceCount added '
+                          '(${linkedDaak.length} daak, ${linkedFiles.length} files)',
+                muted: correspondenceCount == 0,
+              ),
+              if (missing.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                AppText.bodyMedium(
+                  missing.length == 2
+                      ? 'You have not added any Flags or Local Correspondence. Do you still want to send this summary?'
+                      : 'You have not added any ${missing.first}. Do you still want to send this summary?',
+                ),
+              ],
+            ],
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          actions: [
+            AppOutlineButton(
+              onPressed: () {
+                RouteHelper.pop();
+              },
+              text: "Cancel",
+              color: Colors.grey[700],
+            ),
+
+            AppSolidButton(
+              onPressed: () => RouteHelper.pop(),
+              text: "Send",
+              backgroundColor: AppColors.secondary,
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  Widget _confirmRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool muted = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.4),
+        ),
+        color: AppColors.secondaryLight.withValues(alpha: 0.05),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: muted ? Colors.grey[600] : AppColors.primaryDark,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.titleSmall(label),
+                AppText.bodySmall(
+                  value,
+                  color: muted ? Colors.redAccent : Colors.grey[800],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _onPreview() async {

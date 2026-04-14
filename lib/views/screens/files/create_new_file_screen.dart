@@ -72,7 +72,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
     });
   }
 
-  addAttachemnt() {
+  addAttachement() {
     setState(() {
       attachments.add(
         FlagAndAttachmentModel(
@@ -429,7 +429,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                       onDelete: () {
                         setState(() => attachments.removeAt(i));
                       },
-                      onAdd: addAttachemnt,
+                      onAdd: addAttachement,
                     );
                   },
                 ),
@@ -438,7 +438,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                   Row(
                     children: [
                       InkWell(
-                        onTap: addAttachemnt,
+                        onTap: addAttachement,
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),

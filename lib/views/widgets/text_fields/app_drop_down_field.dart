@@ -91,22 +91,18 @@ class AppDropDownField<T> extends StatelessWidget {
             enabledBorder: border,
             disabledBorder: border,
             prefixIcon: prefix,
-            contentPadding: padding ??
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            contentPadding: padding ?? const EdgeInsets.fromLTRB(-8, 0, 0, 0),
             hintStyle: TextStyle(
               color: enabled
-                  ? AppColors.primaryDark.withOpacity(0.6)
-                  : AppColors.primaryDark.withOpacity(0.3),
+                  ? AppColors.primaryDark.withValues(alpha: .6)
+                  : AppColors.primaryDark.withValues(alpha: .3),
               fontWeight: FontWeight.w400,
             ),
           ),
           validator: validator,
           selectedItemBuilder: selectedItemBuilder,
           items: items.map((T value) {
-            return DropdownMenuItem<T>(
-              value: value,
-              child: itemBuilder(value),
-            );
+            return DropdownMenuItem<T>(value: value, child: itemBuilder(value));
           }).toList(),
           onChanged: enabled ? onChanged : null,
         ),

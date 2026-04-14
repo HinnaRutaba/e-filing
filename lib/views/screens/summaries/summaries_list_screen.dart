@@ -254,7 +254,7 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
 
   Widget _helperBanner(String text) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7EC),
