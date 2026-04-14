@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -6,10 +7,13 @@ import 'package:efiling_balochistan/views/screens/summaries/summary_document_car
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
 
 enum SummaryAction {
   editRemarks(
@@ -140,10 +144,49 @@ List<FlagAndAttachmentModel> _demoAttachments() => [
 class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   SummaryAction? _selectedAction;
   final TextEditingController _remarksController = TextEditingController();
+  final TextEditingController _shareSearchController = TextEditingController();
+  final QuillEditorController _editDraftController = QuillEditorController();
+  late String _currentHtml;
+  ChatParticipantModel? _shareTarget;
+
+  static final List<ChatParticipantModel> _demoDeptMembers = [
+    ChatParticipantModel(
+      userId: 101,
+      userTitle: 'Ms. Ayesha Khan',
+      designation: 'Deputy Secretary (Home)',
+    ),
+    ChatParticipantModel(
+      userId: 102,
+      userTitle: 'Mr. Bilal Ahmed',
+      designation: 'Section Officer (Home-I)',
+    ),
+    ChatParticipantModel(
+      userId: 103,
+      userTitle: 'Ms. Fariha Malik',
+      designation: 'Additional Secretary (Home)',
+    ),
+    ChatParticipantModel(
+      userId: 104,
+      userTitle: 'Mr. Usman Tariq',
+      designation: 'Section Officer (Home-II)',
+    ),
+    ChatParticipantModel(
+      userId: 105,
+      userTitle: 'Ms. Sara Javed',
+      designation: 'Deputy Secretary (Admin)',
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentHtml = widget.htmlContent;
+  }
 
   @override
   void dispose() {
     _remarksController.dispose();
+    _shareSearchController.dispose();
     super.dispose();
   }
 
@@ -218,9 +261,20 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     });
   }
 
-  void _onSubmitAction() {
+  Future<void> _onSubmitAction() async {
     final action = _selectedAction;
     if (action == null) return;
+
+    if (action == SummaryAction.editRemarks) {
+      final newHtml = await _editDraftController.getText();
+      if (!mounted) return;
+      setState(() {
+        _currentHtml = newHtml;
+        _selectedAction = null;
+        _remarksController.clear();
+      });
+      return;
+    }
 
     setState(() {
       _selectedAction = null;
@@ -252,7 +306,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -468,46 +522,20 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppText.bodySmall(
-                    'Remarks',
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _remarksController,
-                    minLines: 3,
-                    maxLines: 5,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your remarks…',
-                      filled: true,
-                      fillColor: AppColors.cardColorLight,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.secondaryLight.withValues(
-                            alpha: 0.35,
-                          ),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.secondaryLight.withValues(
-                            alpha: 0.35,
-                          ),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: action.color, width: 1.5),
-                      ),
+                  if (action == SummaryAction.editRemarks)
+                    _draftEditor(action)
+                  else if (action == SummaryAction.returnToSection)
+                    _returnToSectionBody(action)
+                  else if (action == SummaryAction.shareInternally)
+                    _shareInternallyBody(action)
+                  else
+                    AppTextField(
+                      controller: _remarksController,
+                      labelText: "Remarks / Instructions",
+                      isMandatory: true,
+                      hintText: "Please specify what ammendments are needed",
+                      maxLines: 5,
                     ),
-                  ),
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
@@ -531,6 +559,331 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
+  Widget _returnToSectionBody(SummaryAction action) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF8E1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: const Color(0xFFE6B84D).withValues(alpha: 0.55),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.info_rounded,
+                  size: 16,
+                  color: Color(0xFF8A6A12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      color: Color(0xFF7A5A10),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                    children: [
+                      TextSpan(text: 'This will return the draft to '),
+                      TextSpan(
+                        text: 'Mr. Section officer',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text:
+                            ' for amendments. Provide clear instructions on what needs to be changed.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _remarksController,
+          labelText: "Remarks / Instructions",
+          isMandatory: true,
+          hintText: "Please specify what ammendments are needed",
+          maxLines: 5,
+        ),
+      ],
+    );
+  }
+
+  Widget _shareInternallyBody(SummaryAction action) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: AppColors.secondaryDark.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.secondaryDark.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.group_rounded,
+                  size: 16,
+                  color: AppColors.secondaryDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  'Share this summary with a department member for review. They will receive a read-only copy along with your optional instructions.',
+                  color: AppColors.secondaryDark,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SearchDropDownField<ChatParticipantModel>(
+          controller: _shareSearchController,
+          labelText: 'Select Department Members',
+          hintText: 'Search users…',
+          fillColor: AppColors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: AppColors.secondaryLight.withValues(alpha: 0.5),
+            ),
+          ),
+          suggestionsCallback: (pattern) {
+            final q = pattern.toLowerCase();
+            return _demoDeptMembers.where((u) {
+              return (u.userTitle ?? '').toLowerCase().contains(q) ||
+                  (u.designation ?? '').toLowerCase().contains(q);
+            }).toList();
+          },
+          itemBuilder: (context, item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    item.userTitle ?? '',
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText.bodySmall(
+                    item.designation ?? '',
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ],
+              ),
+            );
+          },
+          onSelected: (item) {
+            setState(() {
+              _shareTarget = item;
+              _shareSearchController.text = item.userTitle ?? '';
+            });
+          },
+        ),
+        if (_shareTarget != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.cardColorLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.secondary.withValues(alpha: 0.15),
+                  child: const Icon(
+                    Icons.person,
+                    size: 16,
+                    color: AppColors.secondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppText.bodySmall(
+                        _shareTarget!.userTitle ?? '',
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                      AppText.bodySmall(
+                        _shareTarget!.designation ?? '',
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _shareTarget = null;
+                      _shareSearchController.clear();
+                    });
+                  },
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _remarksController,
+          labelText: 'Instruction (Optional)',
+          hintText: '',
+          maxLines: 4,
+        ),
+      ],
+    );
+  }
+
+  Widget _draftEditor(SummaryAction action) {
+    final mq = MediaQuery.of(context);
+    final keyboardInset = mq.viewInsets.bottom;
+    final available = mq.size.height - keyboardInset;
+    final editorHeight = keyboardInset > 0
+        ? (available * 0.30).clamp(140.0, 260.0)
+        : (mq.size.height * 0.32).clamp(200.0, 360.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF3FB),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.secondaryLight.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 16,
+                color: AppColors.secondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  'You can modify the draft content before signing and forwarding.',
+                  color: AppColors.secondaryDark,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        AppText.bodySmall(
+          'Summary Body',
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.5),
+              ),
+            ),
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ToolBar(
+                  activeIconColor: action.color,
+                  padding: const EdgeInsets.all(4),
+                  iconSize: 20,
+                  controller: _editDraftController,
+                  toolBarConfig: const [
+                    ToolBarStyle.bold,
+                    ToolBarStyle.italic,
+                    ToolBarStyle.underline,
+                    ToolBarStyle.listBullet,
+                    ToolBarStyle.listOrdered,
+                    ToolBarStyle.headerOne,
+                    ToolBarStyle.headerTwo,
+                    ToolBarStyle.link,
+                    ToolBarStyle.align,
+                    ToolBarStyle.color,
+                    ToolBarStyle.undo,
+                    ToolBarStyle.redo,
+                    ToolBarStyle.clean,
+                  ],
+                ),
+                Divider(
+                  color: AppColors.secondaryLight.withValues(alpha: 0.35),
+                  height: 1,
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: editorHeight.toDouble(),
+                  child: QuillHtmlEditor(
+                    text: _currentHtml,
+                    hintText: 'Edit draft content…',
+                    controller: _editDraftController,
+                    minHeight: 180,
+                    textStyle: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
+                    hintTextStyle: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _onPrint() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Print Summary — not wired up yet')),
@@ -544,7 +897,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       summaryDate: widget.summaryDate,
       department: widget.department,
       subject: widget.subject,
-      htmlContent: widget.htmlContent,
+      htmlContent: _currentHtml,
       recipientTitle: widget.recipientTitle,
       recipientDesignation: widget.recipientDesignation,
       recipientDepartment: widget.recipientDepartment,
