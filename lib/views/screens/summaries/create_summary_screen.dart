@@ -172,10 +172,17 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     return GradientScaffold(
-      child: BaseScreen(
-        isdash: false,
-        bgColor: Colors.transparent,
-        title: "Create Summary",
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: AppText.headlineSmall(
+            "Create Summary",
+            textAlign: TextAlign.left,
+          ),
+          scrolledUnderElevation: 0,
+        ),
+
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 40),
           child: Form(
