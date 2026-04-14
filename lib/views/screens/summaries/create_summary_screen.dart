@@ -166,6 +166,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   int get _correspondenceCount => linkedDaak.length + linkedFiles.length;
 
+  bool get _step0Complete =>
+      subjectController.text.trim().isNotEmpty &&
+      selectedDepartment != null &&
+      mainPdf != null &&
+      _summaryHtml.trim().isNotEmpty;
+
+  bool get _step1Complete => _addedFlagsCount > 0 && allAttachmentsValid;
+
+  bool get _step2Complete => _correspondenceCount > 0;
+
   Future<bool> _confirmSend() async {
     final flagsCount = _addedFlagsCount;
     final correspondenceCount = _correspondenceCount;
@@ -366,6 +376,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                   subtitle: "Link references from earlier correspondence",
                   child: _localCorrespondenceBody(),
                 ),
+                if (_openSection == -1) ...[
+                  const SizedBox(height: 4),
+                  _stepperOverview(),
+                ],
                 const SizedBox(height: 24),
               ],
             ),
@@ -1111,6 +1125,123 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     );
   }
 
+  Widget _stepperOverview() {
+    final steps = <_StepProgress>[
+      _StepProgress(
+        title: 'Details',
+        icon: Icons.description_outlined,
+        complete: _step0Complete,
+        index: 0,
+      ),
+      _StepProgress(
+        title: 'Flags',
+        icon: Icons.flag_outlined,
+        complete: _step1Complete,
+        index: 1,
+      ),
+      _StepProgress(
+        title: 'Correspondence',
+        icon: Icons.folder_shared_outlined,
+        complete: _step2Complete,
+        index: 2,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppText.headlineSmall("Steps To Complete"),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < steps.length; i++) ...[
+                    Expanded(child: _stepCircle(steps[i])),
+                    if (i < steps.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 21),
+                        child: Container(
+                          width: 40,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: steps[i].complete && steps[i + 1].complete
+                                ? Colors.green
+                                : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 28),
+          _sectionActions(),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepCircle(_StepProgress step) {
+    final color = step.complete ? Colors.green : Colors.orange;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _changeSection(step.index),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: step.complete ? color : Colors.white,
+                border: Border.all(color: color, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                step.complete ? Icons.check_rounded : step.icon,
+                color: step.complete ? Colors.white : color,
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              step.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              step.complete ? 'Completed' : 'Incomplete',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                color: color.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _sectionActions({
     int? nextStep,
     String? continueLabel,
@@ -1170,6 +1301,20 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       ],
     );
   }
+}
+
+class _StepProgress {
+  final String title;
+  final IconData icon;
+  final bool complete;
+  final int index;
+
+  const _StepProgress({
+    required this.title,
+    required this.icon,
+    required this.complete,
+    required this.index,
+  });
 }
 
 class _LinkPickerSheet<T> extends ConsumerStatefulWidget {
