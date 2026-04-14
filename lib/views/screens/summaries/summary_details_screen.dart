@@ -1,15 +1,54 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
-import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+
+enum SummaryAction {
+  editRemarks(
+    label: 'Edit Drafted Remarks',
+    icon: Icons.edit_outlined,
+    color: AppColors.secondary,
+    filled: false,
+  ),
+  signForward(
+    label: 'Sign & Forward',
+    icon: Icons.arrow_forward_rounded,
+    color: Color(0xFFF0A63A),
+    filled: true,
+  ),
+  shareInternally(
+    label: 'Share Internally',
+    icon: Icons.group_rounded,
+    color: AppColors.secondaryDark,
+    filled: true,
+  ),
+  returnToSection(
+    label: 'Return to Section',
+    icon: Icons.undo_rounded,
+    color: AppColors.error,
+    filled: false,
+  );
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool filled;
+
+  const SummaryAction({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.filled,
+  });
+}
 
 class SummaryMovementEntry {
   final String status;
@@ -99,49 +138,396 @@ List<FlagAndAttachmentModel> _demoAttachments() => [
 ];
 
 class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
+  SummaryAction? _selectedAction;
+  final TextEditingController _remarksController = TextEditingController();
+
+  @override
+  void dispose() {
+    _remarksController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      isdash: false,
-      title: "Summary Details",
-      actions: [
-        AppOutlineButton(
-          onPressed: _onPrint,
-          text: 'Print Summary',
-          icon: Icons.print_outlined,
-          color: AppColors.primaryDark,
-          width: 160,
-        ),
-      ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool wide = constraints.maxWidth >= 900;
-          final content = _documentCard();
-          final sidebar = _sidebar();
-
-          if (wide) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: content),
-                  const SizedBox(width: 16),
-                  SizedBox(width: 280, child: sidebar),
-                ],
-              ),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [content, const SizedBox(height: 16), sidebar],
+    return GradientScaffold(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: AppText.headlineSmall("Summary Details"),
+          actions: [
+            AppOutlineButton(
+              onPressed: _onPrint,
+              text: 'Print Summary',
+              icon: Icons.print_outlined,
+              color: AppColors.primaryDark,
+              width: 160,
             ),
-          );
-        },
+            const SizedBox(width: 12),
+          ],
+        ),
+
+        body: Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool wide = constraints.maxWidth >= 900;
+                  final content = _documentCard();
+                  final sidebar = _sidebar();
+
+                  if (wide) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: content),
+                          const SizedBox(width: 16),
+                          SizedBox(width: 280, child: sidebar),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [content, const SizedBox(height: 16), sidebar],
+                    ),
+                  );
+                },
+              ),
+            ),
+            _actionBar(),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _onActionTap(SummaryAction action) {
+    setState(() {
+      if (_selectedAction == action) {
+        _selectedAction = null;
+        _remarksController.clear();
+      } else {
+        _selectedAction = action;
+      }
+    });
+  }
+
+  void _onSubmitAction() {
+    final action = _selectedAction;
+    if (action == null) return;
+
+    setState(() {
+      _selectedAction = null;
+      _remarksController.clear();
+    });
+  }
+
+  Widget _actionBar() {
+    final expanded = _selectedAction != null;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.secondaryLight.withValues(alpha: 0.2),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondaryDark.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // _sectionDraftBanner(),
+              // const SizedBox(height: 12),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                child: expanded
+                    ? _expandedHeader(key: const ValueKey('header'))
+                    : KeyedSubtree(
+                        key: const ValueKey('buttons'),
+                        child: _actionButtonRow(),
+                      ),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? _expandedRemarks()
+                    : const SizedBox(width: double.infinity),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionDraftBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF3E6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFF0A63A).withValues(alpha: 0.35),
+        ),
+      ),
+      child: RichText(
+        text: const TextSpan(
+          style: TextStyle(
+            color: Color(0xFF7A4A10),
+            fontSize: 12.5,
+            height: 1.35,
+          ),
+          children: [
+            TextSpan(
+              text: 'Section Draft',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            TextSpan(
+              text:
+                  ' — drafted by Mr. Section officer. You can edit the drafted remarks, sign & forward, or return for amendments.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButtonRow() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool wide = constraints.maxWidth >= 720;
+        final buttons = SummaryAction.values
+            .map((a) => _actionButton(a, expand: wide))
+            .toList(growable: false);
+        if (wide) {
+          return Row(
+            children: [
+              for (int i = 0; i < buttons.length; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(child: buttons[i]),
+              ],
+            ],
+          );
+        }
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: buttons
+              .map(
+                (b) =>
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: b),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+
+  Widget _actionButton(
+    SummaryAction action, {
+    required bool expand,
+    VoidCallback? onTapOverride,
+    double? width,
+  }) {
+    final bool selected = _selectedAction == action;
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: action.filled
+            ? action.color
+            : (selected
+                  ? action.color.withValues(alpha: 0.08)
+                  : AppColors.white),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTapOverride ?? () => _onActionTap(action),
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: action.color,
+                width: selected ? 2 : 1.4,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  action.icon,
+                  size: 16,
+                  color: action.filled ? AppColors.white : action.color,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    action.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: action.filled ? AppColors.white : action.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _expandedHeader({Key? key}) {
+    final action = _selectedAction!;
+    return SizedBox(
+      key: key,
+      height: 44,
+      child: Row(
+        children: [
+          Material(
+            color: AppColors.cardColorLight,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _onActionTap(action),
+              child: Container(
+                height: 44,
+                width: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.secondaryLight.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Icon(action.icon, size: 18, color: action.color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              action.label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: action.color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _expandedRemarks() {
+    final action = _selectedAction!;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child:
+          Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppText.bodySmall(
+                    'Remarks',
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _remarksController,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your remarks…',
+                      filled: true,
+                      fillColor: AppColors.cardColorLight,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: AppColors.secondaryLight.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: AppColors.secondaryLight.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: action.color, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _actionButton(
+                      action,
+                      expand: false,
+                      width: double.infinity,
+                      onTapOverride: _onSubmitAction,
+                    ),
+                  ),
+                ],
+              )
+              .animate(key: ValueKey(action))
+              .fadeIn(duration: 220.ms, curve: Curves.easeOut)
+              .slideY(
+                begin: 0.08,
+                end: 0,
+                duration: 220.ms,
+                curve: Curves.easeOut,
+              ),
     );
   }
 
