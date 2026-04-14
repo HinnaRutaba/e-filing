@@ -160,8 +160,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     'Education Department',
     'Health Department',
   ];
-  String _destDepartment = 'Agriculture Department';
-  String? _destOfficer;
+  final TextEditingController _destDeptController = TextEditingController(
+    text: 'Agriculture Department',
+  );
+  final TextEditingController _destOfficerController = TextEditingController();
 
   static final List<ChatParticipantModel> _demoDeptMembers = [
     ChatParticipantModel(
@@ -201,6 +203,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   void dispose() {
     _remarksController.dispose();
     _shareSearchController.dispose();
+    _destDeptController.dispose();
+    _destOfficerController.dispose();
     super.dispose();
   }
 
@@ -902,78 +906,66 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _departmentDropdown() {
-    return DropdownButtonFormField<String>(
-      initialValue: _destDepartment,
-      isExpanded: true,
-      decoration: _forwardingDropdownDecoration(),
-      items: _demoDepartments
-          .map(
-            (d) => DropdownMenuItem<String>(
-              value: d,
-              child: Text(
-                d,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-          )
-          .toList(growable: false),
-      onChanged: (v) {
-        if (v == null) return;
+    return SearchDropDownField<String>(
+      controller: _destDeptController,
+      labelText: 'Destination Department',
+      hintText: 'Select department',
+      showLabel: false,
+      fillColor: AppColors.white,
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return _demoDepartments
+            .where((d) => d.toLowerCase().contains(q))
+            .toList(growable: false);
+      },
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: AppText.bodyMedium(
+            item,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        );
+      },
+      onSelected: (item) {
         setState(() {
-          _destDepartment = v;
-          _destOfficer = null;
+          _destDeptController.text = item;
+          _destOfficerController.clear();
         });
       },
     );
   }
 
   Widget _officerDropdown() {
-    return DropdownButtonFormField<String>(
-      initialValue: _destOfficer,
-      isExpanded: true,
-      decoration: _forwardingDropdownDecoration(
-        hint: 'No secretary user found',
-      ),
-      items: const [],
-      onChanged: null,
-      disabledHint: const Text(
-        'No secretary user found',
-        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-      ),
+    return SearchDropDownField<String>(
+      controller: _destOfficerController,
+      labelText: 'Destination Officer',
+      hintText: 'Select officer',
+      showLabel: false,
+      enabled: false,
+      fillColor: AppColors.white,
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) async => const <String>[],
+
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: AppText.bodyMedium(item, color: AppColors.textPrimary),
+        );
+      },
+      onSelected: (item) {
+        setState(() => _destOfficerController.text = item);
+      },
     );
   }
 
-  InputDecoration _forwardingDropdownDecoration({String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: AppColors.secondaryLight.withValues(alpha: 0.5),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: AppColors.secondaryLight.withValues(alpha: 0.5),
-        ),
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: AppColors.secondaryLight.withValues(alpha: 0.3),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+  OutlineInputBorder _forwardingBorder() {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(
+        color: AppColors.secondaryLight.withValues(alpha: 0.5),
       ),
     );
   }

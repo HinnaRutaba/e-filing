@@ -8,10 +8,7 @@ class SearchDropDownField<T> extends StatelessWidget {
   final TextEditingController? controller;
   final SuggestionsCallback<T> suggestionsCallback;
   final void Function(T suggestion) onSelected;
-  final Widget Function(
-    BuildContext context,
-    T value,
-  ) itemBuilder;
+  final Widget Function(BuildContext context, T value) itemBuilder;
   final String? Function(String?)? validator;
   final String labelText;
   final String hintText;
@@ -73,7 +70,8 @@ class SearchDropDownField<T> extends StatelessWidget {
             decoration: InputDecoration(
               enabled: enabled,
               hintText: hintText,
-              suffixIcon: suffixIcon ??
+              suffixIcon:
+                  suffixIcon ??
                   const Icon(
                     Icons.arrow_drop_down,
                     color: AppColors.secondaryDark,
@@ -88,7 +86,7 @@ class SearchDropDownField<T> extends StatelessWidget {
               hintStyle: TextStyle(
                 color: enabled
                     ? AppColors.textSecondary
-                    : AppColors.primaryDark.withOpacity(0.6),
+                    : AppColors.textPrimary.withOpacity(0.6),
                 fontWeight: FontWeight.w400,
               ),
             ),
