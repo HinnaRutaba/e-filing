@@ -64,6 +64,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   final List<FileModel> linkedFiles = [];
 
   int _openSection = 0;
+  String _summaryHtml = '';
 
   @override
   void initState() {
@@ -106,6 +107,21 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     }
   }
 
+  Future<String> _currentSummaryHtml() async {
+    if (_openSection == 0) {
+      _summaryHtml = await quillEditorController.getText();
+    }
+    return _summaryHtml;
+  }
+
+  Future<void> _changeSection(int newSection) async {
+    if (_openSection == 0 && newSection != 0) {
+      _summaryHtml = await quillEditorController.getText();
+    }
+    if (!mounted) return;
+    setState(() => _openSection = newSection);
+  }
+
   Future<void> _onSend() async {
     HelperUtils.hideKeyboard(context);
     if (!formKey.currentState!.validate()) return;
@@ -113,7 +129,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       Toast.error(message: "Please attach the Main Summary PDF");
       return;
     }
-    final content = await quillEditorController.getText();
+    final content = await _currentSummaryHtml();
     if (content.trim().isEmpty) {
       Toast.error(message: "Please write the summary content");
       return;
@@ -130,7 +146,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   Future<void> _onPreview() async {
     HelperUtils.hideKeyboard(context);
-    final content = await quillEditorController.getText();
+    final content = await _currentSummaryHtml();
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
@@ -301,7 +317,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             Divider(color: Colors.grey[300]!),
             const SizedBox(height: 4),
             QuillHtmlEditor(
-              text: '',
+              text: _summaryHtml,
               hintText: "Write summary content here…",
               controller: quillEditorController,
               minHeight: 220,
@@ -349,7 +365,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
-            onTap: () => setState(() => _openSection = isOpen ? -1 : index),
+            onTap: () => _changeSection(isOpen ? -1 : index),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Row(
@@ -945,7 +961,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           children: [
             if (previousStep != null) ...[
               InkWell(
-                onTap: () => setState(() => _openSection = previousStep),
+                onTap: () => _changeSection(previousStep),
 
                 child: const Icon(Icons.arrow_back_rounded),
               ),
@@ -966,7 +982,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: AppOutlineButton(
-                  onPressed: () => setState(() => _openSection = nextStep),
+                  onPressed: () => _changeSection(nextStep),
                   text: continueLabel,
                   color: AppColors.secondaryDark,
                   padding: const EdgeInsets.symmetric(
