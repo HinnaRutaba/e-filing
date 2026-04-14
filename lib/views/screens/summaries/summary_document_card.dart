@@ -146,8 +146,10 @@ class SummaryDocumentCard extends StatelessWidget {
   Widget _barcodeStrip() {
     return Container(
       width: 44,
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: Colors.green[800]!, width: 4)),
+      decoration: const BoxDecoration(
+        border: Border(
+          right: BorderSide(color: AppColors.primaryDark, width: 4),
+        ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
       child: Column(

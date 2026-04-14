@@ -5,6 +5,8 @@ import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_fil
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -204,6 +206,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               label: flagAttachments[i].flagType?.title ?? '?',
               fileName: flagAttachments[i].attachment?.name,
               onView: () => _onViewAttachment(flagAttachments[i]),
+              onDelete: () => _confirmDeleteAttachment(flagAttachments[i]),
             ),
           ],
           if (isEmpty)
@@ -221,6 +224,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     String? fileName,
     bool isMain = false,
     required VoidCallback onView,
+    VoidCallback? onDelete,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -269,6 +273,17 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               maxLines: 1,
             ),
           ),
+          if (!isMain && onDelete != null) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onDelete,
+              child: Icon(
+                Icons.delete_forever,
+                color: Colors.red[700],
+                size: 24,
+              ),
+            ),
+          ],
           const SizedBox(width: 8),
           _viewButton(onTap: onView),
         ],
@@ -278,7 +293,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _viewButton({required VoidCallback onTap}) {
     return Material(
-      color: AppColors.primary,
+      color: AppColors.primaryDark,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
@@ -320,6 +335,57 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         content: Text('Viewing ${widget.mainPdf?.name ?? 'Main Summary PDF'}'),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAttachment(FlagAndAttachmentModel item) async {
+    final name =
+        item.attachment?.name ?? item.flagType?.title ?? 'this attachment';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.delete_forever, color: Colors.red[700]),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Delete attachment?')),
+            ],
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: TextStyle(color: Colors.grey[800], fontSize: 13),
+              children: [
+                const TextSpan(text: 'Are you sure you want to delete '),
+                TextSpan(
+                  text: '"$name"',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const TextSpan(text: '? This action cannot be undone.'),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          actions: [
+            AppTextLinkButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              text: "Cancel",
+              color: Colors.grey[700],
+            ),
+            AppOutlineButton(
+              width: 120,
+              onPressed: () => Navigator.of(ctx).pop(true),
+              text: "Delete",
+              color: Colors.red[500]!,
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => widget.attachments.remove(item));
   }
 
   Widget _movementCard() {
