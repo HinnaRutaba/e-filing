@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/firebase_options.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
           return MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: TextScaler.noScaling),
-            child: child!,
+            child: ResponsiveWrapper(child: child!),
           );
         }),
         debugShowCheckedModeBanner: false,
