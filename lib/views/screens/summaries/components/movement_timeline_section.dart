@@ -18,17 +18,25 @@ class SummaryMovementEntry {
   });
 }
 
-class MovementTimelineSection extends StatelessWidget {
+class MovementTimelineSection extends StatefulWidget {
   final List<SummaryMovementEntry> movementHistory;
 
   const MovementTimelineSection({super.key, required this.movementHistory});
 
   @override
+  State<MovementTimelineSection> createState() =>
+      _MovementTimelineSectionState();
+}
+
+class _MovementTimelineSectionState extends State<MovementTimelineSection> {
+  bool _expanded = true;
+
+  @override
   Widget build(BuildContext context) {
-    final current = movementHistory
+    final current = widget.movementHistory
         .where((e) => e.current)
         .toList(growable: false);
-    final past = movementHistory
+    final past = widget.movementHistory
         .where((e) => !e.current)
         .toList(growable: false);
 
@@ -173,29 +181,51 @@ class MovementTimelineSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: headerColor.withValues(alpha: 0.08),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: headerColor,
-                    borderRadius: BorderRadius.circular(2),
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              color: headerColor.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: headerColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                AppText.bodyMedium(
-                  header,
-                  fontWeight: FontWeight.w700,
-                  color: headerColor,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText.bodyMedium(
+                      header,
+                      fontWeight: FontWeight.w700,
+                      color: headerColor,
+                    ),
+                  ),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: headerColor,
+                    size: 22,
+                  ),
+                ],
+              ),
             ),
           ),
-          Padding(padding: const EdgeInsets.all(12), child: child),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
         ],
       ),
     );

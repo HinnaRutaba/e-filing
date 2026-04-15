@@ -23,29 +23,38 @@ class InternalCorrespondenceEntry {
   });
 }
 
-class InternalCorrespondenceSection extends StatelessWidget {
+class InternalCorrespondenceSection extends StatefulWidget {
   final List<InternalCorrespondenceEntry> entries;
 
   const InternalCorrespondenceSection({super.key, required this.entries});
+
+  @override
+  State<InternalCorrespondenceSection> createState() =>
+      _InternalCorrespondenceSectionState();
+}
+
+class _InternalCorrespondenceSectionState
+    extends State<InternalCorrespondenceSection> {
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
     return _sidebarShell(
       header: 'Internal Correspondence',
       headerColor: AppColors.primaryDark,
-      trailing: _countBadge(entries.length),
+      trailing: _countBadge(widget.entries.length),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (entries.isEmpty)
+          if (widget.entries.isEmpty)
             AppText.bodySmall(
               'No correspondence yet.',
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
-          for (int i = 0; i < entries.length; i++) ...[
+          for (int i = 0; i < widget.entries.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
-            _correspondenceEntry(entries[i]),
+            _correspondenceEntry(widget.entries[i]),
           ],
         ],
       ),
@@ -218,32 +227,55 @@ class InternalCorrespondenceSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: headerColor.withValues(alpha: 0.08),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: headerColor,
-                    borderRadius: BorderRadius.circular(2),
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              color: headerColor.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: headerColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppText.bodyMedium(
-                    header,
-                    fontWeight: FontWeight.w700,
-                    color: headerColor,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText.bodyMedium(
+                      header,
+                      fontWeight: FontWeight.w700,
+                      color: headerColor,
+                    ),
                   ),
-                ),
-                if (trailing != null) trailing,
-              ],
+                  if (trailing != null) ...[
+                    trailing,
+                    const SizedBox(width: 8),
+                  ],
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: headerColor,
+                    size: 22,
+                  ),
+                ],
+              ),
             ),
           ),
-          Padding(padding: const EdgeInsets.all(12), child: child),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
         ],
       ),
     );

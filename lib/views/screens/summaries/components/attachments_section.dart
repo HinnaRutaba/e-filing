@@ -6,7 +6,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart'
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class AttachmentsSection extends StatelessWidget {
+class AttachmentsSection extends StatefulWidget {
   final XFile? mainPdf;
   final List<FlagAndAttachmentModel> attachments;
   final VoidCallback onViewMainPdf;
@@ -23,11 +23,18 @@ class AttachmentsSection extends StatelessWidget {
   });
 
   @override
+  State<AttachmentsSection> createState() => _AttachmentsSectionState();
+}
+
+class _AttachmentsSectionState extends State<AttachmentsSection> {
+  bool _expanded = true;
+
+  @override
   Widget build(BuildContext context) {
-    final flagAttachments = attachments
+    final flagAttachments = widget.attachments
         .where((e) => e.flagType != null || e.attachment != null)
         .toList(growable: false);
-    final hasMain = mainPdf != null;
+    final hasMain = widget.mainPdf != null;
     final isEmpty = !hasMain && flagAttachments.isEmpty;
 
     return _sidebarShell(
@@ -39,9 +46,9 @@ class AttachmentsSection extends StatelessWidget {
           if (hasMain) ...[
             _attachmentRow(
               label: 'Main Summary PDF',
-              fileName: mainPdf!.name,
+              fileName: widget.mainPdf!.name,
               isMain: true,
-              onView: onViewMainPdf,
+              onView: widget.onViewMainPdf,
             ),
             if (flagAttachments.isNotEmpty) const SizedBox(height: 8),
           ],
@@ -50,7 +57,7 @@ class AttachmentsSection extends StatelessWidget {
             _attachmentRow(
               label: flagAttachments[i].flagType?.title ?? '?',
               fileName: flagAttachments[i].attachment?.name,
-              onView: () => onViewAttachment(flagAttachments[i]),
+              onView: () => widget.onViewAttachment(flagAttachments[i]),
               onDelete: () => _confirmDeleteAttachment(
                 context,
                 flagAttachments[i],
@@ -221,7 +228,7 @@ class AttachmentsSection extends StatelessWidget {
       },
     );
     if (confirmed != true) return;
-    onDeleteAttachment(item);
+    widget.onDeleteAttachment(item);
   }
 
   Widget _sidebarShell({
@@ -248,29 +255,51 @@ class AttachmentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: headerColor.withValues(alpha: 0.08),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: headerColor,
-                    borderRadius: BorderRadius.circular(2),
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              color: headerColor.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: headerColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                AppText.bodyMedium(
-                  header,
-                  fontWeight: FontWeight.w700,
-                  color: headerColor,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText.bodyMedium(
+                      header,
+                      fontWeight: FontWeight.w700,
+                      color: headerColor,
+                    ),
+                  ),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: headerColor,
+                    size: 22,
+                  ),
+                ],
+              ),
             ),
           ),
-          Padding(padding: const EdgeInsets.all(12), child: child),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
         ],
       ),
     );
