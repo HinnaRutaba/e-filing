@@ -212,7 +212,20 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
                       itemCount: _visibleItems.length,
                       itemBuilder: (ctx, i) =>
-                          SummaryCard(item: _visibleItems[i]),
+                          SummaryCard(item: _visibleItems[i])
+                              .animate()
+                              .fadeIn(
+                                delay: (80 * i).ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOut,
+                              )
+                              .slideX(
+                                begin: -0.15,
+                                end: 0,
+                                delay: (80 * i).ms,
+                                duration: 350.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
                     ),
             ),
           ),
