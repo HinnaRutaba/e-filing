@@ -23,6 +23,7 @@ class DaakCard extends StatelessWidget {
     final Color statusColor = daak.status?.color ?? AppColors.secondaryDark;
 
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(18),
