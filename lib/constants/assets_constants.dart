@@ -17,4 +17,5 @@ class AssetsConstants {
   static const String govtLogo = 'assets/govt1.png';
   static const String fingerprint = 'assets/fingerprint.png';
     static const String chatBG = 'assets/chat_bg.png';
+     static const String dashboardBG = 'assets/dashboard_header.svg';
 }
