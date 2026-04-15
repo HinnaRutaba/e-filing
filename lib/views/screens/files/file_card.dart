@@ -98,7 +98,7 @@ class FileCard extends StatelessWidget {
                         color: AppColors.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),

@@ -53,6 +53,10 @@ class _PendingFilesScreenState extends ConsumerState<PendingFilesScreen> {
                   onChanged: (String value) {
                     ref.read(filesController.notifier).filterFiles(value);
                   },
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    borderSide: const BorderSide(color: AppColors.cardColor),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(

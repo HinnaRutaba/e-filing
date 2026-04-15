@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -133,6 +134,10 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                             child: const Icon(Icons.close_rounded),
                           )
                         : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(50),
+                      borderSide: const BorderSide(color: AppColors.cardColor),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -225,18 +230,60 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                                     ],
                                   ),
                                 )
-                              : ListView.builder(
-                                  itemCount: filteredDaak.length,
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  itemBuilder: (context, index) {
-                                    return DaakCard(
-                                      daak: filteredDaak[index],
-                                      onStatusChange: (status) {
-                                        ref
-                                            .read(daakController.notifier)
-                                            .setViewFilter(status);
-                                      },
+                              : Builder(
+                                  builder: (context) {
+                                    Widget buildAnimated(int index) {
+                                      return DaakCard(
+                                            daak: filteredDaak[index],
+                                            onStatusChange: (status) {
+                                              ref
+                                                  .read(daakController.notifier)
+                                                  .setViewFilter(status);
+                                            },
+                                          )
+                                          .animate()
+                                          .fadeIn(
+                                            delay: (80 * index).ms,
+                                            duration: 300.ms,
+                                            curve: Curves.easeOut,
+                                          )
+                                          .slideX(
+                                            begin: -0.15,
+                                            end: 0,
+                                            delay: (80 * index).ms,
+                                            duration: 350.ms,
+                                            curve: Curves.easeOutCubic,
+                                          );
+                                    }
+
+                                    if (!context.isMobile) {
+                                      return GridView.builder(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(),
+                                        itemCount: filteredDaak.length,
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: context.isDesktop
+                                                  ? 3
+                                                  : 2,
+                                              crossAxisSpacing: 0,
+                                              mainAxisSpacing: 8,
+                                              mainAxisExtent: 180,
+                                            ),
+                                        itemBuilder: (context, index) =>
+                                            buildAnimated(index),
+                                      );
+                                    }
+                                    return ListView.builder(
+                                      itemCount: filteredDaak.length,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) =>
+                                          buildAnimated(index),
                                     );
                                   },
                                 ),
