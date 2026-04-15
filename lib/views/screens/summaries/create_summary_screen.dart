@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
@@ -762,6 +763,34 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   }
 
   Widget _summaryDetailsBody() {
+    final dateField = AppTextField(
+      controller: dateController,
+      labelText: "Summary Date",
+      hintText: "Select date",
+      readOnly: true,
+      isMandatory: true,
+      suffixIcon: const Icon(Icons.calendar_month_sharp),
+      onTap: _pickDate,
+      validator: Validators.dateValidator,
+    );
+
+    final departmentField = AppDropDownField<DepartmentModel>(
+      items: departments,
+      labelText: "Target Department",
+      hintText: "Select department",
+      isMandatory: true,
+      itemBuilder: (item) => AppText.titleMedium(item?.title ?? ''),
+      onChanged: (item) {
+        setState(() => selectedDepartment = item);
+      },
+      validator: (item) {
+        if (selectedDepartment == null || item == null) {
+          return 'Please select a department';
+        }
+        return null;
+      },
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -773,33 +802,19 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           validator: Validators.notEmptyValidator,
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          controller: dateController,
-          labelText: "Summary Date",
-          hintText: "Select date",
-          readOnly: true,
-          isMandatory: true,
-          suffixIcon: const Icon(Icons.calendar_month_sharp),
-          onTap: _pickDate,
-          validator: Validators.dateValidator,
-        ),
-        const SizedBox(height: 12),
-        AppDropDownField<DepartmentModel>(
-          items: departments,
-          labelText: "Target Department",
-          hintText: "Select department",
-          isMandatory: true,
-          itemBuilder: (item) => AppText.titleMedium(item?.title ?? ''),
-          onChanged: (item) {
-            setState(() => selectedDepartment = item);
-          },
-          validator: (item) {
-            if (selectedDepartment == null || item == null) {
-              return 'Please select a department';
-            }
-            return null;
-          },
-        ),
+        if (context.isMobile) ...[
+          dateField,
+          const SizedBox(height: 12),
+          departmentField,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: departmentField),
+              const SizedBox(width: 12),
+              Expanded(child: dateField),
+            ],
+          ),
         const SizedBox(height: 12),
         _mainPdfPicker(),
         const SizedBox(height: 16),
@@ -901,7 +916,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         if (linkedDaak.isEmpty)
           _emptyLinkPlaceholder("No daak linked yet")
         else
-          Column(children: [for (final d in linkedDaak) _linkedDaakTile(d)]),
+          _linkedItemsLayout(
+            items: [for (final d in linkedDaak) _linkedDaakTile(d)],
+          ),
         const SizedBox(height: 12),
         _linkSubsectionHeader(
           icon: Icons.folder_outlined,
@@ -913,7 +930,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         if (linkedFiles.isEmpty)
           _emptyLinkPlaceholder("No files linked yet")
         else
-          Column(children: [for (final f in linkedFiles) _linkedFileTile(f)]),
+          _linkedItemsLayout(
+            items: [for (final f in linkedFiles) _linkedFileTile(f)],
+          ),
         const SizedBox(height: 16),
         _sectionActions(previousStep: 1),
       ],
@@ -946,6 +965,26 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         ),
       ],
+    );
+  }
+
+  Widget _linkedItemsLayout({required List<Widget> items}) {
+    if (context.isMobile) {
+      return Column(children: items);
+    }
+    const spacing = 8.0;
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 0,
+          children: [
+            for (final item in items)
+              SizedBox(width: itemWidth, child: item),
+          ],
+        );
+      },
     );
   }
 

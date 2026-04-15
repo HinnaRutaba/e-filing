@@ -259,11 +259,11 @@ class SummaryPreviewSheet extends StatelessWidget {
             ),
           ),
 
-          if (linkedDaak.isNotEmpty || linkedFiles.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            for (final d in linkedDaak) _linkedRefRow(d.subject ?? 'Daak'),
-            for (final f in linkedFiles) _linkedRefRow(f.subject ?? 'File'),
-          ],
+          // if (linkedDaak.isNotEmpty || linkedFiles.isNotEmpty) ...[
+          //   const SizedBox(height: 16),
+          //   for (final d in linkedDaak) _linkedRefRow(d.subject ?? 'Daak'),
+          //   for (final f in linkedFiles) _linkedRefRow(f.subject ?? 'File'),
+          // ],
         ],
       ),
     );
