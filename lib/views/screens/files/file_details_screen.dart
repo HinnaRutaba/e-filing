@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/models/section_schema.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/chats/ai_agent_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -506,176 +507,138 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                         action == FileAction.forward) ||
                                     (widget.fileType == FileType.archived &&
                                         reOpenedFile)) ...[
-                                  Column(
-                                    children: [
-                                      header(Icons.work_history_outlined,
-                                          "Forward to"),
-                                      const SizedBox(height: 16),
-                                      AppDropDownField<SectionModel>(
-                                        items: state.sections,
-                                        onChanged: (item) async {
-                                          setState(() {
-                                            selectedSection = item;
-                                          });
-                                          forwardToList = await controller
-                                              .getForwardTo(item?.id);
-                                          setState(() {
-                                            if (forwardToList != null &&
-                                                forwardToList?.length == 1) {
-                                              forwardTo = forwardToList?.first;
-                                            }
-                                          });
-                                        },
-                                        labelText: "Section",
-                                        hintText: "Select Section",
-                                        prefix: state.loadingSections
-                                            ? fieldLoader
-                                            : null,
-                                        itemBuilder: (item) {
-                                          return AppText.titleMedium(
-                                              item?.title ?? '');
-                                        },
-                                        validator: (item) {
-                                          if (selectedSection == null ||
-                                              item == null) {
-                                            return 'Please select a value';
+                                  Builder(builder: (context) {
+                                    final sectionDropdown =
+                                        AppDropDownField<SectionModel>(
+                                      items: state.sections,
+                                      onChanged: (item) async {
+                                        setState(() {
+                                          selectedSection = item;
+                                        });
+                                        forwardToList = await controller
+                                            .getForwardTo(item?.id);
+                                        setState(() {
+                                          if (forwardToList != null &&
+                                              forwardToList?.length == 1) {
+                                            forwardTo = forwardToList?.first;
                                           }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 12),
-                                      AppDropDownField<ForwardToModel>(
-                                        items: forwardToList ?? [],
-                                        onChanged: (item) async {
-                                          setState(() {
-                                            forwardTo = item;
-                                          });
-                                        },
-                                        labelText: "Forward this file to",
-                                        hintText: "Forward To",
-                                        prefix: state.loadingSections
-                                            ? fieldLoader
-                                            : null,
-                                        buttonHeight:
-                                            forwardTo == null ? null : 57,
-                                        itemBuilder: (item) {
-                                          return Column(
+                                        });
+                                      },
+                                      labelText: "Section",
+                                      hintText: "Select Section",
+                                      prefix: state.loadingSections
+                                          ? fieldLoader
+                                          : null,
+                                      itemBuilder: (item) {
+                                        return AppText.titleMedium(
+                                            item?.title ?? '');
+                                      },
+                                      validator: (item) {
+                                        if (selectedSection == null ||
+                                            item == null) {
+                                          return 'Please select a value';
+                                        }
+                                        return null;
+                                      },
+                                    );
+                                    final forwardDropdown =
+                                        AppDropDownField<ForwardToModel>(
+                                      items: forwardToList ?? [],
+                                      onChanged: (item) async {
+                                        setState(() {
+                                          forwardTo = item;
+                                        });
+                                      },
+                                      labelText: "Forward this file to",
+                                      hintText: "Forward To",
+                                      prefix: state.loadingSections
+                                          ? fieldLoader
+                                          : null,
+                                      buttonHeight:
+                                          forwardTo == null ? null : 57,
+                                      itemBuilder: (item) {
+                                        return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            AppText.titleMedium(
+                                                item?.userTitle ?? ''),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 1),
+                                              decoration: BoxDecoration(
+                                                color: Colors.yellow[400],
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: Colors.yellow[600]!
+                                                      .withOpacity(0.3),
+                                                  width: 0.5,
+                                                ),
+                                              ),
+                                              child: AppText.labelSmall(
+                                                item?.designationTitle ?? '',
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 10,
+                                              ),
+                                            )
+                                          ],
+                                        );
+                                      },
+                                      selectedItemBuilder: (ctx) {
+                                        return forwardToList?.map((item) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    AppText.titleMedium(
+                                                        item.userTitle ?? ''),
+                                                    AppText.labelLarge(
+                                                        item.designationTitle ??
+                                                            ''),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList() ??
+                                            [];
+                                      },
+                                      validator: (item) {
+                                        if (forwardTo == null ||
+                                            item == null) {
+                                          return 'Please select a value';
+                                        }
+                                        return null;
+                                      },
+                                    );
+
+                                    return Column(
+                                      children: [
+                                        header(Icons.work_history_outlined,
+                                            "Forward to"),
+                                        const SizedBox(height: 16),
+                                        if (context.isMobile) ...[
+                                          sectionDropdown,
+                                          const SizedBox(height: 12),
+                                          forwardDropdown,
+                                        ] else
+                                          Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              AppText.titleMedium(
-                                                  item?.userTitle ?? ''),
-                                              // In your itemBuilder or wherever you use it:
-                                              // Height: ~20px (half of standard)
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 1),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.yellow[400],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: Colors.yellow[600]!
-                                                        .withOpacity(0.3),
-                                                    width: 0.5,
-                                                  ),
-                                                ),
-                                                child: AppText.labelSmall(
-                                                  item?.designationTitle ?? '',
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 10, // Smaller font
-                                                ),
-                                              )
+                                              Expanded(child: sectionDropdown),
+                                              const SizedBox(width: 12),
+                                              Expanded(child: forwardDropdown),
                                             ],
-                                          );
-                                        },
-                                        selectedItemBuilder: (ctx) {
-                                          return forwardToList?.map((item) {
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      AppText.titleMedium(
-                                                          item.userTitle ?? ''),
-                                                      AppText.labelLarge(
-                                                          item.designationTitle ??
-                                                              ''),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList() ??
-                                              [];
-                                        },
-                                        validator: (item) {
-                                          if (forwardTo == null ||
-                                              item == null) {
-                                            return 'Please select a value';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      // AppDropDownField<ForwardToModel>(
-                                      //   enabled: selectedSection != null &&
-                                      //       !state.loadingForwardList,
-                                      //   controller: TextEditingController(
-                                      //       text:
-                                      //           "${forwardTo?.userTitle ?? ''} ${forwardTo?.designationTitle == null ? "" : "(" + forwardTo!.designationTitle! + ")"}"),
-                                      //   suggestionsCallback: (_) {
-                                      //     return forwardToList ?? [];
-                                      //   },
-                                      //   onSelected: (item) {
-                                      //     setState(() {
-                                      //       forwardTo = item;
-                                      //     });
-                                      //   },
-                                      //   labelText: "Forward this file to",
-                                      //   hintText: "Forward to",
-                                      //   prefix: selectedSection != null &&
-                                      //           state.loadingForwardList
-                                      //       ? SizedBox(
-                                      //           width: 24,
-                                      //           height: 24,
-                                      //           child: Padding(
-                                      //             padding:
-                                      //                 const EdgeInsets.symmetric(
-                                      //               horizontal: 8.0,
-                                      //               vertical: 8,
-                                      //             ),
-                                      //             child: fieldLoader,
-                                      //           ),
-                                      //         )
-                                      //       : null,
-                                      //   itemBuilder: (ctx, item) {
-                                      //     return Padding(
-                                      //       padding: const EdgeInsets.all(8.0),
-                                      //       child: Column(
-                                      //         crossAxisAlignment:
-                                      //             CrossAxisAlignment.start,
-                                      //         children: [
-                                      //           AppText.titleMedium(
-                                      //               item?.userTitle ?? ''),
-                                      //           AppText.labelLarge(
-                                      //               item?.designationTitle ?? ''),
-                                      //         ],
-                                      //       ),
-                                      //     );
-                                      //   },
-                                      //   validator: (item) {
-                                      //     if (forwardTo == null || item == null) {
-                                      //       return 'Please select a value';
-                                      //     }
-                                      //     return null;
-                                      //   },
-                                      // ),
-                                    ],
-                                  ),
+                                          ),
+                                      ],
+                                    );
+                                  }),
                                 ],
                                 const SizedBox(height: 8),
                                 const Divider(color: Colors.grey),

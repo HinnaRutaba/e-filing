@@ -18,7 +18,7 @@ class FileCard extends StatelessWidget {
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(12),
-      elevation: 1.5,
+      elevation: 3,
       shadowColor: AppColors.secondaryLight.withValues(alpha: 0.35),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -28,166 +28,178 @@ class FileCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.secondaryLight.withValues(alpha: 0.25),
+            color: (data?.tag?.color ?? AppColors.primary).withValues(
+              alpha: 0.4,
             ),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryDark,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        AppText.labelLarge(
-                          data?.barcode ?? '',
-                          color: AppColors.primaryDark,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10,
-                        ),
-                        if (fileType == FileType.forwarded) ...[
-                          const SizedBox(width: 6),
-                          _forwardedCountChip(4),
-                        ],
-                        const Spacer(),
-                        if (data?.tag != null) ...[
-                          _tagPill(data!.tag!.title ?? '', data!.tag!.color),
-                          const SizedBox(width: 4),
-                        ],
-                        if (fileType == FileType.forwarded ||
-                            data?.status != null)
-                          _statusPill(
-                            fileType == FileType.forwarded
-                                ? "Forwarded"
-                                : data?.status?.label ?? '',
-                          ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: AppColors.secondaryDark,
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    AppText.bodyMedium(
-                      data?.subject ?? '---',
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (data?.sender != null)
-                          Expanded(
-                            child: infoTile(
-                              title: "Sender",
-                              value: data?.sender ?? "N/A",
+          child: Container(
+            margin: const EdgeInsets.only(left: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.25),
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 3,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryDark,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                        if (data?.receiver != null) ...[
+                          const SizedBox(width: 6),
+                          AppText.labelLarge(
+                            data?.barcode ?? '',
+                            color: AppColors.primaryDark,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
+                          ),
+                          if (fileType == FileType.forwarded) ...[
+                            const SizedBox(width: 6),
+                            _forwardedCountChip(4),
+                          ],
+                          const Spacer(),
+                          if (data?.tag != null) ...[
+                            _tagPill(data!.tag!.title ?? '', data!.tag!.color),
+                            const SizedBox(width: 4),
+                          ],
+                          if (fileType == FileType.forwarded ||
+                              data?.status != null)
+                            _statusPill(
+                              fileType == FileType.forwarded
+                                  ? "Forwarded"
+                                  : data?.status?.label ?? '',
+                            ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.secondaryDark,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      AppText.bodyMedium(
+                        data?.subject ?? '---',
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (data?.sender != null)
+                            Expanded(
+                              child: infoTile(
+                                title: "Sender",
+                                value: data?.sender ?? "N/A",
+                              ),
+                            ),
+                          if (data?.receiver != null) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: infoTile(
+                                title: "Receiver",
+                                value: data?.receiver ?? '---',
+                              ),
+                            ),
+                          ],
                           const SizedBox(width: 10),
                           Expanded(
-                            child: infoTile(
-                              title: "Receiver",
-                              value: data?.receiver ?? '---',
-                            ),
+                            child:
+                                fileType == FileType.pending ||
+                                    fileType == FileType.actionRequired
+                                ? infoTile(
+                                    title: "Received on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.receivedAt,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : fileType == FileType.archived
+                                ? infoTile(
+                                    title: "Archived on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.archivedAt,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : fileType == FileType.forwarded
+                                ? infoTile(
+                                    title: "Forwarded on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.latestDate,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  )
+                                : infoTile(
+                                    title: "Created on",
+                                    value: DateTimeHelper.datFormatSlashShort(
+                                      data?.createdAt,
+                                    ),
+                                    icon: Icons.calendar_month,
+                                  ),
                           ),
                         ],
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child:
-                              fileType == FileType.pending ||
-                                  fileType == FileType.actionRequired
-                              ? infoTile(
-                                  title: "Received on",
-                                  value: DateTimeHelper.datFormatSlashShort(
-                                    data?.receivedAt,
-                                  ),
-                                  icon: Icons.calendar_month,
-                                )
-                              : fileType == FileType.archived
-                              ? infoTile(
-                                  title: "Archived on",
-                                  value: DateTimeHelper.datFormatSlashShort(
-                                    data?.archivedAt,
-                                  ),
-                                  icon: Icons.calendar_month,
-                                )
-                              : fileType == FileType.forwarded
-                              ? infoTile(
-                                  title: "Forwarded on",
-                                  value: DateTimeHelper.datFormatSlashShort(
-                                    data?.latestDate,
-                                  ),
-                                  icon: Icons.calendar_month,
-                                )
-                              : infoTile(
-                                  title: "Created on",
-                                  value: DateTimeHelper.datFormatSlashShort(
-                                    data?.createdAt,
-                                  ),
-                                  icon: Icons.calendar_month,
-                                ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (data?.referenceNo != null)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.secondaryLight.withValues(alpha: 0.12),
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.secondaryLight.withValues(alpha: 0.25),
-                      ),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.receipt_long_rounded,
-                        color: AppColors.secondary,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      AppText.bodySmall(
-                        data?.referenceNo ?? "Reference No. Not Available",
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 0.3,
                       ),
                     ],
                   ),
                 ),
-            ],
+                if (data?.referenceNo != null)
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryLight.withValues(alpha: 0.12),
+                      border: Border(
+                        top: BorderSide(
+                          color: AppColors.secondaryLight.withValues(
+                            alpha: 0.25,
+                          ),
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.receipt_long_rounded,
+                          color: AppColors.secondary,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 6),
+                        AppText.bodySmall(
+                          data?.referenceNo ?? "Reference No. Not Available",
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          letterSpacing: 0.3,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

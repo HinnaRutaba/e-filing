@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/not_found.dart';
@@ -46,8 +47,10 @@ class _ArchivedFilesScreenState extends ConsumerState<ArchivedFilesScreen> {
                   controller: searchController,
                   labelText: "Search",
                   hintText: "Search by file name or number",
-                  prefix:
-                      const Icon(Icons.search, color: AppColors.secondaryDark),
+                  prefix: const Icon(
+                    Icons.search,
+                    color: AppColors.secondaryDark,
+                  ),
                   onChanged: (String value) {
                     ref.read(filesController.notifier).filterFiles(value);
                   },
@@ -71,10 +74,24 @@ class _ArchivedFilesScreenState extends ConsumerState<ArchivedFilesScreen> {
                       : ListView.builder(
                           itemBuilder: (ctx, i) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: FileCard(
-                              fileType: FileType.archived,
-                              data: files[i],
-                            ),
+                            child:
+                                FileCard(
+                                      fileType: FileType.archived,
+                                      data: files[i],
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: (80 * i).ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOut,
+                                    )
+                                    .slideX(
+                                      begin: -0.15,
+                                      end: 0,
+                                      delay: (80 * i).ms,
+                                      duration: 350.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
                           ),
                           itemCount: files.length,
                           physics: const BouncingScrollPhysics(),

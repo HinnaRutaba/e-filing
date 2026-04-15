@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/not_found.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MyFilesScreen extends ConsumerStatefulWidget {
@@ -70,7 +71,20 @@ class _MyFilesScreenState extends ConsumerState<MyFilesScreen> {
                           child: FileCard(
                             fileType: FileType.my,
                             data: files[i],
-                          ),
+                          )
+                              .animate()
+                              .fadeIn(
+                                delay: (80 * i).ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOut,
+                              )
+                              .slideX(
+                                begin: -0.15,
+                                end: 0,
+                                delay: (80 * i).ms,
+                                duration: 350.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
                         ),
                         itemCount: files.length,
                         physics: const BouncingScrollPhysics(),
