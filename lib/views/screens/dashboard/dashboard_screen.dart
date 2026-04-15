@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/notification_service.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
@@ -122,258 +123,262 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final dashboardState = ref.watch(dashboardController);
     UserModel currentUser = ref.read(authController);
 
-    return BaseScreen(
-      showUserDetails: true,
-      isdash: true,
-      enableBackButton: false,
-      body: _isLoading
-          ? _buildLoadingState()
-          : SmartRefresher(
-              controller: _refreshController,
-              onRefresh: _onRefresh,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    StreamBuilder(
-                      stream: chatService.getUnreadChatsCountStream(
-                        userDesignationId:
-                            currentUser.currentDesignation?.userDesgId,
-                        userId: currentUser.id!,
-                      ),
-                      builder: (context, ss) {
-                        int unread = ss.hasData ? ss.data ?? 0 : 0;
+    return GradientScaffold(
+      child: BaseScreen(
+        bgColor: Colors.transparent,
+        showUserDetails: true,
+        isdash: true,
+        enableBackButton: false,
+        body: _isLoading
+            ? _buildLoadingState()
+            : SmartRefresher(
+                controller: _refreshController,
+                onRefresh: _onRefresh,
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      StreamBuilder(
+                        stream: chatService.getUnreadChatsCountStream(
+                          userDesignationId:
+                              currentUser.currentDesignation?.userDesgId,
+                          userId: currentUser.id!,
+                        ),
+                        builder: (context, ss) {
+                          int unread = ss.hasData ? ss.data ?? 0 : 0;
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          color: AppColors.secondary.withAlpha(30),
-                          shadowColor: Colors.grey.withAlpha(80),
-                          elevation: 0,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 0,
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            horizontalTitleGap: 8,
-                            leading: Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
+                            color: AppColors.secondary.withAlpha(30),
+                            shadowColor: Colors.grey.withAlpha(80),
+                            elevation: 0,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 0,
                               ),
-                              color: AppColors.white,
-                              elevation: 6,
-                              shadowColor: Colors.grey.withAlpha(50),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.chat_rounded,
-                                  color: AppColors.secondary,
+                              horizontalTitleGap: 8,
+                              leading: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                color: AppColors.white,
+                                elevation: 6,
+                                shadowColor: Colors.grey.withAlpha(50),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.chat_rounded,
+                                    color: AppColors.secondary,
+                                  ),
                                 ),
                               ),
-                            ),
-                            title: unread == 0
-                                ? AppText.bodyMedium(
-                                    "Open the chat to view messages.",
-                                    color: AppColors.textPrimary,
-                                  )
-                                : RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: 'You have ',
-                                          style: TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 14,
+                              title: unread == 0
+                                  ? AppText.bodyMedium(
+                                      "Open the chat to view messages.",
+                                      color: AppColors.textPrimary,
+                                    )
+                                  : RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          const TextSpan(
+                                            text: 'You have ',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ),
-                                        TextSpan(
-                                          text: '$unread ',
-                                          style: const TextStyle(
-                                            color: AppColors.secondary,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
+                                          TextSpan(
+                                            text: '$unread ',
+                                            style: const TextStyle(
+                                              color: AppColors.secondary,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        TextSpan(
-                                          text:
-                                              'unread chat${unread > 1 ? 's' : ''}',
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 14,
+                                          TextSpan(
+                                            text:
+                                                'unread chat${unread > 1 ? 's' : ''}',
+                                            style: const TextStyle(
+                                              color: AppColors.textPrimary,
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: AppColors.textSecondary,
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              onTap: () {
+                                RouteHelper.push(Routes.chats);
+                              },
                             ),
-                            onTap: () {
-                              RouteHelper.push(Routes.chats);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 16,
-                        left: 16,
-                        right: 16,
-                        bottom: 6,
+                          );
+                        },
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DashboardCard(
-                                  cardColor: Colors.orange,
-                                  iconColor: Color(0xFFFF8C00),
-                                  title: "Pending Files",
-                                  value: "${dashboardState.pendingFilesCount}",
-                                  onTap: () {
-                                    RouteHelper.push(Routes.pendingFiles);
-                                  },
-                                  loading: dashboardState.loading,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: DashboardCard(
-                                  cardColor: const Color.fromARGB(
-                                    255,
-                                    255,
-                                    39,
-                                    23,
-                                  ),
-                                  iconColor: Colors.red.withRed(600),
-                                  title: "Action Required",
-                                  value:
-                                      "${dashboardState.actionRequiredCount}",
-                                  onTap: () {
-                                    RouteHelper.push(
-                                      Routes.actionRequiredFiles,
-                                    );
-                                  },
-                                  loading: dashboardState.loading,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DashboardCard(
-                                  cardColor: AppColors.secondaryLight,
-                                  iconColor: AppColors.secondaryDark,
-                                  title: "My Files",
-                                  value: "${dashboardState.myFilesCount}",
-                                  onTap: () {
-                                    RouteHelper.push(Routes.myFiles);
-                                  },
-                                  loading: dashboardState.loading,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Badge(
-                                  label: AppText.labelSmall(
-                                    "New",
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  alignment: Alignment.topLeft,
-                                  offset: const Offset(-2, -2),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 16,
+                          left: 16,
+                          right: 16,
+                          bottom: 6,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
                                   child: DashboardCard(
-                                    cardColor:
-                                        Colors.teal[100]!, // lighter card color
-                                    iconColor: Colors.teal[800]!,
-                                    title: "Daak Letters",
-                                    value: "",
+                                    cardColor: Colors.orange,
+                                    iconColor: Color(0xFFFF8C00),
+                                    title: "Pending Files",
+                                    value:
+                                        "${dashboardState.pendingFilesCount}",
                                     onTap: () {
-                                      _tabController.animateTo(1);
+                                      RouteHelper.push(Routes.pendingFiles);
                                     },
                                     loading: dashboardState.loading,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Container(
-                            color: Colors.transparent,
-                            child: TabBar(
-                              controller: _tabController,
-                              labelColor: AppColors.primary,
-                              unselectedLabelColor: AppColors.textSecondary,
-                              indicatorColor: AppColors.primary,
-                              indicatorWeight: 3,
-                              labelStyle: const TextStyle(fontSize: 12),
-                              tabs: const [
-                                Tab(text: 'Pending Files'),
-                                Tab(text: 'Daak Letters'),
-                                Tab(text: 'Processed Files'),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: DashboardCard(
+                                    cardColor: const Color.fromARGB(
+                                      255,
+                                      255,
+                                      39,
+                                      23,
+                                    ),
+                                    iconColor: Colors.red.withRed(600),
+                                    title: "Action Required",
+                                    value:
+                                        "${dashboardState.actionRequiredCount}",
+                                    onTap: () {
+                                      RouteHelper.push(
+                                        Routes.actionRequiredFiles,
+                                      );
+                                    },
+                                    loading: dashboardState.loading,
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                          Expanded(
-                            child: TabBarView(
-                              controller: _tabController,
+                            const SizedBox(height: 16),
+                            Row(
                               children: [
-                                _buildFileList(
-                                  files: dashboardState.pendingFiles,
-                                  fileType: FileType.pending,
-                                  loading:
-                                      dashboardState.loadingPendingFiles &&
-                                      dashboardState.pendingFiles.isEmpty,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchPendingFiles(),
+                                Expanded(
+                                  child: DashboardCard(
+                                    cardColor: AppColors.secondaryLight,
+                                    iconColor: AppColors.secondaryDark,
+                                    title: "My Files",
+                                    value: "${dashboardState.myFilesCount}",
+                                    onTap: () {
+                                      RouteHelper.push(Routes.myFiles);
+                                    },
+                                    loading: dashboardState.loading,
+                                  ),
                                 ),
-                                _buildDaakList(
-                                  daakLetters: dashboardState.daakLetters,
-                                  loading:
-                                      dashboardState.loadingDaakLetters &&
-                                      dashboardState.daakLetters.isEmpty,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchDaakLetters(),
-                                ),
-                                _buildFileList(
-                                  files: dashboardState.forwardedFiles,
-                                  fileType: FileType.forwarded,
-                                  loading:
-                                      dashboardState.loadingForwardedFiles &&
-                                      dashboardState.forwardedFiles.isEmpty,
-                                  onRefresh: () => ref
-                                      .read(dashboardController.notifier)
-                                      .fetchForwardedFiles(),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Badge(
+                                    label: AppText.labelSmall(
+                                      "New",
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    alignment: Alignment.topLeft,
+                                    offset: const Offset(-2, -2),
+                                    child: DashboardCard(
+                                      cardColor: Colors
+                                          .teal[100]!, // lighter card color
+                                      iconColor: Colors.teal[800]!,
+                                      title: "Daak Letters",
+                                      value: "",
+                                      onTap: () {
+                                        _tabController.animateTo(1);
+                                      },
+                                      loading: dashboardState.loading,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Container(
+                              color: Colors.transparent,
+                              child: TabBar(
+                                controller: _tabController,
+                                labelColor: AppColors.primary,
+                                unselectedLabelColor: AppColors.textSecondary,
+                                indicatorColor: AppColors.primary,
+                                indicatorWeight: 3,
+                                labelStyle: const TextStyle(fontSize: 12),
+                                tabs: const [
+                                  Tab(text: 'Pending Files'),
+                                  Tab(text: 'Daak Letters'),
+                                  Tab(text: 'Processed Files'),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildFileList(
+                                    files: dashboardState.pendingFiles,
+                                    fileType: FileType.pending,
+                                    loading:
+                                        dashboardState.loadingPendingFiles &&
+                                        dashboardState.pendingFiles.isEmpty,
+                                    onRefresh: () => ref
+                                        .read(dashboardController.notifier)
+                                        .fetchPendingFiles(),
+                                  ),
+                                  _buildDaakList(
+                                    daakLetters: dashboardState.daakLetters,
+                                    loading:
+                                        dashboardState.loadingDaakLetters &&
+                                        dashboardState.daakLetters.isEmpty,
+                                    onRefresh: () => ref
+                                        .read(dashboardController.notifier)
+                                        .fetchDaakLetters(),
+                                  ),
+                                  _buildFileList(
+                                    files: dashboardState.forwardedFiles,
+                                    fileType: FileType.forwarded,
+                                    loading:
+                                        dashboardState.loadingForwardedFiles &&
+                                        dashboardState.forwardedFiles.isEmpty,
+                                    onRefresh: () => ref
+                                        .read(dashboardController.notifier)
+                                        .fetchForwardedFiles(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
