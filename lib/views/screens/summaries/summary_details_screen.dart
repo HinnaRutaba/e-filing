@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
@@ -273,34 +274,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         body: Column(
           children: [
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final bool wide = constraints.maxWidth >= 900;
-                  final content = _documentCard();
-                  final sidebar = _sidebar();
-
-                  if (wide) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: content),
-                          const SizedBox(width: 16),
-                          SizedBox(width: 280, child: sidebar),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [content, const SizedBox(height: 16), sidebar],
-                    ),
-                  );
-                },
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(context.isMobile ? 12 : 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _documentCard(),
+                    const SizedBox(height: 16),
+                    _sidebar(),
+                  ],
+                ),
               ),
             ),
             _actionBar(),
@@ -435,22 +418,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _actionButtonRow() {
+    final isMobile = context.isMobile;
+    final buttons = SummaryAction.values
+        .map((a) => _actionButton(a, expand: !isMobile))
+        .toList(growable: false);
+    if (!isMobile) {
+      return Row(
+        children: [
+          for (int i = 0; i < buttons.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: buttons[i]),
+          ],
+        ],
+      );
+    }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool wide = constraints.maxWidth >= 720;
-        final buttons = SummaryAction.values
-            .map((a) => _actionButton(a, expand: wide))
-            .toList(growable: false);
-        if (wide) {
-          return Row(
-            children: [
-              for (int i = 0; i < buttons.length; i++) ...[
-                if (i > 0) const SizedBox(width: 10),
-                Expanded(child: buttons[i]),
-              ],
-            ],
-          );
-        }
         return Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -1145,30 +1128,59 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _sidebar() {
+    final attachments = AttachmentsSection(
+      mainPdf: widget.mainPdf,
+      attachments: widget.attachments,
+      onViewMainPdf: _onViewMainPdf,
+      onViewAttachment: _onViewAttachment,
+      onDeleteAttachment: (item) =>
+          setState(() => widget.attachments.remove(item)),
+      onAddAttachment: (item) =>
+          setState(() => widget.attachments.add(item)),
+    );
+    final movement = MovementTimelineSection(
+      movementHistory: widget.movementHistory,
+    );
+    final internal = InternalCorrespondenceSection(
+      entries: widget.correspondence,
+    );
+    final local = LocalCorrespondenceSection(
+      linkedDaak: widget.linkedDaak,
+      linkedFiles: widget.linkedFiles,
+    );
+
+    if (context.isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          attachments,
+          const SizedBox(height: 16),
+          movement,
+          const SizedBox(height: 16),
+          internal,
+          const SizedBox(height: 16),
+          local,
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AttachmentsSection(
-          mainPdf: widget.mainPdf,
-          attachments: widget.attachments,
-          onViewMainPdf: _onViewMainPdf,
-          onViewAttachment: _onViewAttachment,
-          onDeleteAttachment: (item) =>
-              setState(() => widget.attachments.remove(item)),
-          onAddAttachment: (item) =>
-              setState(() => widget.attachments.add(item)),
-        ),
+        _sidebarRow(attachments, movement),
+        const SizedBox(height: 16),
+        _sidebarRow(internal, local),
+      ],
+    );
+  }
 
-        const SizedBox(height: 16),
-
-        MovementTimelineSection(movementHistory: widget.movementHistory),
-        const SizedBox(height: 16),
-        InternalCorrespondenceSection(entries: widget.correspondence),
-        const SizedBox(height: 16),
-        LocalCorrespondenceSection(
-          linkedDaak: widget.linkedDaak,
-          linkedFiles: widget.linkedFiles,
-        ),
+  Widget _sidebarRow(Widget left, Widget right) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 16),
+        Expanded(child: right),
       ],
     );
   }

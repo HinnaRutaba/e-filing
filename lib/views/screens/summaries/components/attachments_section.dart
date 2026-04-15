@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AttachmentsSection extends StatefulWidget {
@@ -49,22 +50,43 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         children: [
           if (hasMain) ...[
             _attachmentRow(
-              label: 'Main Summary PDF',
-              fileName: widget.mainPdf!.name,
-              isMain: true,
-              onView: widget.onViewMainPdf,
-            ),
+                  label: 'Main Summary PDF',
+                  fileName: widget.mainPdf!.name,
+                  isMain: true,
+                  onView: widget.onViewMainPdf,
+                )
+                .animate()
+                .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+                .slideX(
+                  begin: -0.15,
+                  end: 0,
+                  duration: 350.ms,
+                  curve: Curves.easeOutCubic,
+                ),
             if (flagAttachments.isNotEmpty) const SizedBox(height: 8),
           ],
           for (int i = 0; i < flagAttachments.length; i++) ...[
             if (i > 0) const SizedBox(height: 8),
             _attachmentRow(
-              label: flagAttachments[i].flagType?.title ?? '?',
-              fileName: flagAttachments[i].attachment?.name,
-              onView: () => widget.onViewAttachment(flagAttachments[i]),
-              onDelete: () =>
-                  _confirmDeleteAttachment(context, flagAttachments[i]),
-            ),
+                  label: flagAttachments[i].flagType?.title ?? '?',
+                  fileName: flagAttachments[i].attachment?.name,
+                  onView: () => widget.onViewAttachment(flagAttachments[i]),
+                  onDelete: () =>
+                      _confirmDeleteAttachment(context, flagAttachments[i]),
+                )
+                .animate()
+                .fadeIn(
+                  delay: (80 * (i + (hasMain ? 1 : 0))).ms,
+                  duration: 300.ms,
+                  curve: Curves.easeOut,
+                )
+                .slideX(
+                  begin: -0.15,
+                  end: 0,
+                  delay: (80 * (i + (hasMain ? 1 : 0))).ms,
+                  duration: 350.ms,
+                  curve: Curves.easeOutCubic,
+                ),
           ],
           if (isEmpty)
             AppText.bodySmall(

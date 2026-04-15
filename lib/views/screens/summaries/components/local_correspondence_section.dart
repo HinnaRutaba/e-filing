@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class LocalCorrespondenceSection extends StatelessWidget {
   final List<DaakModel> linkedDaak;
@@ -23,7 +24,7 @@ class LocalCorrespondenceSection extends StatelessWidget {
     final isEmpty = linkedDaak.isEmpty && linkedFiles.isEmpty;
 
     return _sidebarShell(
-      header: 'Internal Files //Local Correspondence',
+      header: 'Internal Files / Local Correspondence',
       headerColor: AppColors.primaryDark,
       trailing: _countBadge(linkedDaak.length, linkedFiles.length),
       child: Column(
@@ -40,7 +41,20 @@ class LocalCorrespondenceSection extends StatelessWidget {
             const SizedBox(height: 6),
             for (int i = 0; i < linkedDaak.length; i++) ...[
               if (i > 0) const SizedBox(height: 8),
-              _daakTile(linkedDaak[i]),
+              _daakTile(linkedDaak[i])
+                  .animate()
+                  .fadeIn(
+                    delay: (80 * i).ms,
+                    duration: 300.ms,
+                    curve: Curves.easeOut,
+                  )
+                  .slideX(
+                    begin: -0.15,
+                    end: 0,
+                    delay: (80 * i).ms,
+                    duration: 350.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
             ],
           ],
           if (linkedDaak.isNotEmpty && linkedFiles.isNotEmpty)
@@ -50,7 +64,20 @@ class LocalCorrespondenceSection extends StatelessWidget {
             const SizedBox(height: 6),
             for (int i = 0; i < linkedFiles.length; i++) ...[
               if (i > 0) const SizedBox(height: 8),
-              _fileTile(linkedFiles[i]),
+              _fileTile(linkedFiles[i])
+                  .animate()
+                  .fadeIn(
+                    delay: (80 * (linkedDaak.length + i)).ms,
+                    duration: 300.ms,
+                    curve: Curves.easeOut,
+                  )
+                  .slideX(
+                    begin: -0.15,
+                    end: 0,
+                    delay: (80 * (linkedDaak.length + i)).ms,
+                    duration: 350.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
             ],
           ],
         ],

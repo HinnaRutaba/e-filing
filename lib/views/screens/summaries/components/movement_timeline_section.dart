@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SummaryMovementEntry {
   final String status;
@@ -52,13 +53,40 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
-          for (final entry in past) ...[
-            _movementEntry(entry),
+          for (int i = 0; i < past.length; i++) ...[
+            _movementEntry(past[i])
+                .animate()
+                .fadeIn(
+                  delay: (80 * i).ms,
+                  duration: 300.ms,
+                  curve: Curves.easeOut,
+                )
+                .slideX(
+                  begin: -0.15,
+                  end: 0,
+                  delay: (80 * i).ms,
+                  duration: 350.ms,
+                  curve: Curves.easeOutCubic,
+                ),
             const SizedBox(height: 8),
           ],
           if (current.isNotEmpty) ...[
             const SizedBox(height: 8),
-            for (final entry in current) _movementEntry(entry),
+            for (int i = 0; i < current.length; i++)
+              _movementEntry(current[i])
+                  .animate()
+                  .fadeIn(
+                    delay: (80 * (past.length + i)).ms,
+                    duration: 300.ms,
+                    curve: Curves.easeOut,
+                  )
+                  .slideX(
+                    begin: -0.15,
+                    end: 0,
+                    delay: (80 * (past.length + i)).ms,
+                    duration: 350.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
           ],
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 class InternalCorrespondenceEntry {
@@ -54,7 +55,20 @@ class _InternalCorrespondenceSectionState
             ),
           for (int i = 0; i < widget.entries.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
-            _correspondenceEntry(widget.entries[i]),
+            _correspondenceEntry(widget.entries[i])
+                .animate()
+                .fadeIn(
+                  delay: (80 * i).ms,
+                  duration: 300.ms,
+                  curve: Curves.easeOut,
+                )
+                .slideX(
+                  begin: -0.15,
+                  end: 0,
+                  delay: (80 * i).ms,
+                  duration: 350.ms,
+                  curve: Curves.easeOutCubic,
+                ),
           ],
         ],
       ),
