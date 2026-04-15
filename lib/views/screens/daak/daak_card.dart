@@ -20,173 +20,217 @@ class DaakCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool noDetails =
         daak.status == DaakStatus.disposedOff || daak.status == DaakStatus.nfa;
-    return InkWell(
-      onTap: noDetails
-          ? null
-          : () {
-              RouteHelper.push(
-                Routes.daakDetails(daak.id),
-                extra: DaakDetailsInfo(
-                  daak: daak,
-                  openPDF: true,
-                  status: daak.status ?? DaakStatus.inProgress1,
-                ),
-              ).then((value) {
-                if (value != null && value is DaakViewFilter) {
-                  onStatusChange?.call(value);
-                }
-              });
-            },
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        elevation: 5,
-        shadowColor: AppColors.secondaryDark.withValues(alpha: .2),
+    final Color statusColor = daak.status?.color ?? AppColors.secondaryDark;
+
+    return Container(
+      decoration: BoxDecoration(
         color: AppColors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13),
-            color: daak.status?.color,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          child: Container(
-            margin: const EdgeInsets.only(left: 3),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppColors.white,
-            ),
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: noDetails
+              ? null
+              : () {
+                  RouteHelper.push(
+                    Routes.daakDetails(daak.id),
+                    extra: DaakDetailsInfo(
+                      daak: daak,
+                      openPDF: true,
+                      status: daak.status ?? DaakStatus.inProgress1,
+                    ),
+                  ).then((value) {
+                    if (value != null && value is DaakViewFilter) {
+                      onStatusChange?.call(value);
+                    }
+                  });
+                },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // -------- Accent header strip --------
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: statusColor.withValues(alpha: 0.15),
+                    ),
+                  ),
+                ),
+                child: Row(
                   children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: AppText.labelMedium(
-                        "${daak.diaryNo}",
-                        color: AppColors.secondaryDark,
+                      child: Text(
+                        (daak.status?.label ?? "Unknown").toUpperCase(),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
                       ),
                     ),
                     Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color:
-                            daak.status?.color.withOpacity(0.2) ??
-                            AppColors.secondaryDark.withOpacity(0.2),
-                        border: Border.all(
-                          color: daak.status?.color ?? AppColors.secondaryDark,
-                          width: 1,
-                        ),
-                      ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
-                      child: AppText.labelLarge(
-                        daak.status?.label ?? "Unknown",
-                        color: daak.status?.color ?? AppColors.secondaryDark,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (!noDetails)
-                      const Icon(
-                        Icons.arrow_right,
-                        color: AppColors.secondaryDark,
-                      ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    if (daak.incomingScanUrl != null)
-                      InkWell(
-                        onTap: noDetails
-                            ? null
-                            : () {
-                                RouteHelper.push(
-                                  Routes.daakDetails(daak.id),
-                                  extra: DaakDetailsInfo(
-                                    daak: daak,
-                                    openPDF: true,
-                                    status:
-                                        daak.status ?? DaakStatus.inProgress1,
-                                  ),
-                                );
-                              },
-                        child: Container(
-                          width: 34,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.secondaryDark.withValues(
-                                  alpha: 0.3,
-                                ),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Stack(
-                              children: [
-                                PdfViewer(
-                                  url: daak.incomingScanUrl,
-                                  fullScreen: false,
-                                ),
-                                if (!noDetails)
-                                  const Align(
-                                    alignment: Alignment.topRight,
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4.0,
-                                      ),
-                                      child: Icon(
-                                        Icons.remove_red_eye,
-                                        size: 18,
-                                        color: AppColors.secondary,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.25),
                         ),
                       ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          AppText.titleLarge(
-                            daak.subject ?? "No Subject",
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.apartment,
-                                size: 16,
-                                color: AppColors.secondaryDark,
-                              ),
-                              const SizedBox(width: 4),
-                              AppText.bodyMedium(
-                                daak.sourceDepartment ?? "Unknown Department",
-                              ),
-                            ],
+                          Icon(Icons.tag_rounded, size: 12, color: statusColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${daak.diaryNo}",
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    if (!noDetails) ...[
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: statusColor,
+                        size: 20,
+                      ),
+                    ],
                   ],
                 ),
-                Column(
+              ),
+              // -------- Body --------
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (daak.incomingScanUrl != null)
+                          InkWell(
+                            onTap: noDetails
+                                ? null
+                                : () {
+                                    RouteHelper.push(
+                                      Routes.daakDetails(daak.id),
+                                      extra: DaakDetailsInfo(
+                                        daak: daak,
+                                        openPDF: true,
+                                        status:
+                                            daak.status ??
+                                            DaakStatus.inProgress1,
+                                      ),
+                                    );
+                                  },
+                            child: Container(
+                              width: 34,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.secondaryDark.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: Stack(
+                                  children: [
+                                    PdfViewer(
+                                      url: daak.incomingScanUrl,
+                                      fullScreen: false,
+                                    ),
+                                    if (!noDetails)
+                                      const Align(
+                                        alignment: Alignment.topRight,
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 4.0,
+                                          ),
+                                          child: Icon(
+                                            Icons.remove_red_eye,
+                                            size: 18,
+                                            color: AppColors.secondary,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              AppText.titleLarge(
+                                daak.subject ?? "No Subject",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.apartment,
+                                    size: 16,
+                                    color: AppColors.secondaryDark,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: AppText.bodyMedium(
+                                      daak.sourceDepartment ??
+                                          "Unknown Department",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -288,8 +332,8 @@ class DaakCard extends StatelessWidget {
                           ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

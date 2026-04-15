@@ -270,9 +270,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                                               crossAxisCount: context.isDesktop
                                                   ? 3
                                                   : 2,
-                                              crossAxisSpacing: 0,
-                                              mainAxisSpacing: 8,
-                                              mainAxisExtent: 180,
+                                              crossAxisSpacing: 16,
+                                              mainAxisSpacing: 16,
+                                              mainAxisExtent: 190,
                                             ),
                                         itemBuilder: (context, index) =>
                                             buildAnimated(index),
@@ -282,8 +282,12 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                                       itemCount: filteredDaak.length,
                                       physics:
                                           const AlwaysScrollableScrollPhysics(),
-                                      itemBuilder: (context, index) =>
-                                          buildAnimated(index),
+                                      itemBuilder: (context, index) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12.0,
+                                        ),
+                                        child: buildAnimated(index),
+                                      ),
                                     );
                                   },
                                 ),
