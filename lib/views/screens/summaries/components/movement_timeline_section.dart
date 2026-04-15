@@ -70,11 +70,11 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: entry.current
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : AppColors.cardColorLight,
+        color: AppColors.cardColorLight,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
