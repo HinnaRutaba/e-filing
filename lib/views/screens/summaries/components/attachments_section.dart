@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -12,6 +13,7 @@ class AttachmentsSection extends StatefulWidget {
   final VoidCallback onViewMainPdf;
   final ValueChanged<FlagAndAttachmentModel> onViewAttachment;
   final ValueChanged<FlagAndAttachmentModel> onDeleteAttachment;
+  final ValueChanged<FlagAndAttachmentModel>? onAddAttachment;
 
   const AttachmentsSection({
     super.key,
@@ -20,6 +22,7 @@ class AttachmentsSection extends StatefulWidget {
     required this.onViewMainPdf,
     required this.onViewAttachment,
     required this.onDeleteAttachment,
+    this.onAddAttachment,
   });
 
   @override
@@ -40,6 +43,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return _sidebarShell(
       header: 'Attachments',
       headerColor: AppColors.primaryDark,
+      trailing: widget.onAddAttachment != null ? _addButton() : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -58,10 +62,8 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               label: flagAttachments[i].flagType?.title ?? '?',
               fileName: flagAttachments[i].attachment?.name,
               onView: () => widget.onViewAttachment(flagAttachments[i]),
-              onDelete: () => _confirmDeleteAttachment(
-                context,
-                flagAttachments[i],
-              ),
+              onDelete: () =>
+                  _confirmDeleteAttachment(context, flagAttachments[i]),
             ),
           ],
           if (isEmpty)
@@ -177,6 +179,104 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     );
   }
 
+  Widget _addButton() {
+    return InkWell(
+      onTap: _openAddAttachmentDialog,
+      child: Row(
+        children: [
+          const Icon(Icons.add, color: AppColors.primaryDark, size: 20),
+          const SizedBox(width: 4),
+          AppText.titleMedium(
+            "Add More",
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            color: AppColors.primaryDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openAddAttachmentDialog() async {
+    final model = FlagAndAttachmentModel(
+      usedFlags: [
+        ...widget.attachments.map((e) => e.flagType).whereType<FlagModel>(),
+      ],
+    );
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryDark,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText.bodyMedium(
+                          'Add Attachment',
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  AddFlagAndAttachment(model: model),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AppTextLinkButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        text: 'Cancel',
+                        color: Colors.grey[700],
+                      ),
+                      const SizedBox(width: 8),
+                      AppOutlineButton(
+                        width: 120,
+                        onPressed: () {
+                          if (model.flagType == null) return;
+                          Navigator.of(ctx).pop(true);
+                        },
+                        text: 'Save',
+                        color: AppColors.primaryDark,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (saved == true && model.flagType != null) {
+      widget.onAddAttachment?.call(model);
+    }
+  }
+
   Future<void> _confirmDeleteAttachment(
     BuildContext context,
     FlagAndAttachmentModel item,
@@ -235,6 +335,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     required String header,
     required Color headerColor,
     required Widget child,
+    Widget? trailing,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -278,6 +379,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                       color: headerColor,
                     ),
                   ),
+                  if (trailing != null) ...[trailing, const SizedBox(width: 8)],
                   Icon(
                     _expanded
                         ? Icons.keyboard_arrow_up_rounded

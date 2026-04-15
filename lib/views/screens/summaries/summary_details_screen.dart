@@ -1124,6 +1124,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           onViewAttachment: _onViewAttachment,
           onDeleteAttachment: (item) =>
               setState(() => widget.attachments.remove(item)),
+          onAddAttachment: (item) =>
+              setState(() => widget.attachments.add(item)),
         ),
         const SizedBox(height: 16),
         InternalCorrespondenceSection(entries: widget.correspondence),
