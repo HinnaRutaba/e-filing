@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -147,6 +148,146 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
       relativeTime: '4d ago',
       tab: SummaryTab.sentSummaries,
     ),
+    // -------- Draft from Sections (extra) --------
+    SummaryListItem(
+      reference: 'SUM/D/2026/000002',
+      status: SummaryStatus.pendingReview,
+      title: 'Recruitment policy revision for grade 17 officers',
+      remarksBy: 'Hassan Iqbal',
+      draftedBy: 'Bilal Ahmed',
+      draftedByRole: 'Section Officer',
+      section: 'HRM',
+      target: 'S&GAD',
+      createdAt: DateTime(2026, 4, 10, 9, 15),
+      relativeTime: '5h ago',
+      tab: SummaryTab.draftFromSections,
+    ),
+    SummaryListItem(
+      reference: 'SUM/D/2026/000003',
+      status: SummaryStatus.remarksDrafted,
+      title: 'Allocation of vehicles to district offices',
+      draftedBy: 'Mehreen Tariq',
+      draftedByRole: 'Assistant Director',
+      section: 'ADMN',
+      target: 'TRANS',
+      createdAt: DateTime(2026, 4, 9, 16, 0),
+      relativeTime: '1d ago',
+      tab: SummaryTab.draftFromSections,
+    ),
+    // -------- Internal Forwarded (extra) --------
+    SummaryListItem(
+      reference: 'SUM/I/2026/000005',
+      status: SummaryStatus.forwarded,
+      title: 'Annual procurement plan for fiscal year 2026-27',
+      remarksBy: 'Naveed Akhtar',
+      draftedBy: 'Zainab Malik',
+      draftedByRole: 'Deputy Secretary',
+      section: 'PROC',
+      target: 'FIN',
+      createdAt: DateTime(2026, 4, 8, 10, 30),
+      relativeTime: '2d ago',
+      tab: SummaryTab.internalForwarded,
+    ),
+    SummaryListItem(
+      reference: 'SUM/I/2026/000006',
+      status: SummaryStatus.pendingReview,
+      title: 'Implementation of e-office across secretariat',
+      draftedBy: 'Imran Khalid',
+      draftedByRole: 'IT Director',
+      section: 'IT',
+      target: 'ALL',
+      createdAt: DateTime(2026, 4, 7, 13, 45),
+      relativeTime: '3d ago',
+      tab: SummaryTab.internalForwarded,
+    ),
+    // -------- My Inbox --------
+    SummaryListItem(
+      reference: 'SUM/M/2026/000010',
+      status: SummaryStatus.pendingReview,
+      title: 'Approval for new district hospital construction',
+      remarksBy: 'Tariq Mehmood',
+      draftedBy: 'Aisha Khan',
+      draftedByRole: 'Section Officer',
+      section: 'HEALTH',
+      target: 'P&D',
+      createdAt: DateTime(2026, 4, 11, 8, 20),
+      relativeTime: '2h ago',
+      tab: SummaryTab.myInbox,
+    ),
+    SummaryListItem(
+      reference: 'SUM/M/2026/000011',
+      status: SummaryStatus.forwarded,
+      title: 'Scholarship scheme for minority students',
+      draftedBy: 'Yasir Hussain',
+      draftedByRole: 'Deputy Director',
+      section: 'EDU',
+      target: 'CMDU',
+      createdAt: DateTime(2026, 4, 10, 17, 50),
+      relativeTime: '1d ago',
+      tab: SummaryTab.myInbox,
+    ),
+    SummaryListItem(
+      reference: 'SUM/M/2026/000012',
+      status: SummaryStatus.remarksDrafted,
+      title: 'Rehabilitation works in flood-affected areas',
+      remarksBy: 'Saima Bashir',
+      section: 'PDMA',
+      createdAt: DateTime(2026, 4, 9, 12, 0),
+      relativeTime: '2d ago',
+      tab: SummaryTab.myInbox,
+    ),
+    // -------- Pending Action --------
+    SummaryListItem(
+      reference: 'SUM/P/2026/000020',
+      status: SummaryStatus.pendingReview,
+      title: 'Posting of Section Officers in CMDU',
+      remarksBy: 'Junaid Anwar',
+      draftedBy: 'Faiza Iqbal',
+      draftedByRole: 'Section Officer',
+      section: 'S&GAD',
+      target: 'CMDU',
+      createdAt: DateTime(2026, 4, 11, 11, 0),
+      relativeTime: '4h ago',
+      tab: SummaryTab.pendingAction,
+    ),
+    SummaryListItem(
+      reference: 'SUM/P/2026/000021',
+      status: SummaryStatus.pendingReview,
+      title: 'Sanction of additional posts for revenue department',
+      draftedBy: 'Adeel Raza',
+      draftedByRole: 'Deputy Secretary',
+      section: 'REV',
+      target: 'FIN',
+      createdAt: DateTime(2026, 4, 10, 14, 25),
+      relativeTime: '1d ago',
+      tab: SummaryTab.pendingAction,
+    ),
+    // -------- Sent Summaries (extra) --------
+    SummaryListItem(
+      reference: 'SUM/S/2026/000008',
+      status: SummaryStatus.sent,
+      title: 'Approval of supplementary grant for sports gala',
+      draftedBy: 'Komal Shah',
+      draftedByRole: 'Assistant Secretary',
+      section: 'SPORTS',
+      target: 'FIN',
+      createdAt: DateTime(2026, 4, 5, 15, 30),
+      relativeTime: '5d ago',
+      tab: SummaryTab.sentSummaries,
+    ),
+    SummaryListItem(
+      reference: 'SUM/S/2026/000009',
+      status: SummaryStatus.sent,
+      title: 'Notification of revised pay scales',
+      remarksBy: 'Rashid Ali',
+      draftedBy: 'Nadia Saeed',
+      draftedByRole: 'Section Officer',
+      section: 'FIN',
+      target: 'ALL',
+      createdAt: DateTime(2026, 4, 4, 9, 0),
+      relativeTime: '6d ago',
+      tab: SummaryTab.sentSummaries,
+    ),
   ];
 
   int _countFor(SummaryTab tab) => _items.where((e) => e.tab == tab).length;
@@ -207,26 +348,55 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
                         Center(child: Text('No summaries yet')),
                       ],
                     )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                      itemCount: _visibleItems.length,
-                      itemBuilder: (ctx, i) =>
-                          SummaryCard(item: _visibleItems[i])
-                              .animate()
-                              .fadeIn(
-                                delay: (80 * i).ms,
-                                duration: 300.ms,
-                                curve: Curves.easeOut,
-                              )
-                              .slideX(
-                                begin: -0.15,
-                                end: 0,
-                                delay: (80 * i).ms,
-                                duration: 350.ms,
-                                curve: Curves.easeOutCubic,
-                              ),
-                    ),
+                  : Builder(builder: (context) {
+                      final perRow = context.isMobile ? 1 : 2;
+                      final rowCount =
+                          (_visibleItems.length / perRow).ceil();
+                      return ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding:
+                            const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                        itemCount: rowCount,
+                        itemBuilder: (ctx, rowIndex) {
+                          final children = <Widget>[];
+                          for (var c = 0; c < perRow; c++) {
+                            final i = rowIndex * perRow + c;
+                            if (i >= _visibleItems.length) {
+                              children.add(const Expanded(
+                                  child: SizedBox.shrink()));
+                              continue;
+                            }
+                            final card = SummaryCard(item: _visibleItems[i])
+                                .animate()
+                                .fadeIn(
+                                  delay: (80 * i).ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOut,
+                                )
+                                .slideX(
+                                  begin: -0.15,
+                                  end: 0,
+                                  delay: (80 * i).ms,
+                                  duration: 350.ms,
+                                  curve: Curves.easeOutCubic,
+                                );
+                            if (c > 0) {
+                              children.add(const SizedBox(width: 12));
+                            }
+                            children.add(Expanded(child: card));
+                          }
+                          if (perRow == 1) {
+                            return children.first is Expanded
+                                ? (children.first as Expanded).child
+                                : children.first;
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: children,
+                          );
+                        },
+                      );
+                    }),
             ),
           ),
         ],

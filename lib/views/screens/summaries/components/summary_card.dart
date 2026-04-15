@@ -157,7 +157,7 @@ class SummaryCard extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         height: 1.25,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
