@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -51,6 +52,10 @@ class _ForwardedFilesScreenState extends ConsumerState<ForwardedFilesScreen> {
                 onChanged: (String value) {
                   ref.read(filesController.notifier).filterFiles(value);
                 },
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                  borderSide: const BorderSide(color: AppColors.cardColor),
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -68,30 +73,53 @@ class _ForwardedFilesScreenState extends ConsumerState<ForwardedFilesScreen> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        itemBuilder: (ctx, i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child:
-                              FileCard(
-                                    fileType: FileType.forwarded,
-                                    data: files[i],
-                                  )
-                                  .animate()
-                                  .fadeIn(
-                                    delay: (80 * i).ms,
-                                    duration: 300.ms,
-                                    curve: Curves.easeOut,
-                                  )
-                                  .slideX(
-                                    begin: -0.15,
-                                    end: 0,
-                                    delay: (80 * i).ms,
-                                    duration: 350.ms,
-                                    curve: Curves.easeOutCubic,
+                    : Builder(
+                        builder: (context) {
+                          Widget buildAnimated(int i) {
+                            return FileCard(
+                                  fileType: FileType.forwarded,
+                                  data: files[i],
+                                )
+                                .animate()
+                                .fadeIn(
+                                  delay: (80 * i).ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOut,
+                                )
+                                .slideX(
+                                  begin: -0.15,
+                                  end: 0,
+                                  delay: (80 * i).ms,
+                                  duration: 350.ms,
+                                  curve: Curves.easeOutCubic,
+                                );
+                          }
+
+                          if (!context.isMobile) {
+                            return GridView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: files.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: context.isDesktop ? 3 : 2,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                    mainAxisExtent: 160,
                                   ),
-                        ),
-                        itemCount: files.length,
-                        physics: const BouncingScrollPhysics(),
+                              itemBuilder: (ctx, i) => buildAnimated(i),
+                            );
+                          }
+                          return ListView.builder(
+                            itemBuilder: (ctx, i) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              child: buildAnimated(i),
+                            ),
+                            itemCount: files.length,
+                            physics: const BouncingScrollPhysics(),
+                          );
+                        },
                       ),
               ),
             ],
