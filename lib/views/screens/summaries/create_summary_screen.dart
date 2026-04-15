@@ -65,6 +65,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   final List<FileModel> linkedFiles = [];
 
   int _openSection = 0;
+  bool _secretaryRemarksExpanded = true;
   String _summaryHtml = '';
 
   Future fetchData() async {
@@ -350,41 +351,53 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           scrolledUnderElevation: 0,
         ),
 
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 40),
-          child: Form(
-            key: formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _expandableSection(
-                  index: 0,
-                  icon: Icons.description_outlined,
-                  title: "Summary Details",
-                  subtitle: "Subject, date, department and content",
-                  child: _summaryDetailsBody(),
+        body: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: _secretaryRemarksAlert(),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _expandableSection(
+                        index: 0,
+                        icon: Icons.description_outlined,
+                        title: "Summary Details",
+                        subtitle: "Subject, date, department and content",
+                        child: _summaryDetailsBody(),
+                      ),
+                      _expandableSection(
+                        index: 1,
+                        icon: Icons.flag_outlined,
+                        title: "Flags",
+                        subtitle: "Attach supporting flags for this summary",
+                        child: _flagsBody(),
+                      ),
+                      _expandableSection(
+                        index: 2,
+                        icon: Icons.folder_shared_outlined,
+                        title: "Local Correspondence",
+                        subtitle: "Link references from earlier correspondence",
+                        child: _localCorrespondenceBody(),
+                      ),
+                      if (_openSection == -1) ...[
+                        const SizedBox(height: 4),
+                        _stepperOverview(),
+                      ],
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
-                _expandableSection(
-                  index: 1,
-                  icon: Icons.flag_outlined,
-                  title: "Flags",
-                  subtitle: "Attach supporting flags for this summary",
-                  child: _flagsBody(),
-                ),
-                _expandableSection(
-                  index: 2,
-                  icon: Icons.folder_shared_outlined,
-                  title: "Local Correspondence",
-                  subtitle: "Link references from earlier correspondence",
-                  child: _localCorrespondenceBody(),
-                ),
-                if (_openSection == -1) ...[
-                  const SizedBox(height: 4),
-                  _stepperOverview(),
-                ],
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -394,6 +407,117 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   // ---------------------------------------------------------------------------
   // Sub-widgets
   // ---------------------------------------------------------------------------
+
+  Widget _secretaryRemarksAlert() {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.orange.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => setState(
+              () => _secretaryRemarksExpanded = !_secretaryRemarksExpanded,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText.titleMedium(
+                      "Secretary Remarks",
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _secretaryRemarksExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _secretaryRemarksExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppText.titleSmall(
+                                    "Secretary Name",
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  AppText.bodySmall("(Home Departmentt)"),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_month,
+                                  size: 16,
+                                  color: Colors.grey[600]!,
+                                ),
+                                const SizedBox(width: 4),
+                                AppText.labelSmall(
+                                  DateTimeHelper.datFormatSlash(DateTime.now()),
+                                  color: Colors.grey[600],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Remarks added by secretary",
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                        const SizedBox(height: 4),
+                        AppText.labelMedium(
+                          "Make the ammendments suggested by secreatry and resend",
+                          color: Colors.orange[800],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: double.infinity, height: 0),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _mainPdfPicker() {
     return Column(
