@@ -1,10 +1,13 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_correspondence_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/local_correspondence_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -73,6 +76,8 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
   final List<FlagAndAttachmentModel> attachments;
   final List<SummaryMovementEntry> movementHistory;
   final List<InternalCorrespondenceEntry> correspondence;
+  final List<DaakModel> linkedDaak;
+  final List<FileModel> linkedFiles;
 
   SummaryDetailsScreen({
     super.key,
@@ -99,11 +104,15 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
       ),
     ],
     List<InternalCorrespondenceEntry>? correspondence,
+    List<DaakModel>? linkedDaak,
+    List<FileModel>? linkedFiles,
   }) : summaryDate = summaryDate ?? _kDemoDate,
        recipientTimestamp = recipientTimestamp ?? _kDemoTimestamp,
        mainPdf = mainPdf ?? XFile('main_summary.pdf'),
        attachments = attachments ?? _demoAttachments(),
-       correspondence = correspondence ?? _demoCorrespondence();
+       correspondence = correspondence ?? _demoCorrespondence(),
+       linkedDaak = linkedDaak ?? _demoLinkedDaak(),
+       linkedFiles = linkedFiles ?? _demoLinkedFiles();
 
   @override
   ConsumerState<SummaryDetailsScreen> createState() =>
@@ -116,6 +125,28 @@ final DateTime _kDemoTimestamp = DateTime(2026, 4, 14, 0, 0);
 const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
+
+List<DaakModel> _demoLinkedDaak() => [
+  DaakModel(
+    id: 1,
+    diaryNo: 'DIARY/2026/0001',
+    letterNo: 'LTR-2026-001',
+    subject: 'Budget allocation request for Q2',
+  ),
+];
+
+List<FileModel> _demoLinkedFiles() => [
+  FileModel(
+    fileId: 1,
+    referenceNo: 'FILE/HD/2026/0042',
+    subject: 'Home Department policy review',
+  ),
+  FileModel(
+    fileId: 2,
+    referenceNo: 'FILE/HD/2026/0043',
+    subject: 'Departmental staffing plan',
+  ),
+];
 
 List<InternalCorrespondenceEntry> _demoCorrespondence() => [
   InternalCorrespondenceEntry(
@@ -1127,10 +1158,17 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           onAddAttachment: (item) =>
               setState(() => widget.attachments.add(item)),
         ),
+
+        const SizedBox(height: 16),
+
+        MovementTimelineSection(movementHistory: widget.movementHistory),
         const SizedBox(height: 16),
         InternalCorrespondenceSection(entries: widget.correspondence),
         const SizedBox(height: 16),
-        MovementTimelineSection(movementHistory: widget.movementHistory),
+        LocalCorrespondenceSection(
+          linkedDaak: widget.linkedDaak,
+          linkedFiles: widget.linkedFiles,
+        ),
       ],
     );
   }
