@@ -3,10 +3,12 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/internal_correspondence_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
@@ -55,21 +57,6 @@ enum SummaryAction {
   });
 }
 
-class SummaryMovementEntry {
-  final String status;
-  final String stage;
-  final String department;
-  final String user;
-  final bool current;
-  const SummaryMovementEntry({
-    required this.status,
-    required this.stage,
-    required this.department,
-    required this.user,
-    this.current = false,
-  });
-}
-
 class SummaryDetailsScreen extends ConsumerStatefulWidget {
   final String barcode;
   final String summaryNumber;
@@ -85,6 +72,7 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
   final XFile? mainPdf;
   final List<FlagAndAttachmentModel> attachments;
   final List<SummaryMovementEntry> movementHistory;
+  final List<InternalCorrespondenceEntry> correspondence;
 
   SummaryDetailsScreen({
     super.key,
@@ -110,10 +98,12 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
         current: true,
       ),
     ],
+    List<InternalCorrespondenceEntry>? correspondence,
   }) : summaryDate = summaryDate ?? _kDemoDate,
        recipientTimestamp = recipientTimestamp ?? _kDemoTimestamp,
        mainPdf = mainPdf ?? XFile('main_summary.pdf'),
-       attachments = attachments ?? _demoAttachments();
+       attachments = attachments ?? _demoAttachments(),
+       correspondence = correspondence ?? _demoCorrespondence();
 
   @override
   ConsumerState<SummaryDetailsScreen> createState() =>
@@ -126,6 +116,27 @@ final DateTime _kDemoTimestamp = DateTime(2026, 4, 14, 0, 0);
 const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
+
+List<InternalCorrespondenceEntry> _demoCorrespondence() => [
+  InternalCorrespondenceEntry(
+    fromUser: 'Mr. Secretary',
+    toUser: 'Mr. Section officer',
+    toDesignation: 'Additional Secretary-II',
+    status: 'Returned',
+    date: DateTime(2026, 4, 15, 11, 45),
+    remarksTitle: "Secretary's Instructions",
+    remarks: 'Add more details',
+  ),
+  InternalCorrespondenceEntry(
+    fromUser: 'Mr. Secretary',
+    toUser: 'Mr. Section officer',
+    toDesignation: 'Additional Secretary-II',
+    status: 'Returned',
+    date: DateTime(2026, 4, 15, 12, 6),
+    remarksTitle: "Secretary's Instructions",
+    remarks: 'Change XYZ',
+  ),
+];
 
 List<FlagAndAttachmentModel> _demoAttachments() => [
   FlagAndAttachmentModel(
@@ -1106,154 +1117,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _attachmentsCard(),
+        AttachmentsSection(
+          mainPdf: widget.mainPdf,
+          attachments: widget.attachments,
+          onViewMainPdf: _onViewMainPdf,
+          onViewAttachment: _onViewAttachment,
+          onDeleteAttachment: (item) =>
+              setState(() => widget.attachments.remove(item)),
+        ),
         const SizedBox(height: 16),
-        _movementCard(),
+        InternalCorrespondenceSection(entries: widget.correspondence),
+        const SizedBox(height: 16),
+        MovementTimelineSection(movementHistory: widget.movementHistory),
       ],
-    );
-  }
-
-  Widget _attachmentsCard() {
-    final flagAttachments = widget.attachments
-        .where((e) => e.flagType != null || e.attachment != null)
-        .toList(growable: false);
-    final hasMain = widget.mainPdf != null;
-    final isEmpty = !hasMain && flagAttachments.isEmpty;
-
-    return _sidebarShell(
-      header: 'Attachments',
-      headerColor: AppColors.primaryDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (hasMain) ...[
-            _attachmentRow(
-              label: 'Main Summary PDF',
-              fileName: widget.mainPdf!.name,
-              isMain: true,
-              onView: () => _onViewMainPdf(),
-            ),
-            if (flagAttachments.isNotEmpty) const SizedBox(height: 8),
-          ],
-          for (int i = 0; i < flagAttachments.length; i++) ...[
-            if (i > 0) const SizedBox(height: 8),
-            _attachmentRow(
-              label: flagAttachments[i].flagType?.title ?? '?',
-              fileName: flagAttachments[i].attachment?.name,
-              onView: () => _onViewAttachment(flagAttachments[i]),
-              onDelete: () => _confirmDeleteAttachment(flagAttachments[i]),
-            ),
-          ],
-          if (isEmpty)
-            AppText.bodySmall(
-              'No attachments.',
-              color: AppColors.textSecondary,
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _attachmentRow({
-    required String label,
-    String? fileName,
-    bool isMain = false,
-    required VoidCallback onView,
-    VoidCallback? onDelete,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.cardColorLight,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (isMain)
-            const Icon(
-              Icons.picture_as_pdf_rounded,
-              size: 18,
-              color: AppColors.error,
-            )
-          else
-            Container(
-              width: 26,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: AppColors.secondary.withValues(alpha: 0.4),
-                ),
-              ),
-              child: AppText.bodySmall(
-                label,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.secondaryDark,
-              ),
-            ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: AppText.bodySmall(
-              isMain ? label : (fileName ?? label),
-              color: AppColors.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-          if (!isMain && onDelete != null) ...[
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: onDelete,
-              child: Icon(
-                Icons.delete_forever,
-                color: Colors.red[700],
-                size: 24,
-              ),
-            ),
-          ],
-          const SizedBox(width: 8),
-          _viewButton(onTap: onView),
-        ],
-      ),
-    );
-  }
-
-  Widget _viewButton({required VoidCallback onTap}) {
-    return Material(
-      color: AppColors.primaryDark,
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(6),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.remove_red_eye_outlined,
-                size: 13,
-                color: AppColors.white,
-              ),
-              const SizedBox(width: 4),
-              AppText.bodySmall(
-                'View',
-                color: AppColors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -1268,201 +1144,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Viewing ${widget.mainPdf?.name ?? 'Main Summary PDF'}'),
-      ),
-    );
-  }
-
-  Future<void> _confirmDeleteAttachment(FlagAndAttachmentModel item) async {
-    final name =
-        item.attachment?.name ?? item.flagType?.title ?? 'this attachment';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.delete_forever, color: Colors.red[700]),
-              const SizedBox(width: 10),
-              const Expanded(child: Text('Delete attachment?')),
-            ],
-          ),
-          content: RichText(
-            text: TextSpan(
-              style: TextStyle(color: Colors.grey[800], fontSize: 13),
-              children: [
-                const TextSpan(text: 'Are you sure you want to delete '),
-                TextSpan(
-                  text: '"$name"',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const TextSpan(text: '? This action cannot be undone.'),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          actions: [
-            AppTextLinkButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              text: "Cancel",
-              color: Colors.grey[700],
-            ),
-            AppOutlineButton(
-              width: 120,
-              onPressed: () => Navigator.of(ctx).pop(true),
-              text: "Delete",
-              color: Colors.red[500]!,
-            ),
-          ],
-        );
-      },
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => widget.attachments.remove(item));
-  }
-
-  Widget _movementCard() {
-    final current = widget.movementHistory
-        .where((e) => e.current)
-        .toList(growable: false);
-    final past = widget.movementHistory
-        .where((e) => !e.current)
-        .toList(growable: false);
-
-    return _sidebarShell(
-      header: 'Movement Timeline',
-      headerColor: AppColors.primaryDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (past.isEmpty)
-            AppText.bodySmall(
-              'No movement history yet.',
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          for (final entry in past) ...[
-            _movementEntry(entry),
-            const SizedBox(height: 8),
-          ],
-          if (current.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            for (final entry in current) _movementEntry(entry),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _movementEntry(SummaryMovementEntry entry) {
-    final accent = entry.current ? AppColors.primary : AppColors.secondaryLight;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: entry.current
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : AppColors.cardColorLight,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: accent,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              AppText.bodySmall(
-                entry.status,
-                color: accent == AppColors.primary
-                    ? AppColors.primaryDark
-                    : AppColors.secondaryDark,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          AppText.bodyMedium(
-            entry.stage,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            fontSize: 13,
-          ),
-          const SizedBox(height: 4),
-          AppText.bodySmall(
-            'Department: ${entry.department}',
-            color: AppColors.textSecondary,
-            fontSize: 11,
-          ),
-          AppText.bodySmall(
-            'User: ${entry.user}',
-            color: AppColors.textSecondary,
-            fontSize: 11,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sidebarShell({
-    required String header,
-    required Color headerColor,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: headerColor.withValues(alpha: 0.08),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: headerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                AppText.bodyMedium(
-                  header,
-                  fontWeight: FontWeight.w700,
-                  color: headerColor,
-                ),
-              ],
-            ),
-          ),
-          Padding(padding: const EdgeInsets.all(12), child: child),
-        ],
       ),
     );
   }
