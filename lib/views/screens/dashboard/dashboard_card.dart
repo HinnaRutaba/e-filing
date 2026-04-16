@@ -7,6 +7,8 @@ class DashboardCard extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
   final bool loading;
+  final bool showSmallCard;
+  final IconData icon;
   const DashboardCard({
     super.key,
     required this.cardColor,
@@ -14,7 +16,9 @@ class DashboardCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.onTap,
+    required this.icon,
     this.loading = false,
+    this.showSmallCard = true,
   });
 
   @override
@@ -24,8 +28,8 @@ class DashboardCard extends StatelessWidget {
       children: [
         _buildCard(),
         Positioned(
-          top: 4,
-          right: 4,
+          top: showSmallCard ? -8 : 4,
+          right: showSmallCard ? -12 : 4,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child:
@@ -148,51 +152,73 @@ class DashboardCard extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Icon(Icons.circle, size: 12, color: iconColor),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppText.bodyLarge(
-                                title,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[900],
-                              ),
-                              loading && (value.isEmpty || value == '0')
-                                  ? const Row(
-                                      children: [
-                                        SpinKitThreeBounce(
-                                          color: AppColors.accent,
-                                          size: 16,
-                                        ),
-                                      ],
-                                    )
-                                  : AppText.headlineMedium(
-                                      value,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.grey[900],
-                                    ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 12,
                     ),
+                    child: showSmallCard ? cardSmall() : cardBody(),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget cardBody() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2.0),
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyLarge(
+                title,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[900],
+              ),
+              loading && (value.isEmpty || value == '0')
+                  ? const Row(
+                      children: [
+                        SpinKitThreeBounce(color: AppColors.accent, size: 16),
+                      ],
+                    )
+                  : AppText.headlineMedium(
+                      value,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[900],
+                    ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget cardSmall() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18, color: iconColor),
+          AppText.headlineMedium(
+            value,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[900],
+          ),
+        ],
       ),
     );
   }

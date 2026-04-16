@@ -242,7 +242,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       right: 20,
                       child: _buildUserHeader(currentUser),
                     ),
-                    Positioned(
+                    AnimatedPositioned(
+                      duration: 300.ms,
                       left: 16,
                       right: 16,
                       top: context.isMobile ? 160 : 140,
@@ -453,6 +454,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildStatsCard(BuildContext context, DashboardModel dashboardState) {
+    final smallCard = true;
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
@@ -476,6 +478,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         RouteHelper.push(Routes.pendingFiles);
       },
       loading: dashboardState.loading,
+      icon: Icons.timelapse,
+      showSmallCard: smallCard,
     );
 
     final actionRequiredCard = DashboardCard(
@@ -487,6 +491,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         RouteHelper.push(Routes.actionRequiredFiles);
       },
       loading: dashboardState.loading,
+      icon: Icons.info_outline,
+      showSmallCard: smallCard,
     );
 
     final myFilesCard = DashboardCard(
@@ -498,6 +504,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         RouteHelper.push(Routes.myFiles);
       },
       loading: dashboardState.loading,
+      icon: Icons.file_copy,
+      showSmallCard: smallCard,
     );
 
     final daakCard = Badge(
@@ -519,6 +527,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _tabController.animateTo(1);
         },
         loading: false,
+        icon: Icons.mark_email_unread,
+        showSmallCard: smallCard,
       ),
     );
 
