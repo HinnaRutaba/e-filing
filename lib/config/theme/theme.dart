@@ -247,6 +247,15 @@ class AppTheme {
     chipTheme: AppChipTheme.lightChipTheme,
     inputDecorationTheme: AppTextFieldTheme.inputDecorationTheme,
     bottomNavigationBarTheme: BottomNavBarTheme.lightNavbarTheme,
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: _lightCard,
+      surfaceTintColor: _lightCard,
+      modalBackgroundColor: _lightCard,
+      modalBarrierColor: Color(0x4D000000),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+    ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       color: AppColors.primaryDark,
     ),
@@ -320,6 +329,15 @@ class AppTheme {
     ),
     bottomNavigationBarTheme: BottomNavBarTheme.darkNavbarTheme.copyWith(
       backgroundColor: _darkBackground,
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: _darkSurface,
+      surfaceTintColor: _darkSurface,
+      modalBackgroundColor: _darkSurface,
+      modalBarrierColor: Color(0x99000000),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
     ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: _darkSurface,

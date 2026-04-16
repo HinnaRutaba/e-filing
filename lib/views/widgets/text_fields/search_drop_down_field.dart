@@ -1,5 +1,5 @@
 import 'package:drop_down_search_field/drop_down_search_field.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +43,8 @@ class SearchDropDownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -53,11 +55,14 @@ class SearchDropDownField<T> extends StatelessWidget {
             children: [
               AppText.labelLarge(
                 labelText,
-                color: enabled ? Colors.grey[800] : Colors.grey,
+                color: enabled
+                    ? appColors.textPrimary
+                    : appColors.textSecondary,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
-              if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
+              if (isMandatory)
+                AppText.headlineSmall(' *', color: theme.colorScheme.error),
             ],
           ),
           const SizedBox(height: 8),
@@ -66,15 +71,18 @@ class SearchDropDownField<T> extends StatelessWidget {
           textFieldConfiguration: TextFieldConfiguration(
             controller: controller,
             autofocus: false,
-            style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
+            style: DefaultTextStyle.of(context).style.copyWith(
+              fontSize: 16,
+              color: appColors.textPrimary,
+            ),
             decoration: InputDecoration(
               enabled: enabled,
               hintText: hintText,
               suffixIcon:
                   suffixIcon ??
-                  const Icon(
+                  Icon(
                     Icons.arrow_drop_down,
-                    color: AppColors.secondaryDark,
+                    color: appColors.textSecondary,
                   ),
               border: border,
               fillColor: fillColor,
@@ -85,20 +93,19 @@ class SearchDropDownField<T> extends StatelessWidget {
               prefixIcon: prefix,
               hintStyle: TextStyle(
                 color: enabled
-                    ? AppColors.textSecondary
-                    : AppColors.textPrimary.withOpacity(0.6),
+                    ? appColors.textSecondary
+                    : appColors.textSecondary.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w400,
               ),
             ),
           ),
           displayAllSuggestionWhenTap: true,
-          //isMultiSelectDropdown: false,
           suggestionsCallback: suggestionsCallback,
           itemBuilder: itemBuilder,
           onSuggestionSelected: onSelected,
           suggestionsBoxDecoration: SuggestionsBoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: AppColors.white,
+            color: theme.cardColor,
           ),
           noItemsFoundBuilder: (context) {
             return Container(
@@ -109,7 +116,7 @@ class SearchDropDownField<T> extends StatelessWidget {
               child: Center(
                 child: AppText.bodyLarge(
                   "No Items Found!",
-                  color: AppColors.error,
+                  color: theme.colorScheme.error,
                 ),
               ),
             );

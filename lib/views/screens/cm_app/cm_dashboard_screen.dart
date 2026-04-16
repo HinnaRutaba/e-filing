@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:signature/signature.dart';
 
 class CMDashboardScreen extends ConsumerStatefulWidget {
   const CMDashboardScreen({super.key});
@@ -80,12 +81,15 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     final bool canBack = _currentPage > 0;
     final bool canNext = _currentPage < _summaries.length - 1;
 
+    //return Scaffold(body: VectorHandwritingSheet());
+
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Column(
           children: [
             _buildHeader(context, dashboardState, headerHeight),
+
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -443,4 +447,110 @@ class _ConcaveConnectorClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
+}
+
+class VectorHandwritingSheet extends StatefulWidget {
+  @override
+  _VectorHandwritingSheetState createState() => _VectorHandwritingSheetState();
+}
+
+class _VectorHandwritingSheetState extends State<VectorHandwritingSheet> {
+  // 1. Initialize your controller
+  final SignatureController _controller = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.transparent,
+  );
+
+  String? _svgString;
+
+  // 2. The magic function: Points -> SVG String
+  String exportToSvg(List<Point> points, double width, double height) {
+    if (points.isEmpty) return "";
+
+    String pathData = "";
+
+    for (int i = 0; i < points.length; i++) {
+      final point = points[i];
+      final x = point.offset.dx;
+      final y = point.offset.dy;
+
+      if (i == 0 || points[i - 1].type == PointType.tap) {
+        // Start a new line segment
+        pathData += "M $x $y ";
+      } else if (point.type == PointType.move) {
+        // Draw line to next point
+        pathData += "L $x $y ";
+      }
+    }
+
+    return '''
+    <svg viewBox="0 0 $width $height" xmlns="http://www.w3.org/2000/svg">
+      <path d="$pathData" fill="none" stroke="black" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+    </svg>
+    ''';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Handwriting to Vector")),
+      body: Column(
+        children: [
+          // The Drawing Area
+          Expanded(
+            child: Signature(
+              controller: _controller,
+              backgroundColor: Colors.grey[200]!,
+            ),
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: Icon(Icons.clear),
+                onPressed: () => _controller.clear(),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // 3. Convert to SVG String
+                  final svg = exportToSvg(
+                    _controller.points,
+                    context.size!.width,
+                    context.size!.height,
+                  );
+                  setState(() => _svgString = svg);
+
+                  // You can now store 'svg' in your Database as a String!
+                  print("Stored SVG: $svg");
+                },
+                child: Text("Extract Vector"),
+              ),
+            ],
+          ),
+
+          // 4. Preview the Stored Vector
+          if (_svgString != null)
+            Container(
+              height: 400,
+              width: double.infinity,
+              color: Colors.white,
+              child: Column(
+                children: [
+                  Text("Preview from DB (SVG):"),
+                  Expanded(
+                    child: SvgPicture.string(
+                      _svgString!,
+                      height: 200,
+                      width: double.infinity,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
@@ -84,8 +85,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                         alignment: Alignment.centerLeft,
                         child: AppText.labelSmall(
                           "Attachment",
-
-                          color: Colors.grey[800],
+                          color: context.appColors.textPrimary,
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),

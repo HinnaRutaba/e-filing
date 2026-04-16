@@ -1,5 +1,5 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
@@ -45,6 +45,8 @@ class AppDropDownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -54,11 +56,14 @@ class AppDropDownField<T> extends StatelessWidget {
             children: [
               AppText.labelLarge(
                 labelText,
-                color: enabled ? Colors.grey[800] : Colors.grey,
+                color: enabled
+                    ? appColors.textPrimary
+                    : appColors.textSecondary,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
-              if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
+              if (isMandatory)
+                AppText.headlineSmall(' *', color: theme.colorScheme.error),
             ],
           ),
           const SizedBox(height: 4),
@@ -68,17 +73,29 @@ class AppDropDownField<T> extends StatelessWidget {
           buttonStyleData: ButtonStyleData(
             height: buttonHeight ?? 24,
             width: buttonWidth,
-            //padding: const EdgeInsets.symmetric(horizontal: 8),
           ),
-          // menuItemStyleData: const MenuItemStyleData(
-          //   height: 48,
-          // ),
+          style: TextStyle(fontSize: 14, color: appColors.textPrimary),
+          dropdownStyleData: DropdownStyleData(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: appColors.secondaryLight.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+          iconStyleData: IconStyleData(
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: appColors.textSecondary,
+            ),
+          ),
           hint: Text(
             hintText,
             style: TextStyle(
               color: enabled
-                  ? AppColors.secondaryDark.withOpacity(0.8)
-                  : AppColors.secondaryLight.withOpacity(0.5),
+                  ? appColors.textSecondary.withValues(alpha: 0.8)
+                  : appColors.textSecondary.withValues(alpha: 0.5),
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -94,8 +111,8 @@ class AppDropDownField<T> extends StatelessWidget {
             contentPadding: padding ?? const EdgeInsets.fromLTRB(-8, 0, 0, 0),
             hintStyle: TextStyle(
               color: enabled
-                  ? AppColors.primaryDark.withValues(alpha: .6)
-                  : AppColors.primaryDark.withValues(alpha: .3),
+                  ? appColors.textSecondary.withValues(alpha: 0.8)
+                  : appColors.textSecondary.withValues(alpha: 0.5),
               fontWeight: FontWeight.w400,
             ),
           ),
