@@ -265,9 +265,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   final double statsCardTop = isMobile
                       ? (mobileCompact ? 172.0 : 160.0)
                       : 124.0;
+                  const Duration animDuration = Duration(milliseconds: 320);
+                  const Curve animCurve = Curves.easeOutCubic;
                   return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
+                    duration: animDuration,
+                    curve: animCurve,
                     height: headerHeight + cardsOverlap,
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -275,14 +277,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         headerBackground,
                         userHeaderPositioned,
                         AnimatedPositioned(
-                          duration: 300.ms,
+                          duration: animDuration,
+                          curve: animCurve,
                           left: 16,
                           right: 16,
                           top: statsCardTop,
-                          child: _buildStatsCard(
-                            context,
-                            dashboardState,
-                            mobileCompact,
+                          child: AnimatedSize(
+                            duration: animDuration,
+                            curve: animCurve,
+                            alignment: Alignment.topCenter,
+                            child: AnimatedSwitcher(
+                              duration: animDuration,
+                              switchInCurve: animCurve,
+                              switchOutCurve: animCurve,
+                              layoutBuilder: (currentChild, previousChildren) {
+                                return Stack(
+                                  alignment: Alignment.topCenter,
+                                  children: <Widget>[
+                                    ...previousChildren,
+                                    if (currentChild != null) currentChild,
+                                  ],
+                                );
+                              },
+                              transitionBuilder: (child, animation) =>
+                                  FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                              child: KeyedSubtree(
+                                key: ValueKey<bool>(mobileCompact),
+                                child: _buildStatsCard(
+                                  context,
+                                  dashboardState,
+                                  mobileCompact,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
