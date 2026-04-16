@@ -19,7 +19,6 @@ import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
-import 'package:efiling_balochistan/views/widgets/loading_card.dart';
 import 'package:efiling_balochistan/views/widgets/not_found.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +50,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _tabController = TabController(
       length: 3,
       vsync: this,
-      animationDuration: Duration.zero,
+      animationDuration: 400.ms,
     );
     NotificationService().initNotification();
     _loadInitialData();
