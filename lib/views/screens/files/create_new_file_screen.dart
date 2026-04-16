@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
@@ -613,18 +614,14 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
         Card(
           margin: const EdgeInsets.all(0),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          color: AppColors.cardColor,
+          color: context.appColors.cardColor,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, size: 20, color: AppColors.primaryDark),
+            child: Icon(icon, size: 20),
           ),
         ),
         const SizedBox(width: 8),
-        AppText.titleMedium(
-          title,
-          color: AppColors.primaryDark,
-          fontWeight: FontWeight.w600,
-        ),
+        AppText.titleMedium(title, fontWeight: FontWeight.w600),
       ],
     );
   }

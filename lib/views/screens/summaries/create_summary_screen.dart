@@ -325,7 +325,6 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      // backgroundColor: Colors.transparent,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.92,
       ),
@@ -700,7 +699,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    color: Theme.of(context).cardColor,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Icon(
