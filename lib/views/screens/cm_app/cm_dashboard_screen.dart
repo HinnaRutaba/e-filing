@@ -1,3 +1,5 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -256,65 +258,83 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                         ],
                       ),
                       //const SizedBox(height: 8),
-                      Row(
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.summarize,
-                                  color: Colors.white,
-                                  size: 22,
+                          Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(100),
                                 ),
-                                ClipRect(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: RichText(
-                                      text: const TextSpan(
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                        children: [
-                                          TextSpan(text: 'You have '),
-                                          TextSpan(
-                                            text: '3 ',
+                                padding: const EdgeInsets.all(10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.summarize,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                    ClipRect(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 8),
+                                        child: RichText(
+                                          text: const TextSpan(
                                             style: TextStyle(
-                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              fontSize: 14,
                                             ),
+                                            children: [
+                                              TextSpan(text: 'You have '),
+                                              TextSpan(
+                                                text: '3 ',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: "summaries to review",
+                                              ),
+                                            ],
                                           ),
-                                          TextSpan(text: "summaries to review"),
-                                        ],
+                                        ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              InkWell(
+                                onTap: () {
+                                  //RouteHelper.push(Routes.summaries);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: AppText.titleSmall(
+                                    "View All >",
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          ClipPath(
-                            clipper: _ConcaveConnectorClipper(),
-                            child: Container(
-                              width: 12,
-                              height: 12,
-                              color: Colors.white.withValues(alpha: 0.15),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            padding: const EdgeInsets.all(8),
-                            child: AppText.titleSmall(
-                              "View All",
-                              color: Colors.white,
+                          Positioned(
+                            right: 147,
+                            child: ClipPath(
+                              clipper: _ConcaveConnectorClipper(),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
                             ),
                           ),
                         ],
@@ -411,17 +431,21 @@ class _ConcaveConnectorClipper extends CustomClipper<Path> {
     final path = Path();
     final w = size.width;
     final h = size.height;
-    // Top edge curves downward (concave)
+    const double vDip = 0.75; // top/bottom: deep concave
+    const double hDip = 0.2; // left/right: very subtle concave
+    // Top edge: curves downward toward center (deep concave)
     path.moveTo(0, 0);
-    path.quadraticBezierTo(w / 2, h * 0.35, w, 0);
-    // Right edge
-    path.lineTo(w, h);
-    // Bottom edge curves upward (concave)
-    path.quadraticBezierTo(w / 2, h - h * 0.35, 0, h);
+    path.quadraticBezierTo(w / 2, h * vDip, w, 0);
+    // Right edge: curves leftward very slightly (subtle concave)
+    path.quadraticBezierTo(w - w * hDip, h / 2, w, h);
+    // Bottom edge: curves upward toward center (deep concave)
+    path.quadraticBezierTo(w / 2, h - h * vDip, 0, h);
+    // Left edge: curves rightward very slightly (subtle concave)
+    path.quadraticBezierTo(w * hDip, h / 2, 0, 0);
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
 }
