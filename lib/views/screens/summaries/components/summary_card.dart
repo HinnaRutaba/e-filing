@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -10,20 +11,30 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    final bool isDark = theme.brightness == Brightness.dark;
     final statusColor = item.status.fg;
-    final statusBg = item.status.bg;
+
+    final statusBg = statusColor.withValues(alpha: 0.12);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: appColors.secondaryLight.withValues(
+            alpha: isDark ? 0.25 : 0.18,
+          ),
+          width: 0.8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
+            color: appColors.shadow.withValues(alpha: isDark ? 0.45 : 0.08),
+            blurRadius: isDark ? 20 : 16,
+            spreadRadius: isDark ? 0 : -2,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -39,7 +50,7 @@ class SummaryCard extends StatelessWidget {
             children: [
               // -------- Accent header strip --------
               Container(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
                 decoration: BoxDecoration(
                   color: statusBg,
                   border: Border(
@@ -71,37 +82,56 @@ class SummaryCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.schedule_rounded,
-                            size: 12,
-                            color: statusColor,
+                    Builder(
+                      builder: (context) {
+                        // Dark mode: pale tinted pill with light fg. A pale
+                        // statusColor bg reads "light" and a lifted (lightened)
+                        // statusColor fg stays readable while keeping brand.
+                        final pillBg = isDark
+                            ? Color.lerp(
+                                    statusColor,
+                                    appColors.accent,
+                                    0.75,
+                                  ) ??
+                                  statusColor
+                            : theme.cardColor;
+                        final pillFg = isDark
+                            ? Color.lerp(statusColor, appColors.accent, 0.15) ??
+                                  statusColor
+                            : statusColor;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.relativeTime,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          decoration: BoxDecoration(
+                            color: pillBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.55),
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 12,
+                                color: pillFg,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.relativeTime,
+                                style: TextStyle(
+                                  color: pillFg,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -118,7 +148,7 @@ class SummaryCard extends StatelessWidget {
                         Text(
                           item.reference,
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: appColors.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
@@ -130,13 +160,13 @@ class SummaryCard extends StatelessWidget {
                             Icon(
                               Icons.calendar_today_rounded,
                               size: 13,
-                              color: Colors.grey.shade500,
+                              color: appColors.textSecondary,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               DateTimeHelper.datFormatSlash(item.createdAt),
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: appColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -144,15 +174,18 @@ class SummaryCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(width: 4),
-                        Icon(Icons.chevron_right, color: Colors.grey.shade600),
+                        Icon(
+                          Icons.chevron_right,
+                          color: appColors.textSecondary,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
                     // Title
                     Text(
                       item.title,
-                      style: const TextStyle(
-                        color: Color(0xFF1F2937),
+                      style: TextStyle(
+                        color: appColors.textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         height: 1.25,
@@ -255,6 +288,7 @@ class _PersonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -284,7 +318,7 @@ class _PersonTile extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: Colors.grey.shade500,
+                  color: appColors.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
@@ -293,8 +327,8 @@ class _PersonTile extends StatelessWidget {
               const SizedBox(height: 1),
               Text(
                 name,
-                style: const TextStyle(
-                  color: Color(0xFF1F2937),
+                style: TextStyle(
+                  color: appColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -305,7 +339,7 @@ class _PersonTile extends StatelessWidget {
                 Text(
                   sub!,
                   style: TextStyle(
-                    color: Colors.grey.shade500,
+                    color: appColors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -336,22 +370,35 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appColors = context.appColors;
+    // Pale tinted chip with brightened fg in dark mode, matching the status
+    // pill treatment.
+    final chipBg = isDark
+        ? Color.lerp(color, appColors.accent, 0.78) ?? color
+        : color.withValues(alpha: 0.08);
+    final chipFg = isDark
+        ? Color.lerp(color, appColors.accent, 0.1) ?? color
+        : color;
+    final chipBorder = isDark
+        ? color.withValues(alpha: 0.5)
+        : color.withValues(alpha: 0.18);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        color: chipBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: chipBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: color),
+          Icon(icon, size: 13, color: chipFg),
           const SizedBox(width: 6),
           Text(
             '$label: ',
             style: TextStyle(
-              color: color.withValues(alpha: 0.8),
+              color: chipFg.withValues(alpha: 0.8),
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -359,7 +406,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: color,
+              color: chipFg,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),

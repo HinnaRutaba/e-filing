@@ -1,12 +1,12 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/models/daak_meta_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 
@@ -18,20 +18,29 @@ class DaakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appColors = context.appColors;
     final bool noDetails =
         daak.status == DaakStatus.disposedOff || daak.status == DaakStatus.nfa;
-    final Color statusColor = daak.status?.color ?? AppColors.secondaryDark;
+    final Color statusColor = daak.status?.color ?? appColors.secondaryDark;
 
+    final bool isDark = theme.brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: appColors.secondaryLight.withValues(alpha: isDark ? 0.25 : 0.18),
+          width: 0.8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: appColors.shadow.withValues(alpha: isDark ? 0.45 : 0.08),
+            blurRadius: isDark ? 20 : 16,
+            spreadRadius: isDark ? 0 : -2,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -91,33 +100,53 @@ class DaakCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.tag_rounded, size: 12, color: statusColor),
-                          const SizedBox(width: 4),
-                          Text(
-                            "${daak.diaryNo}",
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                    Builder(
+                      builder: (context) {
+                        final pillBg = isDark
+                            ? Color.lerp(
+                                    statusColor,
+                                    appColors.accent,
+                                    0.75,
+                                  ) ??
+                                  statusColor
+                            : theme.cardColor;
+                        final pillFg = isDark
+                            ? Color.lerp(statusColor, appColors.accent, 0.15) ??
+                                  statusColor
+                            : statusColor;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: pillBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.55),
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tag_rounded,
+                                size: 12,
+                                color: pillFg,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${daak.diaryNo}",
+                                style: TextStyle(
+                                  color: pillFg,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     if (!noDetails) ...[
                       const SizedBox(width: 2),
@@ -162,7 +191,7 @@ class DaakCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.secondaryDark.withValues(
+                                    color: appColors.secondaryDark.withValues(
                                       alpha: 0.3,
                                     ),
                                     blurRadius: 4,
@@ -179,16 +208,16 @@ class DaakCard extends StatelessWidget {
                                       fullScreen: false,
                                     ),
                                     if (!noDetails)
-                                      const Align(
+                                      Align(
                                         alignment: Alignment.topRight,
                                         child: Padding(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 4.0,
                                           ),
                                           child: Icon(
                                             Icons.remove_red_eye,
                                             size: 18,
-                                            color: AppColors.secondary,
+                                            color: colorScheme.secondary,
                                           ),
                                         ),
                                       ),
@@ -211,10 +240,10 @@ class DaakCard extends StatelessWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.apartment,
                                     size: 16,
-                                    color: AppColors.secondaryDark,
+                                    color: appColors.secondaryDark,
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
@@ -239,98 +268,89 @@ class DaakCard extends StatelessWidget {
                       children: [
                         if (daak.letterDate != null)
                           _infoTile(
+                            context,
                             'Letter Date',
                             DateTimeHelper.datFormatSlash(daak.letterDate),
                           ),
-                        _infoTile('Letter No', daak.letterNo ?? "Unknown"),
+                        _infoTile(
+                          context,
+                          'Letter No',
+                          daak.letterNo ?? "Unknown",
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    daak.status == DaakStatus.forwarded
-                        ? RichText(
-                            text: TextSpan(
-                              children: [
-                                const TextSpan(
-                                  text: 'Forwarded to ',
-                                  style: TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                  ),
+                    Builder(
+                      builder: (context) {
+                        // Theme-aware brand blue: dark blue on light cards,
+                        // light blue on dark navy cards.
+                        final Color brand = isDark
+                            ? appColors.secondaryLight
+                            : appColors.secondaryDark;
+                        final labelStyle = TextStyle(
+                          color: brand.withValues(alpha: 0.75),
+                          fontSize: 14,
+                        );
+                        final valueStyle = TextStyle(
+                          color: brand,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        );
+                        return daak.status == DaakStatus.forwarded
+                            ? RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Forwarded to ',
+                                      style: labelStyle,
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          daak
+                                              .forwardDetails
+                                              ?.lastForward
+                                              ?.forwardedTo ??
+                                          "Unknown",
+                                      style: valueStyle,
+                                    ),
+                                    TextSpan(text: ' on ', style: labelStyle),
+                                    TextSpan(
+                                      text: DateTimeHelper
+                                          .dateFormatddMMYYWithTime(
+                                        daak
+                                            .forwardDetails
+                                            ?.lastForward
+                                            ?.forwardedAt,
+                                      ),
+                                      style: valueStyle,
+                                    ),
+                                  ],
                                 ),
-                                TextSpan(
-                                  text:
-                                      daak
-                                          .forwardDetails
-                                          ?.lastForward
-                                          ?.forwardedTo ??
-                                      "Unknown",
-                                  style: const TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              )
+                            : RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Received by ',
+                                      style: labelStyle,
+                                    ),
+                                    TextSpan(
+                                      text: daak.receivedBy ?? "Unknown",
+                                      style: valueStyle,
+                                    ),
+                                    TextSpan(text: ' on ', style: labelStyle),
+                                    TextSpan(
+                                      text: DateTimeHelper
+                                          .dateFormatddMMYYWithTime(
+                                        daak.receivedAt,
+                                      ),
+                                      style: valueStyle,
+                                    ),
+                                  ],
                                 ),
-                                const TextSpan(
-                                  text: ' on ',
-                                  style: TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: DateTimeHelper.dateFormatddMMYYWithTime(
-                                    daak
-                                        .forwardDetails
-                                        ?.lastForward
-                                        ?.forwardedAt,
-                                  ),
-                                  style: const TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RichText(
-                            text: TextSpan(
-                              children: [
-                                const TextSpan(
-                                  text: 'Received by ',
-                                  style: TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: daak.receivedBy ?? "Unknown",
-                                  style: const TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const TextSpan(
-                                  text: ' on ',
-                                  style: TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: DateTimeHelper.dateFormatddMMYYWithTime(
-                                    daak.receivedAt,
-                                  ),
-                                  style: const TextStyle(
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                              );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -341,11 +361,12 @@ class DaakCard extends StatelessWidget {
     );
   }
 
-  Widget _infoTile(String label, String value) {
+  Widget _infoTile(BuildContext context, String label, String value) {
+    final appColors = context.appColors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.circle, size: 6, color: AppColors.secondaryDark),
+        Icon(Icons.circle, size: 6, color: appColors.secondaryDark),
         const SizedBox(width: 4),
         AppText.bodySmall('$label: ', fontWeight: FontWeight.w800),
         AppText.bodySmall(value),

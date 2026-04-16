@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -312,94 +313,100 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      isdash: false,
-      title: 'Summaries',
-      actions: [
-        AppOutlineButton(
-          onPressed: () {
-            RouteHelper.push(Routes.createSummary);
-          },
-          text: "New Summary",
-          icon: Icons.add,
-        ),
-      ],
-      body: Column(
-        children: [
-          _tabBar(),
-          if (_helperBannerText() != null) _helperBanner(_helperBannerText()!),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                // TODO: reload from controller.
-                await Future<void>.delayed(const Duration(milliseconds: 400));
-              },
-              child: _visibleItems.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 120),
-                        Icon(
-                          Icons.inbox_outlined,
-                          size: 56,
-                          color: Colors.black26,
-                        ),
-                        SizedBox(height: 12),
-                        Center(child: Text('No summaries yet')),
-                      ],
-                    )
-                  : Builder(builder: (context) {
-                      final perRow = context.isMobile ? 1 : 2;
-                      final rowCount =
-                          (_visibleItems.length / perRow).ceil();
-                      return ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding:
-                            const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                        itemCount: rowCount,
-                        itemBuilder: (ctx, rowIndex) {
-                          final children = <Widget>[];
-                          for (var c = 0; c < perRow; c++) {
-                            final i = rowIndex * perRow + c;
-                            if (i >= _visibleItems.length) {
-                              children.add(const Expanded(
-                                  child: SizedBox.shrink()));
-                              continue;
-                            }
-                            final card = SummaryCard(item: _visibleItems[i])
-                                .animate()
-                                .fadeIn(
-                                  delay: (80 * i).ms,
-                                  duration: 300.ms,
-                                  curve: Curves.easeOut,
-                                )
-                                .slideX(
-                                  begin: -0.15,
-                                  end: 0,
-                                  delay: (80 * i).ms,
-                                  duration: 350.ms,
-                                  curve: Curves.easeOutCubic,
-                                );
-                            if (c > 0) {
-                              children.add(const SizedBox(width: 12));
-                            }
-                            children.add(Expanded(child: card));
-                          }
-                          if (perRow == 1) {
-                            return children.first is Expanded
-                                ? (children.first as Expanded).child
-                                : children.first;
-                          }
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: children,
-                          );
-                        },
-                      );
-                    }),
-            ),
+    return GradientScaffold(
+      child: BaseScreen(
+        bgColor: Colors.transparent,
+        isdash: false,
+        title: 'Summaries',
+        actions: [
+          AppOutlineButton(
+            onPressed: () {
+              RouteHelper.push(Routes.createSummary);
+            },
+            text: "New Summary",
+            icon: Icons.add,
           ),
         ],
+        body: Column(
+          children: [
+            _tabBar(),
+            if (_helperBannerText() != null)
+              _helperBanner(_helperBannerText()!),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  // TODO: reload from controller.
+                  await Future<void>.delayed(const Duration(milliseconds: 400));
+                },
+                child: _visibleItems.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 120),
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 56,
+                            color: Colors.black26,
+                          ),
+                          SizedBox(height: 12),
+                          Center(child: Text('No summaries yet')),
+                        ],
+                      )
+                    : Builder(
+                        builder: (context) {
+                          final perRow = context.isMobile ? 1 : 2;
+                          final rowCount = (_visibleItems.length / perRow)
+                              .ceil();
+                          return ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                            itemCount: rowCount,
+                            itemBuilder: (ctx, rowIndex) {
+                              final children = <Widget>[];
+                              for (var c = 0; c < perRow; c++) {
+                                final i = rowIndex * perRow + c;
+                                if (i >= _visibleItems.length) {
+                                  children.add(
+                                    const Expanded(child: SizedBox.shrink()),
+                                  );
+                                  continue;
+                                }
+                                final card = SummaryCard(item: _visibleItems[i])
+                                    .animate()
+                                    .fadeIn(
+                                      delay: (80 * i).ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOut,
+                                    )
+                                    .slideX(
+                                      begin: -0.15,
+                                      end: 0,
+                                      delay: (80 * i).ms,
+                                      duration: 350.ms,
+                                      curve: Curves.easeOutCubic,
+                                    );
+                                if (c > 0) {
+                                  children.add(const SizedBox(width: 12));
+                                }
+                                children.add(Expanded(child: card));
+                              }
+                              if (perRow == 1) {
+                                return children.first is Expanded
+                                    ? (children.first as Expanded).child
+                                    : children.first;
+                              }
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: children,
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

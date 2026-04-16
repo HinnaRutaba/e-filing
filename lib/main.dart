@@ -10,6 +10,7 @@ import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -19,16 +20,14 @@ import 'package:toastification/toastification.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  //debugRepaintTextRainbowEnabled = true;
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     DevicePreview(
       enabled: false,
-      builder: (context) => const ProviderScope(
-        child: MyApp(),
-      ), // Wrap your app
+      builder: (context) =>
+          const ProviderScope(child: MyApp()), // Wrap your app
     ),
   );
 }
@@ -42,13 +41,16 @@ class MyApp extends ConsumerWidget {
     final themeMode = ref.watch(themeController);
     return ToastificationWrapper(
       child: MaterialApp.router(
-        builder: EasyLoading.init(builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.noScaling),
-            child: ResponsiveWrapper(child: child!),
-          );
-        }),
+        builder: EasyLoading.init(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: ResponsiveWrapper(child: child!),
+            );
+          },
+        ),
         debugShowCheckedModeBanner: false,
         title: "E-Filing",
         theme: AppTheme.light,

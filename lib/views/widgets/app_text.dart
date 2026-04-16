@@ -1,4 +1,3 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 typedef TextBuilder = Text Function(BuildContext context);
@@ -323,7 +322,8 @@ class AppText extends Text {
               letterSpacing: letterSpacing,
               decoration:
                   decoration ?? (underline ? TextDecoration.underline : null),
-              decorationColor: AppColors.textPrimary,
+              decorationColor:
+                  color ?? Theme.of(context).colorScheme.onSurface,
               fontFamily: fontFamily,
             ),
       );

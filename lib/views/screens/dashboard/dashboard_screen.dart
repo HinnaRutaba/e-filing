@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
@@ -91,12 +91,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         builder: (context) => Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: const AchievementDialog(
+            child: AchievementDialog(
               title: "Daak Letters has been added",
               message:
                   "You can now receive and manage Daak letters directly in your inbox. Keep track of all incoming official correspondence in one place.",
               icon: Icons.mail_outline,
-              iconColor: Colors.green,
+              iconColor: context.appColors.success,
             ),
           ),
         ),
@@ -217,12 +217,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryDark.withValues(alpha: 0.8),
+                  color: context.appColors.secondaryDark.withValues(alpha: 0.8),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.secondaryDark,
-                      AppColors.secondaryLight.withValues(alpha: 0.7),
-                      AppColors.accent.withValues(alpha: 0.2),
+                      context.appColors.secondaryDark,
+                      context.appColors.secondaryLight.withValues(alpha: 0.7),
+                      context.appColors.accent.withValues(alpha: 0.2),
                     ],
                     begin: Alignment.bottomLeft,
                     end: Alignment.topRight,
@@ -292,11 +292,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: AppColors.secondaryLight.withValues(alpha: 0.3),
+                    color: context.appColors.secondaryLight.withValues(alpha: 0.3),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.secondaryDark.withValues(alpha: 0.06),
+                      color: context.appColors.secondaryDark.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -305,18 +305,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.secondaryDark,
-                        AppColors.secondaryLight,
+                        context.appColors.secondaryDark,
+                        context.appColors.secondaryLight,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.secondaryDark.withValues(alpha: 0.3),
+                        color: context.appColors.secondaryDark.withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -325,8 +325,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicatorPadding: EdgeInsets.zero,
                   dividerColor: Colors.transparent,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.secondaryDark,
+                  labelColor: context.appColors.accent,
+                  unselectedLabelColor: context.appColors.textSecondary,
                   labelPadding: const EdgeInsets.symmetric(
                     vertical: 2,
                     horizontal: 4,
@@ -401,9 +401,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         Hero(
           tag: 'profile_avatar',
           child: CircleAvatar(
-            backgroundColor: Colors.white.withValues(alpha: 0.25),
+            backgroundColor: context.appColors.accent.withValues(alpha: 0.25),
             radius: 22,
-            child: const Icon(Icons.person, color: Colors.white, size: 26),
+            child: Icon(Icons.person, color: context.appColors.accent, size: 26),
           ),
         ),
         const SizedBox(width: 12),
@@ -416,17 +416,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 currentUser.userTitle ?? '---',
 
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: context.appColors.accent,
               ),
               const SizedBox(height: 2),
               AppText.bodySmall(
                 currentUser.currentDesignation?.designation ?? '',
 
-                color: Colors.white.withValues(alpha: 0.9),
+                color: context.appColors.accent.withValues(alpha: 0.9),
               ),
             ],
           ),
         ),
+        _ThemeToggleButton(
+          onTap: () => ref.read(themeController.notifier).toggle(),
+          isDark: ref.watch(themeController) == ThemeMode.dark,
+        ),
+        const SizedBox(width: 8),
         StreamBuilder<int>(
           stream: chatService.getUnreadChatsCountStream(
             userDesignationId: currentUser.currentDesignation?.userDesgId,
@@ -440,18 +445,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 onTap: () => RouteHelper.push(Routes.chats),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
+                    color: context.appColors.accent.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
                   padding: const EdgeInsets.all(10),
                   child: Badge(
                     isLabelVisible: unread > 0,
                     label: Text(unread > 99 ? '99+' : '$unread'),
-                    backgroundColor: AppColors.error,
-                    textColor: Colors.white,
-                    child: const Icon(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    textColor: context.appColors.accent,
+                    child: Icon(
                       Icons.chat_rounded,
-                      color: Colors.white,
+                      color: context.appColors.accent,
                       size: 22,
                     ),
                   ),
@@ -490,7 +495,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
 
     final pendingCard = DashboardCard(
-      cardColor: Colors.orange,
+      cardColor: context.appColors.warning,
       iconColor: Colors.yellowAccent,
       title: "Pending Files",
       value: "${dashboardState.pendingFilesCount}",
@@ -503,7 +508,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     final actionRequiredCard = DashboardCard(
-      cardColor: AppColors.error,
+      cardColor: Theme.of(context).colorScheme.error,
       iconColor: Colors.red[900]!,
       title: "Action Required",
       value: "${dashboardState.actionRequiredCount}",
@@ -516,8 +521,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     final myFilesCard = DashboardCard(
-      cardColor: AppColors.secondaryLight,
-      iconColor: AppColors.secondaryDark,
+      cardColor: context.appColors.secondaryLight,
+      iconColor: context.appColors.secondaryDark,
       title: "My Files",
       value: "${dashboardState.myFilesCount}",
       onTap: () {
@@ -531,11 +536,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final daakCard = Badge(
       label: AppText.labelSmall(
         "New",
-        color: Colors.white,
+        color: context.appColors.accent,
         fontWeight: FontWeight.bold,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      backgroundColor: Colors.green,
+      backgroundColor: context.appColors.success,
       alignment: Alignment.topLeft,
       offset: const Offset(-2, -6),
       child: DashboardCard(
@@ -667,6 +672,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 }
 
+class _ThemeToggleButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _ThemeToggleButton({required this.onTap, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.appColors.accent.withValues(alpha: 0.18),
+          shape: BoxShape.circle,
+        ),
+        padding: const EdgeInsets.all(10),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) =>
+              RotationTransition(turns: animation, child: child),
+          child: Icon(
+            isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            key: ValueKey<bool>(isDark),
+            color: context.appColors.accent,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _UnreadMessagesPill extends StatefulWidget {
   final int unread;
   final VoidCallback onTap;
@@ -712,7 +750,7 @@ class _UnreadMessagesPillState extends State<_UnreadMessagesPill>
     final unread = widget.unread;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: context.appColors.accent.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(100),
       ),
       padding: const EdgeInsets.all(10),
@@ -737,8 +775,8 @@ class _UnreadMessagesPillState extends State<_UnreadMessagesPill>
                         padding: const EdgeInsets.only(right: 8),
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: context.appColors.accent,
                               fontSize: 14,
                             ),
                             children: [
@@ -765,9 +803,9 @@ class _UnreadMessagesPillState extends State<_UnreadMessagesPill>
                   scale: iconValue,
                   child: Opacity(
                     opacity: iconValue,
-                    child: const Icon(
+                    child: Icon(
                       Icons.chat_rounded,
-                      color: Colors.white,
+                      color: context.appColors.accent,
                       size: 22,
                     ),
                   ),

@@ -23,77 +23,95 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
     return RepaintBoundary(
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          _buildCard(),
+          _buildCard(context),
           Positioned(
-          top: showSmallCard ? -8 : 6,
-          right: showSmallCard
-              ? value == null
-                    ? -8
-                    : 12
-              : 6,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child:
-                InkWell(
-                      onTap: onTap,
-                      child: Container(
-                        padding: showSmallCard
-                            ? const EdgeInsets.all(4)
-                            : const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+            top: showSmallCard ? -8 : 6,
+            right: showSmallCard
+                ? value == null
+                      ? -8
+                      : 12
+                : 6,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child:
+                  InkWell(
+                        onTap: onTap,
+                        child: Container(
+                          padding: showSmallCard
+                              ? const EdgeInsets.all(4)
+                              : const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                          decoration: BoxDecoration(
+                            color: appColors.accent.withValues(alpha: 0.38),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: appColors.accent,
+                              width: 0.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: cardColor.withValues(alpha: 0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
-                        decoration: BoxDecoration(
-                          color: Colors.white38,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white, width: 0.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cardColor.withValues(alpha: 0.08),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                            BoxShadow(
-                              color: iconColor.withValues(alpha: 0.08),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                              BoxShadow(
+                                color: iconColor.withValues(alpha: 0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: showSmallCard
+                              ? Icon(
+                                  Icons.chevron_right,
+                                  size: 20,
+                                  color: appColors.secondaryDark,
+                                )
+                              : AppText.titleSmall(
+                                  "Open",
+                                  fontWeight: FontWeight.w700,
+                                  color: appColors.secondaryDark,
+                                  fontSize: 10,
+                                ),
                         ),
-                        child: showSmallCard
-                            ? const Icon(Icons.chevron_right, size: 20)
-                            : AppText.titleSmall(
-                                "Open",
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.secondaryDark,
-                                fontSize: 10,
-                              ),
+                      )
+                      .animate()
+                      .shimmer(
+                        duration: 1600.ms,
+                        delay: 1200.ms,
+                        colors: [
+                          appColors.accent.withValues(alpha: 0.0),
+                          appColors.accent.withValues(alpha: 0.9),
+                          appColors.accent.withValues(alpha: 0.0),
+                        ],
                       ),
-                    )
-                    .animate(
-                     // onPlay: (c) => c.repeat()
-                    )
-                    .shimmer(
-                      duration: 1600.ms,
-                      delay: 1200.ms,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.0),
-                        Colors.white.withValues(alpha: 0.9),
-                        Colors.white.withValues(alpha: 0.0),
-                      ],
-                    ),
+            ),
           ),
-        ),
         ],
       ),
     );
   }
 
-  Widget _buildCard() {
+  Widget _buildCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    final isDark = theme.brightness == Brightness.dark;
+    // Frosted-glass gloss is bright in light mode; in dark mode we soften the
+    // white overlays so the colored card face stays saturated.
+    final double glossHigh = isDark ? 0.12 : 0.22;
+    final double glossMid = isDark ? 0.06 : 0.08;
+    final double glossTop = isDark ? 0.18 : 0.32;
+    // Card-color saturation for the body gradient. Higher = more vivid face.
+    final double faceHigh = isDark ? 0.9 : 0.8;
+    final double faceMid = isDark ? 0.55 : 0.4;
+    final double faceOuter = isDark ? 0.45 : 0.35;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -114,10 +132,9 @@ class DashboardCard extends StatelessWidget {
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Colors.white.withValues(alpha: 0.2),
-              Colors.white.withValues(alpha: 0.1),
-              cardColor.withValues(alpha: 0.2),
-              //cardColor.withValues(alpha: 0.4),
+              appColors.accent.withValues(alpha: glossHigh),
+              appColors.accent.withValues(alpha: glossMid),
+              cardColor.withValues(alpha: faceOuter),
             ],
             stops: const [0.0, 0.4, 1.0],
           ),
@@ -138,9 +155,9 @@ class DashboardCard extends StatelessWidget {
                           begin: Alignment.bottomLeft,
                           end: Alignment.topRight,
                           colors: [
-                            cardColor.withValues(alpha: 0.6),
-                            cardColor.withValues(alpha: 0.2),
-                            Colors.white10,
+                            cardColor.withValues(alpha: faceHigh),
+                            cardColor.withValues(alpha: faceMid),
+                            appColors.accent.withValues(alpha: glossMid),
                           ],
                         ),
                       ),
@@ -157,8 +174,8 @@ class DashboardCard extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withValues(alpha: 0.3),
-                            Colors.white.withValues(alpha: 0),
+                            appColors.accent.withValues(alpha: glossTop),
+                            appColors.accent.withValues(alpha: 0),
                           ],
                         ),
                       ),
@@ -169,7 +186,7 @@ class DashboardCard extends StatelessWidget {
                       horizontal: 8,
                       vertical: 12,
                     ),
-                    child: showSmallCard ? cardSmall() : cardBody(),
+                    child: showSmallCard ? cardSmall(context) : cardBody(context),
                   ),
                 ],
               ),
@@ -180,7 +197,9 @@ class DashboardCard extends StatelessWidget {
     );
   }
 
-  Widget cardBody() {
+  Widget cardBody(BuildContext context) {
+    final appColors = context.appColors;
+    final onCardText = Colors.grey[900];
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -197,19 +216,19 @@ class DashboardCard extends StatelessWidget {
                 title,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[900],
+                color: onCardText,
               ),
               loading && (value == null || value!.isEmpty || value == '0')
-                  ? const Row(
+                  ? Row(
                       children: [
-                        SpinKitThreeBounce(color: AppColors.accent, size: 16),
+                        SpinKitThreeBounce(color: appColors.accent, size: 16),
                       ],
                     )
                   : AppText.headlineMedium(
                       value ?? '',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[900],
+                      color: onCardText,
                     ),
             ],
           ),
@@ -218,7 +237,8 @@ class DashboardCard extends StatelessWidget {
     );
   }
 
-  Widget cardSmall() {
+  Widget cardSmall(BuildContext context) {
+    final onCardText = Colors.grey[900];
     return Padding(
       padding: value == null
           ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
@@ -232,7 +252,7 @@ class DashboardCard extends StatelessWidget {
               value!,
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[900],
+              color: onCardText,
             ),
         ],
       ),

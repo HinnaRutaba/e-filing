@@ -1,6 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -33,7 +33,7 @@ class BaseScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (context.isMobile) {
       return Scaffold(
-        backgroundColor: bgColor ?? AppColors.background,
+        backgroundColor: bgColor ?? Theme.of(context).scaffoldBackgroundColor,
         extendBodyBehindAppBar: isdash,
         appBar: _buildAppBar(context, ref, showMenuButton: true),
         drawer: const NavDrawer(alwaysExpanded: true),
@@ -71,7 +71,7 @@ class BaseScreen extends ConsumerWidget {
     void expand() => ref.read(navDrawerExpandedProvider.notifier).state = true;
 
     return Scaffold(
-      backgroundColor: bgColor ?? AppColors.background,
+      backgroundColor: bgColor ?? Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           Row(
@@ -88,7 +88,9 @@ class BaseScreen extends ConsumerWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: collapse,
-                child: Container(color: Colors.black.withValues(alpha: 0.35)),
+                child: Container(
+                  color: context.appColors.shadow.withValues(alpha: 0.35),
+                ),
               ),
             ),
           ),
@@ -134,12 +136,13 @@ class BaseScreen extends ConsumerWidget {
                             Hero(
                               tag: HeroTags.profile,
                               child: CircleAvatar(
-                                backgroundColor: AppColors.secondaryLight
+                                backgroundColor: context.appColors
+                                    .secondaryLight
                                     .withValues(alpha: 0.2),
                                 radius: 15,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person,
-                                  color: AppColors.secondary,
+                                  color: Theme.of(context).colorScheme.secondary,
                                   size: 20,
                                 ),
                               ),
@@ -156,7 +159,7 @@ class BaseScreen extends ConsumerWidget {
                                 AppText.bodySmall(
                                   user.currentDesignation?.designation ?? '',
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: context.appColors.textSecondary,
                                 ),
                               ],
                             ),
@@ -179,9 +182,11 @@ class BaseScreen extends ConsumerWidget {
                                                   if (des.userDesgId ==
                                                       selectedDesignation
                                                           ?.userDesgId)
-                                                    const Icon(
+                                                    Icon(
                                                       Icons.check,
-                                                      color: Colors.green,
+                                                      color: context
+                                                          .appColors
+                                                          .success,
                                                     ),
                                                 ],
                                               ),
@@ -217,7 +222,9 @@ class BaseScreen extends ConsumerWidget {
               builder: (context) => IconButton(
                 icon: Icon(
                   Icons.menu,
-                  color: !isdash ? AppColors.textPrimary : AppColors.cardColor,
+                  color: !isdash
+                      ? context.appColors.textPrimary
+                      : context.appColors.accent,
                 ),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
@@ -229,14 +236,20 @@ class BaseScreen extends ConsumerWidget {
             onPressed: () {
               ref.read(authController.notifier).logout(context);
             },
-            icon: Icon(Icons.power_settings_new, color: Colors.orange[300]),
+            icon: Icon(
+              Icons.power_settings_new,
+              color: context.appColors.warning,
+            ),
           ),
         const SizedBox(width: 16),
         ...actions ?? [],
         if (enableBackButton)
           IconButton(
             onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
-            icon: const Icon(Icons.clear, color: Colors.black87),
+            icon: Icon(
+              Icons.clear,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
       ],
     );
