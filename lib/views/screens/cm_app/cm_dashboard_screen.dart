@@ -233,127 +233,105 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                           ),
                         ],
                       ),
-                      //const SizedBox(height: 8),
-                      Stack(
-                        alignment: Alignment.center,
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(100),
+                          Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.summarize,
+                                      color: Colors.white,
+                                      size: 22,
                                     ),
-                                    padding: const EdgeInsets.all(10),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.summarize,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        ClipRect(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 8,
+                                    ClipRect(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 8),
+                                        child: RichText(
+                                          text: const TextSpan(
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
                                             ),
-                                            child: RichText(
-                                              text: const TextSpan(
+                                            children: [
+                                              TextSpan(text: 'You have '),
+                                              TextSpan(
+                                                text: '3 ',
                                                 style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
                                                 ),
-                                                children: [
-                                                  TextSpan(text: 'You have '),
-                                                  TextSpan(
-                                                    text: '3 ',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                    ),
-                                                  ),
-                                                  TextSpan(
-                                                    text: "summaries to review",
-                                                  ),
-                                                ],
                                               ),
-                                            ),
+                                              TextSpan(
+                                                text: "summaries to review",
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  )
-                                  .animate(delay: 300.ms)
-                                  .scale(
-                                    alignment: Alignment.centerLeft,
-                                    begin: const Offset(0, 1),
-                                    end: const Offset(1, 1),
-                                    duration: 450.ms,
-                                    curve: Curves.easeOutCubic,
-                                  )
-                                  .fadeIn(duration: 250.ms),
-                              const SizedBox(width: 16),
-                              InkWell(
-                                    onTap: () {
-                                      //RouteHelper.push(Routes.summaries);
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          100,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.all(8),
-                                      child: AppText.titleSmall(
-                                        "View All >",
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  )
-                                  .animate(delay: 300.ms)
-                                  .scale(
-                                    delay: 700.ms,
-                                    alignment: Alignment.centerLeft,
-                                    begin: const Offset(0, 0),
-                                    end: const Offset(1, 1),
-                                    duration: 550.ms,
-                                    curve: Curves.easeInOutBack,
-                                  )
-                                  .fadeIn(delay: 700.ms, duration: 200.ms),
-                            ],
-                          ),
-                          Positioned(
-                            right: 147,
-                            child:
-                                ClipPath(
-                                      clipper: _ConcaveConnectorClipper(),
-                                      child: Container(
-                                        width: 20,
-                                        height: 20,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                      ),
-                                    )
-                                    .animate(delay: 300.ms)
-                                    .scale(
-                                      delay: 450.ms,
-                                      alignment: Alignment.centerLeft,
-                                      begin: const Offset(0, 1),
-                                      end: const Offset(1, 1),
-                                      duration: 250.ms,
-                                      curve: Curves.easeOutCubic,
-                                    )
-                                    .fadeIn(delay: 450.ms, duration: 150.ms),
-                          ),
+                                  ],
+                                ),
+                              )
+                              .animate(delay: 300.ms)
+                              .scale(
+                                alignment: Alignment.centerLeft,
+                                begin: const Offset(0, 1),
+                                end: const Offset(1, 1),
+                                duration: 450.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .fadeIn(duration: 250.ms),
+                          ClipPath(
+                                clipper: _ConcaveConnectorClipper(),
+                                child: Container(
+                                  width: 20,
+                                  height: 24,
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                ),
+                              )
+                              .animate(delay: 300.ms)
+                              .scale(
+                                delay: 450.ms,
+                                alignment: Alignment.centerLeft,
+                                begin: const Offset(0, 1),
+                                end: const Offset(1, 1),
+                                duration: 250.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .fadeIn(delay: 450.ms, duration: 150.ms),
+                          InkWell(
+                                onTap: () {
+                                  //RouteHelper.push(Routes.summaries);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: AppText.titleSmall(
+                                    "View All >",
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                              .animate(delay: 300.ms)
+                              .scale(
+                                delay: 700.ms,
+                                alignment: Alignment.centerLeft,
+                                begin: const Offset(0, 0),
+                                end: const Offset(1, 1),
+                                duration: 550.ms,
+                                curve: Curves.easeInOutBack,
+                              )
+                              .fadeIn(delay: 700.ms, duration: 200.ms),
                         ],
                       ),
                     ],

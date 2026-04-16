@@ -136,13 +136,16 @@ class BaseScreen extends ConsumerWidget {
                             Hero(
                               tag: HeroTags.profile,
                               child: CircleAvatar(
-                                backgroundColor: context.appColors
+                                backgroundColor: context
+                                    .appColors
                                     .secondaryLight
                                     .withValues(alpha: 0.2),
                                 radius: 15,
                                 child: Icon(
                                   Icons.person,
-                                  color: Theme.of(context).colorScheme.secondary,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary,
                                   size: 20,
                                 ),
                               ),
@@ -212,7 +215,12 @@ class BaseScreen extends ConsumerWidget {
               ),
             )
           : title != null
-          ? AppText.headlineSmall(title!, textAlign: TextAlign.left)
+          ? Padding(
+              padding: context.isMobile
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.only(left: 12.0),
+              child: AppText.headlineSmall(title!, textAlign: TextAlign.left),
+            )
           : const SizedBox(),
       titleSpacing: 0,
       centerTitle: false,

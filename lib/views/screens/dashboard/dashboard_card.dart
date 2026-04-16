@@ -45,8 +45,8 @@ class DashboardCard extends StatelessWidget {
                       padding: showSmallCard
                           ? const EdgeInsets.all(4)
                           : const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
+                              horizontal: 6,
+                              vertical: 3,
                             ),
                       decoration: BoxDecoration(
                         color: appColors.accent.withValues(alpha: 0.38),

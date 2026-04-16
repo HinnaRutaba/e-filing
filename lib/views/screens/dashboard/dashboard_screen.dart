@@ -257,10 +257,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 animation: _compactNotifier,
                 builder: (context, _) {
                   final bool mobileCompact = isMobile && _compactNotifier.value;
-                  final double cardsOverlap = mobileCompact ? 42.0 : 110.0;
+                  final double cardsOverlap = mobileCompact
+                      ? 42.0
+                      : isMobile
+                      ? 110.0
+                      : 16;
                   final double statsCardTop = isMobile
                       ? (mobileCompact ? 172.0 : 160.0)
-                      : 140.0;
+                      : 124.0;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
@@ -292,11 +296,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: context.appColors.secondaryLight.withValues(alpha: 0.3),
+                    color: context.appColors.secondaryLight.withValues(
+                      alpha: 0.3,
+                    ),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: context.appColors.secondaryDark.withValues(alpha: 0.06),
+                      color: context.appColors.secondaryDark.withValues(
+                        alpha: 0.06,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -316,7 +324,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: context.appColors.secondaryDark.withValues(alpha: 0.3),
+                        color: context.appColors.secondaryDark.withValues(
+                          alpha: 0.3,
+                        ),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -403,7 +413,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: CircleAvatar(
             backgroundColor: context.appColors.accent.withValues(alpha: 0.25),
             radius: 22,
-            child: Icon(Icons.person, color: context.appColors.accent, size: 26),
+            child: Icon(
+              Icons.person,
+              color: context.appColors.accent,
+              size: 26,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -479,7 +493,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     bool compact,
   ) {
     final bool isMobile = context.isMobile;
-    final bool smallCard = !isMobile || compact;
+    final bool smallCard = isMobile && compact;
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
