@@ -161,7 +161,7 @@ class DashboardCard extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey[900],
                                 ),
-                                loading && value.isEmpty
+                                loading && (value.isEmpty || value == '0')
                                     ? const Row(
                                         children: [
                                           SpinKitThreeBounce(

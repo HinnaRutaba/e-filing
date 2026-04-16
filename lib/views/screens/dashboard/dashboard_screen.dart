@@ -48,7 +48,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      animationDuration: Duration.zero,
+    );
     NotificationService().initNotification();
     _loadInitialData();
 
@@ -158,7 +162,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              if (dashboardState.backdropAnimated)
+                              if (dashboardState.animated)
                                 SvgPicture.asset(
                                   AssetsConstants.dashboardBG,
                                   fit: BoxFit.fitWidth,
@@ -179,21 +183,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                       },
                                     )
                                     .custom(
-                                      duration: 800.ms,
-                                      curve: Curves.easeOutCubic,
+                                      duration: 600.ms,
+                                      curve: Curves.easeInOutCirc,
                                       begin: 100,
                                       end: 0,
                                       builder: (context, value, child) {
                                         return ClipRRect(
                                           borderRadius: BorderRadius.only(
                                             topLeft: Radius.circular(
-                                              value * 20,
+                                              value * 30,
                                             ),
                                             bottomLeft: Radius.circular(
-                                              value * 20,
+                                              value * 30,
                                             ),
                                             topRight: Radius.circular(
-                                              value * 20,
+                                              value * 30,
                                             ),
                                           ),
                                           child: child,
@@ -452,7 +456,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
-          .animate()
+          .animate(delay: dashboardState.animated ? 200.ms : 1400.ms)
           .scale(
             delay: delay,
             duration: 400.ms,
@@ -583,7 +587,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       itemCount: files.length,
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: FileCard(fileType: fileType, data: files[i]),
+        child: FileCard(fileType: fileType, data: files[i])
+            .animate()
+            .fadeIn(delay: (60 * i).ms, duration: 300.ms, curve: Curves.easeOut)
+            .slideX(
+              begin: -0.12,
+              end: 0,
+              delay: (60 * i).ms,
+              duration: 350.ms,
+              curve: Curves.easeOutCubic,
+            ),
       ),
     );
   }
