@@ -256,45 +256,68 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                         ],
                       ),
                       //const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.summarize,
-                              color: Colors.white,
-                              size: 22,
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(100),
                             ),
-                            ClipRect(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8),
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    children: [
-                                      const TextSpan(text: 'You have '),
-                                      TextSpan(
-                                        text: '3 ',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
+                            padding: const EdgeInsets.all(10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.summarize,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                ClipRect(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: RichText(
+                                      text: const TextSpan(
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
                                         ),
+                                        children: [
+                                          TextSpan(text: 'You have '),
+                                          TextSpan(
+                                            text: '3 ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          TextSpan(text: "summaries to review"),
+                                        ],
                                       ),
-                                      TextSpan(text: "summaries to review"),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          ClipPath(
+                            clipper: _ConcaveConnectorClipper(),
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: AppText.titleSmall(
+                              "View All",
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -380,4 +403,25 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       ),
     );
   }
+}
+
+class _ConcaveConnectorClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+    // Top edge curves downward (concave)
+    path.moveTo(0, 0);
+    path.quadraticBezierTo(w / 2, h * 0.35, w, 0);
+    // Right edge
+    path.lineTo(w, h);
+    // Bottom edge curves upward (concave)
+    path.quadraticBezierTo(w / 2, h - h * 0.35, 0, h);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
