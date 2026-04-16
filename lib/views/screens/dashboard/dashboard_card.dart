@@ -4,7 +4,7 @@ class DashboardCard extends StatelessWidget {
   final Color cardColor;
   final Color iconColor;
   final String title;
-  final String value;
+  final String? value;
   final VoidCallback onTap;
   final bool loading;
   final bool showSmallCard;
@@ -23,26 +23,34 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _buildCard(),
-        Positioned(
-          top: showSmallCard ? -8 : 4,
-          right: showSmallCard ? -12 : 4,
+    return RepaintBoundary(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _buildCard(),
+          Positioned(
+          top: showSmallCard ? -8 : 6,
+          right: showSmallCard
+              ? value == null
+                    ? -8
+                    : 12
+              : 6,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child:
                 InkWell(
                       onTap: onTap,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
+                        padding: showSmallCard
+                            ? const EdgeInsets.all(4)
+                            : const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                         decoration: BoxDecoration(
                           color: Colors.white38,
                           borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white, width: 0.5),
                           boxShadow: [
                             BoxShadow(
                               color: cardColor.withValues(alpha: 0.08),
@@ -56,15 +64,19 @@ class DashboardCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: AppText.titleSmall(
-                          "Open",
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.secondaryDark,
-                          fontSize: 10,
-                        ),
+                        child: showSmallCard
+                            ? const Icon(Icons.chevron_right, size: 20)
+                            : AppText.titleSmall(
+                                "Open",
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.secondaryDark,
+                                fontSize: 10,
+                              ),
                       ),
                     )
-                    .animate(onPlay: (c) => c.repeat())
+                    .animate(
+                     // onPlay: (c) => c.repeat()
+                    )
                     .shimmer(
                       duration: 1600.ms,
                       delay: 1200.ms,
@@ -76,7 +88,8 @@ class DashboardCard extends StatelessWidget {
                     ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -186,14 +199,14 @@ class DashboardCard extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[900],
               ),
-              loading && (value.isEmpty || value == '0')
+              loading && (value == null || value!.isEmpty || value == '0')
                   ? const Row(
                       children: [
                         SpinKitThreeBounce(color: AppColors.accent, size: 16),
                       ],
                     )
                   : AppText.headlineMedium(
-                      value,
+                      value ?? '',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: Colors.grey[900],
@@ -207,17 +220,20 @@ class DashboardCard extends StatelessWidget {
 
   Widget cardSmall() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: value == null
+          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+          : const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 18, color: iconColor),
-          AppText.headlineMedium(
-            value,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[900],
-          ),
+          if (value != null)
+            AppText.headlineMedium(
+              value!,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[900],
+            ),
         ],
       ),
     );

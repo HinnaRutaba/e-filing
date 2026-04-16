@@ -22,6 +22,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/not_found.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -43,6 +44,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   final RefreshController _refreshController = RefreshController();
   late TabController _tabController;
   final ChatService chatService = ChatService();
+  final ValueNotifier<bool> _compactNotifier = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -59,6 +61,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       if (!mounted) return;
       _loadDataForCurrentTab();
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _refreshController.dispose();
+    _compactNotifier.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -108,6 +118,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (!mounted || !context.isMobile) return false;
+    if (notification.metrics.axis != Axis.vertical) return false;
+
+    if (notification.metrics.pixels <= 0 && _compactNotifier.value) {
+      _compactNotifier.value = false;
+      return false;
+    }
+
+    if (notification is UserScrollNotification &&
+        notification.direction == ScrollDirection.reverse &&
+        !_compactNotifier.value) {
+      _compactNotifier.value = true;
+    }
+    return false;
+  }
+
   Future<void> _onRefresh() async {
     try {
       await ref.read(dashboardController.notifier).initData();
@@ -127,8 +154,93 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final topPadding = MediaQuery.of(context).padding.top;
     final bool hasAppBarIcons = context.isMobile;
     final double userHeaderTop = topPadding + (hasAppBarIcons ? 54 : 28);
-    const headerHeight = 208.0;
-    const cardsOverlap = 110.0;
+    const headerHeight = 212.0;
+    final bool isMobile = context.isMobile;
+
+    final Widget headerBackground = Positioned(
+      left: 0,
+      right: 0,
+      top: 0,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+        child: SizedBox(
+          height: headerHeight,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (dashboardState.animated)
+                SvgPicture.asset(
+                  AssetsConstants.dashboardBG,
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.topCenter,
+                )
+              else
+                SvgPicture.asset(
+                      AssetsConstants.dashboardBG,
+                      fit: BoxFit.fitWidth,
+                      alignment: Alignment.topCenter,
+                    )
+                    .animate(
+                      delay: 800.ms,
+                      onComplete: (_) {
+                        ref
+                            .read(dashboardController.notifier)
+                            .markBackdropAnimated();
+                      },
+                    )
+                    .custom(
+                      duration: 600.ms,
+                      curve: Curves.easeInOutCirc,
+                      begin: 40,
+                      end: 0,
+                      builder: (context, value, child) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(value * 30),
+                            bottomLeft: Radius.circular(value * 30),
+                            topRight: Radius.circular(value * 30),
+                          ),
+                          child: child,
+                        );
+                      },
+                    )
+                    .scale(
+                      alignment: Alignment.bottomRight,
+                      begin: const Offset(0, 0),
+                      end: const Offset(1, 1),
+                      duration: 800.ms,
+                      curve: Curves.easeOutCubic,
+                    )
+                    .fadeIn(duration: 400.ms),
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryDark.withValues(alpha: 0.8),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.secondaryDark,
+                      AppColors.secondaryLight.withValues(alpha: 0.7),
+                      AppColors.accent.withValues(alpha: 0.2),
+                    ],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final Widget userHeaderPositioned = Positioned(
+      top: userHeaderTop,
+      left: 20,
+      right: 20,
+      child: _buildUserHeader(currentUser),
+    );
 
     return GradientScaffold(
       child: BaseScreen(
@@ -141,236 +253,139 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           onRefresh: _onRefresh,
           child: Column(
             children: [
-              SizedBox(
-                height: headerHeight + cardsOverlap,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(28),
-                        ),
-                        child: SizedBox(
-                          height: headerHeight,
-                          width: double.infinity,
-
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              if (dashboardState.animated)
-                                SvgPicture.asset(
-                                  AssetsConstants.dashboardBG,
-                                  fit: BoxFit.fitWidth,
-                                  alignment: Alignment.topCenter,
-                                )
-                              else
-                                SvgPicture.asset(
-                                      AssetsConstants.dashboardBG,
-                                      fit: BoxFit.fitWidth,
-                                      alignment: Alignment.topCenter,
-                                    )
-                                    .animate(
-                                      delay: 800.ms,
-                                      onComplete: (_) {
-                                        ref
-                                            .read(dashboardController.notifier)
-                                            .markBackdropAnimated();
-                                      },
-                                    )
-                                    .custom(
-                                      duration: 600.ms,
-                                      curve: Curves.easeInOutCirc,
-                                      begin: 40,
-                                      end: 0,
-                                      builder: (context, value, child) {
-                                        return ClipRRect(
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(
-                                              value * 30,
-                                            ),
-                                            bottomLeft: Radius.circular(
-                                              value * 30,
-                                            ),
-                                            topRight: Radius.circular(
-                                              value * 30,
-                                            ),
-                                          ),
-                                          child: child,
-                                        );
-                                      },
-                                    )
-                                    .scale(
-                                      alignment: Alignment.bottomRight,
-                                      begin: const Offset(0, 0),
-                                      end: const Offset(1, 1),
-                                      duration: 800.ms,
-                                      curve: Curves.easeOutCubic,
-                                    )
-                                    .fadeIn(duration: 400.ms),
-                              Container(
-                                height: headerHeight,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondaryDark.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.secondaryDark,
-                                      AppColors.secondaryLight.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                      AppColors.accent.withValues(alpha: 0.2),
-                                    ],
-                                    begin: Alignment.bottomLeft,
-                                    end: Alignment.topRight,
-                                  ),
-                                ),
-                              ),
-                            ],
+              AnimatedBuilder(
+                animation: _compactNotifier,
+                builder: (context, _) {
+                  final bool mobileCompact = isMobile && _compactNotifier.value;
+                  final double cardsOverlap = mobileCompact ? 42.0 : 110.0;
+                  final double statsCardTop = isMobile
+                      ? (mobileCompact ? 172.0 : 160.0)
+                      : 140.0;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    height: headerHeight + cardsOverlap,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        headerBackground,
+                        userHeaderPositioned,
+                        AnimatedPositioned(
+                          duration: 300.ms,
+                          left: 16,
+                          right: 16,
+                          top: statsCardTop,
+                          child: _buildStatsCard(
+                            context,
+                            dashboardState,
+                            mobileCompact,
                           ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: userHeaderTop,
-                      left: 20,
-                      right: 20,
-                      child: _buildUserHeader(currentUser),
-                    ),
-                    AnimatedPositioned(
-                      duration: 300.ms,
-                      left: 16,
-                      right: 16,
-                      top: context.isMobile ? 160 : 140,
-                      child: _buildStatsCard(context, dashboardState),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.6),
-                      Colors.white.withValues(alpha: 0.25),
-                      Colors.white.withValues(alpha: 0.02),
-                    ],
-                    stops: const [0.0, 0.6, 1.0],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.secondaryDark.withValues(alpha: 0.10),
-                      offset: const Offset(0, 10),
-                      blurRadius: 14,
-                      spreadRadius: -6,
-                    ),
-                  ],
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: AppColors.secondaryLight.withValues(alpha: 0.3),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.secondaryDark.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.secondaryDark,
-                          AppColors.secondaryLight,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.secondaryDark.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicatorPadding: EdgeInsets.zero,
-                    dividerColor: Colors.transparent,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: AppColors.secondaryDark,
-                    labelPadding: const EdgeInsets.symmetric(
-                      vertical: 2,
-                      horizontal: 4,
+                  );
+                },
+              ),
+              Container(
+                padding: const EdgeInsets.all(3),
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppColors.secondaryLight.withValues(alpha: 0.3),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.secondaryDark.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    labelStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                  ],
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.secondaryDark,
+                        AppColors.secondaryLight,
+                      ],
                     ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    splashBorderRadius: BorderRadius.circular(999),
-                    overlayColor: WidgetStateProperty.all(Colors.transparent),
-                    tabs: const [
-                      Tab(text: 'Pending Files', height: 30),
-                      Tab(text: 'Daak Letters', height: 30),
-                      Tab(text: 'Processed Files', height: 30),
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.secondaryDark.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicatorPadding: EdgeInsets.zero,
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: AppColors.secondaryDark,
+                  labelPadding: const EdgeInsets.symmetric(
+                    vertical: 2,
+                    horizontal: 4,
+                  ),
+                  labelStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  splashBorderRadius: BorderRadius.circular(999),
+                  overlayColor: WidgetStateProperty.all(Colors.transparent),
+                  tabs: const [
+                    Tab(text: 'Pending Files', height: 30),
+                    Tab(text: 'Daak Letters', height: 30),
+                    Tab(text: 'Processed Files', height: 30),
+                  ],
                 ),
               ),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleScrollNotification,
+                  child: TabBarView(
+                    controller: _tabController,
 
-                  children: [
-                    _buildFileList(
-                      files: dashboardState.pendingFiles,
-                      fileType: FileType.pending,
-                      loading:
-                          dashboardState.loadingPendingFiles &&
-                          dashboardState.pendingFiles.isEmpty,
-                      onRefresh: () => ref
-                          .read(dashboardController.notifier)
-                          .fetchPendingFiles(),
-                    ),
-                    _buildDaakList(
-                      daakLetters: dashboardState.daakLetters,
-                      loading:
-                          dashboardState.loadingDaakLetters &&
-                          dashboardState.daakLetters.isEmpty,
-                      onRefresh: () => ref
-                          .read(dashboardController.notifier)
-                          .fetchDaakLetters(),
-                    ),
-                    _buildFileList(
-                      files: dashboardState.forwardedFiles,
-                      fileType: FileType.forwarded,
-                      loading:
-                          dashboardState.loadingForwardedFiles &&
-                          dashboardState.forwardedFiles.isEmpty,
-                      onRefresh: () => ref
-                          .read(dashboardController.notifier)
-                          .fetchForwardedFiles(),
-                    ),
-                  ],
+                    children: [
+                      _buildFileList(
+                        files: dashboardState.pendingFiles,
+                        fileType: FileType.pending,
+                        loading:
+                            dashboardState.loadingPendingFiles &&
+                            dashboardState.pendingFiles.isEmpty,
+                        onRefresh: () => ref
+                            .read(dashboardController.notifier)
+                            .fetchPendingFiles(),
+                      ),
+                      _buildDaakList(
+                        daakLetters: dashboardState.daakLetters,
+                        loading:
+                            dashboardState.loadingDaakLetters &&
+                            dashboardState.daakLetters.isEmpty,
+                        onRefresh: () => ref
+                            .read(dashboardController.notifier)
+                            .fetchDaakLetters(),
+                      ),
+                      _buildFileList(
+                        files: dashboardState.forwardedFiles,
+                        fileType: FileType.forwarded,
+                        loading:
+                            dashboardState.loadingForwardedFiles &&
+                            dashboardState.forwardedFiles.isEmpty,
+                        onRefresh: () => ref
+                            .read(dashboardController.notifier)
+                            .fetchForwardedFiles(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -453,8 +468,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildStatsCard(BuildContext context, DashboardModel dashboardState) {
-    final smallCard = true;
+  Widget _buildStatsCard(
+    BuildContext context,
+    DashboardModel dashboardState,
+    bool compact,
+  ) {
+    final bool isMobile = context.isMobile;
+    final bool smallCard = !isMobile || compact;
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
@@ -522,7 +542,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         cardColor: Colors.green[200]!,
         iconColor: Colors.green[800]!,
         title: "Daak Letters",
-        value: "",
+        value: null,
         onTap: () {
           _tabController.animateTo(1);
         },
@@ -534,7 +554,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final cards = [pendingCard, actionRequiredCard, myFilesCard, daakCard];
 
-    if (!context.isMobile) {
+    if (!isMobile || compact) {
       return Row(
         children: [
           for (var i = 0; i < cards.length; i++) ...[
