@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
@@ -39,6 +41,7 @@ class SummaryDocumentCard extends StatefulWidget {
 
 class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   bool _signExpanded = false;
+  Uint8List? _signatureImage;
   late final SignatureController _signatureController;
 
   @override
@@ -151,7 +154,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                     _htmlBody(),
                     const SizedBox(height: 28),
                     _signaturePad(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
                     _signatoryBlock(),
                     const SizedBox(height: 24),
                     AppText.bodyMedium(
@@ -226,11 +229,19 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   Widget _signaturePad() {
     return Align(
       alignment: Alignment.centerRight,
-      child: AnimatedSize(
+      child: AnimatedCrossFade(
         duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
+        sizeCurve: Curves.easeOutCubic,
+        firstCurve: Curves.easeOut,
+        secondCurve: Curves.easeIn,
         alignment: Alignment.centerRight,
-        child: _signExpanded ? _expandedPad() : _collapsedPad(),
+        crossFadeState: _signExpanded
+            ? CrossFadeState.showSecond
+            : CrossFadeState.showFirst,
+        firstChild: _signatureImage != null
+            ? _signedPreview()
+            : _collapsedPad(),
+        secondChild: _expandedPad(),
       ),
     );
   }
@@ -270,6 +281,61 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
     );
   }
 
+  Widget _signedPreview() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () => setState(() => _signExpanded = true),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 140,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.45),
+              ),
+              color: Colors.white,
+            ),
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Image.memory(_signatureImage!, fit: BoxFit.contain),
+          ),
+          Positioned(
+            top: -8,
+            right: -8,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(
+                    color: AppColors.secondaryLight.withValues(alpha: 0.5),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.edit_outlined,
+                  size: 14,
+                  color: AppColors.secondaryDark,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _expandedPad() {
     return Container(
       width: double.infinity,
@@ -291,8 +357,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
           ),
           Container(
             color: AppColors.secondaryLight.withValues(alpha: 0.08),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
                 AppText.labelSmall(
@@ -301,13 +366,26 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () => _signatureController.clear(),
+                  onPressed: () {
+                    _signatureController.clear();
+                    setState(() => _signatureImage = null);
+                  },
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Clear'),
                 ),
                 TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _signExpanded = false),
+                  onPressed: () async {
+                    if (_signatureController.isNotEmpty) {
+                      final bytes = await _signatureController.toPngBytes();
+                      if (!mounted) return;
+                      setState(() {
+                        _signatureImage = bytes;
+                        _signExpanded = false;
+                      });
+                    } else {
+                      setState(() => _signExpanded = false);
+                    }
+                  },
                   icon: const Icon(Icons.check, size: 16),
                   label: const Text('Done'),
                 ),
