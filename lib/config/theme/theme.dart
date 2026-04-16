@@ -316,10 +316,7 @@ class AppTheme {
     checkboxTheme: AppCheckBoxTheme.darkCheckboxTheme,
     chipTheme: AppChipTheme.darkChipTheme,
     inputDecorationTheme: AppTextFieldTheme.inputDecorationThemeDark.copyWith(
-      filled: true,
       fillColor: _darkSurface,
-      hintStyle: const TextStyle(color: _darkTextSecondary),
-      labelStyle: const TextStyle(color: _darkTextSecondary),
     ),
     bottomNavigationBarTheme: BottomNavBarTheme.darkNavbarTheme.copyWith(
       backgroundColor: _darkBackground,

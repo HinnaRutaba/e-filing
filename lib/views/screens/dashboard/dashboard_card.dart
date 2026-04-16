@@ -40,58 +40,53 @@ class DashboardCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               child:
                   InkWell(
-                        onTap: onTap,
-                        child: Container(
-                          padding: showSmallCard
-                              ? const EdgeInsets.all(4)
-                              : const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                          decoration: BoxDecoration(
-                            color: appColors.accent.withValues(alpha: 0.38),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: appColors.accent,
-                              width: 0.5,
+                    onTap: onTap,
+                    child: Container(
+                      padding: showSmallCard
+                          ? const EdgeInsets.all(4)
+                          : const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: cardColor.withValues(alpha: 0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                              BoxShadow(
-                                color: iconColor.withValues(alpha: 0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                      decoration: BoxDecoration(
+                        color: appColors.accent.withValues(alpha: 0.38),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: appColors.accent, width: 0.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cardColor.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
-                          child: showSmallCard
-                              ? Icon(
-                                  Icons.chevron_right,
-                                  size: 20,
-                                  color: appColors.secondaryDark,
-                                )
-                              : AppText.titleSmall(
-                                  "Open",
-                                  fontWeight: FontWeight.w700,
-                                  color: appColors.secondaryDark,
-                                  fontSize: 10,
-                                ),
-                        ),
-                      )
-                      .animate()
-                      .shimmer(
-                        duration: 1600.ms,
-                        delay: 1200.ms,
-                        colors: [
-                          appColors.accent.withValues(alpha: 0.0),
-                          appColors.accent.withValues(alpha: 0.9),
-                          appColors.accent.withValues(alpha: 0.0),
+                          BoxShadow(
+                            color: iconColor.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                       ),
+                      child: showSmallCard
+                          ? Icon(
+                              Icons.chevron_right,
+                              size: 20,
+                              color: appColors.secondaryDark,
+                            )
+                          : AppText.titleSmall(
+                              "Open",
+                              fontWeight: FontWeight.w700,
+                              color: appColors.secondaryDark,
+                              fontSize: 10,
+                            ),
+                    ),
+                  ).animate().shimmer(
+                    duration: 1600.ms,
+                    delay: 1200.ms,
+                    colors: [
+                      appColors.accent.withValues(alpha: 0.0),
+                      appColors.accent.withValues(alpha: 0.9),
+                      appColors.accent.withValues(alpha: 0.0),
+                    ],
+                  ),
             ),
           ),
         ],
@@ -103,15 +98,14 @@ class DashboardCard extends StatelessWidget {
     final theme = Theme.of(context);
     final appColors = context.appColors;
     final isDark = theme.brightness == Brightness.dark;
-    // Frosted-glass gloss is bright in light mode; in dark mode we soften the
-    // white overlays so the colored card face stays saturated.
-    final double glossHigh = isDark ? 0.12 : 0.22;
-    final double glossMid = isDark ? 0.06 : 0.08;
+
+    final double glossHigh = isDark ? 0.05 : 0.08;
+    final double glossMid = isDark ? 0.02 : 0.03;
     final double glossTop = isDark ? 0.18 : 0.32;
-    // Card-color saturation for the body gradient. Higher = more vivid face.
-    final double faceHigh = isDark ? 0.9 : 0.8;
-    final double faceMid = isDark ? 0.55 : 0.4;
-    final double faceOuter = isDark ? 0.45 : 0.35;
+
+    final double faceHigh = isDark ? 0.85 : 0.75;
+    final double faceMid = isDark ? 0.2 : 0.08;
+    final double faceOuter = isDark ? 0.4 : 0.3;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -157,8 +151,9 @@ class DashboardCard extends StatelessWidget {
                           colors: [
                             cardColor.withValues(alpha: faceHigh),
                             cardColor.withValues(alpha: faceMid),
-                            appColors.accent.withValues(alpha: glossMid),
+                            Colors.transparent,
                           ],
+                          stops: const [0.0, 0.55, 1.0],
                         ),
                       ),
                     ),
@@ -186,7 +181,9 @@ class DashboardCard extends StatelessWidget {
                       horizontal: 8,
                       vertical: 12,
                     ),
-                    child: showSmallCard ? cardSmall(context) : cardBody(context),
+                    child: showSmallCard
+                        ? cardSmall(context)
+                        : cardBody(context),
                   ),
                 ],
               ),

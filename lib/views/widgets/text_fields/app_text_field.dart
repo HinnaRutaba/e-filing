@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,6 +61,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -71,11 +73,14 @@ class AppTextField extends StatelessWidget {
             children: [
               AppText.labelLarge(
                 labelText,
-                color: enabled == false ? Colors.grey : Colors.grey[800],
+                color: enabled
+                    ? appColors.textPrimary
+                    : appColors.textSecondary,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
-              if (isMandatory) AppText.headlineSmall(' *', color: Colors.red),
+              if (isMandatory)
+                AppText.headlineSmall(' *', color: theme.colorScheme.error),
             ],
           ),
           const SizedBox(height: 4),
@@ -91,11 +96,9 @@ class AppTextField extends StatelessWidget {
           enabled: enabled,
           showCursor: true,
           onTap: onTap,
-          style: style ??
-              const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
+          style:
+              style ??
+              TextStyle(fontSize: 14, color: appColors.textPrimary),
           autovalidateMode: AutovalidateMode.onUserInteraction,
           keyboardType: inputType,
           maxLength: maxLength,
@@ -110,11 +113,12 @@ class AppTextField extends StatelessWidget {
             disabledBorder: border,
             prefixIcon: prefix,
             hintStyle: TextStyle(
-                color: enabled
-                    ? AppColors.secondaryDark.withOpacity(0.8)
-                    : AppColors.secondaryLight.withOpacity(0.5),
-                fontWeight: FontWeight.w400,
-                fontSize: 14),
+              color: enabled
+                  ? appColors.textSecondary.withValues(alpha: 0.8)
+                  : appColors.textSecondary.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+            ),
             fillColor: filledColor,
           ),
           obscureText: obscureText,

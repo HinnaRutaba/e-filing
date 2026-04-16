@@ -1,5 +1,5 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
@@ -200,7 +200,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.send, color: AppColors.secondary),
+                  Icon(Icons.send, color: Theme.of(context).colorScheme.secondary),
                   const SizedBox(width: 8),
                   Expanded(child: AppText.headlineSmall("Send Summary?")),
                   const SizedBox(width: 8),
@@ -208,15 +208,15 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     onTap: () {
                       RouteHelper.pop();
                     },
-                    child: const Icon(
+                    child: Icon(
                       Icons.clear,
-                      color: AppColors.textPrimary,
+                      color: context.appColors.textPrimary,
                     ),
                   ),
                 ],
               ),
 
-              const Divider(color: Colors.grey, height: 40),
+              Divider(color: context.appColors.border, height: 40),
             ],
           ),
           content: Column(
@@ -256,13 +256,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 RouteHelper.pop();
               },
               text: "Cancel",
-              color: Colors.grey[700],
+              color: context.appColors.textSecondary,
             ),
 
             AppSolidButton(
               onPressed: () => RouteHelper.pop(),
               text: "Send",
-              backgroundColor: AppColors.secondary,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
           ],
         );
@@ -283,9 +283,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         borderRadius: BorderRadius.circular(8),
 
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.4),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.4),
         ),
-        color: AppColors.secondaryLight.withValues(alpha: 0.05),
+        color: context.appColors.secondaryLight.withValues(alpha: 0.05),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +293,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           Icon(
             icon,
             size: 18,
-            color: muted ? Colors.grey[600] : AppColors.primaryDark,
+            color: muted ? Colors.grey[600] : context.appColors.primaryDark,
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -303,7 +303,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 AppText.titleSmall(label),
                 AppText.bodySmall(
                   value,
-                  color: muted ? Colors.redAccent : Colors.grey[800],
+                  color: muted ? Theme.of(context).colorScheme.error : Colors.grey[800],
                 ),
               ],
             ),
@@ -413,10 +413,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.08),
+        color: context.appColors.warning.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Colors.orange.withValues(alpha: 0.5),
+          color: context.appColors.warning.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -432,25 +432,25 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline_rounded,
-                    color: Colors.orange,
+                    color: context.appColors.warning,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: AppText.titleMedium(
                       "Secretary Remarks",
-                      color: Colors.orange,
+                      color: context.appColors.warning,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   AnimatedRotation(
                     turns: _secretaryRemarksExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: Colors.orange,
+                      color: context.appColors.warning,
                     ),
                   ),
                 ],
@@ -488,12 +488,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                                 Icon(
                                   Icons.calendar_month,
                                   size: 16,
-                                  color: Colors.grey[600]!,
+                                  color: context.appColors.textSecondary,
                                 ),
                                 const SizedBox(width: 4),
                                 AppText.labelSmall(
                                   DateTimeHelper.datFormatSlash(DateTime.now()),
-                                  color: Colors.grey[600],
+                                  color: context.appColors.textSecondary,
                                 ),
                               ],
                             ),
@@ -507,7 +507,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                         const SizedBox(height: 4),
                         AppText.labelMedium(
                           "Make the ammendments suggested by secreatry and resend",
-                          color: Colors.orange[800],
+                          color: context.appColors.warning,
                           fontWeight: FontWeight.w600,
                         ),
                       ],
@@ -528,11 +528,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           children: [
             AppText.labelLarge(
               "Main Summary PDF",
-              color: Colors.grey[800],
+              color: context.appColors.textPrimary,
               fontWeight: FontWeight.w500,
               fontSize: 12,
             ),
-            AppText.headlineSmall(' *', color: Colors.red),
+            AppText.headlineSmall(' *', color: Theme.of(context).colorScheme.error),
           ],
         ),
         const SizedBox(height: 4),
@@ -544,16 +544,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               border: Border.all(
-                color: AppColors.secondaryLight.withOpacity(0.5),
+                color: context.appColors.secondaryLight.withValues(alpha: 0.5),
               ),
               borderRadius: BorderRadius.circular(10),
-              color: AppColors.white,
+              color: Theme.of(context).cardColor,
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.picture_as_pdf,
-                  color: AppColors.secondaryDark,
+                  color: context.appColors.secondaryDark,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -561,8 +561,8 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                   child: AppText.bodyMedium(
                     mainPdf?.name ?? "Choose file",
                     color: mainPdf != null
-                        ? AppColors.secondaryDark
-                        : AppColors.secondaryLight,
+                        ? context.appColors.secondaryDark
+                        : context.appColors.secondaryLight,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -570,12 +570,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 if (mainPdf != null)
                   InkWell(
                     onTap: () => setState(() => mainPdf = null),
-                    child: Icon(Icons.cancel, color: Colors.red[800], size: 18),
+                    child: Icon(Icons.cancel, color: Theme.of(context).colorScheme.error, size: 18),
                   )
                 else
-                  const Icon(
+                  Icon(
                     Icons.upload_file,
-                    color: AppColors.secondary,
+                    color: Theme.of(context).colorScheme.secondary,
                     size: 20,
                   ),
               ],
@@ -592,14 +592,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.secondaryLight.withOpacity(0.5)),
+          border: Border.all(
+            color: context.appColors.secondaryLight.withValues(alpha: 0.5),
+          ),
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.white,
+          color: Theme.of(context).cardColor,
         ),
         child: Column(
           children: [
             ToolBar(
-              activeIconColor: Colors.blue,
+              activeIconColor: Theme.of(context).colorScheme.primary,
               padding: const EdgeInsets.all(6),
               iconSize: 22,
               controller: quillEditorController,
@@ -617,15 +619,21 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 ToolBarStyle.blockQuote,
               ],
             ),
-            Divider(color: Colors.grey[300]!),
+            Divider(color: context.appColors.border),
             const SizedBox(height: 4),
             QuillHtmlEditor(
               text: _summaryHtml,
               hintText: "Write summary content here…",
               controller: quillEditorController,
               minHeight: 220,
-              textStyle: const TextStyle(fontSize: 16, color: Colors.black),
-              hintTextStyle: const TextStyle(fontSize: 16, color: Colors.grey),
+              textStyle: TextStyle(
+                fontSize: 16,
+                color: context.appColors.textPrimary,
+              ),
+              hintTextStyle: TextStyle(
+                fontSize: 16,
+                color: context.appColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -648,16 +656,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isOpen
-              ? AppColors.secondary.withValues(alpha: 0.4)
-              : AppColors.secondaryLight.withValues(alpha: 0.4),
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4)
+              : context.appColors.secondaryLight.withValues(alpha: 0.4),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.appColors.shadow.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -678,10 +686,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    color: AppColors.cardColor,
+                    color: Theme.of(context).cardColor,
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Icon(icon, size: 20, color: AppColors.primaryDark),
+                      child: Icon(icon, size: 20, color: context.appColors.primaryDark),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -691,14 +699,14 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                       children: [
                         AppText.titleMedium(
                           title,
-                          color: AppColors.primaryDark,
+                          color: context.appColors.primaryDark,
                           fontWeight: FontWeight.w600,
                         ),
                         if (subtitle != null) ...[
                           const SizedBox(height: 2),
                           AppText.bodySmall(
                             subtitle,
-                            color: Colors.grey[600],
+                            color: context.appColors.textSecondary,
                             fontSize: 11,
                           ),
                         ],
@@ -711,12 +719,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.08),
+                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: AppText.bodySmall(
                       'Step ${index + 1}',
-                      color: AppColors.secondary,
+                      color: Theme.of(context).colorScheme.secondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
                     ),
@@ -727,7 +735,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: Colors.grey[700],
+                      color: context.appColors.textSecondary,
                     ),
                   ),
                 ],
@@ -746,7 +754,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                       children: [
                         Divider(
                           height: 1,
-                          color: AppColors.secondaryLight.withValues(
+                          color: context.appColors.secondaryLight.withValues(
                             alpha: 0.4,
                           ),
                         ),
@@ -820,7 +828,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         const SizedBox(height: 16),
         AppText.labelLarge(
           "Content",
-          color: Colors.grey[800],
+          color: context.appColors.textPrimary,
           fontWeight: FontWeight.w500,
           fontSize: 12,
         ),
@@ -842,7 +850,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           physics: const NeverScrollableScrollPhysics(),
           separatorBuilder: (_, __) => Divider(
             height: 32,
-            color: AppColors.secondaryLight.withValues(alpha: .5),
+            color: context.appColors.secondaryLight.withValues(alpha: .5),
           ),
           itemBuilder: (ctx, i) {
             final model = attachments[i];
@@ -864,21 +872,21 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primaryDark),
+                    border: Border.all(color: context.appColors.primaryDark),
                   ),
                   padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add,
-                        color: AppColors.primaryDark,
+                        color: context.appColors.primaryDark,
                         size: 20,
                       ),
                       const SizedBox(width: 4),
                       AppText.bodySmall(
                         "Add More",
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ],
@@ -903,7 +911,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       children: [
         AppText.bodySmall(
           "Link any earlier correspondence received locally that relates to this summary.",
-          color: Colors.grey[700],
+          color: context.appColors.textSecondary,
         ),
         const SizedBox(height: 8),
         _linkSubsectionHeader(
@@ -948,12 +956,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: AppColors.secondaryDark),
+        Icon(icon, size: 20, color: context.appColors.secondaryDark),
         const SizedBox(width: 6),
         Expanded(
           child: AppText.titleSmall(
             title,
-            color: AppColors.secondaryDark,
+            color: context.appColors.secondaryDark,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -961,7 +969,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           onPressed: onAdd,
           text: actionLabel,
           icon: Icons.add,
-          color: AppColors.secondary,
+          color: Theme.of(context).colorScheme.secondary,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         ),
       ],
@@ -995,12 +1003,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.4),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.4),
         ),
-        color: AppColors.cardColorLight,
+        color: context.appColors.cardColorLight,
       ),
       alignment: Alignment.center,
-      child: AppText.bodySmall(text, color: Colors.grey[600]),
+      child: AppText.bodySmall(text, color: context.appColors.textSecondary),
     );
   }
 
@@ -1011,9 +1019,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.5),
         ),
-        color: AppColors.secondaryLight.withValues(alpha: 0.02),
+        color: context.appColors.secondaryLight.withValues(alpha: 0.02),
       ),
       child: Row(
         children: [
@@ -1021,13 +1029,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.mail_outline_rounded,
               size: 16,
-              color: AppColors.secondary,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
           const SizedBox(width: 8),
@@ -1038,12 +1046,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 AppText.bodyMedium(
                   daak.diaryNo ?? daak.letterNo ?? '—',
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                 ),
                 if ((daak.subject ?? '').isNotEmpty)
                   AppText.bodySmall(
                     daak.subject!,
-                    color: Colors.grey[700],
+                    color: context.appColors.textSecondary,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1053,7 +1061,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           IconButton(
             tooltip: 'Remove',
             onPressed: () => setState(() => linkedDaak.remove(daak)),
-            icon: Icon(Icons.cancel, color: Colors.red[700], size: 20),
+            icon: Icon(Icons.cancel, color: Theme.of(context).colorScheme.error, size: 20),
           ),
         ],
       ),
@@ -1067,9 +1075,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.5),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.5),
         ),
-        color: AppColors.secondaryLight.withValues(alpha: 0.02),
+        color: context.appColors.secondaryLight.withValues(alpha: 0.02),
       ),
       child: Row(
         children: [
@@ -1077,13 +1085,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.folder_outlined,
               size: 16,
-              color: AppColors.secondary,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
           const SizedBox(width: 10),
@@ -1094,12 +1102,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 AppText.bodyMedium(
                   file.referenceNo ?? file.barcode ?? '—',
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: context.appColors.textPrimary,
                 ),
                 if ((file.subject ?? '').isNotEmpty)
                   AppText.bodySmall(
                     file.subject!,
-                    color: Colors.grey[700],
+                    color: context.appColors.textSecondary,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1109,7 +1117,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           IconButton(
             tooltip: 'Remove',
             onPressed: () => setState(() => linkedFiles.remove(file)),
-            icon: Icon(Icons.cancel, color: Colors.red[700], size: 20),
+            icon: Icon(Icons.cancel, color: Theme.of(context).colorScheme.error, size: 20),
           ),
         ],
       ),
@@ -1122,7 +1130,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     final result = await showModalBottomSheet<List<DaakModel>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
@@ -1169,7 +1177,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     final result = await showModalBottomSheet<List<FileModel>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
@@ -1221,13 +1229,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: selected
-              ? AppColors.secondary
-              : AppColors.secondaryLight.withValues(alpha: 0.4),
+              ? Theme.of(context).colorScheme.secondary
+              : context.appColors.secondaryLight.withValues(alpha: 0.4),
           width: selected ? 1.6 : 1,
         ),
         color: selected
-            ? AppColors.secondary.withValues(alpha: 0.06)
-            : AppColors.white,
+            ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.06)
+            : Theme.of(context).cardColor,
       ),
       child: Row(
         children: [
@@ -1235,10 +1243,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 18, color: AppColors.secondary),
+            child: Icon(icon, size: 18, color: Theme.of(context).colorScheme.secondary),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1248,19 +1256,19 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 AppText.bodyMedium(
                   primary,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryDark,
+                  color: context.appColors.primaryDark,
                 ),
                 if (secondary.isNotEmpty)
                   AppText.bodySmall(
                     secondary,
-                    color: Colors.grey[700],
+                    color: context.appColors.textSecondary,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 if (tertiary != null && tertiary.isNotEmpty)
                   AppText.bodySmall(
                     tertiary,
-                    color: Colors.grey[500],
+                    color: context.appColors.textSecondary.withValues(alpha: 0.7),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1273,16 +1281,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             height: 22,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: selected ? AppColors.secondary : Colors.transparent,
+              color: selected ? Theme.of(context).colorScheme.secondary : Colors.transparent,
               border: Border.all(
                 color: selected
-                    ? AppColors.secondary
-                    : AppColors.secondaryLight,
+                    ? Theme.of(context).colorScheme.secondary
+                    : context.appColors.secondaryLight,
                 width: 1.6,
               ),
             ),
             child: selected
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                ? Icon(Icons.check, size: 14, color: context.appColors.accent)
                 : null,
           ),
         ],
@@ -1334,8 +1342,8 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                           height: 3,
                           decoration: BoxDecoration(
                             color: steps[i].complete && steps[i + 1].complete
-                                ? Colors.green
-                                : Colors.grey.shade300,
+                                ? context.appColors.success
+                                : context.appColors.border,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -1353,7 +1361,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   }
 
   Widget _stepCircle(_StepProgress step) {
-    final color = step.complete ? Colors.green : Colors.orange;
+    final color = step.complete
+        ? context.appColors.success
+        : context.appColors.warning;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () => _changeSection(step.index),
@@ -1366,7 +1376,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: step.complete ? color : Colors.white,
+                color: step.complete ? color : Theme.of(context).cardColor,
                 border: Border.all(color: color, width: 2),
                 boxShadow: [
                   BoxShadow(
@@ -1378,7 +1388,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               ),
               child: Icon(
                 step.complete ? Icons.check_rounded : step.icon,
-                color: step.complete ? Colors.white : color,
+                color: step.complete ? context.appColors.accent : color,
                 size: 22,
               ),
             ),
@@ -1429,7 +1439,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               child: AppOutlineButton(
                 onPressed: _onPreview,
                 text: "Preview Summary",
-                color: AppColors.primaryDark,
+                color: context.appColors.primaryDark,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,
@@ -1442,7 +1452,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 child: AppOutlineButton(
                   onPressed: () => _changeSection(nextStep),
                   text: continueLabel,
-                  color: AppColors.secondaryDark,
+                  color: context.appColors.secondaryDark,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
@@ -1547,9 +1557,9 @@ class _LinkPickerSheetState<T> extends ConsumerState<_LinkPickerSheet<T>> {
                 IconButton(
                   tooltip: 'Back',
                   onPressed: () => RouteHelper.pop(),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_rounded,
-                    color: AppColors.black,
+                    color: context.appColors.textPrimary,
                   ),
                 ),
                 Expanded(child: AppText.headlineSmall(widget.title)),
@@ -1564,9 +1574,12 @@ class _LinkPickerSheetState<T> extends ConsumerState<_LinkPickerSheet<T>> {
               hintText: "Search by reference, subject…",
               showLabel: false,
               autoFocus: true,
-              prefix: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(Icons.search, color: AppColors.secondary),
+              prefix: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
               ),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -1584,7 +1597,7 @@ class _LinkPickerSheetState<T> extends ConsumerState<_LinkPickerSheet<T>> {
                     child: Center(
                       child: AppText.bodyMedium(
                         "No results",
-                        color: Colors.grey[600],
+                        color: context.appColors.textSecondary,
                       ),
                     ),
                   )
