@@ -48,6 +48,7 @@ dependencies:
   logger: ^2.5.0
   go_router: 15.1.2
   go_transitions: ^0.8.2
+  animations: ^2.0.11
   flutter_riverpod: ^2.6.1
   toastification: 2.3.0
   connectivity_plus: 6.1.1
@@ -90,6 +91,8 @@ dependencies:
   signature: ^5.5.0
   speech_to_text: ^7.3.0
   device_info_plus: 12.3.0
+  pencil_kit: ^2.1.1
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:

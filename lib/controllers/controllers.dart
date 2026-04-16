@@ -4,6 +4,8 @@ import 'package:efiling_balochistan/controllers/daak_controller.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/files_controller.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
+import 'package:efiling_balochistan/controllers/theme_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
 import 'package:efiling_balochistan/repository/chat/chat_repo.dart';
@@ -47,4 +49,8 @@ final daakController = StateNotifierProvider<DaakController, DaakState>(
 final speechToTextController =
     StateNotifierProvider<SpeechToTextService, STTModel>(
   (ref) => SpeechToTextService(STTModel(), ref),
+);
+
+final themeController = StateNotifierProvider<ThemeController, ThemeMode>(
+  (ref) => ThemeController(),
 );

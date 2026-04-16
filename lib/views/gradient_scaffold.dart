@@ -15,9 +15,9 @@ class GradientScaffold extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.secondary.withOpacity(0.3),
-                  AppColors.secondaryLight.withOpacity(0.3),
-                  AppColors.accent.withOpacity(0.3),
+                  AppColors.secondary.withValues(alpha: .3),
+                  AppColors.secondaryLight.withValues(alpha: .3),
+                  AppColors.accent.withValues(alpha: .3),
                   AppColors.appBarColor,
                   AppColors.white,
                   AppColors.white,

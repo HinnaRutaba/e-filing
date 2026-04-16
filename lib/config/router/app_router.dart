@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/archived_files_screen.dart';
@@ -24,6 +25,7 @@ import 'package:efiling_balochistan/views/screens/settings/settings_screen.dart'
 import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/secretary_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_details_screen.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +67,13 @@ class AppRouter {
       ),
     ),
     GoRoute(
+      path: Routes.cmDashboard,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const CMDashboardScreen(),
+      ),
+    ),
+    GoRoute(
       path: Routes.createFile,
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
@@ -83,6 +92,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const CreateSummaryScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.secretarySummary,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const SecretarySummaryScreen(),
       ),
     ),
     GoRoute(
@@ -128,9 +144,25 @@ class AppRouter {
     ),
     GoRoute(
       path: Routes.chats,
-      pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const ChatsScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        transitionDuration: const Duration(milliseconds: 420),
+        reverseTransitionDuration: const Duration(milliseconds: 320),
+        child: const ChatsScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          final scale = Tween<double>(begin: 0.05, end: 1.0).animate(curved);
+          final fade = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
+          return ScaleTransition(
+            alignment: const Alignment(1.0, -0.95),
+            scale: scale,
+            child: FadeTransition(opacity: fade, child: child),
+          );
+        },
       ),
     ),
     GoRoute(
