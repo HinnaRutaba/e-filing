@@ -1,5 +1,3 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -174,34 +172,11 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (dashboardState.animated)
-              SvgPicture.asset(
-                AssetsConstants.dashboardBG,
-                fit: BoxFit.fitWidth,
-                alignment: Alignment.topCenter,
-              )
-            else
-              SvgPicture.asset(
-                    AssetsConstants.dashboardBG,
-                    fit: BoxFit.fitWidth,
-                    alignment: Alignment.topCenter,
-                  )
-                  .animate(
-                    delay: 800.ms,
-                    onComplete: (_) {
-                      ref
-                          .read(dashboardController.notifier)
-                          .markBackdropAnimated();
-                    },
-                  )
-                  .scale(
-                    alignment: Alignment.bottomRight,
-                    begin: const Offset(0, 0),
-                    end: const Offset(1, 1),
-                    duration: 800.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                  .fadeIn(duration: 400.ms),
+            SvgPicture.asset(
+              AssetsConstants.dashboardBG,
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
+            ),
             Container(
               decoration: BoxDecoration(
                 color: AppColors.secondaryDark.withValues(alpha: 0.8),
@@ -264,78 +239,119 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                           Row(
                             children: [
                               Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.summarize,
-                                      color: Colors.white,
-                                      size: 22,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(100),
                                     ),
-                                    ClipRect(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: RichText(
-                                          text: const TextSpan(
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
+                                    padding: const EdgeInsets.all(10),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.summarize,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                        ClipRect(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8,
                                             ),
-                                            children: [
-                                              TextSpan(text: 'You have '),
-                                              TextSpan(
-                                                text: '3 ',
+                                            child: RichText(
+                                              text: const TextSpan(
                                                 style: TextStyle(
-                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                  fontSize: 14,
                                                 ),
+                                                children: [
+                                                  TextSpan(text: 'You have '),
+                                                  TextSpan(
+                                                    text: '3 ',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: "summaries to review",
+                                                  ),
+                                                ],
                                               ),
-                                              TextSpan(
-                                                text: "summaries to review",
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  )
+                                  .animate(delay: 300.ms)
+                                  .scale(
+                                    alignment: Alignment.centerLeft,
+                                    begin: const Offset(0, 1),
+                                    end: const Offset(1, 1),
+                                    duration: 450.ms,
+                                    curve: Curves.easeOutCubic,
+                                  )
+                                  .fadeIn(duration: 250.ms),
                               const SizedBox(width: 16),
                               InkWell(
-                                onTap: () {
-                                  //RouteHelper.push(Routes.summaries);
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(100),
-                                  ),
-                                  padding: const EdgeInsets.all(8),
-                                  child: AppText.titleSmall(
-                                    "View All >",
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
+                                    onTap: () {
+                                      //RouteHelper.push(Routes.summaries);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.all(8),
+                                      child: AppText.titleSmall(
+                                        "View All >",
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  )
+                                  .animate(delay: 300.ms)
+                                  .scale(
+                                    delay: 700.ms,
+                                    alignment: Alignment.centerLeft,
+                                    begin: const Offset(0, 0),
+                                    end: const Offset(1, 1),
+                                    duration: 550.ms,
+                                    curve: Curves.easeInOutBack,
+                                  )
+                                  .fadeIn(delay: 700.ms, duration: 200.ms),
                             ],
                           ),
                           Positioned(
                             right: 147,
-                            child: ClipPath(
-                              clipper: _ConcaveConnectorClipper(),
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                color: Colors.white.withValues(alpha: 0.15),
-                              ),
-                            ),
+                            child:
+                                ClipPath(
+                                      clipper: _ConcaveConnectorClipper(),
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                      ),
+                                    )
+                                    .animate(delay: 300.ms)
+                                    .scale(
+                                      delay: 450.ms,
+                                      alignment: Alignment.centerLeft,
+                                      begin: const Offset(0, 1),
+                                      end: const Offset(1, 1),
+                                      duration: 250.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .fadeIn(delay: 450.ms, duration: 150.ms),
                           ),
                         ],
                       ),
@@ -352,7 +368,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   Widget _buildPager({required bool canBack, required bool canNext}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

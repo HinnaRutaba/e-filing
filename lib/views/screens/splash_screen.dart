@@ -77,70 +77,64 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Widget logo() {
     return Hero(
       tag: HeroTags.logo,
-      child: Image.asset(
-        AssetsConstants.logo,
-        height: 200,
-      ),
+      child: Image.asset(AssetsConstants.logo, height: 200),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: GradientScaffold(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                const Spacer(),
-                widget.navigate
-                    ? logo()
-                        .animate()
-                        // .scale(
-                        //   duration: const Duration(milliseconds: 600),
-                        // )
-                        .fade(
-                          // delay: const Duration(milliseconds: 100),
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOut,
-                        )
-                    : logo(),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      AppText.titleSmall("Powered By"),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Image.asset(
-                              AssetsConstants.cmduLogo,
-                              height: 72,
-                            ),
+    return GradientScaffold(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 40, 24, 48),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              const Spacer(),
+              widget.navigate
+                  ? logo().animate()
+                    // .scale(
+                    //   duration: const Duration(milliseconds: 600),
+                    // )
+                    .fade(
+                      // delay: const Duration(milliseconds: 100),
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    )
+                  : logo(),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    AppText.titleSmall("Powered By"),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.asset(
+                            AssetsConstants.cmduLogo,
+                            height: 72,
                           ),
-                          const SizedBox(width: 16),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(1.0),
-                            child: Image.asset(
-                              AssetsConstants.govtLogo,
-                              height: 64,
-                            ),
-                          )
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
+                        ),
+                        const SizedBox(width: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(1.0),
+                          child: Image.asset(
+                            AssetsConstants.govtLogo,
+                            height: 64,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
