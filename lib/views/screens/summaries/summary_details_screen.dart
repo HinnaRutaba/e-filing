@@ -463,7 +463,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             ? action.color
             : (selected
                   ? action.color.withValues(alpha: 0.08)
-                  : context.appColors.secondaryLight.withValues(alpha: 0.1)),
+                  : action.color.withValues(alpha: 0.02)),
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
