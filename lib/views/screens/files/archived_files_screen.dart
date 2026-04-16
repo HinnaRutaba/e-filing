@@ -27,7 +27,9 @@ class _ArchivedFilesScreenState extends ConsumerState<ArchivedFilesScreen> {
 
   @override
   void initState() {
-    fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     super.initState();
   }
 

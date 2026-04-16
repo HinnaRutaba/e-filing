@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
@@ -111,7 +110,7 @@ class SignaturePad extends StatefulWidget {
     this.colors = kDefaultSignatureColors,
     this.initialPenColor = const Color(0xFF0D2C6B),
     this.initialPenIndex = 0,
-    this.canvasHeight = 180,
+    this.canvasHeight = 280,
     this.canvasColor = AppColors.cardColorLight,
     this.onChanged,
     this.onDrawStart,

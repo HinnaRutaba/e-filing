@@ -23,68 +23,21 @@ class PreviewFile extends StatelessWidget {
           ),
           padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
           child: content != null && content?.isNotEmpty == true
-              ? Builder(builder: (context) {
-                  FileContentModel details = content!.first;
-                  return Column(
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: RotatedBox(
-                              quarterTurns: 3,
-                              child: AppText.labelLarge(
-                                details.barcode ?? '---',
-                                maxLines: 2,
-                                fontFamily: fileFont,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // AppText.titleMedium(
-                                //   details.fileType ?? '',
-                                //   fontFamily: fileFont,
-                                // ),
-                                // const SizedBox(height: 8),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AppText.bodyLarge(
-                                      "Subject: ",
-                                      fontFamily: fileFont,
-                                    ),
-                                    Expanded(
-                                      child: AppText.titleMedium(
-                                        details.subject ?? 'N/A',
-                                        fontWeight: FontWeight.w600,
-                                        decoration: TextDecoration.underline,
-                                        fontFamily: fileFont,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ...content!.map((e) {
-                        return Row(
+              ? Builder(
+                  builder: (context) {
+                    FileContentModel details = content!.first;
+                    return Column(
+                      children: [
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(left: 8, top: 24),
+                              padding: const EdgeInsets.only(left: 8.0),
                               child: RotatedBox(
                                 quarterTurns: 3,
-                                child: AppText.bodySmall(
-                                  e.fileMovNo ?? '',
+                                child: AppText.labelLarge(
+                                  details.barcode ?? '---',
+                                  maxLines: 2,
                                   fontFamily: fileFont,
                                 ),
                               ),
@@ -95,74 +48,124 @@ class PreviewFile extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(height: 12),
                                   // AppText.titleMedium(
-                                  //   e.receiver ?? '---',
+                                  //   details.fileType ?? '',
                                   //   fontFamily: fileFont,
                                   // ),
-                                  HtmlReader(
-                                    html: e.content ?? '',
-                                  ),
-                                  Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        if (e.signature != null &&
-                                            e.signature!.isNotEmpty)
-                                          Image.network(
-                                            e.signature!.startsWith(
-                                                    NetworkBase.base)
-                                                ? e.signature!
-                                                : e.signatureUrl!,
-                                            width: 80,
-                                          ),
-                                        const SizedBox(height: 8),
-                                        AppText.titleMedium(
-                                          e.sender ?? '---',
-                                          fontFamily: fileFont,
+                                  // const SizedBox(height: 8),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.bodyLarge(
+                                        "Subject: ",
+                                        fontFamily: fileFont,
+                                      ),
+                                      Expanded(
+                                        child: AppText.titleMedium(
+                                          details.subject ?? 'N/A',
                                           fontWeight: FontWeight.w600,
-                                        ),
-                                        AppText.bodyMedium(
-                                          "(${e.designation ?? '---'})",
+                                          decoration: TextDecoration.underline,
                                           fontFamily: fileFont,
                                         ),
-                                        const SizedBox(height: 4),
-                                        AppText.bodyMedium(
-                                          DateTimeHelper
-                                              .dateFormatSlashWithTime(
-                                                  e.sendingDate),
-                                          fontFamily: fileFont,
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: AppText.titleMedium(
-                                            e.receiver ?? '---',
-                                            fontFamily: fileFont,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
                           ],
-                        );
-                      }).toList(),
-                    ],
-                  );
-                })
+                        ),
+                        const SizedBox(height: 8),
+                        ...content!.map((e) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 8,
+                                  top: 24,
+                                ),
+                                child: RotatedBox(
+                                  quarterTurns: 3,
+                                  child: AppText.bodySmall(
+                                    e.fileMovNo ?? '',
+                                    fontFamily: fileFont,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const SizedBox(height: 12),
+                                    // AppText.titleMedium(
+                                    //   e.receiver ?? '---',
+                                    //   fontFamily: fileFont,
+                                    // ),
+                                    HtmlReader(html: e.content ?? ''),
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          if (e.signature != null &&
+                                              e.signature!.isNotEmpty)
+                                            Image.network(
+                                              e.signature!.startsWith(
+                                                    NetworkBase.base,
+                                                  )
+                                                  ? e.signature!
+                                                  : e.signatureUrl!,
+                                              width: 80,
+                                            ),
+                                          const SizedBox(height: 8),
+                                          AppText.titleMedium(
+                                            e.sender ?? '---',
+                                            fontFamily: fileFont,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          AppText.bodyMedium(
+                                            "(${e.designation ?? '---'})",
+                                            fontFamily: fileFont,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          AppText.bodyMedium(
+                                            DateTimeHelper.dateFormatSlashWithTime(
+                                              e.sendingDate,
+                                            ),
+                                            fontFamily: fileFont,
+                                          ),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: AppText.titleMedium(
+                                              e.receiver ?? '---',
+                                              fontFamily: fileFont,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ],
+                    );
+                  },
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (html != null) ...[
-                      HtmlReader(
-                        html: html!,
-                      ),
+                      HtmlReader(html: html!),
                       const SizedBox(height: 48),
                     ],
                     Align(
@@ -182,10 +185,7 @@ class PreviewFile extends StatelessWidget {
           left: 48,
           top: 0,
           bottom: 0,
-          child: Container(
-            width: 2.5,
-            color: Colors.green[800],
-          ),
+          child: Container(width: 2.5, color: Colors.green[800]),
         ),
       ],
     );

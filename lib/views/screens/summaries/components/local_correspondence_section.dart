@@ -24,7 +24,7 @@ class LocalCorrespondenceSection extends StatelessWidget {
     final isEmpty = linkedDaak.isEmpty && linkedFiles.isEmpty;
 
     return _sidebarShell(
-      header: 'Internal Files / Local Correspondence',
+      header: 'Internal Files (Daak / E-Files)',
       headerColor: AppColors.primaryDark,
       trailing: _countBadge(linkedDaak.length, linkedFiles.length),
       child: Column(

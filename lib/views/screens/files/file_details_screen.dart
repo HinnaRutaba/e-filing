@@ -181,6 +181,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     return RefreshIndicator(
       onRefresh: fetchData,
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: AppText.headlineSmall("File Details"),
           backgroundColor: AppColors.background,

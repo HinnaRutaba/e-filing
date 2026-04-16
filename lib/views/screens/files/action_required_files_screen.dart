@@ -29,7 +29,9 @@ class _ActionRequiredFilesScreenState
 
   @override
   void initState() {
-    fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     super.initState();
   }
 

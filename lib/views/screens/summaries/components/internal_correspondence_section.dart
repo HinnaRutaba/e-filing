@@ -41,7 +41,7 @@ class _InternalCorrespondenceSectionState
   @override
   Widget build(BuildContext context) {
     return _sidebarShell(
-      header: 'Internal Correspondence',
+      header: 'Deparmental Correspondence',
       headerColor: AppColors.primaryDark,
       trailing: _countBadge(widget.entries.length),
       child: Column(
@@ -264,10 +264,7 @@ class _InternalCorrespondenceSectionState
                       color: headerColor,
                     ),
                   ),
-                  if (trailing != null) ...[
-                    trailing,
-                    const SizedBox(width: 8),
-                  ],
+                  if (trailing != null) ...[trailing, const SizedBox(width: 8)],
                   Icon(
                     _expanded
                         ? Icons.keyboard_arrow_up_rounded

@@ -25,7 +25,9 @@ class _PendingFilesScreenState extends ConsumerState<PendingFilesScreen> {
 
   @override
   void initState() {
-    fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     super.initState();
   }
 

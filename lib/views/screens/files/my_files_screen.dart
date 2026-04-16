@@ -25,7 +25,9 @@ class _MyFilesScreenState extends ConsumerState<MyFilesScreen> {
 
   @override
   void initState() {
-    fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     super.initState();
   }
 

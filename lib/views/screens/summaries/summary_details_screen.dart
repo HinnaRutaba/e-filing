@@ -23,10 +23,22 @@ import 'package:image_picker/image_picker.dart';
 import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
 
 enum SummaryAction {
+  returnToSection(
+    label: 'Return to Section',
+    icon: Icons.undo_rounded,
+    color: AppColors.error,
+    filled: false,
+  ),
   editRemarks(
     label: 'Edit Drafted Remarks',
     icon: Icons.edit_outlined,
     color: AppColors.secondary,
+    filled: true,
+  ),
+  shareInternally(
+    label: 'Share Internally',
+    icon: Icons.group_rounded,
+    color: AppColors.secondaryDark,
     filled: false,
   ),
   signForward(
@@ -34,18 +46,6 @@ enum SummaryAction {
     icon: Icons.arrow_forward_rounded,
     color: Color(0xFFF0A63A),
     filled: true,
-  ),
-  shareInternally(
-    label: 'Share Internally',
-    icon: Icons.group_rounded,
-    color: AppColors.secondaryDark,
-    filled: true,
-  ),
-  returnToSection(
-    label: 'Return to Section',
-    icon: Icons.undo_rounded,
-    color: AppColors.error,
-    filled: false,
   );
 
   final String label;
@@ -1135,8 +1135,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       onViewAttachment: _onViewAttachment,
       onDeleteAttachment: (item) =>
           setState(() => widget.attachments.remove(item)),
-      onAddAttachment: (item) =>
-          setState(() => widget.attachments.add(item)),
+      onAddAttachment: (item) => setState(() => widget.attachments.add(item)),
     );
     final movement = MovementTimelineSection(
       movementHistory: widget.movementHistory,

@@ -26,7 +26,9 @@ class _ForwardedFilesScreenState extends ConsumerState<ForwardedFilesScreen> {
 
   @override
   void initState() {
-    fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchData();
+    });
     super.initState();
   }
 
