@@ -2,6 +2,8 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -91,21 +93,61 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemBuilder: (ctx, i) {
                   final s = _summaries[i];
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: SummaryDocumentCard(
-                      barcode: s['barcode'] as String,
-                      summaryNumber: s['summaryNumber'] as String,
-                      summaryDate: DateTime.now(),
-                      department: s['department'] as String,
-                      subject: s['subject'] as String,
-                      htmlContent: s['htmlContent'] as String,
-                      recipientTitle: 'Mr. Chief Minister',
-                      recipientDesignation: 'Chief Minister',
-                      recipientDepartment: 'Chief Minister Secretariat',
-                      recipientTimestamp: DateTime.now(),
-                      destination: 'Quetta',
+                  return StickyTagDrawer(
+                    panelWidth: MediaQuery.sizeOf(context).width * 0.8,
+                    tagsAlignment: const Alignment(0.0, -0.5),
+                    mainContent: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: SummaryDocumentCard(
+                        barcode: s['barcode'] as String,
+                        summaryNumber: s['summaryNumber'] as String,
+                        summaryDate: DateTime.now(),
+                        department: s['department'] as String,
+                        subject: s['subject'] as String,
+                        htmlContent: s['htmlContent'] as String,
+                        recipientTitle: 'Mr. Chief Minister',
+                        recipientDesignation: 'Chief Minister',
+                        recipientDepartment: 'Chief Minister Secretariat',
+                        recipientTimestamp: DateTime.now(),
+                        destination: 'Quetta',
+                      ),
                     ),
+                    tags: [
+                      StickyTag(
+                        text: "Attachment",
+                        backgroundColor: AppColors.primary,
+                        panelContent: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Center(
+                              child: AppText.bodyMedium(
+                                "No attachments available",
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      StickyTag(
+                        text: "Brief",
+                        backgroundColor: Colors.orange,
+                        panelContent: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          physics: const BouncingScrollPhysics(),
+                          child: SummaryBrief(
+                            note:
+                                'Will not appear on the printed summary as it will be meant for internal departments.',
+                            paragraphs: const [
+                              '03. Furthermore, it is submitted that the initial presentation, all suggested changes have been incorporated, and the system is now ready for deployment. As an initial step, it is proposed to deploy the E-Filing System in the Admin Section of the Chief Minister Secretariat as a pilot project. Upon successful implementation and evaluation, the system can be expanded to the entire Chief Minister Secretariat and eventually deployed across other government departments.',
+                              '04. In this regard, it is kindly requested to approve the deployment of the E-Filing System in the Admin Section of the Chief Minister Secretariat as a pilot project and provide directions for its phased expansion.',
+                            ],
+                            authorName: 'Mumtaz Haider Khan',
+                            authorDesignation: 'Deputy Coordinator (CM)',
+                            timestamp: DateTime(2025, 4, 14, 16, 27),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

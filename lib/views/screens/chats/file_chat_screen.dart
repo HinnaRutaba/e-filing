@@ -668,48 +668,54 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                                         ],
                                                       ),
                                                     ),
-                                                    flagText: "Flags",
-                                                    panelContent:
-                                                        SingleChildScrollView(
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .fromLTRB(
-                                                                16, 0, 16, 16),
-                                                        child: file?.attachments !=
-                                                                    null &&
-                                                                file!
-                                                                    .attachments
-                                                                    .isNotEmpty
-                                                            ? ReadOnlyFlagAttachmentList(
-                                                                header: AppText
-                                                                    .titleMedium(
-                                                                        "Attached Flags"),
-                                                                data: file!
-                                                                    .attachments,
-                                                              )
-                                                                .animate(
-                                                                    delay:
-                                                                        100.ms)
-                                                                .fade(
-                                                                    duration:
-                                                                        400.ms,
-                                                                    curve: Curves
-                                                                        .easeInOut)
-                                                                .slide(
-                                                                    begin:
-                                                                        const Offset(
+                                                    tags: [
+                                                      StickyTag(
+                                                        text: "Flags",
+                                                        panelContent:
+                                                            SingleChildScrollView(
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .fromLTRB(
+                                                                    16,
+                                                                    0,
+                                                                    16,
+                                                                    16),
+                                                            child: file?.attachments !=
+                                                                        null &&
+                                                                    file!
+                                                                        .attachments
+                                                                        .isNotEmpty
+                                                                ? ReadOnlyFlagAttachmentList(
+                                                                    header: AppText
+                                                                        .titleMedium(
+                                                                            "Attached Flags"),
+                                                                    data: file!
+                                                                        .attachments,
+                                                                  )
+                                                                    .animate(
+                                                                        delay:
+                                                                            100.ms)
+                                                                    .fade(
+                                                                        duration:
+                                                                            400.ms,
+                                                                        curve: Curves
+                                                                            .easeInOut)
+                                                                    .slide(
+                                                                        begin: const Offset(
                                                                             1,
                                                                             0),
-                                                                    end: Offset
-                                                                        .zero)
-                                                            : Center(
-                                                                child: AppText
-                                                                    .bodyMedium(
-                                                                        "No flags available"),
-                                                              ),
+                                                                        end: Offset
+                                                                            .zero)
+                                                                : Center(
+                                                                    child: AppText
+                                                                        .bodyMedium(
+                                                                            "No flags available"),
+                                                                  ),
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                    ],
                                                   );
                                                 },
                                               );

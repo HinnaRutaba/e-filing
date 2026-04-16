@@ -15,6 +15,8 @@ class DateTimeHelper {
   static const String _dateFormatterEEE = "EEE";
   static const String _dateFormatterEEEDD = "EEE dd";
   static const String _dateFormatterEEEDDMM = "EEE\n dd/MM";
+  static const String _dateFormatterEEEDDMMYYHHMM = "EEE, dd MMM yy\n hh:mm aa";
+
   static const String _yyyyMMDD = "yyyy-MM-dd";
   static const String _dateFormatterddSpaces = "dd";
 
@@ -101,6 +103,13 @@ class DateTimeHelper {
       return 'Date unspecified';
     }
     return DateFormat(_dateFormatterSlashShort).format(dateTime);
+  }
+
+   static String fullDayMonthNameWithTime(DateTime? dateTime) {
+    if (dateTime == null) {
+      return 'Date unspecified';
+    }
+    return DateFormat(_dateFormatterEEEDDMMYYHHMM).format(dateTime);
   }
 
   static String dateFormatSlashWithTime(DateTime? dateTime) {

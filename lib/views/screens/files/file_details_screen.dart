@@ -246,28 +246,36 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
               )
             : SafeArea(
                 child: StickyTagDrawer(
-                  flagText: "Flags",
                   panelWidth: MediaQuery.sizeOf(context).width * 0.8,
-                  panelContent: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: details?.attachments != null &&
-                              details!.attachments.isNotEmpty
-                          ? ReadOnlyFlagAttachmentList(
-                              header:
-                                  header(Icons.flag_outlined, "Attached Flags"),
-                              data: details!.attachments,
-                            )
-                              .animate(delay: 100.ms)
-                              .fade(duration: 400.ms, curve: Curves.easeInOut)
-                              .slide(
-                                  begin: const Offset(1, 0), end: Offset.zero)
-                          : Center(
-                              child: AppText.bodyMedium("No flags available"),
-                            ),
+                  tags: [
+                    StickyTag(
+                      text: "Flags",
+                      panelContent: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: details?.attachments != null &&
+                                  details!.attachments.isNotEmpty
+                              ? ReadOnlyFlagAttachmentList(
+                                  header: header(
+                                      Icons.flag_outlined, "Attached Flags"),
+                                  data: details!.attachments,
+                                )
+                                  .animate(delay: 100.ms)
+                                  .fade(
+                                      duration: 400.ms,
+                                      curve: Curves.easeInOut)
+                                  .slide(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero)
+                              : Center(
+                                  child:
+                                      AppText.bodyMedium("No flags available"),
+                                ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                   mainContent: SingleChildScrollView(
                     controller: scrollController,
                     physics: const BouncingScrollPhysics(
