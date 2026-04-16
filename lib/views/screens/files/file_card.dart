@@ -29,7 +29,7 @@ class FileCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: (data?.tag?.color ?? AppColors.primary).withValues(
-              alpha: 0.4,
+              alpha: 0.6,
             ),
           ),
           child: Container(
