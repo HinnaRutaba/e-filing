@@ -44,8 +44,6 @@ class DioClient {
           handler.next(requestOption);
         },
         onResponse: (response, handler) {
-          log("REQUEST_______${response.requestOptions.data}");
-          log("RESPONSE________${response.data}_____${response.statusCode}");
           if (response.statusCode == 401) {
             SessionExpiredHandler.handleExpiration();
           }
@@ -98,13 +96,13 @@ class DioClient {
               response: error.response,
               error: error.response?.data is Map
                   ? error.response?.data['error'] ??
-                      error.response?.data['message'] ??
-                      "Something went wrong"
+                        error.response?.data['message'] ??
+                        "Something went wrong"
                   : error.response?.data,
               message: error.response?.data is Map
                   ? error.response?.data['error'] ??
-                      error.response?.data['message'] ??
-                      "Something went wrong"
+                        error.response?.data['message'] ??
+                        "Something went wrong"
                   : error.response?.data,
             ),
           );
@@ -115,8 +113,9 @@ class DioClient {
     _dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         // Don't trust any certificate just because their root cert is trusted.
-        final HttpClient client =
-            HttpClient(context: SecurityContext(withTrustedRoots: false));
+        final HttpClient client = HttpClient(
+          context: SecurityContext(withTrustedRoots: false),
+        );
         client.badCertificateCallback =
             ((X509Certificate cert, String host, int port) => true);
         return client;

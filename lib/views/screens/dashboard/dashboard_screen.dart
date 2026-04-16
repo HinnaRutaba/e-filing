@@ -184,7 +184,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     .custom(
                                       duration: 600.ms,
                                       curve: Curves.easeInOutCirc,
-                                      begin: 100,
+                                      begin: 40,
                                       end: 0,
                                       builder: (context, value, child) {
                                         return ClipRRect(
@@ -338,6 +338,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
+
                   children: [
                     _buildFileList(
                       files: dashboardState.pendingFiles,
