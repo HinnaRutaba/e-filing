@@ -227,7 +227,7 @@ class BaseScreen extends ConsumerWidget {
         if (isdash && context.isMobile)
           IconButton(
             onPressed: () {
-              ref.read(authController.notifier).logout();
+              ref.read(authController.notifier).logout(context);
             },
             icon: Icon(Icons.power_settings_new, color: Colors.orange[300]),
           ),

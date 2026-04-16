@@ -224,7 +224,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                             padding: const EdgeInsets.all(8),
                             visualDensity: VisualDensity.compact,
                             onPressed: () {
-                              ref.read(authController.notifier).logout();
+                              ref.read(authController.notifier).logout(context);
                             },
                             icon: Icon(
                               Icons.power_settings_new,

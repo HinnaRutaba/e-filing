@@ -55,9 +55,9 @@ class SessionExpiredHandler {
                     const SizedBox(height: 24),
                     AppSolidButton(
                       onPressed: () {
-                        ProviderScope.containerOf(context)
-                            .read(authController.notifier)
-                            .logout();
+                        ProviderScope.containerOf(
+                          context,
+                        ).read(authController.notifier).logout(context);
                         showingSessionExpiredDialog = false;
                       },
                       text: "OK",

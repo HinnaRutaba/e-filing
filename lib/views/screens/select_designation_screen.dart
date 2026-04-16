@@ -38,7 +38,7 @@ class _SelectDesignationScreenState
               const SizedBox(height: 24),
               AppSolidButton(
                   onPressed: () {
-                    ref.read(authController.notifier).logout();
+                    ref.read(authController.notifier).logout(context);
                   },
                   text: "Go back to Login"),
             ],

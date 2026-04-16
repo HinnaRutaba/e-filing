@@ -6,7 +6,9 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
+import 'package:efiling_balochistan/views/widgets/confirmation_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class AuthController extends BaseControllerState<UserModel> {
@@ -14,8 +16,10 @@ class AuthController extends BaseControllerState<UserModel> {
 
   AuthRepo get repo => ref.read(authRepo);
 
-  Future<bool> login(
-      {required String username, required String password}) async {
+  Future<bool> login({
+    required String username,
+    required String password,
+  }) async {
     bool success = false;
     EasyLoading.show();
     try {
@@ -57,7 +61,8 @@ class AuthController extends BaseControllerState<UserModel> {
 
   Future<UserModel?> fetchLoggedInUser() async {
     try {
-      int desId = state.currentDesignation?.userDesgId ??
+      int desId =
+          state.currentDesignation?.userDesgId ??
           (await localStorage.getDesignation())?.userDesgId ??
           0;
       UserModel? model = await repo.fetchCurrentUserDetails(desId);
@@ -89,7 +94,23 @@ class AuthController extends BaseControllerState<UserModel> {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const ConfirmationDialog(
+        title: 'Log out?',
+        message: 'You will need to sign in again to continue.',
+        icon: Icons.logout_rounded,
+        iconColor: Colors.red,
+        confirmText: 'Log out',
+        cancelText: 'Cancel',
+        destructive: true,
+      ),
+    );
+
+    if (confirmed != true) return;
+
     try {
       await repo.logout();
       RouteHelper.navigateTo(Routes.login);
@@ -98,10 +119,11 @@ class AuthController extends BaseControllerState<UserModel> {
     }
   }
 
-  Future<bool> changePassword(
-      {required String currentPassword,
-      required String newPassword,
-      required String confirmPassword}) async {
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     bool success = false;
     EasyLoading.show();
     try {
