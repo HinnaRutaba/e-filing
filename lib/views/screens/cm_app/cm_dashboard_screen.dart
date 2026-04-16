@@ -90,6 +90,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _summaries.length,
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemBuilder: (ctx, i) {
                   final s = _summaries[i];

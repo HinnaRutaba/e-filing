@@ -3,8 +3,9 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:signature/signature.dart';
 
-class SummaryDocumentCard extends StatelessWidget {
+class SummaryDocumentCard extends StatefulWidget {
   final String barcode;
   final String summaryNumber;
   final DateTime summaryDate;
@@ -33,9 +34,33 @@ class SummaryDocumentCard extends StatelessWidget {
   });
 
   @override
+  State<SummaryDocumentCard> createState() => _SummaryDocumentCardState();
+}
+
+class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
+  bool _signExpanded = false;
+  late final SignatureController _signatureController;
+
+  @override
+  void initState() {
+    super.initState();
+    _signatureController = SignatureController(
+      penStrokeWidth: 2,
+      penColor: AppColors.textPrimary,
+      exportBackgroundColor: Colors.transparent,
+    );
+  }
+
+  @override
+  void dispose() {
+    _signatureController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final dateText =
-        'Dated Quetta the ${DateFormat('d MMMM, yyyy').format(summaryDate)}';
+        'Dated Quetta the ${DateFormat('d MMMM, yyyy').format(widget.summaryDate)}';
 
     return Container(
       decoration: BoxDecoration(
@@ -85,7 +110,7 @@ class SummaryDocumentCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     AppText.titleMedium(
-                      department.toUpperCase(),
+                      widget.department.toUpperCase(),
                       textAlign: TextAlign.center,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -112,7 +137,9 @@ class SummaryDocumentCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: AppText.bodyMedium(
-                            subject.isEmpty ? '—' : subject.toUpperCase(),
+                            widget.subject.isEmpty
+                                ? '—'
+                                : widget.subject.toUpperCase(),
                             fontWeight: FontWeight.w700,
                             underline: true,
                             fontFamily: fileFont,
@@ -123,10 +150,12 @@ class SummaryDocumentCard extends StatelessWidget {
                     const SizedBox(height: 16),
                     _htmlBody(),
                     const SizedBox(height: 28),
+                    _signaturePad(),
+                    const SizedBox(height: 20),
                     _signatoryBlock(),
                     const SizedBox(height: 24),
                     AppText.bodyMedium(
-                      destination,
+                      widget.destination,
                       fontWeight: FontWeight.w700,
                       underline: true,
                       color: AppColors.textPrimary,
@@ -155,12 +184,12 @@ class SummaryDocumentCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          _verticalLabel('BARCODE: $barcode'),
+          _verticalLabel('BARCODE: ${widget.barcode}'),
           const SizedBox(height: 12),
           Container(width: 28, height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 12),
           _verticalLabel(
-            'SUMMARY NO: $summaryNumber\n${DateFormat('dd-MM-yyyy').format(summaryDate)}',
+            'SUMMARY NO: ${widget.summaryNumber}\n${DateFormat('dd-MM-yyyy').format(widget.summaryDate)}',
           ),
         ],
       ),
@@ -180,13 +209,13 @@ class SummaryDocumentCard extends StatelessWidget {
   }
 
   Widget _htmlBody() {
-    final hasContent = htmlContent.trim().isNotEmpty;
+    final hasContent = widget.htmlContent.trim().isNotEmpty;
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 160),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: hasContent
-          ? HtmlReader(html: htmlContent)
+          ? HtmlReader(html: widget.htmlContent)
           : AppText.bodyMedium(
               'No content provided.',
               color: AppColors.textSecondary,
@@ -194,30 +223,126 @@ class SummaryDocumentCard extends StatelessWidget {
     );
   }
 
+  Widget _signaturePad() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.centerRight,
+        child: _signExpanded ? _expandedPad() : _collapsedPad(),
+      ),
+    );
+  }
+
+  Widget _collapsedPad() {
+    return InkWell(
+      onTap: () => setState(() => _signExpanded = true),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 140,
+        height: 48,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.secondaryLight.withValues(alpha: 0.45),
+            style: BorderStyle.solid,
+          ),
+          color: AppColors.secondaryLight.withValues(alpha: 0.06),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: AppColors.secondaryDark,
+            ),
+            const SizedBox(width: 6),
+            AppText.labelLarge(
+              'Tap to sign',
+              color: AppColors.secondaryDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _expandedPad() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.45),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: Signature(
+              controller: _signatureController,
+              backgroundColor: Colors.white,
+            ),
+          ),
+          Container(
+            color: AppColors.secondaryLight.withValues(alpha: 0.08),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                AppText.labelSmall(
+                  'Sign above',
+                  color: AppColors.textSecondary,
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => _signatureController.clear(),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Clear'),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      setState(() => _signExpanded = false),
+                  icon: const Icon(Icons.check, size: 16),
+                  label: const Text('Done'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _signatoryBlock() {
     final stamp = DateFormat(
       'h:mm a EEE d MMM yyyy',
-    ).format(recipientTimestamp);
+    ).format(widget.recipientTimestamp);
     return Align(
       alignment: Alignment.centerRight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           AppText.bodyMedium(
-            recipientTitle,
+            widget.recipientTitle,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
             fontFamily: fileFont,
           ),
           const SizedBox(height: 2),
           AppText.bodySmall(
-            '($recipientDesignation)',
+            '(${widget.recipientDesignation})',
             color: Colors.grey[900],
             fontSize: 12,
             fontFamily: fileFont,
           ),
           AppText.bodySmall(
-            recipientDepartment,
+            widget.recipientDepartment,
             color: Colors.grey[900],
             fontSize: 12,
             fontFamily: fileFont,
