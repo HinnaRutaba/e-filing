@@ -305,7 +305,7 @@ class FileCard extends StatelessWidget {
               ),
               AppText.bodySmall(
                 value,
-                color: AppColors.textPrimary,
+                color: Colors.grey[700],
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 overflow: TextOverflow.ellipsis,
