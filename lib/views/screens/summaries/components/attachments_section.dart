@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -43,7 +43,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
 
     return _sidebarShell(
       header: 'Attachments',
-      headerColor: AppColors.primaryDark,
+      headerColor: context.appColors.primaryDark,
       trailing: widget.onAddAttachment != null ? _addButton() : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,7 +91,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
           if (isEmpty)
             AppText.bodySmall(
               'No attachments.',
-              color: AppColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
         ],
       ),
@@ -108,19 +108,19 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.cardColorLight,
+        color: context.appColors.cardColorLight,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.25),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
         children: [
           if (isMain)
-            const Icon(
+            Icon(
               Icons.picture_as_pdf_rounded,
               size: 18,
-              color: AppColors.error,
+              color: Theme.of(context).colorScheme.error,
             )
           else
             Container(
@@ -128,24 +128,24 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               height: 22,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.12),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: AppColors.secondary.withValues(alpha: 0.4),
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
                 ),
               ),
               child: AppText.bodySmall(
                 label,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.secondaryDark,
+                color: context.appColors.secondaryDark,
               ),
             ),
           const SizedBox(width: 10),
           Expanded(
             child: AppText.bodySmall(
               isMain ? label : (fileName ?? label),
-              color: AppColors.textPrimary,
+              color: context.appColors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               overflow: TextOverflow.ellipsis,
@@ -158,7 +158,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               onTap: onDelete,
               child: Icon(
                 Icons.delete_forever,
-                color: Colors.red[700],
+                color: Theme.of(context).colorScheme.error,
                 size: 24,
               ),
             ),
@@ -172,7 +172,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
 
   Widget _viewButton({required VoidCallback onTap}) {
     return Material(
-      color: AppColors.primaryDark,
+      color: context.appColors.primaryDark,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
@@ -182,15 +182,15 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.remove_red_eye_outlined,
                 size: 13,
-                color: AppColors.white,
+                color: context.appColors.accent,
               ),
               const SizedBox(width: 4),
               AppText.bodySmall(
                 'View',
-                color: AppColors.white,
+                color: context.appColors.accent,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -206,13 +206,13 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       onTap: _openAddAttachmentDialog,
       child: Row(
         children: [
-          const Icon(Icons.add, color: AppColors.primaryDark, size: 20),
+          Icon(Icons.add, color: context.appColors.primaryDark, size: 20),
           const SizedBox(width: 4),
           AppText.titleMedium(
             "Add More",
             fontSize: 14,
             fontWeight: FontWeight.w900,
-            color: AppColors.primaryDark,
+            color: context.appColors.primaryDark,
           ),
         ],
       ),
@@ -250,7 +250,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                         width: 4,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: AppColors.primaryDark,
+                          color: context.appColors.primaryDark,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -259,7 +259,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                         child: AppText.bodyMedium(
                           'Add Attachment',
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryDark,
+                          color: context.appColors.primaryDark,
                         ),
                       ),
                     ],
@@ -273,7 +273,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                       AppTextLinkButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
                         text: 'Cancel',
-                        color: Colors.grey[700],
+                        color: context.appColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
                       AppOutlineButton(
@@ -283,7 +283,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                           Navigator.of(ctx).pop(true);
                         },
                         text: 'Save',
-                        color: AppColors.primaryDark,
+                        color: context.appColors.primaryDark,
                       ),
                     ],
                   ),
@@ -314,14 +314,14 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
           ),
           title: Row(
             children: [
-              Icon(Icons.delete_forever, color: Colors.red[700]),
+              Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
               const SizedBox(width: 10),
               const Expanded(child: Text('Delete attachment?')),
             ],
           ),
           content: RichText(
             text: TextSpan(
-              style: TextStyle(color: Colors.grey[800], fontSize: 13),
+              style: TextStyle(color: context.appColors.textPrimary, fontSize: 13),
               children: [
                 const TextSpan(text: 'Are you sure you want to delete '),
                 TextSpan(
@@ -337,13 +337,13 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
             AppTextLinkButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               text: "Cancel",
-              color: Colors.grey[700],
+              color: context.appColors.textSecondary,
             ),
             AppOutlineButton(
               width: 120,
               onPressed: () => Navigator.of(ctx).pop(true),
               text: "Delete",
-              color: Colors.red[500]!,
+              color: Theme.of(context).colorScheme.error,
             ),
           ],
         );
@@ -361,14 +361,14 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.2),
+          color: context.appColors.secondaryLight.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.appColors.shadow.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

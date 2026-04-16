@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -136,6 +137,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                           'Subject:',
                           fontWeight: FontWeight.w700,
                           fontFamily: fileFont,
+                          color: AppColors.textPrimary,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -146,6 +148,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                             fontWeight: FontWeight.w700,
                             underline: true,
                             fontFamily: fileFont,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -218,7 +221,13 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
       constraints: const BoxConstraints(minHeight: 160),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: hasContent
-          ? HtmlReader(html: widget.htmlContent)
+          ? HtmlReader(
+              html: widget.htmlContent,
+              textStyle: const TextStyle(
+                color: AppColors.black,
+                fontFamily: fileFont,
+              ),
+            )
           : AppText.bodyMedium(
               'No content provided.',
               color: AppColors.textSecondary,
@@ -365,15 +374,16 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                   color: AppColors.textSecondary,
                 ),
                 const Spacer(),
-                TextButton.icon(
+                AppTextLinkButton(
                   onPressed: () {
                     _signatureController.clear();
                     setState(() => _signatureImage = null);
                   },
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Clear'),
+                  icon: Icons.refresh,
+                  text: "Clear",
+                  color: AppColors.secondaryDark,
                 ),
-                TextButton.icon(
+                AppTextLinkButton(
                   onPressed: () async {
                     if (_signatureController.isNotEmpty) {
                       final bytes = await _signatureController.toPngBytes();
@@ -386,8 +396,9 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                       setState(() => _signExpanded = false);
                     }
                   },
-                  icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Done'),
+                  icon: Icons.check,
+                  text: "Done",
+                  color: AppColors.secondaryDark,
                 ),
               ],
             ),

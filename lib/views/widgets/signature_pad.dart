@@ -285,15 +285,16 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 
   Widget _penTypeSelector() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        AppText.titleSmall('Pen', fontSize: 14),
-        const SizedBox(width: 8),
-        for (int i = 0; i < widget.pens.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
-          _penIconButton(i),
-        ],
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: AppText.titleSmall('Pen', fontSize: 14),
+        ),
+        for (int i = 0; i < widget.pens.length; i++) _penIconButton(i),
       ],
     );
   }
@@ -342,15 +343,17 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 
   Widget _penColorRow() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        AppText.titleSmall('Color', fontSize: 14),
-        const SizedBox(width: 8),
-        for (int i = 0; i < widget.colors.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: AppText.titleSmall('Color', fontSize: 14),
+        ),
+        for (int i = 0; i < widget.colors.length; i++)
           _penColorDot(widget.colors[i]),
-        ],
       ],
     );
   }

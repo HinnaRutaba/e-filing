@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -41,20 +41,22 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
         .where((e) => !e.current)
         .toList(growable: false);
 
+    final appColors = context.appColors;
     return _sidebarShell(
+      context: context,
       header: 'Movement Timeline',
-      headerColor: AppColors.primaryDark,
+      headerColor: appColors.primaryDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (past.isEmpty)
             AppText.bodySmall(
               'No movement history yet.',
-              color: AppColors.textSecondary,
+              color: appColors.textSecondary,
               fontSize: 12,
             ),
           for (int i = 0; i < past.length; i++) ...[
-            _movementEntry(past[i])
+            _movementEntry(context, past[i])
                 .animate()
                 .fadeIn(
                   delay: (80 * i).ms,
@@ -73,7 +75,7 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
           if (current.isNotEmpty) ...[
             const SizedBox(height: 8),
             for (int i = 0; i < current.length; i++)
-              _movementEntry(current[i])
+              _movementEntry(context, current[i])
                   .animate()
                   .fadeIn(
                     delay: (80 * (past.length + i)).ms,
@@ -93,15 +95,19 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
     );
   }
 
-  Widget _movementEntry(SummaryMovementEntry entry) {
-    final accent = entry.current ? AppColors.primary : AppColors.secondaryLight;
+  Widget _movementEntry(BuildContext context, SummaryMovementEntry entry) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    final accent = entry.current
+        ? theme.colorScheme.primary
+        : appColors.secondaryLight;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardColorLight,
+        color: appColors.cardColorLight,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.25),
+          color: appColors.secondaryLight.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -113,7 +119,7 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
                 child: AppText.bodyMedium(
                   entry.stage,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: appColors.textPrimary,
                   fontSize: 13,
                 ),
               ),
@@ -131,9 +137,9 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
                   const SizedBox(width: 6),
                   AppText.bodySmall(
                     entry.status,
-                    color: accent == AppColors.primary
-                        ? AppColors.primaryDark
-                        : AppColors.secondaryDark,
+                    color: entry.current
+                        ? appColors.primaryDark
+                        : appColors.secondaryDark,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.4,
@@ -142,7 +148,6 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
               ),
             ],
           ),
-
           Row(
             children: [
               Expanded(
@@ -151,30 +156,29 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
                   children: [
                     AppText.titleSmall(
                       entry.user,
-                      color: AppColors.textPrimary,
+                      color: appColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                     AppText.titleSmall(
                       '(${entry.department})',
-                      color: AppColors.textSecondary,
+                      color: appColors.textSecondary,
                       fontSize: 11,
                     ),
                   ],
                 ),
               ),
-
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_month,
-                    color: Colors.grey,
+                    color: appColors.textSecondary,
                     size: 15,
                   ),
                   const SizedBox(width: 4),
                   AppText.labelSmall(
                     DateTimeHelper.datFormatSlash(DateTime.now()),
-                    color: Colors.grey[600],
+                    color: appColors.textSecondary,
                   ),
                 ],
               ),
@@ -186,20 +190,23 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
   }
 
   Widget _sidebarShell({
+    required BuildContext context,
     required String header,
     required Color headerColor,
     required Widget child,
   }) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.2),
+          color: appColors.secondaryLight.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: appColors.shadow.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

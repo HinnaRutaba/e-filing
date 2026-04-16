@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
@@ -7,8 +8,8 @@ import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
-import 'package:efiling_balochistan/views/screens/summaries/components/internal_correspondence_section.dart';
-import 'package:efiling_balochistan/views/screens/summaries/components/local_correspondence_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/departmental_correspondence_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -38,13 +39,13 @@ enum SummaryAction {
   shareInternally(
     label: 'Share Internally',
     icon: Icons.group_rounded,
-    color: AppColors.secondaryDark,
+    color: Color(0xFFF0A63A),
     filled: false,
   ),
   signForward(
     label: 'Sign & Forward',
     icon: Icons.arrow_forward_rounded,
-    color: Color(0xFFF0A63A),
+    color: Colors.deepPurpleAccent,
     filled: true,
   );
 
@@ -329,7 +330,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final expanded = _selectedAction != null;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).bottomSheetTheme.backgroundColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -462,7 +463,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             ? action.color
             : (selected
                   ? action.color.withValues(alpha: 0.08)
-                  : AppColors.white),
+                  : context.appColors.secondaryLight.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -689,14 +690,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                 child: Icon(
                   Icons.group_rounded,
                   size: 16,
-                  color: AppColors.secondaryDark,
+                  color: AppColors.secondaryLight,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: AppText.bodySmall(
                   'Share this summary with a department member for review. They will receive a read-only copy along with your optional instructions.',
-                  color: AppColors.secondaryDark,
+                  color: AppColors.secondaryLight,
                   fontSize: 12.5,
                 ),
               ),
@@ -708,7 +709,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           controller: _shareSearchController,
           labelText: 'Select Department Members',
           hintText: 'Search users…',
-          fillColor: AppColors.white,
+
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
@@ -847,7 +848,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.secondaryLight.withValues(alpha: 0.35),
@@ -865,12 +866,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.12),
+                  color: context.appColors.secondaryLight.withValues(
+                    alpha: 0.2,
+                  ),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: AppText.labelSmall(
                   stepLabel,
-                  color: AppColors.textPrimary,
+                  color: context.appColors.secondaryLight,
                 ),
               ),
               const SizedBox(width: 10),
@@ -897,7 +900,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           'Pre-filled from section draft. You may change if needed.',
           style: TextStyle(
             fontSize: 11,
-            color: Colors.grey[600],
+            color: context.appColors.secondaryLight,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -924,7 +927,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       style: const TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
         letterSpacing: 0.6,
       ),
     );
@@ -936,7 +938,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       labelText: 'Destination Department',
       hintText: 'Select department',
       showLabel: false,
-      fillColor: AppColors.white,
+
       border: _forwardingBorder(),
       suggestionsCallback: (pattern) {
         final q = pattern.toLowerCase();
@@ -970,7 +972,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       hintText: 'Select officer',
       showLabel: false,
       enabled: false,
-      fillColor: AppColors.white,
+
       border: _forwardingBorder(),
       suggestionsCallback: (pattern) async => const <String>[],
 
@@ -1034,11 +1036,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        AppText.bodySmall(
-          'Summary Body',
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
+        AppText.labelLarge('Summary Body', fontWeight: FontWeight.w700),
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
@@ -1140,10 +1138,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final movement = MovementTimelineSection(
       movementHistory: widget.movementHistory,
     );
-    final internal = InternalCorrespondenceSection(
+    final internal = DepartmentalCorrespondenceSection(
       entries: widget.correspondence,
     );
-    final local = LocalCorrespondenceSection(
+    final files = InternalFilesSection(
       linkedDaak: widget.linkedDaak,
       linkedFiles: widget.linkedFiles,
     );
@@ -1158,7 +1156,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           const SizedBox(height: 16),
           internal,
           const SizedBox(height: 16),
-          local,
+          files,
         ],
       );
     }
@@ -1168,7 +1166,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       children: [
         _sidebarRow(attachments, movement),
         const SizedBox(height: 16),
-        _sidebarRow(internal, local),
+        _sidebarRow(internal, files),
       ],
     );
   }
