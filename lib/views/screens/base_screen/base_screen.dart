@@ -68,8 +68,7 @@ class BaseScreen extends ConsumerWidget {
 
     void collapse() =>
         ref.read(navDrawerExpandedProvider.notifier).state = false;
-    void expand() =>
-        ref.read(navDrawerExpandedProvider.notifier).state = true;
+    void expand() => ref.read(navDrawerExpandedProvider.notifier).state = true;
 
     return Scaffold(
       backgroundColor: bgColor ?? AppColors.background,
@@ -216,7 +215,10 @@ class BaseScreen extends ConsumerWidget {
       leading: showMenuButton
           ? Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu),
+                icon: Icon(
+                  Icons.menu,
+                  color: !isdash ? AppColors.textPrimary : AppColors.cardColor,
+                ),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             )
@@ -227,10 +229,7 @@ class BaseScreen extends ConsumerWidget {
             onPressed: () {
               ref.read(authController.notifier).logout();
             },
-            icon: const Icon(
-              Icons.power_settings_new,
-              color: Colors.orange,
-            ),
+            icon: Icon(Icons.power_settings_new, color: Colors.orange[300]),
           ),
         const SizedBox(width: 16),
         ...actions ?? [],

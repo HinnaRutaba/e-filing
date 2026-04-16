@@ -24,6 +24,8 @@ class DashboardModel {
   final bool loadingForwardedFiles;
   final bool loadingDaakLetters;
 
+  final bool backdropAnimated;
+
   DashboardModel({
     this.actionRequiredCount = 0,
     this.myFilesCount = 0,
@@ -38,6 +40,7 @@ class DashboardModel {
     this.loadingForwardedFiles = false,
     this.daakLetters = const [],
     this.loadingDaakLetters = false,
+    this.backdropAnimated = false,
   });
 
   DashboardModel copyWith({
@@ -54,6 +57,7 @@ class DashboardModel {
     bool? loadingPendingFiles,
     bool? loadingForwardedFiles,
     bool? loadingDaakLetters,
+    bool? backdropAnimated,
   }) {
     return DashboardModel(
       actionRequiredCount: actionRequiredCount ?? this.actionRequiredCount,
@@ -70,12 +74,18 @@ class DashboardModel {
           loadingForwardedFiles ?? this.loadingForwardedFiles,
       daakLetters: daakLetters ?? this.daakLetters,
       loadingDaakLetters: loadingDaakLetters ?? this.loadingDaakLetters,
+      backdropAnimated: backdropAnimated ?? this.backdropAnimated,
     );
   }
 }
 
 class DashboardController extends BaseControllerState<DashboardModel> {
   DashboardController(super.state, super.ref);
+
+  void markBackdropAnimated() {
+    if (state.backdropAnimated) return;
+    state = state.copyWith(backdropAnimated: true);
+  }
 
   Future<void> initData() async {
     await Future.delayed(Duration.zero);

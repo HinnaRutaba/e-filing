@@ -19,6 +19,7 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return GradientBlurCard();
     return loading
         ? const LoadingCard(cardCount: 1)
         : Card(
@@ -69,7 +70,7 @@ class DashboardCard extends StatelessWidget {
                               size: 16,
                             ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ],
@@ -77,5 +78,61 @@ class DashboardCard extends StatelessWidget {
               ),
             ),
           );
+  }
+}
+
+class GradientBlurCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: Container(
+          width: 300,
+          height: 400,
+          child: Stack(
+            children: [
+              // 1. The Variable Blur Layer
+              Positioned.fill(
+                child: ShaderMask(
+                  shaderCallback: (rect) {
+                    return LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      // The blur will be 100% at 'stops: 0.0' and 0% at 'stops: 0.5'
+                      colors: [Colors.black, Colors.transparent],
+                      stops: [0.0, 0.5],
+                    ).createShader(rect);
+                  },
+                  blendMode: BlendMode.dstIn,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(color: Colors.white.withOpacity(0.1)),
+                  ),
+                ),
+              ),
+
+              // 2. The Visual Gradient Surface (Color/Border)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(25),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
