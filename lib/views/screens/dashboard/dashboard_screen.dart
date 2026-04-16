@@ -248,8 +248,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              Container(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.6),
+                      Colors.white.withValues(alpha: 0.25),
+                      Colors.white.withValues(alpha: 0.02),
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.secondaryDark.withValues(alpha: 0.10),
+                      offset: const Offset(0, 10),
+                      blurRadius: 14,
+                      spreadRadius: -6,
+                    ),
+                  ],
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
