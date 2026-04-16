@@ -1,6 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -130,6 +130,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   Widget build(BuildContext context) {
     UserModel currentUser = ref.read(authController);
     final ChatService chatService = ChatService();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appColors = context.appColors;
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return AnimatedContainer(
       duration: _animDuration,
@@ -137,9 +141,9 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       width: _effectiveExpanded ? _effectiveExpandedWidth : _collapsedWidth,
 
       child: Material(
-        color: AppColors.cardColor,
+        color: theme.cardColor,
         elevation: 8,
-        shadowColor: AppColors.secondaryDark,
+        shadowColor: appColors.secondaryDark,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(16),
@@ -148,21 +152,28 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.cardColor,
+            color: theme.cardColor,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
             gradient: LinearGradient(
-              colors: [
-                AppColors.secondaryDark.withValues(alpha: 0.7),
-                AppColors.secondary.withValues(alpha: 0.5),
-                AppColors.secondaryLight.withValues(alpha: .3),
-                AppColors.accent.withValues(alpha: .3),
-                AppColors.appBarColor,
-                AppColors.white,
-                // AppColors.white,
-              ],
+              colors: isDark
+                  ? [
+                      appColors.secondaryDark.withValues(alpha: 0.9),
+                      appColors.secondaryDark.withValues(alpha: 0.6),
+                      theme.cardColor,
+                      theme.cardColor,
+                      theme.cardColor,
+                    ]
+                  : [
+                      appColors.secondaryDark.withValues(alpha: 0.7),
+                      colorScheme.secondary.withValues(alpha: 0.5),
+                      appColors.secondaryLight.withValues(alpha: .3),
+                      appColors.accent.withValues(alpha: .3),
+                      appColors.surfaceMuted,
+                      appColors.accent,
+                    ],
               begin: Alignment.bottomLeft,
               end: Alignment.topRight,
             ),
@@ -211,7 +222,9 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 onPressed: _toggle,
                 icon: Icon(
                   _effectiveExpanded ? Icons.chevron_left : Icons.chevron_right,
-                  color: AppColors.secondaryDark,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? context.appColors.secondaryLight
+                      : context.appColors.secondaryDark,
                 ),
               ),
             )
@@ -236,10 +249,16 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     ChatService chatService,
     UserModel currentUser,
   ) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    final bool isDark = theme.brightness == Brightness.dark;
     final bool isSelected = menu.routeName == RouteHelper.currentLocation;
     final Color fgColor = isSelected
-        ? AppColors.primaryDark
-        : AppColors.secondaryDark;
+        ? (isDark ? appColors.primaryLight : appColors.primaryDark)
+        : (isDark ? appColors.secondaryLight : appColors.secondaryDark);
+    final Color selectedBg = appColors.secondaryLight.withValues(
+      alpha: isDark ? 0.25 : 0.2,
+    );
     final bool isChats = menu.routeName == Routes.chats;
 
     void onTap() {
@@ -253,9 +272,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.secondaryLight.withValues(alpha: 0.2)
-              : Colors.transparent,
+          color: isSelected ? selectedBg : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Tooltip(
@@ -279,13 +296,13 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                             isLabelVisible: unread > 0,
                             label: Text(
                               unread > 99 ? '99+' : '$unread',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: appColors.accent,
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: theme.colorScheme.error,
                             child: iconWidget,
                           );
                         },
@@ -301,9 +318,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     return Container(
       margin: const EdgeInsets.only(right: 24),
       decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.secondaryLight.withValues(alpha: 0.2)
-            : Colors.transparent,
+        color: isSelected ? selectedBg : Colors.transparent,
         borderRadius: const BorderRadius.only(
           topRight: Radius.circular(12),
           bottomRight: Radius.circular(12),
@@ -342,7 +357,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
               )
             : AppText.titleMedium(menu.title, color: fgColor),
         subtitle: menu.routeName == null
-            ? AppText.bodyMedium("Coming Soon", color: Colors.black38)
+            ? AppText.bodyMedium(
+                "Coming Soon",
+                color: appColors.textSecondary.withValues(alpha: 0.6),
+              )
             : null,
         onTap: menu.onTap ?? onTap,
       ),
@@ -389,7 +407,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                   child: AppText.bodySmall(
                     "Version: ${snapshot.data}",
                     textAlign: TextAlign.center,
-                    color: AppColors.white,
+                    color: context.appColors.textSecondary,
                   ),
                 );
               }
@@ -402,7 +420,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             },
             text: "Sign Out",
             icon: Icons.logout,
-            color: Colors.orange[400],
+            color: context.appColors.warning,
           )
         else
           Padding(
@@ -413,7 +431,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 onPressed: () {
                   ref.read(authController.notifier).logout(context);
                 },
-                icon: Icon(Icons.logout, color: Colors.orange[400]),
+                icon: Icon(Icons.logout, color: context.appColors.warning),
               ),
             ),
           ),
