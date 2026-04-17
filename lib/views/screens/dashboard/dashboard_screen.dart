@@ -422,15 +422,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           tag: 'profile_avatar',
           child: CircleAvatar(
             backgroundColor: context.appColors.accent.withValues(alpha: 0.25),
-            radius: 22,
+            radius: 20,
             child: Icon(
               Icons.person,
               color: context.appColors.accent,
-              size: 26,
+              size: 20,
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +442,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 fontWeight: FontWeight.w600,
                 color: context.appColors.accent,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 0.5),
               AppText.bodySmall(
                 currentUser.currentDesignation?.designation ?? '',
 
@@ -472,16 +472,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     color: context.appColors.accent.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   child: Badge(
                     isLabelVisible: unread > 0,
                     label: Text(unread > 99 ? '99+' : '$unread'),
                     backgroundColor: Theme.of(context).colorScheme.error,
                     textColor: context.appColors.accent,
+                    alignment: const Alignment(4, -1.8),
                     child: Icon(
                       Icons.chat_rounded,
                       color: context.appColors.accent,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -690,10 +691,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       itemBuilder: (ctx, i) => DaakCard(daak: daakLetters[i]),
     );
   }
-
-  Widget _buildLoadingState() {
-    return const Center(child: CircularProgressIndicator());
-  }
 }
 
 class _ThemeToggleButton extends StatelessWidget {
@@ -712,7 +709,7 @@ class _ThemeToggleButton extends StatelessWidget {
           color: context.appColors.accent.withValues(alpha: 0.18),
           shape: BoxShape.circle,
         ),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           transitionBuilder: (child, animation) =>
@@ -721,7 +718,7 @@ class _ThemeToggleButton extends StatelessWidget {
             isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
             key: ValueKey<bool>(isDark),
             color: context.appColors.accent,
-            size: 22,
+            size: 20,
           ),
         ),
       ),
