@@ -1,13 +1,16 @@
+import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:flutter/material.dart';
+
 class SummaryModel {
   final int? id;
   final String? summaryNo;
   final String? subject;
-  final String? summaryDate;
+  final DateTime? summaryDate;
   final String? summaryType;
   final String? body;
   final int? statusCode;
   final String? statusLabel;
-  final String? statusBadge;
+  final Color? statusBadge;
   final String? originatingDepartment;
   final String? currentDepartment;
   final String? originatingUser;
@@ -15,8 +18,8 @@ class SummaryModel {
   final String? currentHolder;
   final String? currentHolderDesignation;
   final String? draftTargetDepartment;
-  final String? createdAt;
-  final String? updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   SummaryModel({
     this.id,
@@ -43,12 +46,12 @@ class SummaryModel {
     int? id,
     String? summaryNo,
     String? subject,
-    String? summaryDate,
+    DateTime? summaryDate,
     String? summaryType,
     String? body,
     int? statusCode,
     String? statusLabel,
-    String? statusBadge,
+    Color? statusBadge,
     String? originatingDepartment,
     String? currentDepartment,
     String? originatingUser,
@@ -56,8 +59,8 @@ class SummaryModel {
     String? currentHolder,
     String? currentHolderDesignation,
     String? draftTargetDepartment,
-    String? createdAt,
-    String? updatedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return SummaryModel(
       id: id ?? this.id,
@@ -90,7 +93,7 @@ class SummaryModel {
       SummarySchema.id: id,
       SummarySchema.summaryNo: summaryNo,
       SummarySchema.subject: subject,
-      SummarySchema.summaryDate: summaryDate,
+      SummarySchema.summaryDate: summaryDate?.toIso8601String(),
       SummarySchema.summaryType: summaryType,
       SummarySchema.body: body,
       SummarySchema.statusCode: statusCode,
@@ -103,8 +106,8 @@ class SummaryModel {
       SummarySchema.currentHolder: currentHolder,
       SummarySchema.currentHolderDesignation: currentHolderDesignation,
       SummarySchema.draftTargetDepartment: draftTargetDepartment,
-      SummarySchema.createdAt: createdAt,
-      SummarySchema.updatedAt: updatedAt,
+      SummarySchema.createdAt: createdAt?.toIso8601String(),
+      SummarySchema.updatedAt: updatedAt?.toIso8601String(),
     };
   }
 
@@ -113,12 +116,14 @@ class SummaryModel {
       id: map[SummarySchema.id]?.toInt(),
       summaryNo: map[SummarySchema.summaryNo],
       subject: map[SummarySchema.subject],
-      summaryDate: map[SummarySchema.summaryDate],
+      summaryDate: map[SummarySchema.summaryDate] != null
+          ? DateTime.tryParse(map[SummarySchema.summaryDate])
+          : null,
       summaryType: map[SummarySchema.summaryType],
       body: map[SummarySchema.body],
       statusCode: map[SummarySchema.statusCode]?.toInt(),
       statusLabel: map[SummarySchema.statusLabel],
-      statusBadge: map[SummarySchema.statusBadge],
+      statusBadge: HelperUtils.getTagColor(map[SummarySchema.statusBadge]),
       originatingDepartment: map[SummarySchema.originatingDepartment],
       currentDepartment: map[SummarySchema.currentDepartment],
       originatingUser: map[SummarySchema.originatingUser],
@@ -126,8 +131,12 @@ class SummaryModel {
       currentHolder: map[SummarySchema.currentHolder],
       currentHolderDesignation: map[SummarySchema.currentHolderDesignation],
       draftTargetDepartment: map[SummarySchema.draftTargetDepartment],
-      createdAt: map[SummarySchema.createdAt],
-      updatedAt: map[SummarySchema.updatedAt],
+      createdAt: map[SummarySchema.createdAt] != null
+          ? DateTime.tryParse(map[SummarySchema.createdAt])
+          : null,
+      updatedAt: map[SummarySchema.updatedAt] != null
+          ? DateTime.tryParse(map[SummarySchema.updatedAt])
+          : null,
     );
   }
 

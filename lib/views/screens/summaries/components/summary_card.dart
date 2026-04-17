@@ -1,12 +1,12 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
-import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:flutter/material.dart';
 
 class SummaryCard extends StatelessWidget {
-  final SummaryListItem item;
+  final SummaryModel item;
   const SummaryCard({super.key, required this.item});
 
   @override
@@ -14,7 +14,7 @@ class SummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final appColors = context.appColors;
     final bool isDark = theme.brightness == Brightness.dark;
-    final statusColor = item.status.fg;
+    final statusColor = item.statusBadge ?? Colors.grey;
 
     final statusBg = statusColor.withValues(alpha: 0.12);
 
@@ -73,7 +73,7 @@ class SummaryCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        item.status.label,
+                        item.statusLabel ?? '-',
                         style: TextStyle(
                           color: statusColor,
                           fontSize: 11,
@@ -88,11 +88,7 @@ class SummaryCard extends StatelessWidget {
                         // statusColor bg reads "light" and a lifted (lightened)
                         // statusColor fg stays readable while keeping brand.
                         final pillBg = isDark
-                            ? Color.lerp(
-                                    statusColor,
-                                    appColors.accent,
-                                    0.75,
-                                  ) ??
+                            ? Color.lerp(statusColor, appColors.accent, 0.75) ??
                                   statusColor
                             : theme.cardColor;
                         final pillFg = isDark
@@ -121,7 +117,7 @@ class SummaryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                item.relativeTime,
+                                DateTimeHelper.datFormatSlash(item.summaryDate),
                                 style: TextStyle(
                                   color: pillFg,
                                   fontSize: 11,
@@ -146,7 +142,7 @@ class SummaryCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          item.reference,
+                          item.summaryNo ?? '-',
                           style: TextStyle(
                             color: appColors.textSecondary,
                             fontSize: 12,
@@ -164,7 +160,9 @@ class SummaryCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              DateTimeHelper.datFormatSlash(item.createdAt),
+                              DateTimeHelper.datFormatSlash(
+                                item.createdAt ?? item.summaryDate,
+                              ),
                               style: TextStyle(
                                 color: appColors.textSecondary,
                                 fontSize: 12,
@@ -183,7 +181,7 @@ class SummaryCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     // Title
                     Text(
-                      item.title,
+                      item.subject ?? '-',
                       style: TextStyle(
                         color: appColors.textPrimary,
                         fontSize: 17,
@@ -198,25 +196,26 @@ class SummaryCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        if (item.section != null)
+                        if (item.currentDepartment != null)
                           _InfoChip(
                             icon: Icons.account_tree_outlined,
                             label: 'Section',
-                            value: item.section!,
+                            value: item.currentDepartment!,
                             color: const Color(0xFF2563EB),
                           ),
-                        if (item.target != null)
+                        if (item.draftTargetDepartment != null)
                           _InfoChip(
                             icon: Icons.gps_fixed_rounded,
                             label: 'Target',
-                            value: item.target!,
+                            value: item.draftTargetDepartment!,
                             color: const Color(0xFF0891B2),
                           ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    if (item.remarksBy != null || item.draftedBy != null)
+                    if (item.originatingUser != null ||
+                        item.currentHolder != null)
                       _PeopleRow(item: item),
                   ],
                 ),
@@ -231,31 +230,32 @@ class SummaryCard extends StatelessWidget {
 
 /// Compact two-column row showing Remarks by / Drafted by with avatar initials.
 class _PeopleRow extends StatelessWidget {
-  final SummaryListItem item;
+  final SummaryModel item;
   const _PeopleRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
     final people = <Widget>[];
-    if (item.remarksBy != null) {
+    if (item.originatingUser != null) {
       people.add(
         Expanded(
           child: _PersonTile(
-            label: 'Remarks by',
-            name: item.remarksBy!,
+            label: 'Originating',
+            name: item.originatingUser!,
+            sub: item.originatingDesignation,
             color: const Color(0xFF7C3AED),
           ),
         ),
       );
     }
-    if (item.draftedBy != null) {
+    if (item.currentHolder != null) {
       if (people.isNotEmpty) people.add(const SizedBox(width: 10));
       people.add(
         Expanded(
           child: _PersonTile(
-            label: 'Drafted by',
-            name: item.draftedBy!,
-            sub: item.draftedByRole,
+            label: 'Current Holder',
+            name: item.currentHolder!,
+            sub: item.currentHolderDesignation,
             color: const Color(0xFF059669),
           ),
         ),

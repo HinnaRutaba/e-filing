@@ -1,10 +1,12 @@
 import 'package:efiling_balochistan/controllers/auth_controller.dart';
 import 'package:efiling_balochistan/controllers/connectivity_controller.dart';
 import 'package:efiling_balochistan/controllers/daak_controller.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/files_controller.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/controllers/theme_controller.dart';
+import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
@@ -19,11 +21,12 @@ final authRepo = Provider((ref) => AuthRepo());
 final filesRepo = Provider((ref) => FileRepo());
 final chatRepo = Provider((ref) => ChatRepo());
 final daakRepo = Provider((ref) => DaakRepo());
+final summariesRepo = Provider((ref) => SummariesRepo());
 
 final connectivityController =
     StateNotifierProvider<ConnectivityController, ConnectivityViewModel>(
-  (ref) => ConnectivityController(ConnectivityViewModel(), ref),
-);
+      (ref) => ConnectivityController(ConnectivityViewModel(), ref),
+    );
 
 final filesController = StateNotifierProvider<FilesController, FileViewModel>(
   (ref) => FilesController(FileViewModel(), ref),
@@ -39,17 +42,22 @@ final authController = StateNotifierProvider<AuthController, UserModel>(
 
 final dashboardController =
     StateNotifierProvider<DashboardController, DashboardModel>(
-  (ref) => DashboardController(DashboardModel(), ref),
-);
+      (ref) => DashboardController(DashboardModel(), ref),
+    );
 
 final daakController = StateNotifierProvider<DaakController, DaakState>(
   (ref) => DaakController(DaakState(allDaak: []), ref),
 );
 
+final summariesController =
+    StateNotifierProvider<SummariesController, SummariesState>(
+      (ref) => SummariesController(SummariesState(allSummaries: []), ref),
+    );
+
 final speechToTextController =
     StateNotifierProvider<SpeechToTextService, STTModel>(
-  (ref) => SpeechToTextService(STTModel(), ref),
-);
+      (ref) => SpeechToTextService(STTModel(), ref),
+    );
 
 final themeController = StateNotifierProvider<ThemeController, ThemeMode>(
   (ref) => ThemeController(),

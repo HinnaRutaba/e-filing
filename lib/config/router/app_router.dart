@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
@@ -106,21 +107,8 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toLeft.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) {
-          final item = state.extra as SummaryListItem?;
-          if (item == null) {
-            return SummaryDetailsScreen();
-          }
-          return SummaryDetailsScreen(
-            barcode: item.reference,
-            summaryNumber: item.title,
-            subject: item.title,
-            summaryDate: item.createdAt,
-            department: item.section != null
-                ? '${item.section} Department'
-                : 'Home Department',
-            recipientTitle: item.remarksBy ?? 'Mr. Secretary',
-            recipientTimestamp: item.createdAt,
-          );
+          final item = state.extra as SummaryModel?;
+          return SummaryDetailsScreen(summary: item);
         },
       ),
     ),

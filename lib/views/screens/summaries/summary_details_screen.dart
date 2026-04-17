@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/chat/participant_model.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -63,17 +64,7 @@ enum SummaryAction {
 }
 
 class SummaryDetailsScreen extends ConsumerStatefulWidget {
-  final String barcode;
-  final String summaryNumber;
-  final DateTime summaryDate;
-  final String department;
-  final String subject;
-  final String htmlContent;
-  final String recipientTitle;
-  final String recipientDesignation;
-  final String recipientDepartment;
-  final DateTime recipientTimestamp;
-  final String destination;
+  final SummaryModel summary;
   final XFile? mainPdf;
   final List<FlagAndAttachmentModel> attachments;
   final List<SummaryMovementEntry> movementHistory;
@@ -83,17 +74,7 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
 
   SummaryDetailsScreen({
     super.key,
-    this.barcode = 'SUM/HD/2026/000002',
-    this.summaryNumber = 'SUB38888',
-    DateTime? summaryDate,
-    this.department = 'Home Department',
-    this.subject = 'SUB38888',
-    this.htmlContent = _kFallbackHtml,
-    this.recipientTitle = 'Mr. Secretary',
-    this.recipientDesignation = 'Additional Chief Secretary (Home)',
-    this.recipientDepartment = 'Home Department',
-    DateTime? recipientTimestamp,
-    this.destination = 'Governor House',
+    SummaryModel? summary,
     XFile? mainPdf,
     List<FlagAndAttachmentModel>? attachments,
     this.movementHistory = const [
@@ -108,8 +89,7 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
     List<InternalCorrespondenceEntry>? correspondence,
     List<DaakModel>? linkedDaak,
     List<FileModel>? linkedFiles,
-  }) : summaryDate = summaryDate ?? _kDemoDate,
-       recipientTimestamp = recipientTimestamp ?? _kDemoTimestamp,
+  }) : summary = summary ?? SummaryModel(),
        mainPdf = mainPdf ?? XFile('main_summary.pdf'),
        attachments = attachments ?? _demoAttachments(),
        correspondence = correspondence ?? _demoCorrespondence(),
@@ -120,9 +100,6 @@ class SummaryDetailsScreen extends ConsumerStatefulWidget {
   ConsumerState<SummaryDetailsScreen> createState() =>
       _SummaryDetailsScreenState();
 }
-
-final DateTime _kDemoDate = DateTime(2026, 4, 14);
-final DateTime _kDemoTimestamp = DateTime(2026, 4, 14, 0, 0);
 
 const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
@@ -240,7 +217,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _currentHtml = widget.htmlContent;
+    _currentHtml = widget.summary.body ?? _kFallbackHtml;
   }
 
   @override
@@ -1112,18 +1089,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _documentCard() {
+    final s = widget.summary;
     return SummaryDocumentCard(
-      barcode: widget.barcode,
-      summaryNumber: widget.summaryNumber,
-      summaryDate: widget.summaryDate,
-      department: widget.department,
-      subject: widget.subject,
+      barcode: s.summaryNo ?? '',
+      summaryNumber: s.summaryNo ?? '',
+      summaryDate: s.summaryDate ?? DateTime.now(),
+      department: s.originatingDepartment ?? '',
+      subject: s.subject ?? '',
       htmlContent: _currentHtml,
-      recipientTitle: widget.recipientTitle,
-      recipientDesignation: widget.recipientDesignation,
-      recipientDepartment: widget.recipientDepartment,
-      recipientTimestamp: widget.recipientTimestamp,
-      destination: widget.destination,
+      recipientTitle: s.currentHolder ?? '',
+      recipientDesignation: s.currentHolderDesignation ?? '',
+      recipientDepartment: s.currentDepartment ?? '',
+      recipientTimestamp: s.updatedAt ?? s.createdAt ?? DateTime.now(),
+      destination: s.draftTargetDepartment ?? '',
     );
   }
 
