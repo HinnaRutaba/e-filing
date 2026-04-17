@@ -84,9 +84,6 @@ class SummaryCard extends StatelessWidget {
                     ),
                     Builder(
                       builder: (context) {
-                        // Dark mode: pale tinted pill with light fg. A pale
-                        // statusColor bg reads "light" and a lifted (lightened)
-                        // statusColor fg stays readable while keeping brand.
                         final pillBg = isDark
                             ? Color.lerp(statusColor, appColors.accent, 0.75) ??
                                   statusColor
@@ -117,7 +114,7 @@ class SummaryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                DateTimeHelper.datFormatSlash(item.summaryDate),
+                                DateTimeHelper.timeAgo(item.summaryDate),
                                 style: TextStyle(
                                   color: pillFg,
                                   fontSize: 11,
@@ -160,7 +157,7 @@ class SummaryCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              DateTimeHelper.datFormatSlash(
+                              DateTimeHelper.timeAgo(
                                 item.createdAt ?? item.summaryDate,
                               ),
                               style: TextStyle(

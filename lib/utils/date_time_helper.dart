@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class DateTimeHelper {
   DateTimeHelper._();
@@ -9,7 +10,7 @@ class DateTimeHelper {
   static const String _dateFormatterddMMMyyyySpaces = "dd MMM yyyy";
   static const String _dateFormatterSlash = "dd/MM/yyyy";
   static const String _dateFormatterSlashWithTime = "dd/MM/yyyy hh:mm aa";
-    static const String _dateFormatterddMMYYWithTime = "dd MMM yy hh:mm aa";
+  static const String _dateFormatterddMMYYWithTime = "dd MMM yy hh:mm aa";
   static const String _dateFormatterSlashShort = "dd/MM/yy";
   static const String _dateFormatterEEEE = "EEEE";
   static const String _dateFormatterEEE = "EEE";
@@ -51,13 +52,7 @@ class DateTimeHelper {
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
 
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        hour,
-        minute,
-      );
+      return DateTime(date.year, date.month, date.day, hour, minute);
     } catch (e) {
       print("Error parsing time: $e");
       return null;
@@ -105,7 +100,7 @@ class DateTimeHelper {
     return DateFormat(_dateFormatterSlashShort).format(dateTime);
   }
 
-   static String fullDayMonthNameWithTime(DateTime? dateTime) {
+  static String fullDayMonthNameWithTime(DateTime? dateTime) {
     if (dateTime == null) {
       return 'Date unspecified';
     }
@@ -203,5 +198,10 @@ class DateTimeHelper {
       return 'Date unspecified';
     }
     return DateFormat(_dateFormatterddSpaces).format(dateTime);
+  }
+
+  static String timeAgo(DateTime? dateTime) {
+    if (dateTime == null) return 'Unknown';
+    return timeago.format(dateTime);
   }
 }
