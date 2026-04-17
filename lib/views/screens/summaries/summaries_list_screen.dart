@@ -319,20 +319,8 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
         ],
         body: Column(
           children: [
-            // Subtitle
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppText.bodySmall(
-                  'Manage incoming, internal, sent summaries and section drafts.',
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-            // Main tabs
             _mainTabBar(),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             // Sub-tabs
             if (_currentSubTabs.isNotEmpty) _subTabBar(),
             // Helper banner
@@ -479,8 +467,6 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     );
   }
 
-  // ---------- Helper banner ----------
-
   Widget _helperBanner(String text) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -503,10 +489,6 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     );
   }
 }
-
-// ===========================================================================
-// Sub-tab chip (Inbox / Drafts / Sent Out / etc.)
-// ===========================================================================
 
 class _SubTabChip extends StatelessWidget {
   final String label;

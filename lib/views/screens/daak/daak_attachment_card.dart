@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
@@ -11,23 +12,21 @@ class DaakAttachmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Card(
-      color: Colors.white,
+      color: colors.cardColor,
       child: ListTile(
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         leading: const Icon(Icons.attach_file, color: AppColors.secondary),
         horizontalTitleGap: 8,
         title: AppText.titleMedium(
-            attachment?.originalName ?? "Unknown Attachment"),
-        subtitle: AppText.labelLarge(
+          attachment?.originalName ?? "Unknown Attachment",
+        ),
+        subtitle: AppText.labelMedium(
           "Uploaded at: ${DateTimeHelper.datFormatSlashShort(attachment!.uploadedAt!)}",
-          color: AppColors.textSecondary,
         ),
-        trailing: AppText.labelSmall(
-          attachment?.fileSizeText ?? '',
-          color: Colors.black38,
-        ),
+        trailing: AppText.labelSmall(attachment?.fileSizeText ?? ''),
         onTap: () {
           Navigator.push(
             context,

@@ -169,11 +169,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                       theme.cardColor,
                     ]
                   : [
-                      appColors.secondaryDark.withValues(alpha: 0.7),
-                      colorScheme.secondary.withValues(alpha: 0.5),
-                      appColors.secondaryLight.withValues(alpha: .3),
+                      appColors.secondaryDark.withValues(alpha: 0.4),
+                      colorScheme.secondary.withValues(alpha: 0.3),
+                      appColors.secondaryLight.withValues(alpha: .2),
                       appColors.accent.withValues(alpha: .3),
-                      appColors.surfaceMuted,
                       appColors.accent,
                     ],
               begin: Alignment.bottomLeft,
