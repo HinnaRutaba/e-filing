@@ -6,9 +6,11 @@ import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_card.dart';
+import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,18 +55,17 @@ class SummariesListScreen extends ConsumerStatefulWidget {
 }
 
 class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
-
-
   final ScrollController _mainTabScrollController = ScrollController();
   final ScrollController _subTabScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final TypingDetector _typingDetector = TypingDetector(milliseconds: 500);
   final Map<SummaryMainTab, GlobalKey> _mainTabKeys = {
     for (final t in SummaryMainTab.values) t: GlobalKey(),
   };
-  
+
   final Map<SummarySubTab, GlobalKey> _subTabKeys = {
     for (final t in SummarySubTab.values) t: GlobalKey(),
   };
-
 
   List<SummarySubTab> _subTabsFor(SummaryMainTab mainTab) =>
       SummarySubTab.values.where((s) => s.parent == mainTab).toList();
@@ -84,6 +85,7 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   void dispose() {
     _mainTabScrollController.dispose();
     _subTabScrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -166,6 +168,8 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
             const SizedBox(height: 2),
             // Sub-tabs
             if (currentSubTabs.isNotEmpty) _subTabBar(mainTab, subTab),
+            // Search bar
+            _searchBar(),
             // Helper banner
             if (bannerText != null) _helperBanner(bannerText),
             // List
@@ -314,6 +318,38 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _searchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: AppTextField(
+        controller: _searchController,
+        hintText: 'Search summaries...',
+        labelText: '',
+        showLabel: false,
+        onChanged: (value) {
+          setState(() {});
+          _typingDetector.run(() {
+            ref.read(summariesController.notifier).setSearchText(value);
+          });
+        },
+        prefix: const Icon(Icons.search_rounded),
+        suffixIcon: _searchController.text.isNotEmpty
+            ? InkWell(
+                onTap: () {
+                  _searchController.clear();
+                  ref.read(summariesController.notifier).setSearchText('');
+                },
+                child: const Icon(Icons.close_rounded),
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(50),
+          borderSide: const BorderSide(color: AppColors.cardColor),
+        ),
       ),
     );
   }
