@@ -282,36 +282,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           left: 16,
                           right: 16,
                           top: statsCardTop,
+
                           child: AnimatedSize(
                             duration: animDuration,
                             curve: animCurve,
+                            clipBehavior: Clip.none,
                             alignment: Alignment.topCenter,
-                            child: AnimatedSwitcher(
-                              duration: animDuration,
-                              switchInCurve: animCurve,
-                              switchOutCurve: animCurve,
-                              layoutBuilder: (currentChild, previousChildren) {
-                                return Stack(
-                                  alignment: Alignment.topCenter,
-                                  children: <Widget>[
-                                    ...previousChildren,
-                                    if (currentChild != null) currentChild,
-                                  ],
-                                );
-                              },
-                              transitionBuilder: (child, animation) =>
-                                  FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  ),
-                              child: KeyedSubtree(
-                                key: ValueKey<bool>(mobileCompact),
-                                child: _buildStatsCard(
-                                  context,
-                                  dashboardState,
-                                  mobileCompact,
-                                ),
-                              ),
+                            child: _buildStatsCard(
+                              context,
+                              dashboardState,
+                              mobileCompact,
                             ),
                           ),
                         ),
@@ -527,7 +507,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
-          .animate(delay: dashboardState.animated ? 200.ms : 1400.ms)
+          .animate(delay: dashboardState.animated ? 20.ms : 1400.ms)
           .scale(
             delay: delay,
             duration: 400.ms,
