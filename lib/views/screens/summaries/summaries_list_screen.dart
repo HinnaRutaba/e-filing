@@ -7,28 +7,65 @@ import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum SummaryTab {
-  myInbox('My Inbox', Icons.inbox_rounded),
-  pendingAction('Pending Action', Icons.notifications_none_rounded),
-  internalForwarded('Internal Forwarded', Icons.forward_to_inbox_rounded),
-  draftFromSections('Draft from Sections', Icons.edit_note_rounded),
-  sentSummaries('Sent Summaries', Icons.send_rounded);
+// ---------------------------------------------------------------------------
+// Main tabs
+// ---------------------------------------------------------------------------
+
+enum SummaryMainTab {
+  actionRequired('Action Required', Icons.notifications_none_rounded),
+  sentTracked('Sent & Tracked', Icons.check_circle_outline_rounded),
+  archive('Archive', Icons.archive_outlined);
 
   final String label;
   final IconData icon;
-  const SummaryTab(this.label, this.icon);
+  const SummaryMainTab(this.label, this.icon);
 }
 
-/// Status chip color + label for a summary row.
+// ---------------------------------------------------------------------------
+// Sub-tabs (grouped by parent main tab)
+// ---------------------------------------------------------------------------
+
+enum SummarySubTab {
+  // Action Required
+  inbox('Inbox', SummaryMainTab.actionRequired, 'inbox'),
+  sharedToMe('Shared to me', SummaryMainTab.actionRequired, 'internal'),
+  drafts('Drafts', SummaryMainTab.actionRequired, 'my_drafts'),
+  disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
+
+  // Sent & Tracked
+  sentOut('Sent Out', SummaryMainTab.sentTracked, 'sent'),
+  sharedInternally(
+    'Shared Internally',
+    SummaryMainTab.sentTracked,
+    'internal_forwarded',
+  );
+
+  final String label;
+  final SummaryMainTab parent;
+  final String filterName;
+  const SummarySubTab(this.label, this.parent, this.filterName);
+}
+
+// ---------------------------------------------------------------------------
+// Status chip
+// ---------------------------------------------------------------------------
+
 enum SummaryStatus {
   remarksDrafted('REMARKS DRAFTED', Color(0xFF6C4BE3), Color(0xFFEFEAFE)),
   pendingReview('PENDING REVIEW', Color(0xFFD97706), Color(0xFFFFF4E0)),
   forwarded('FORWARDED', Color(0xFF2563EB), Color(0xFFE4EDFD)),
-  sent('SENT', Color(0xFF059669), Color(0xFFE1F6EE));
+  sent('SENT', Color(0xFF059669), Color(0xFFE1F6EE)),
+  sectionDraft('SECTION DRAFT', Color(0xFFD97706), Color(0xFFFFF4E0)),
+  pendingWithSecretary(
+    'Pending with Secretary',
+    Color(0xFF059669),
+    Color(0xFFE1F6EE),
+  );
 
   final String label;
   final Color fg;
@@ -36,9 +73,12 @@ enum SummaryStatus {
   const SummaryStatus(this.label, this.fg, this.bg);
 }
 
-/// View model for a single summary row shown in the list.
+// ---------------------------------------------------------------------------
+// View-model for a single summary row
+// ---------------------------------------------------------------------------
+
 class SummaryListItem {
-  final String reference; // e.g. SUM/D/2026/000001
+  final String reference;
   final SummaryStatus status;
   final String title;
   final String? remarksBy;
@@ -48,7 +88,7 @@ class SummaryListItem {
   final String? target;
   final DateTime createdAt;
   final String relativeTime;
-  final SummaryTab tab;
+  final SummarySubTab tab;
 
   const SummaryListItem({
     required this.reference,
@@ -65,6 +105,10 @@ class SummaryListItem {
   });
 }
 
+// ===========================================================================
+// Screen
+// ===========================================================================
+
 class SummariesListScreen extends ConsumerStatefulWidget {
   const SummariesListScreen({super.key});
 
@@ -74,33 +118,151 @@ class SummariesListScreen extends ConsumerStatefulWidget {
 }
 
 class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
-  late SummaryTab _selected;
-  final ScrollController _tabScrollController = ScrollController();
-  final Map<SummaryTab, GlobalKey> _tabKeys = {
-    for (final t in SummaryTab.values) t: GlobalKey(),
+  SummaryMainTab _mainTab = SummaryMainTab.actionRequired;
+  late SummarySubTab _subTab;
+
+  final ScrollController _mainTabScrollController = ScrollController();
+  final ScrollController _subTabScrollController = ScrollController();
+  final Map<SummaryMainTab, GlobalKey> _mainTabKeys = {
+    for (final t in SummaryMainTab.values) t: GlobalKey(),
   };
+  final Map<SummarySubTab, GlobalKey> _subTabKeys = {
+    for (final t in SummarySubTab.values) t: GlobalKey(),
+  };
+
+  // ---- Mock data ----
+
+  final List<SummaryListItem> _items = [
+    // -------- Drafts (Action Required) --------
+    SummaryListItem(
+      reference: 'SUR/ID/2026/000001',
+      status: SummaryStatus.sectionDraft,
+      title: 'Subject TI0022',
+      draftedBy: 'Mr. Section officer',
+      draftedByRole: 'Additional Secretary-II',
+      section: 'Additional Secretary-II',
+      target: 'Agriculture Department',
+      createdAt: DateTime(2026, 4, 11),
+      relativeTime: '4d ago',
+      tab: SummarySubTab.drafts,
+    ),
+    SummaryListItem(
+      reference: 'SUR/ID/2026/000002',
+      status: SummaryStatus.sectionDraft,
+      title: 'Subj8888',
+      draftedBy: 'Mr. Section officer',
+      draftedByRole: 'Additional Secretary-II',
+      section: 'Additional Secretary-II',
+      target: 'Governor House',
+      createdAt: DateTime(2026, 4, 12),
+      relativeTime: '3d ago',
+      tab: SummarySubTab.drafts,
+    ),
+    SummaryListItem(
+      reference: 'SUR/ID/2026/000005',
+      status: SummaryStatus.sectionDraft,
+      title: 'Budget allocation for Q3',
+      draftedBy: 'Ms. Deputy Director',
+      draftedByRole: 'Additional Secretary-I',
+      section: 'Additional Secretary-I',
+      target: 'Finance Department',
+      createdAt: DateTime(2026, 4, 13),
+      relativeTime: '2d ago',
+      tab: SummarySubTab.drafts,
+    ),
+    // -------- Sent Out (Sent & Tracked) --------
+    SummaryListItem(
+      reference: 'SUR/ID/2026/000003',
+      status: SummaryStatus.pendingWithSecretary,
+      title: 'Summary to Test Hand Notes',
+      section: 'Information Department',
+      remarksBy: 'Imran Khan',
+      draftedBy: 'Imran Khan',
+      draftedByRole: 'Secretary Information',
+      createdAt: DateTime(2026, 4, 14),
+      relativeTime: '1d ago',
+      tab: SummarySubTab.sentOut,
+    ),
+    SummaryListItem(
+      reference: 'SUR/ID/2026/000004',
+      status: SummaryStatus.pendingWithSecretary,
+      title: 'Test summary',
+      section: 'Chief Minister Secretariat',
+      remarksBy: 'Mr. PSTOCM',
+      draftedBy: 'Mr. PSTOCM',
+      draftedByRole: 'Principal Secretary IPS CMS',
+      createdAt: DateTime(2026, 4, 14),
+      relativeTime: '1d ago',
+      tab: SummarySubTab.sentOut,
+    ),
+  ];
+
+  List<SummarySubTab> get _currentSubTabs =>
+      SummarySubTab.values.where((s) => s.parent == _mainTab).toList();
+
+  int _countForMain(SummaryMainTab m) =>
+      _items.where((e) => e.tab.parent == m).length;
+
+  int _countForSub(SummarySubTab s) => _items.where((e) => e.tab == s).length;
+
+  List<SummaryListItem> get _visibleItems {
+    if (_currentSubTabs.isEmpty) {
+      return _items.where((e) => e.tab.parent == _mainTab).toList();
+    }
+    return _items.where((e) => e.tab == _subTab).toList();
+  }
 
   @override
   void initState() {
     super.initState();
-    _selected = SummaryTab.values.firstWhere(
-      (t) => _countFor(t) > 0,
-      orElse: () => SummaryTab.myInbox,
+    // Auto-select the first main tab that has data.
+    _mainTab = SummaryMainTab.values.firstWhere(
+      (m) => _countForMain(m) > 0,
+      orElse: () => SummaryMainTab.actionRequired,
     );
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _scrollSelectedIntoView(),
-    );
+    // Auto-select the first sub-tab with data under that main tab.
+    final subs = _currentSubTabs;
+    if (subs.isNotEmpty) {
+      _subTab = subs.firstWhere(
+        (s) => _countForSub(s) > 0,
+        orElse: () => subs.first,
+      );
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollMainTabIntoView();
+      if (_currentSubTabs.isNotEmpty) _scrollSubTabIntoView();
+    });
   }
 
   @override
   void dispose() {
-    _tabScrollController.dispose();
+    _mainTabScrollController.dispose();
+    _subTabScrollController.dispose();
     super.dispose();
   }
 
-  void _scrollSelectedIntoView() {
-    final ctx = _tabKeys[_selected]?.currentContext;
+  void _onMainTabChanged(SummaryMainTab tab) {
+    if (tab == _mainTab) return;
+    setState(() {
+      _mainTab = tab;
+      final subs = _currentSubTabs;
+      if (subs.isNotEmpty) {
+        _subTab = subs.firstWhere(
+          (s) => _countForSub(s) > 0,
+          orElse: () => subs.first,
+        );
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _scrollMainTabIntoView(),
+    );
+  }
+
+  void _scrollMainTabIntoView() {
+    final ctx = _mainTabKeys[_mainTab]?.currentContext;
     if (ctx == null) return;
+    final rb = ctx.findRenderObject();
+    if (rb is! RenderBox || !rb.hasSize) return;
     Scrollable.ensureVisible(
       ctx,
       duration: const Duration(milliseconds: 300),
@@ -109,205 +271,33 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     );
   }
 
-  final List<SummaryListItem> _items = [
-    SummaryListItem(
-      reference: 'SUM/D/2026/000001',
-      status: SummaryStatus.remarksDrafted,
-      title: 'Summary Tests',
-      remarksBy: 'Haroon Khan',
-      draftedBy: 'Haroon Khan',
-      draftedByRole: 'Programmer',
-      section: 'CMDU',
-      target: 'BEEF',
-      createdAt: DateTime(2026, 4, 9, 20, 37),
-      relativeTime: '1d ago',
-      tab: SummaryTab.draftFromSections,
-    ),
-    SummaryListItem(
-      reference: 'SUM/I/2026/000004',
-      status: SummaryStatus.forwarded,
-      title: 'Quarterly budget review',
-      remarksBy: 'Ali Raza',
-      draftedBy: 'Fatima Noor',
-      draftedByRole: 'Section Officer',
-      section: 'FIN',
-      target: 'CMDU',
-      createdAt: DateTime(2026, 4, 8, 14, 10),
-      relativeTime: '2d ago',
-      tab: SummaryTab.internalForwarded,
-    ),
-    SummaryListItem(
-      reference: 'SUM/S/2026/000007',
-      status: SummaryStatus.sent,
-      title: 'Procurement approval',
-      remarksBy: 'Sara Ahmed',
-      draftedBy: 'Sara Ahmed',
-      draftedByRole: 'Deputy Director',
-      section: 'CMDU',
-      target: 'EDU',
-      createdAt: DateTime(2026, 4, 6, 11, 5),
-      relativeTime: '4d ago',
-      tab: SummaryTab.sentSummaries,
-    ),
-    // -------- Draft from Sections (extra) --------
-    SummaryListItem(
-      reference: 'SUM/D/2026/000002',
-      status: SummaryStatus.pendingReview,
-      title: 'Recruitment policy revision for grade 17 officers',
-      remarksBy: 'Hassan Iqbal',
-      draftedBy: 'Bilal Ahmed',
-      draftedByRole: 'Section Officer',
-      section: 'HRM',
-      target: 'S&GAD',
-      createdAt: DateTime(2026, 4, 10, 9, 15),
-      relativeTime: '5h ago',
-      tab: SummaryTab.draftFromSections,
-    ),
-    SummaryListItem(
-      reference: 'SUM/D/2026/000003',
-      status: SummaryStatus.remarksDrafted,
-      title: 'Allocation of vehicles to district offices',
-      draftedBy: 'Mehreen Tariq',
-      draftedByRole: 'Assistant Director',
-      section: 'ADMN',
-      target: 'TRANS',
-      createdAt: DateTime(2026, 4, 9, 16, 0),
-      relativeTime: '1d ago',
-      tab: SummaryTab.draftFromSections,
-    ),
-    // -------- Internal Forwarded (extra) --------
-    SummaryListItem(
-      reference: 'SUM/I/2026/000005',
-      status: SummaryStatus.forwarded,
-      title: 'Annual procurement plan for fiscal year 2026-27',
-      remarksBy: 'Naveed Akhtar',
-      draftedBy: 'Zainab Malik',
-      draftedByRole: 'Deputy Secretary',
-      section: 'PROC',
-      target: 'FIN',
-      createdAt: DateTime(2026, 4, 8, 10, 30),
-      relativeTime: '2d ago',
-      tab: SummaryTab.internalForwarded,
-    ),
-    SummaryListItem(
-      reference: 'SUM/I/2026/000006',
-      status: SummaryStatus.pendingReview,
-      title: 'Implementation of e-office across secretariat',
-      draftedBy: 'Imran Khalid',
-      draftedByRole: 'IT Director',
-      section: 'IT',
-      target: 'ALL',
-      createdAt: DateTime(2026, 4, 7, 13, 45),
-      relativeTime: '3d ago',
-      tab: SummaryTab.internalForwarded,
-    ),
-    // -------- My Inbox --------
-    SummaryListItem(
-      reference: 'SUM/M/2026/000010',
-      status: SummaryStatus.pendingReview,
-      title: 'Approval for new district hospital construction',
-      remarksBy: 'Tariq Mehmood',
-      draftedBy: 'Aisha Khan',
-      draftedByRole: 'Section Officer',
-      section: 'HEALTH',
-      target: 'P&D',
-      createdAt: DateTime(2026, 4, 11, 8, 20),
-      relativeTime: '2h ago',
-      tab: SummaryTab.myInbox,
-    ),
-    SummaryListItem(
-      reference: 'SUM/M/2026/000011',
-      status: SummaryStatus.forwarded,
-      title: 'Scholarship scheme for minority students',
-      draftedBy: 'Yasir Hussain',
-      draftedByRole: 'Deputy Director',
-      section: 'EDU',
-      target: 'CMDU',
-      createdAt: DateTime(2026, 4, 10, 17, 50),
-      relativeTime: '1d ago',
-      tab: SummaryTab.myInbox,
-    ),
-    SummaryListItem(
-      reference: 'SUM/M/2026/000012',
-      status: SummaryStatus.remarksDrafted,
-      title: 'Rehabilitation works in flood-affected areas',
-      remarksBy: 'Saima Bashir',
-      section: 'PDMA',
-      createdAt: DateTime(2026, 4, 9, 12, 0),
-      relativeTime: '2d ago',
-      tab: SummaryTab.myInbox,
-    ),
-    // -------- Pending Action --------
-    SummaryListItem(
-      reference: 'SUM/P/2026/000020',
-      status: SummaryStatus.pendingReview,
-      title: 'Posting of Section Officers in CMDU',
-      remarksBy: 'Junaid Anwar',
-      draftedBy: 'Faiza Iqbal',
-      draftedByRole: 'Section Officer',
-      section: 'S&GAD',
-      target: 'CMDU',
-      createdAt: DateTime(2026, 4, 11, 11, 0),
-      relativeTime: '4h ago',
-      tab: SummaryTab.pendingAction,
-    ),
-    SummaryListItem(
-      reference: 'SUM/P/2026/000021',
-      status: SummaryStatus.pendingReview,
-      title: 'Sanction of additional posts for revenue department',
-      draftedBy: 'Adeel Raza',
-      draftedByRole: 'Deputy Secretary',
-      section: 'REV',
-      target: 'FIN',
-      createdAt: DateTime(2026, 4, 10, 14, 25),
-      relativeTime: '1d ago',
-      tab: SummaryTab.pendingAction,
-    ),
-    // -------- Sent Summaries (extra) --------
-    SummaryListItem(
-      reference: 'SUM/S/2026/000008',
-      status: SummaryStatus.sent,
-      title: 'Approval of supplementary grant for sports gala',
-      draftedBy: 'Komal Shah',
-      draftedByRole: 'Assistant Secretary',
-      section: 'SPORTS',
-      target: 'FIN',
-      createdAt: DateTime(2026, 4, 5, 15, 30),
-      relativeTime: '5d ago',
-      tab: SummaryTab.sentSummaries,
-    ),
-    SummaryListItem(
-      reference: 'SUM/S/2026/000009',
-      status: SummaryStatus.sent,
-      title: 'Notification of revised pay scales',
-      remarksBy: 'Rashid Ali',
-      draftedBy: 'Nadia Saeed',
-      draftedByRole: 'Section Officer',
-      section: 'FIN',
-      target: 'ALL',
-      createdAt: DateTime(2026, 4, 4, 9, 0),
-      relativeTime: '6d ago',
-      tab: SummaryTab.sentSummaries,
-    ),
-  ];
-
-  int _countFor(SummaryTab tab) => _items.where((e) => e.tab == tab).length;
-
-  List<SummaryListItem> get _visibleItems =>
-      _items.where((e) => e.tab == _selected).toList();
+  void _scrollSubTabIntoView() {
+    final ctx = _subTabKeys[_subTab]?.currentContext;
+    if (ctx == null) return;
+    final rb = ctx.findRenderObject();
+    if (rb is! RenderBox || !rb.hasSize) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.5,
+    );
+  }
 
   String? _helperBannerText() {
-    switch (_selected) {
-      case SummaryTab.myInbox:
+    switch (_subTab) {
+      case SummarySubTab.inbox:
         return 'Summaries received by you and awaiting your action.';
-      case SummaryTab.pendingAction:
-        return 'Summaries that require your decision or signature.';
-      case SummaryTab.internalForwarded:
-        return 'Internal remarks forwarded within your section.';
-      case SummaryTab.draftFromSections:
+      case SummarySubTab.sharedToMe:
+        return 'Summaries shared with you by colleagues.';
+      case SummarySubTab.drafts:
         return 'Section drafts and internal remarks pending your review, signature, and forwarding.';
-      case SummaryTab.sentSummaries:
+      case SummarySubTab.disposal:
+        return 'Summaries that have been disposed off.';
+      case SummarySubTab.sentOut:
         return 'Summaries you have already dispatched.';
+      case SummarySubTab.sharedInternally:
+        return 'Summaries shared internally within your section.';
     }
   }
 
@@ -323,15 +313,32 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
             onPressed: () {
               RouteHelper.push(Routes.createSummary);
             },
-            text: "New Summary",
-            icon: Icons.add,
+            text: "Draft Summary",
+            icon: Icons.edit_outlined,
           ),
         ],
         body: Column(
           children: [
-            _tabBar(),
+            // Subtitle
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: AppText.bodySmall(
+                  'Manage incoming, internal, sent summaries and section drafts.',
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+            // Main tabs
+            _mainTabBar(),
+            const SizedBox(height: 4),
+            // Sub-tabs
+            if (_currentSubTabs.isNotEmpty) _subTabBar(),
+            // Helper banner
             if (_helperBannerText() != null)
               _helperBanner(_helperBannerText()!),
+            // List
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -411,28 +418,58 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     );
   }
 
-  Widget _tabBar() {
+  // ---------- Main tab bar ----------
+
+  Widget _mainTabBar() {
     return SizedBox(
       height: 48,
       child: ListView.separated(
-        controller: _tabScrollController,
+        controller: _mainTabScrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: SummaryTab.values.length,
+        itemCount: SummaryMainTab.values.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final tab = SummaryTab.values[index];
+          final tab = SummaryMainTab.values[index];
           return KeyedSubtree(
-            key: _tabKeys[tab],
-            child: _SummaryFilterTile(
+            key: _mainTabKeys[tab],
+            child: GradientTabChip(
               label: tab.label,
               icon: tab.icon,
-              count: _countFor(tab),
-              selected: _selected == tab,
+              count: _countForMain(tab),
+              selected: _mainTab == tab,
+              onTap: () => _onMainTabChanged(tab),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ---------- Sub-tab bar ----------
+
+  Widget _subTabBar() {
+    final subs = _currentSubTabs;
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        controller: _subTabScrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        itemCount: subs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final sub = subs[index];
+          return KeyedSubtree(
+            key: _subTabKeys[sub],
+            child: _SubTabChip(
+              label: sub.label,
+              count: _countForSub(sub),
+              selected: _subTab == sub,
               onTap: () {
-                setState(() => _selected = tab);
+                setState(() => _subTab = sub);
                 WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _scrollSelectedIntoView(),
+                  (_) => _scrollSubTabIntoView(),
                 );
               },
             ),
@@ -441,6 +478,8 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
       ),
     );
   }
+
+  // ---------- Helper banner ----------
 
   Widget _helperBanner(String text) {
     return Container(
@@ -465,19 +504,18 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Summary card moved to components/summary_card.dart
+// ===========================================================================
+// Sub-tab chip (Inbox / Drafts / Sent Out / etc.)
+// ===========================================================================
 
-class _SummaryFilterTile extends StatelessWidget {
+class _SubTabChip extends StatelessWidget {
   final String label;
-  final IconData icon;
   final int count;
   final bool selected;
   final VoidCallback onTap;
 
-  const _SummaryFilterTile({
+  const _SubTabChip({
     required this.label,
-    required this.icon,
     required this.count,
     required this.selected,
     required this.onTap,
@@ -487,101 +525,48 @@ class _SummaryFilterTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: DecoratedBox(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.secondary.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : const [],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            children: [
-              _buildContent(filled: false),
-              if (selected)
-                _buildContent(filled: true).animate().custom(
-                  duration: 200.ms,
-                  curve: Curves.easeInOutSine,
-                  builder: (context, value, child) => ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (rect) {
-                      const softness = 0.4;
-                      final t = value * (1 + softness);
-                      final s1 = (t - softness).clamp(0.0, 0.999);
-                      final s2 = t.clamp(s1 + 0.001, 1.0);
-                      return LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        stops: [s1, s2],
-                        colors: const [Colors.white, Colors.transparent],
-                      ).createShader(rect);
-                    },
-                    child: child,
-                  ),
-                ),
-            ],
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.grey.shade300,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildContent({required bool filled}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: filled ? null : AppColors.cardColorLight,
-        gradient: filled
-            ? LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  AppColors.secondary,
-                  AppColors.secondary.withValues(alpha: 0.75),
-                ],
-              )
-            : null,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: filled ? Colors.transparent : Colors.grey.shade300,
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: filled ? Colors.white : Colors.black54, size: 18),
-          const SizedBox(width: 8),
-          AppText.bodySmall(
-            label,
-            color: filled ? Colors.white : Colors.black87,
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              color: count == 0
-                  ? (filled ? Colors.white24 : Colors.grey.shade300)
-                  : Colors.red,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '$count',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
               style: TextStyle(
-                color: count == 0 && !filled ? Colors.black54 : Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+                color: selected ? Colors.white : Colors.black54,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.25)
+                    : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.black54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

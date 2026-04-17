@@ -9,6 +9,7 @@ import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -68,7 +69,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: _FilterTile(
+                    child: GradientTabChip(
                       label: 'Inbox',
                       icon: Icons.inbox_rounded,
                       selected:
@@ -82,7 +83,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _FilterTile(
+                    child: GradientTabChip(
                       label: 'My NFA',
                       icon: Icons.folder_open_rounded,
                       selected: controller.selectedFilter == DaakViewFilter.nfa,
@@ -95,7 +96,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _FilterTile(
+                    child: GradientTabChip(
                       label: 'Forwarded',
                       icon: Icons.forward_to_inbox_rounded,
                       selected:
@@ -317,103 +318,3 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
   }
 }
 
-class _FilterTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterTile({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.secondary.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : const [],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            children: [
-              _buildContent(filled: false),
-              if (selected)
-                _buildContent(filled: true).animate().custom(
-                  duration: 200.ms,
-                  curve: Curves.easeInOutSine,
-                  builder: (context, value, child) => ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (rect) {
-                      const softness = 0.4;
-                      final t = value * (1 + softness);
-                      final s1 = (t - softness).clamp(0.0, 0.999);
-                      final s2 = t.clamp(s1 + 0.001, 1.0);
-                      return LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        stops: [s1, s2],
-                        colors: const [Colors.white, Colors.transparent],
-                      ).createShader(rect);
-                    },
-                    child: child,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent({required bool filled}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: filled ? null : AppColors.cardColorLight,
-        gradient: filled
-            ? LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  AppColors.secondary,
-                  AppColors.secondary.withValues(alpha: 0.75),
-                ],
-              )
-            : null,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: filled ? Colors.transparent : Colors.grey[300]!,
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: filled ? Colors.white : Colors.black54, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: AppText.bodySmall(
-              label,
-              color: filled ? Colors.white : Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -27,4 +27,22 @@ class HelperUtils {
         ? str.substring(0, 2).toUpperCase()
         : str[0].toUpperCase();
   }
+
+  static Color getTagColor(String colorName) {
+    Color tagColor = Colors.blue;
+    if (colorName == 'danger') {
+      tagColor = Colors.red[700]!;
+    } else if (colorName == 'warning') {
+      tagColor = Colors.amber[700]!;
+    } else if (colorName == 'success') {
+      tagColor = Colors.green[700]!;
+    } else if (colorName == 'info') {
+      tagColor = Colors.blue[700]!;
+    } else if (colorName == 'primary') {
+      tagColor = Colors.blue[700]!;
+    } else if (colorName == 'secondary') {
+      tagColor = Colors.grey[700]!;
+    }
+    return tagColor;
+  }
 }
