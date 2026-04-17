@@ -821,22 +821,24 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _signForwardBody(SummaryAction action) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _stepCard(
-          stepLabel: 'STEP 1',
-          title: 'Signature',
-          child: SignaturePad(controller: _signaturePadController),
-        ),
-        const SizedBox(height: 12),
-        _stepCard(
-          stepLabel: 'STEP 2',
-          title: 'Forwarding',
-          child: _forwardingStep(action),
-        ),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _stepCard(
+            stepLabel: 'STEP 1',
+            title: 'Signature',
+            child: SignaturePad(controller: _signaturePadController),
+          ),
+          const SizedBox(height: 12),
+          _stepCard(
+            stepLabel: 'STEP 2',
+            title: 'Forwarding',
+            child: _forwardingStep(action),
+          ),
+        ],
+      ),
     );
   }
 

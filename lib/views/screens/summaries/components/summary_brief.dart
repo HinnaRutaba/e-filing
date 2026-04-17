@@ -2,7 +2,6 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class SummaryBrief extends StatelessWidget {
   final String title;
@@ -28,7 +27,7 @@ class SummaryBrief extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: const Color(0xFFFFF8E1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.secondaryLight.withValues(alpha: 0.25),
@@ -58,7 +57,7 @@ class SummaryBrief extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.10),
+        color: const Color(0xFFFFF3CD),
         border: Border(
           bottom: BorderSide(color: accent.withValues(alpha: 0.25)),
         ),
@@ -131,7 +130,7 @@ class SummaryBrief extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.06),
+        color: const Color(0xFFFFF5D6),
         border: Border(top: BorderSide(color: accent.withValues(alpha: 0.2))),
       ),
       child: Row(

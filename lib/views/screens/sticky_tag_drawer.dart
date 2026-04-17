@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_detection/keyboard_detection.dart';
@@ -6,14 +6,14 @@ import 'package:keyboard_detection/keyboard_detection.dart';
 class StickyTag {
   final String text;
   final Widget panelContent;
-  final Color backgroundColor;
-  final Color textColor;
+  final Color? backgroundColor;
+  final Color? textColor;
 
   const StickyTag({
     required this.text,
     required this.panelContent,
-    this.backgroundColor = AppColors.secondaryDark,
-    this.textColor = Colors.white,
+    this.backgroundColor,
+    this.textColor,
   });
 }
 
@@ -106,15 +106,14 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     final bool isOpen = _openIndex != null;
     final StickyTag? activeTag = isOpen ? widget.tags[_openIndex!] : null;
     final double screenHeight = MediaQuery.of(context).size.height;
-    // Each tag has a minHeight of 80 plus an 8px gap between tags.
     final double totalTagsHeight = widget.tags.isEmpty
         ? 0
         : (widget.tags.length * 80) + ((widget.tags.length - 1) * 8);
-    // Map alignment.y (-1..1) to a top offset inside the available track
-    // (screenHeight - totalTagsHeight). -1 pins top, 0 centers, 1 pins bottom.
     final double track = (screenHeight - totalTagsHeight).clamp(
       0,
       screenHeight,
@@ -136,25 +135,47 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
                 bottom: 0,
                 right: 0,
                 width: _widthAnimation.value,
-                child: Material(
-                  elevation: 8,
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          child: AppTextLinkButton(
-                            onPressed: _close,
-                            text: "Close",
-                            icon: Icons.close,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: appColors.shadow.withValues(alpha: 0.4),
+                        blurRadius: 24,
+                        spreadRadius: 0,
+                        offset: const Offset(-8, 0),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    elevation: 0,
+                    color: theme.bottomSheetTheme.backgroundColor ??
+                        appColors.surfaceMuted,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Align(
+                            alignment: Alignment.topRight,
+                            child: AppTextLinkButton(
+                              onPressed: _close,
+                              text: "Close",
+                              icon: Icons.close,
+                            ),
                           ),
                         ),
-                      ),
-                      if (activeTag != null)
-                        Expanded(child: activeTag.panelContent),
-                    ],
+                        if (activeTag != null)
+                          Expanded(child: activeTag.panelContent),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -168,7 +189,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (var i = 0; i < widget.tags.length; i++) ...[
-                    _buildTag(widget.tags[i], i),
+                    _buildTag(context, widget.tags[i], i),
                     if (i != widget.tags.length - 1) const SizedBox(height: 8),
                   ],
                 ],
@@ -179,23 +200,26 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
     );
   }
 
-  Widget _buildTag(StickyTag tag, int index) {
+  Widget _buildTag(BuildContext context, StickyTag tag, int index) {
+    final appColors = context.appColors;
+    final tagBg = tag.backgroundColor ?? appColors.secondaryDark;
+    final tagFg = tag.textColor ?? appColors.accent;
     return GestureDetector(
       onTap: () => _openTag(index),
       child: Container(
         width: 32,
         constraints: const BoxConstraints(minHeight: 80),
         decoration: BoxDecoration(
-          color: tag.backgroundColor,
+          color: tagBg,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             bottomLeft: Radius.circular(12),
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Colors.black45,
+              color: appColors.shadow.withValues(alpha: 0.45),
               blurRadius: 8,
-              offset: Offset(2, 2),
+              offset: const Offset(2, 2),
             ),
           ],
         ),
@@ -207,7 +231,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
             child: Text(
               tag.text,
               style: TextStyle(
-                color: tag.textColor,
+                color: tagFg,
                 fontWeight: FontWeight.bold,
               ),
             ),

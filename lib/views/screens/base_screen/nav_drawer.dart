@@ -147,6 +147,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
             bottomRight: Radius.circular(16),
           ),
         ),
@@ -155,6 +156,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             color: theme.cardColor,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
             gradient: LinearGradient(

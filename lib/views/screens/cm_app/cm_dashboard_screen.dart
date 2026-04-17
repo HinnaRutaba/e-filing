@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -363,7 +364,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
           ),
           AppText.labelLarge(
             '${_currentPage + 1} / ${_summaries.length}',
-            color: AppColors.secondaryDark,
+            color: context.appColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
           _navButton(
@@ -386,8 +387,8 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     bool iconTrailing = false,
   }) {
     final color = enabled
-        ? AppColors.secondaryDark
-        : AppColors.secondaryDark.withValues(alpha: 0.35);
+        ? context.appColors.textPrimary
+        : context.appColors.textPrimary.withValues(alpha: 0.35);
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(999),

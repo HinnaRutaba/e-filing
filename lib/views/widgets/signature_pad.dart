@@ -94,7 +94,7 @@ class SignaturePad extends StatefulWidget {
   final List<Color> colors;
   final Color initialPenColor;
   final int initialPenIndex;
-  final double canvasHeight;
+  final double? canvasHeight;
   final Color canvasColor;
   final VoidCallback? onChanged;
   final VoidCallback? onDrawStart;
@@ -110,7 +110,7 @@ class SignaturePad extends StatefulWidget {
     this.colors = kDefaultSignatureColors,
     this.initialPenColor = const Color(0xFF0D2C6B),
     this.initialPenIndex = 0,
-    this.canvasHeight = 280,
+    this.canvasHeight,
     this.canvasColor = AppColors.cardColorLight,
     this.onChanged,
     this.onDrawStart,
@@ -228,7 +228,8 @@ class _SignaturePadState extends State<SignaturePad> {
         ],
         const SizedBox(height: 8),
         Container(
-          height: widget.canvasHeight,
+          height:
+              widget.canvasHeight ?? MediaQuery.sizeOf(context).height * 0.2,
           decoration: BoxDecoration(
             color: widget.canvasColor,
             borderRadius: BorderRadius.circular(10),
