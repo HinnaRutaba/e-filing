@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ChatParticipantModel {
+class DepartmentUserModel {
   final int? userDesignationId;
   final int? userId;
   final String? userTitle;
@@ -9,7 +9,7 @@ class ChatParticipantModel {
   final bool removed;
   final DateTime? removedAt;
 
-  ChatParticipantModel({
+  DepartmentUserModel({
     this.userDesignationId,
     this.userId,
     this.userTitle,
@@ -19,29 +19,30 @@ class ChatParticipantModel {
     this.removedAt,
   });
 
-  factory ChatParticipantModel.fromJson(Map<String, dynamic> json) {
-    return ChatParticipantModel(
+  factory DepartmentUserModel.fromJson(Map<String, dynamic> json) {
+    return DepartmentUserModel(
       userDesignationId: json['user_designation_id'] ?? 0,
       userId: json['user_id'] ?? '',
       userTitle: json['user_title'] ?? '',
       designation: json['designation'] ?? '',
       joinedAt: json['joined_at'] != null
           ? json['joined_at'] is Timestamp
-              ? (json['joined_at'] as Timestamp).toDate()
-              : DateTime.parse(json['joined_at'])
+                ? (json['joined_at'] as Timestamp).toDate()
+                : DateTime.parse(json['joined_at'])
           : null,
       removed: json['removed'] ?? false,
       removedAt: json['removed_at'] != null
           ? json['removed_at'] is Timestamp
-              ? (json['removed_at'] as Timestamp).toDate()
-              : DateTime.parse(json['removed_at'])
+                ? (json['removed_at'] as Timestamp).toDate()
+                : DateTime.parse(json['removed_at'])
           : null,
     );
   }
 
-  factory ChatParticipantModel.fromParticipantEndpoint(
-      Map<String, dynamic> json) {
-    return ChatParticipantModel(
+  factory DepartmentUserModel.fromParticipantEndpoint(
+    Map<String, dynamic> json,
+  ) {
+    return DepartmentUserModel(
       userDesignationId: json['userDesgId'] ?? 0,
       userId: json['userId'] ?? '',
       userTitle: json['userTitle'] ?? json['userName'] ?? '',
@@ -55,13 +56,13 @@ class ChatParticipantModel {
       'user_id': userId,
       'user_title': userTitle,
       'designation': designation,
-      'removed': removed  ,
+      'removed': removed,
       if (joinedAt != null) 'joined_at': Timestamp.fromDate(joinedAt!),
       if (removedAt != null) 'removed_at': Timestamp.fromDate(removedAt!),
     };
   }
 
-  ChatParticipantModel copyWith({
+  DepartmentUserModel copyWith({
     int? userDesignationId,
     int? userId,
     String? userTitle,
@@ -70,7 +71,7 @@ class ChatParticipantModel {
     bool? removed,
     DateTime? removedAt,
   }) {
-    return ChatParticipantModel(
+    return DepartmentUserModel(
       userDesignationId: userDesignationId ?? this.userDesignationId,
       userId: userId ?? this.userId,
       userTitle: userTitle ?? this.userTitle,

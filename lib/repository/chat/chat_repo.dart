@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/chat/chat_file_model.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_interface.dart';
 
@@ -23,7 +23,7 @@ class ChatRepo extends ChatInterface {
   }
 
   @override
-  Future<List<ChatParticipantModel>> getUsersForChat(int? userDesgId) async {
+  Future<List<DepartmentUserModel>> getUsersForChat(int? userDesgId) async {
     try {
       if (userDesgId == null) {
         throw Exception("Designation ID is required to fetch users");
@@ -33,8 +33,8 @@ class ChatRepo extends ChatInterface {
         options: await options(authRequired: true),
       );
       return data['data']!
-          .map<ChatParticipantModel>(
-            (e) => ChatParticipantModel.fromParticipantEndpoint(e),
+          .map<DepartmentUserModel>(
+            (e) => DepartmentUserModel.fromParticipantEndpoint(e),
           )
           .toList();
     } catch (e) {
@@ -43,21 +43,23 @@ class ChatRepo extends ChatInterface {
   }
 
   @override
-  Future<ChatFileModel> saveChatFile(
-      {required String filePath, required String fileName}) async {
+  Future<ChatFileModel> saveChatFile({
+    required String filePath,
+    required String fileName,
+  }) async {
     try {
       Map<String, dynamic> data = await dioClient.post(
         url: saveFileUrl(),
-        options:
-            await options(authRequired: true, isMultipartContentType: true),
-        formData: FormData.fromMap(
-          {
-            'chat_file': await MultipartFile.fromFile(
-              filePath,
-              filename: fileName,
-            ),
-          },
+        options: await options(
+          authRequired: true,
+          isMultipartContentType: true,
         ),
+        formData: FormData.fromMap({
+          'chat_file': await MultipartFile.fromFile(
+            filePath,
+            filename: fileName,
+          ),
+        }),
       );
       return ChatFileModel.fromJson(data['data']);
     } catch (e) {

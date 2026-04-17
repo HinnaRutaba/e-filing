@@ -1,13 +1,13 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 class DaakAttachmentCard extends StatelessWidget {
-  final DaakAttachmentModel? attachment;
+  final AttachmentModel? attachment;
   const DaakAttachmentCard({super.key, required this.attachment});
 
   @override

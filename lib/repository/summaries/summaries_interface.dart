@@ -1,6 +1,6 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
-import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 
 abstract class SummariesInterface extends NetworkBase {
   String fetchSummariesListUrl({

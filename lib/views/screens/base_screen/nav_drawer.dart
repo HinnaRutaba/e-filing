@@ -421,7 +421,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             },
             text: "Sign Out",
             icon: Icons.logout,
-            color: context.appColors.warning,
+            color: Colors.red[600],
           )
         else
           Padding(

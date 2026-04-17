@@ -1,6 +1,6 @@
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_interface.dart';
-import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 
 class SummariesRepo extends SummariesInterface {
   @override

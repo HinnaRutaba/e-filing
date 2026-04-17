@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
 
 import 'message_model.dart';
 
@@ -10,7 +10,7 @@ class ChatModel {
   final int? fileId;
   final String? fileBarCode;
   final DateTime createdAt;
-  final List<ChatParticipantModel> participants;
+  final List<DepartmentUserModel> participants;
   final MessageModel? lastMessage;
   final ChatType? type;
 
@@ -24,19 +24,25 @@ class ChatModel {
     this.type,
   });
 
-  List<ChatParticipantModel> get activeParticipants =>
+  List<DepartmentUserModel> get activeParticipants =>
       participants.where((e) => e.removed != true).toList();
 
-  factory ChatModel.fromJson(Map<String, dynamic> json, String docId,
-      {List<ChatParticipantModel>? participants}) {
+  factory ChatModel.fromJson(
+    Map<String, dynamic> json,
+    String docId, {
+    List<DepartmentUserModel>? participants,
+  }) {
     return ChatModel(
       id: docId,
       fileId: json['file_id'],
       createdAt: (json['created_at'] as Timestamp).toDate(),
-      participants: participants ??
+      participants:
+          participants ??
           (json['participants'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  ChatParticipantModel.fromJson(Map<String, dynamic>.from(p)))
+              .map(
+                (p) =>
+                    DepartmentUserModel.fromJson(Map<String, dynamic>.from(p)),
+              )
               .toList(),
       fileBarCode: json['file_barcode'],
       lastMessage: json['last_message'] != null

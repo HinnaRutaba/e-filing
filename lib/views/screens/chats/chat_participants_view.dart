@@ -4,7 +4,7 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -15,7 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatParticipantsView extends ConsumerStatefulWidget {
   final String chatId;
-  final List<ChatParticipantModel> participantsToAdd;
+  final List<DepartmentUserModel> participantsToAdd;
   final bool addMembers;
   final ChatService _chatService = ChatService();
 
@@ -43,17 +43,21 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
     _searchController = TextEditingController();
 
     // Initialize stream in initState
-    _chatSubscription =
-        widget._chatService.readChatStream(widget.chatId).listen((chatModel) {
-      setState(() {
-        _chatData = chatModel;
-        _isLoading = false;
-      });
-    }, onError: (error) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
+    _chatSubscription = widget._chatService
+        .readChatStream(widget.chatId)
+        .listen(
+          (chatModel) {
+            setState(() {
+              _chatData = chatModel;
+              _isLoading = false;
+            });
+          },
+          onError: (error) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
@@ -76,28 +80,36 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
     }
 
     final notInChatParticipants = widget.participantsToAdd
-        .where((p) => !_chatData.activeParticipants
-            .any((ap) => ap.userId == p.userId && !ap.removed))
+        .where(
+          (p) => !_chatData.activeParticipants.any(
+            (ap) => ap.userId == p.userId && !ap.removed,
+          ),
+        )
         .toList();
 
-    final activeParticipants = _chatData.activeParticipants
-        .where((ap) => !ap.removed)
-        .toList()
-      ..sort((a, b) => (b.joinedAt ?? DateTime.now())
-          .compareTo(a.joinedAt ?? DateTime.now()));
+    final activeParticipants =
+        _chatData.activeParticipants.where((ap) => !ap.removed).toList()..sort(
+          (a, b) => (b.joinedAt ?? DateTime.now()).compareTo(
+            a.joinedAt ?? DateTime.now(),
+          ),
+        );
 
     // Filter participants based on search
     final searchQuery = _searchController.text.toLowerCase();
     final filteredNotInChat = notInChatParticipants
-        .where((p) =>
-            (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
-            (p.designation?.toLowerCase().contains(searchQuery) ?? false))
+        .where(
+          (p) =>
+              (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
+              (p.designation?.toLowerCase().contains(searchQuery) ?? false),
+        )
         .toList();
 
     final filteredActive = activeParticipants
-        .where((p) =>
-            (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
-            (p.designation?.toLowerCase().contains(searchQuery) ?? false))
+        .where(
+          (p) =>
+              (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
+              (p.designation?.toLowerCase().contains(searchQuery) ?? false),
+        )
         .toList();
 
     return Column(
@@ -180,7 +192,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
 }
 
 class _NotAddedParticipantsWidget extends StatelessWidget {
-  final List<ChatParticipantModel> participants;
+  final List<DepartmentUserModel> participants;
   final ChatService chatService;
   final String chatId;
   final int uid;
@@ -216,8 +228,10 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
               final isCurrentUser = uid == participant.userId;
 
               return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 dense: true,
                 leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
@@ -237,7 +251,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    if (isCurrentUser) AppText.labelSmall("(You)")
+                    if (isCurrentUser) AppText.labelSmall("(You)"),
                   ],
                 ),
                 subtitle: Row(
@@ -245,7 +259,9 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
                           color: AppColors.cardColor,
@@ -286,7 +302,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
 }
 
 class _AddedParticipantsWidget extends StatelessWidget {
-  final List<ChatParticipantModel> participants;
+  final List<DepartmentUserModel> participants;
   final ChatService chatService;
   final String chatId;
   final int uid;
@@ -320,8 +336,10 @@ class _AddedParticipantsWidget extends StatelessWidget {
               final isCurrentUser = uid == participant.userId;
 
               return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 dense: true,
                 leading: CircleAvatar(
                   backgroundColor: AppColors.secondary,
@@ -341,7 +359,7 @@ class _AddedParticipantsWidget extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    if (isCurrentUser) AppText.labelSmall("(You)")
+                    if (isCurrentUser) AppText.labelSmall("(You)"),
                   ],
                 ),
                 subtitle: Row(
@@ -349,7 +367,9 @@ class _AddedParticipantsWidget extends StatelessWidget {
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
                           color: AppColors.cardColor,
@@ -379,8 +399,8 @@ class _AddedParticipantsWidget extends StatelessWidget {
                   },
                   text: isCurrentUser
                       ? participant.removed
-                          ? ""
-                          : "Leave"
+                            ? ""
+                            : "Leave"
                       : "Remove",
                   color: AppColors.error,
                   fontSize: 14,

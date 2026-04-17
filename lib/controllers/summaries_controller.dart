@@ -4,8 +4,39 @@ import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
-import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter/material.dart';
+
+enum SummaryMainTab {
+  actionRequired('Action Required', Icons.notifications_none_rounded),
+  sentTracked('Sent & Tracked', Icons.check_circle_outline_rounded),
+  archive('Archive', Icons.archive_outlined);
+
+  final String label;
+  final IconData icon;
+  const SummaryMainTab(this.label, this.icon);
+}
+
+enum SummarySubTab {
+  // Action Required
+  inbox('Inbox', SummaryMainTab.actionRequired, 'inbox'),
+  sharedToMe('Shared to me', SummaryMainTab.actionRequired, 'internal'),
+  drafts('Drafts', SummaryMainTab.actionRequired, 'my_drafts'),
+  disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
+
+  // Sent & Tracked
+  sentOut('Sent Out', SummaryMainTab.sentTracked, 'sent'),
+  sharedInternally(
+    'Shared Internally',
+    SummaryMainTab.sentTracked,
+    'internal_forwarded',
+  );
+
+  final String label;
+  final SummaryMainTab parent;
+  final String filterName;
+  const SummarySubTab(this.label, this.parent, this.filterName);
+}
 
 class SummariesState {
   final List<SummaryModel> allSummaries;

@@ -4,9 +4,9 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
@@ -61,13 +61,13 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
-  List<ChatParticipantModel> usersForChat = [];
+  List<DepartmentUserModel> usersForChat = [];
   String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
   XFile? disposeOffLetter;
 
-  ChatParticipantModel? forwardTo;
+  DepartmentUserModel? forwardTo;
   final TextEditingController forwardToController = TextEditingController();
   DaakAction selectedAction = DaakAction.forward;
 
@@ -121,7 +121,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   Future<void> fetchDetails() async {
     int? desgId = ref.read(authController).currentDesignation?.userDesgId;
-    List<ChatParticipantModel> users = await ref
+    List<DepartmentUserModel> users = await ref
         .read(chatRepo)
         .getUsersForChat(desgId);
     users.removeWhere((element) => element.userDesignationId == desgId);
@@ -269,7 +269,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         ),
                         const SizedBox(height: 4),
                         if (selectedAction == DaakAction.forward) ...[
-                          SearchDropDownField<ChatParticipantModel>(
+                          SearchDropDownField<DepartmentUserModel>(
                             suggestionsCallback: (pattern) {
                               return usersForChat
                                   .where(

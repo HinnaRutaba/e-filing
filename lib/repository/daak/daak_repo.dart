@@ -1,8 +1,8 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_interface.dart';
 import 'package:image_picker/image_picker.dart';
 

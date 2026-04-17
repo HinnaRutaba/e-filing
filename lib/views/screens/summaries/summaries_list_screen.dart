@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -14,37 +15,6 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-enum SummaryMainTab {
-  actionRequired('Action Required', Icons.notifications_none_rounded),
-  sentTracked('Sent & Tracked', Icons.check_circle_outline_rounded),
-  archive('Archive', Icons.archive_outlined);
-
-  final String label;
-  final IconData icon;
-  const SummaryMainTab(this.label, this.icon);
-}
-
-enum SummarySubTab {
-  // Action Required
-  inbox('Inbox', SummaryMainTab.actionRequired, 'inbox'),
-  sharedToMe('Shared to me', SummaryMainTab.actionRequired, 'internal'),
-  drafts('Drafts', SummaryMainTab.actionRequired, 'my_drafts'),
-  disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
-
-  // Sent & Tracked
-  sentOut('Sent Out', SummaryMainTab.sentTracked, 'sent'),
-  sharedInternally(
-    'Shared Internally',
-    SummaryMainTab.sentTracked,
-    'internal_forwarded',
-  );
-
-  final String label;
-  final SummaryMainTab parent;
-  final String filterName;
-  const SummarySubTab(this.label, this.parent, this.filterName);
-}
 
 class SummariesListScreen extends ConsumerStatefulWidget {
   const SummariesListScreen({super.key});

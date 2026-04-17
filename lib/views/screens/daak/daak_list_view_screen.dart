@@ -3,7 +3,7 @@ import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/daak_controller.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';

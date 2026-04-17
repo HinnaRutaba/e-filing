@@ -1,7 +1,7 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/models/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
@@ -169,7 +169,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final TextEditingController _shareSearchController = TextEditingController();
   final QuillEditorController _editDraftController = QuillEditorController();
   late String _currentHtml;
-  ChatParticipantModel? _shareTarget;
+  DepartmentUserModel? _shareTarget;
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
@@ -186,28 +186,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   );
   final TextEditingController _destOfficerController = TextEditingController();
 
-  static final List<ChatParticipantModel> _demoDeptMembers = [
-    ChatParticipantModel(
+  static final List<DepartmentUserModel> _demoDeptMembers = [
+    DepartmentUserModel(
       userId: 101,
       userTitle: 'Ms. Ayesha Khan',
       designation: 'Deputy Secretary (Home)',
     ),
-    ChatParticipantModel(
+    DepartmentUserModel(
       userId: 102,
       userTitle: 'Mr. Bilal Ahmed',
       designation: 'Section Officer (Home-I)',
     ),
-    ChatParticipantModel(
+    DepartmentUserModel(
       userId: 103,
       userTitle: 'Ms. Fariha Malik',
       designation: 'Additional Secretary (Home)',
     ),
-    ChatParticipantModel(
+    DepartmentUserModel(
       userId: 104,
       userTitle: 'Mr. Usman Tariq',
       designation: 'Section Officer (Home-II)',
     ),
-    ChatParticipantModel(
+    DepartmentUserModel(
       userId: 105,
       userTitle: 'Ms. Sara Javed',
       designation: 'Deputy Secretary (Admin)',
@@ -682,7 +682,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SearchDropDownField<ChatParticipantModel>(
+        SearchDropDownField<DepartmentUserModel>(
           controller: _shareSearchController,
           labelText: 'Select Department Members',
           hintText: 'Search users…',

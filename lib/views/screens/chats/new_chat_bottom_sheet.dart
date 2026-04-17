@@ -3,7 +3,7 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -22,9 +22,9 @@ class NewChatBottomSheet extends ConsumerStatefulWidget {
 
 class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   late TextEditingController _searchController;
-  List<ChatParticipantModel> _allParticipants = [];
-  List<ChatParticipantModel> _filteredParticipants = [];
-  ChatParticipantModel? _selectedParticipant;
+  List<DepartmentUserModel> _allParticipants = [];
+  List<DepartmentUserModel> _filteredParticipants = [];
+  DepartmentUserModel? _selectedParticipant;
   bool _isLoading = true;
   bool _isCreatingChat = false;
   final ChatService _chatService = ChatService();
@@ -52,8 +52,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
           .getUsersForChat(currentUser.currentDesignation!.userDesgId!);
 
       // Filter out the current user from the list
-      _allParticipants =
-          participants.where((p) => p.userId != currentUser.id).toList();
+      _allParticipants = participants
+          .where((p) => p.userId != currentUser.id)
+          .toList();
 
       _filteredParticipants = List.from(_allParticipants);
 
@@ -61,9 +62,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading users: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading users: $e')));
       }
     }
   }
@@ -74,11 +75,13 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
         _filteredParticipants = List.from(_allParticipants);
       } else {
         _filteredParticipants = _allParticipants
-            .where((p) =>
-                (p.userTitle?.toLowerCase().contains(query.toLowerCase()) ??
-                    false) ||
-                (p.designation?.toLowerCase().contains(query.toLowerCase()) ??
-                    false))
+            .where(
+              (p) =>
+                  (p.userTitle?.toLowerCase().contains(query.toLowerCase()) ??
+                      false) ||
+                  (p.designation?.toLowerCase().contains(query.toLowerCase()) ??
+                      false),
+            )
             .toList();
       }
 
@@ -90,7 +93,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     });
   }
 
-  void _selectParticipant(ChatParticipantModel participant) {
+  void _selectParticipant(DepartmentUserModel participant) {
     setState(() {
       // Toggle selection - if same participant is selected, deselect them
       if (_selectedParticipant?.userId == participant.userId &&
@@ -109,7 +112,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     await _createChatWithUser(_selectedParticipant!);
   }
 
-  Future<void> _createChatWithUser(ChatParticipantModel selectedUser) async {
+  Future<void> _createChatWithUser(DepartmentUserModel selectedUser) async {
     try {
       setState(() => _isCreatingChat = true);
 
@@ -127,7 +130,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
         chatId = existingChatId;
       } else {
         final participants = [
-          ChatParticipantModel(
+          DepartmentUserModel(
             userDesignationId: currentUser.currentDesignation!.userDesgId!,
             userId: currentUser.id!,
             userTitle: currentUser.userTitle!,
@@ -159,9 +162,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     } catch (e) {
       setState(() => _isCreatingChat = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating chat: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error creating chat: $e')));
       }
     }
   }
@@ -204,8 +207,10 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     ),
                     IconButton(
                       onPressed: () => RouteHelper.pop(),
-                      icon: const Icon(Icons.close,
-                          color: AppColors.textSecondary),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -243,135 +248,142 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredParticipants.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_search,
-                                size: 64,
-                                color: Colors.grey[400],
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_search,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          AppText.titleMedium(
+                            _searchController.text.isEmpty
+                                ? 'No users available'
+                                : 'No users found',
+                            color: AppColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredParticipants.length,
+                    itemBuilder: (context, index) {
+                      final participant = _filteredParticipants[index];
+                      final isSelected =
+                          _selectedParticipant?.userId == participant.userId &&
+                          _selectedParticipant?.userDesignationId ==
+                              participant.userDesignationId;
+                      final isOtherSelected =
+                          _selectedParticipant != null && !isSelected;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 100),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 0,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primaryDark.withAlpha(12)
+                              : null,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isSelected
+                              ? Border.all(
+                                  color: AppColors.primaryDark,
+                                  width: 1.2,
+                                )
+                              : null,
+                        ),
+                        child: Opacity(
+                          opacity: isOtherSelected ? 0.4 : 1.0,
+                          child: ListTile(
+                            contentPadding: isSelected
+                                ? const EdgeInsets.symmetric(horizontal: 8)
+                                : const EdgeInsets.all(0),
+                            horizontalTitleGap: 8,
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? AppColors.primaryDark
+                                  : AppColors.secondary,
+                              radius: 16,
+                              child: AppText.titleLarge(
+                                HelperUtils.firstTwoLetters(
+                                  participant.userTitle ?? '',
+                                ),
+                                color: Colors.white,
+                                fontSize: 14,
                               ),
-                              const SizedBox(height: 16),
-                              AppText.titleMedium(
-                                _searchController.text.isEmpty
-                                    ? 'No users available'
-                                    : 'No users found',
-                                color: AppColors.textSecondary,
+                            ),
+                            title: AppText.titleMedium(
+                              participant.userTitle ?? 'Unknown User',
+                              fontSize: 16,
+                              color: isSelected ? AppColors.primaryDark : null,
+                            ),
+                            subtitle: Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.primaryDark.withOpacity(
+                                                0.1,
+                                              )
+                                            : AppColors.cardColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: isSelected
+                                            ? Border.all(
+                                                color: AppColors.primaryDark
+                                                    .withOpacity(0.3),
+                                              )
+                                            : null,
+                                      ),
+                                      child: AppText.labelMedium(
+                                        participant.designation ?? '',
+                                        fontSize: 12,
+                                        color: isSelected
+                                            ? AppColors.primaryDark
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primaryDark,
+                                  )
+                                : const Icon(
+                                    Icons.add_circle_outline,
+                                    color: AppColors.textSecondary,
+                                  ),
+                            onTap: () {
+                              HelperUtils.hideKeyboard(context);
+                              _selectParticipant(participant);
+                            },
                           ),
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredParticipants.length,
-                        itemBuilder: (context, index) {
-                          final participant = _filteredParticipants[index];
-                          final isSelected = _selectedParticipant?.userId ==
-                                  participant.userId &&
-                              _selectedParticipant?.userDesignationId ==
-                                  participant.userDesignationId;
-                          final isOtherSelected =
-                              _selectedParticipant != null && !isSelected;
-
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 100),
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 0, vertical: 0),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primaryDark.withAlpha(12)
-                                  : null,
-                              borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppColors.primaryDark, width: 1.2)
-                                  : null,
-                            ),
-                            child: Opacity(
-                              opacity: isOtherSelected ? 0.4 : 1.0,
-                              child: ListTile(
-                                contentPadding: isSelected
-                                    ? const EdgeInsets.symmetric(horizontal: 8)
-                                    : const EdgeInsets.all(0),
-                                horizontalTitleGap: 8,
-                                leading: CircleAvatar(
-                                  backgroundColor: isSelected
-                                      ? AppColors.primaryDark
-                                      : AppColors.secondary,
-                                  radius: 16,
-                                  child: AppText.titleLarge(
-                                    HelperUtils.firstTwoLetters(
-                                        participant.userTitle ?? ''),
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                title: AppText.titleMedium(
-                                  participant.userTitle ?? 'Unknown User',
-                                  fontSize: 16,
-                                  color:
-                                      isSelected ? AppColors.primaryDark : null,
-                                ),
-                                subtitle: Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? AppColors.primaryDark
-                                                    .withOpacity(0.1)
-                                                : AppColors.cardColor,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: isSelected
-                                                ? Border.all(
-                                                    color: AppColors.primaryDark
-                                                        .withOpacity(0.3))
-                                                : null,
-                                          ),
-                                          child: AppText.labelMedium(
-                                            participant.designation ?? '',
-                                            fontSize: 12,
-                                            color: isSelected
-                                                ? AppColors.primaryDark
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                trailing: isSelected
-                                    ? const Icon(
-                                        Icons.check_circle,
-                                        color: AppColors.primaryDark,
-                                      )
-                                    : const Icon(
-                                        Icons.add_circle_outline,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                onTap: () {
-                                  HelperUtils.hideKeyboard(context);
-                                  _selectParticipant(participant);
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        separatorBuilder: (_, __) => const Divider(
-                          color: AppColors.cardColor,
-                          thickness: 1,
-                          height: 1,
-                        ),
-                      ),
+                      );
+                    },
+                    separatorBuilder: (_, __) => const Divider(
+                      color: AppColors.cardColor,
+                      thickness: 1,
+                      height: 1,
+                    ),
+                  ),
           ),
 
           // Bottom button
@@ -379,9 +391,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey[200]!),
-              ),
+              border: Border(top: BorderSide(color: Colors.grey[200]!)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -393,13 +403,13 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                       : null,
                   backgroundColor:
                       (_selectedParticipant != null && !_isCreatingChat)
-                          ? AppColors.primary
-                          : AppColors.disabled,
+                      ? AppColors.primary
+                      : AppColors.disabled,
                   text: _isCreatingChat
                       ? 'Creating Chat...'
                       : _selectedParticipant != null
-                          ? 'Start Chat with ${_selectedParticipant!.userTitle}'
-                          : 'Select a user to start chat',
+                      ? 'Start Chat with ${_selectedParticipant!.userTitle}'
+                      : 'Select a user to start chat',
                 ),
               ),
             ),
