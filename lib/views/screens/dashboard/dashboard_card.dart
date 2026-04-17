@@ -139,7 +139,7 @@ class DashboardCard extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14.8),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Stack(
                 children: [
                   Positioned.fill(
