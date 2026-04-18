@@ -16,7 +16,15 @@ class SummaryCard extends StatelessWidget {
     final bool isDark = theme.brightness == Brightness.dark;
     final statusColor = item.statusBadge ?? Colors.grey;
 
-    final statusBg = statusColor.withValues(alpha: 0.12);
+    final bool isReturnedToOriginator =
+        item.statusCode == 7 &&
+        item.originatingUser != null &&
+        item.originatingUser?.trim() == item.currentHolder?.trim();
+    const Color highlightColor = Color(0xFFDC2626);
+
+    final statusBg = isReturnedToOriginator
+        ? highlightColor.withValues(alpha: isDark ? 0.32 : 0.22)
+        : statusColor.withValues(alpha: 0.12);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -24,10 +32,12 @@ class SummaryCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: appColors.secondaryLight.withValues(
-            alpha: isDark ? 0.25 : 0.18,
-          ),
-          width: 0.8,
+          color: isReturnedToOriginator
+              ? highlightColor.withValues(alpha: isDark ? 0.9 : 0.8)
+              : appColors.secondaryLight.withValues(
+                  alpha: isDark ? 0.25 : 0.18,
+                ),
+          width: isReturnedToOriginator ? 1.6 : 0.8,
         ),
         boxShadow: [
           BoxShadow(
@@ -43,6 +53,7 @@ class SummaryCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
+            debugPrint('Tapped summary ${item.id}');
             RouteHelper.push(Routes.summaryDetails, extra: item);
           },
           child: Column(

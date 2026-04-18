@@ -21,7 +21,12 @@ enum SummarySubTab {
   // Action Required
   inbox('Inbox', SummaryMainTab.actionRequired, 'inbox'),
   sharedToMe('Shared to me', SummaryMainTab.actionRequired, 'internal'),
-  drafts('Drafts', SummaryMainTab.actionRequired, 'my_drafts'),
+  drafts(
+    'Drafts',
+    SummaryMainTab.actionRequired,
+    'draft',
+    //'my_drafts',
+  ),
   disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
 
   // Sent & Tracked

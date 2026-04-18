@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 
 abstract class SummariesInterface extends NetworkBase {
+
   String fetchSummariesListUrl({
     required int desId,
     required SummarySubTab subTab,
@@ -14,6 +15,8 @@ abstract class SummariesInterface extends NetworkBase {
     }
     return url;
   }
+
+  String summaryDetailsUrl(int summaryId, int desId) => '${baseUrl}summaries/$summaryId?userDesgID=$desId';
 
 
   Future<List<SummaryModel>> fetchSummariesList({
