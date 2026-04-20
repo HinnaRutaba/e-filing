@@ -57,7 +57,6 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   String get _department => _s.originatingDepartment ?? '';
   String get _subject => _s.subject ?? '';
   String get _htmlContent => _s.body ?? '';
-  String get _destination => _s.draftTargetDepartment ?? '';
 
   @override
   Widget build(BuildContext context) {

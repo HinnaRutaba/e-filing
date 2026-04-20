@@ -10,7 +10,7 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
-import 'package:efiling_balochistan/views/screens/summaries/components/departmental_correspondence_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/internal_forward_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
@@ -1067,8 +1067,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ?.summary
           ?.currentHolder,
     );
-    final internal = DepartmentalCorrespondenceSection(
-      entries:
+
+    final internal = InternalForwardSection(
+      forwards:
           ref.read(summariesController).details?.internalForwards ?? const [],
     );
     final files = InternalFilesSection(
