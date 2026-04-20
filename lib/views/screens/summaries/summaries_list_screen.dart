@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
@@ -153,15 +154,15 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
                       child: visibleItems.isEmpty
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
-                              children: const [
-                                SizedBox(height: 120),
+                              children: [
+                                const SizedBox(height: 120),
                                 Icon(
                                   Icons.inbox_outlined,
                                   size: 56,
-                                  color: Colors.black26,
+                                  color: context.appColors.textSecondary,
                                 ),
-                                SizedBox(height: 12),
-                                Center(child: Text('No summaries yet')),
+                                const SizedBox(height: 12),
+                                const Center(child: Text('No summaries yet')),
                               ],
                             )
                           : Builder(
@@ -325,22 +326,30 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   }
 
   Widget _helperBanner(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark
+        ? const Color(0xFF3B2A0E)
+        : const Color(0xFFFFF7EC);
+    final borderColor = isDark
+        ? const Color(0xFF8A5A1A)
+        : const Color(0xFFF1C99A);
+    final textColor = isDark
+        ? const Color(0xFFE8C07A)
+        : const Color(0xFF8A4B08);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7EC),
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1C99A)),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: Color(0xFFB45309), size: 20),
+          Icon(Icons.info_outline, color: textColor, size: 20),
           const SizedBox(width: 8),
-          Expanded(
-            child: AppText.bodySmall(text, color: const Color(0xFF8A4B08)),
-          ),
+          Expanded(child: AppText.bodySmall(text, color: textColor)),
         ],
       ),
     );
@@ -360,6 +369,7 @@ class _SubTabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -367,16 +377,18 @@ class _SubTabChip extends StatelessWidget {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: selected ? AppColors.primary : appColors.cardColorLight,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : Colors.grey.shade300,
+            color: selected
+                ? AppColors.primary
+                : appColors.secondaryLight.withValues(alpha: 0.35),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.black54,
+            color: selected ? Colors.white : appColors.textPrimary,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
