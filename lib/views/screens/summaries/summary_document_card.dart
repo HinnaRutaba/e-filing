@@ -177,16 +177,6 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                     const SizedBox(height: 10),
                     _signaturePad(),
                   ],
-                  const SizedBox(height: 24),
-                  if (_destination.isNotEmpty)
-                    AppText.bodyMedium(
-                      _destination,
-                      fontWeight: FontWeight.w700,
-                      underline: true,
-                      color: AppColors.textPrimary,
-                      fontFamily: fileFont,
-                    ),
-                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -259,7 +249,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
     final hasSignature = (track.signatureUrl ?? '').isNotEmpty;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (hasHtmlRemarks)
           Padding(
@@ -314,23 +304,31 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                   fontSize: 12,
                   fontFamily: fileFont,
                 ),
-              if ((track.toDepartment ?? '').isNotEmpty &&
-                  track.toDepartment != track.fromDepartment)
-                AppText.bodySmall(
-                  'To: ${track.toDepartment}',
-                  color: Colors.grey[900],
-                  fontSize: 12,
-                  fontFamily: fileFont,
+              if (track.actedAtDisplay != null)
+                AppText.labelSmall(track.actedAtDisplay!),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.bodyMedium(
+                      track.toUserDesignation ?? '',
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      fontFamily: fileFont,
+                    ),
+
+                    AppText.bodySmall(
+                      '${track.toDepartment}',
+                      color: Colors.grey[900],
+                      fontSize: 12,
+                      fontFamily: fileFont,
+                    ),
+                  ],
                 ),
-              if ((track.actionLabel ?? '').isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: AppText.labelSmall(
-                    track.actionLabel!.toUpperCase(),
-                    color: AppColors.secondaryDark,
-                    fontFamily: fileFont,
-                  ),
-                ),
+              ),
             ],
           ),
         ),

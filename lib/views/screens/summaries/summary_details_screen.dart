@@ -151,15 +151,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             : Column(
                 children: [
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.all(context.isMobile ? 12 : 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _documentCard(),
-                          const SizedBox(height: 16),
-                          _sidebar(),
-                        ],
+                    child: RefreshIndicator(
+                      onRefresh: _loadDetails,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.all(context.isMobile ? 12 : 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _documentCard(),
+                            const SizedBox(height: 16),
+                            _sidebar(),
+                          ],
+                        ),
                       ),
                     ),
                   ),

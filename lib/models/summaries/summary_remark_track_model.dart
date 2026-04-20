@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
+import 'package:flutter/material.dart';
 
 class SummaryRemarkTrackModel {
   final int? movementId;
@@ -18,6 +19,28 @@ class SummaryRemarkTrackModel {
   final String? handwrittenPngApiUrl;
   final String? handwrittenStrokesUrl;
   final HandwrittenStrokes? handwrittenStrokes;
+  final double? handwrittenWidth;
+  final double? handwrittenHeight;
+  final Color? handwrittenPenColor;
+  final DateTime? actedAt;
+  final String? actedAtDisplay;
+
+  static Color? _parseHexColor(String? hex) {
+    if (hex == null) return null;
+    var value = hex.trim();
+    if (value.isEmpty) return null;
+    if (value.startsWith('#')) value = value.substring(1);
+    if (value.length == 6) value = 'FF$value';
+    if (value.length != 8) return null;
+    final parsed = int.tryParse(value, radix: 16);
+    return parsed == null ? null : Color(parsed);
+  }
+
+  static String? _colorToHex(Color? color) {
+    if (color == null) return null;
+    final argb = color.toARGB32();
+    return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
+  }
 
   SummaryRemarkTrackModel({
     this.movementId,
@@ -37,6 +60,11 @@ class SummaryRemarkTrackModel {
     this.handwrittenPngApiUrl,
     this.handwrittenStrokesUrl,
     this.handwrittenStrokes,
+    this.handwrittenWidth,
+    this.handwrittenHeight,
+    this.handwrittenPenColor,
+    this.actedAt,
+    this.actedAtDisplay,
   });
 
   SummaryRemarkTrackModel copyWith({
@@ -57,6 +85,11 @@ class SummaryRemarkTrackModel {
     String? handwrittenPngApiUrl,
     String? handwrittenStrokesUrl,
     HandwrittenStrokes? handwrittenStrokes,
+    double? handwrittenWidth,
+    double? handwrittenHeight,
+    Color? handwrittenPenColor,
+    DateTime? actedAt,
+    String? actedAtDisplay,
   }) {
     return SummaryRemarkTrackModel(
       movementId: movementId ?? this.movementId,
@@ -77,6 +110,11 @@ class SummaryRemarkTrackModel {
       handwrittenStrokesUrl:
           handwrittenStrokesUrl ?? this.handwrittenStrokesUrl,
       handwrittenStrokes: handwrittenStrokes ?? this.handwrittenStrokes,
+      handwrittenWidth: handwrittenWidth ?? this.handwrittenWidth,
+      handwrittenHeight: handwrittenHeight ?? this.handwrittenHeight,
+      handwrittenPenColor: handwrittenPenColor ?? this.handwrittenPenColor,
+      actedAt: actedAt ?? this.actedAt,
+      actedAtDisplay: actedAtDisplay ?? this.actedAtDisplay,
     );
   }
 
@@ -99,6 +137,12 @@ class SummaryRemarkTrackModel {
       SummaryRemarkTrackSchema.handwrittenPngApiUrl: handwrittenPngApiUrl,
       SummaryRemarkTrackSchema.handwrittenStrokesUrl: handwrittenStrokesUrl,
       SummaryRemarkTrackSchema.handwrittenStrokes: handwrittenStrokes?.toJson(),
+      SummaryRemarkTrackSchema.handwrittenWidth: handwrittenWidth,
+      SummaryRemarkTrackSchema.handwrittenHeight: handwrittenHeight,
+      SummaryRemarkTrackSchema.handwrittenPenColor:
+          _colorToHex(handwrittenPenColor),
+      SummaryRemarkTrackSchema.actedAt: actedAt?.toIso8601String(),
+      SummaryRemarkTrackSchema.actedAtDisplay: actedAtDisplay,
     };
   }
 
@@ -129,6 +173,18 @@ class SummaryRemarkTrackModel {
                   ),
                 )
               : null,
+      handwrittenWidth: (map[SummaryRemarkTrackSchema.handwrittenWidth]
+              as num?)
+          ?.toDouble(),
+      handwrittenHeight: (map[SummaryRemarkTrackSchema.handwrittenHeight]
+              as num?)
+          ?.toDouble(),
+      handwrittenPenColor:
+          _parseHexColor(map[SummaryRemarkTrackSchema.handwrittenPenColor]),
+      actedAt: map[SummaryRemarkTrackSchema.actedAt] != null
+          ? DateTime.tryParse(map[SummaryRemarkTrackSchema.actedAt])
+          : null,
+      actedAtDisplay: map[SummaryRemarkTrackSchema.actedAtDisplay],
     );
   }
 
@@ -153,7 +209,12 @@ class SummaryRemarkTrackModel {
         other.handwrittenPngUrl == handwrittenPngUrl &&
         other.handwrittenPngApiUrl == handwrittenPngApiUrl &&
         other.handwrittenStrokesUrl == handwrittenStrokesUrl &&
-        other.handwrittenStrokes == handwrittenStrokes;
+        other.handwrittenStrokes == handwrittenStrokes &&
+        other.handwrittenWidth == handwrittenWidth &&
+        other.handwrittenHeight == handwrittenHeight &&
+        other.handwrittenPenColor == handwrittenPenColor &&
+        other.actedAt == actedAt &&
+        other.actedAtDisplay == actedAtDisplay;
   }
 
   @override
@@ -174,7 +235,12 @@ class SummaryRemarkTrackModel {
         handwrittenPngUrl.hashCode ^
         handwrittenPngApiUrl.hashCode ^
         handwrittenStrokesUrl.hashCode ^
-        handwrittenStrokes.hashCode;
+        handwrittenStrokes.hashCode ^
+        handwrittenWidth.hashCode ^
+        handwrittenHeight.hashCode ^
+        handwrittenPenColor.hashCode ^
+        actedAt.hashCode ^
+        actedAtDisplay.hashCode;
   }
 }
 
@@ -196,4 +262,9 @@ class SummaryRemarkTrackSchema {
   static const String handwrittenPngApiUrl = 'handwritten_png_api_url';
   static const String handwrittenStrokesUrl = 'handwritten_strokes_url';
   static const String handwrittenStrokes = 'handwritten_strokes';
+  static const String handwrittenWidth = 'handwritten_width';
+  static const String handwrittenHeight = 'handwritten_height';
+  static const String handwrittenPenColor = 'handwritten_pen_color';
+  static const String actedAt = 'acted_at';
+  static const String actedAtDisplay = 'acted_at_display';
 }
