@@ -56,6 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       RouteHelper.navigateTo(Routes.login);
       return;
     }
+    
     await ctrl.fetchLoggedInUser();
     ctrl.getOpenAIToken();
     DesignationModel? designation = await ctrl.fetchDesignation();
@@ -63,6 +64,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       RouteHelper.navigateTo(Routes.login);
       return;
     }
+    ref.read(summariesController.notifier).fetchSummariesMeta();
     RouteHelper.navigateTo(Routes.dashboard);
   }
 

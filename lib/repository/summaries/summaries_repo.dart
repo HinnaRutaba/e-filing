@@ -53,8 +53,11 @@ class SummariesRepo extends SummariesInterface {
   }
 
   @override
-  Future<SummariesMetaModel> fetchSummariesMeta({required int desId}) async {
+  Future<SummariesMetaModel> fetchSummariesMeta({required int? desId}) async {
     try {
+      if(desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
       Map<String, dynamic> data = await dioClient.get(
         url: summaryMetaUrl(desId),
         options: await options(authRequired: true),

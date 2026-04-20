@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -50,6 +51,7 @@ class SummariesState {
   final bool isLoading;
   final SummaryMainTab selectedMainTab;
   final SummarySubTab selectedSubTab;
+  final SummariesMetaModel? meta;
 
   SummariesState({
     required this.allSummaries,
@@ -58,6 +60,7 @@ class SummariesState {
     this.selectedMainTab = SummaryMainTab.actionRequired,
     this.selectedSubTab = SummarySubTab.inbox,
     this.isLoading = false,
+    this.meta,
   }) : filteredSummaries = filteredSummaries ?? allSummaries;
 
   SummariesState copyWith({
@@ -67,6 +70,7 @@ class SummariesState {
     SummaryMainTab? selectedMainTab,
     SummarySubTab? selectedSubTab,
     bool? isLoading,
+    SummariesMetaModel? meta,
   }) {
     return SummariesState(
       allSummaries: allSummaries ?? this.allSummaries,
@@ -75,6 +79,7 @@ class SummariesState {
       selectedMainTab: selectedMainTab ?? this.selectedMainTab,
       selectedSubTab: selectedSubTab ?? this.selectedSubTab,
       isLoading: isLoading ?? this.isLoading,
+      meta: meta ?? this.meta,
     );
   }
 
@@ -98,8 +103,23 @@ class SummariesController extends BaseControllerState<SummariesState> {
   Future<void> loadData({bool isInitialLoad = false}) async {
     if (isInitialLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
-    await fetchSummariesList(desId: desId);
+     await fetchSummariesList(desId: desId);
     if (isInitialLoad) state = state.copyWith(isLoading: false);
+  }
+
+  SummariesMetaModel? get meta => state.meta;
+
+  Future<SummariesMetaModel?> fetchSummariesMeta() async {
+    try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      final meta = await repo.fetchSummariesMeta(desId: desId);
+      state = state.copyWith(meta: meta);
+      return meta;
+    } catch (e, s) {
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return null;
+    }
   }
 
   void resetData() {
