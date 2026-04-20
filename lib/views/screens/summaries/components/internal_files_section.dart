@@ -221,7 +221,30 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    if (linkedBy != null) AppText.labelSmall(linkedBy),
+                    if (linkedBy != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: appColors.secondaryLight.withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: appColors.secondaryLight.withValues(
+                              alpha: 0.35,
+                            ),
+                          ),
+                        ),
+                        child: AppText.labelSmall(
+                          linkedBy,
+                          color: appColors.secondaryLight,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                   ],
                 ),
                 if (subtitle.isNotEmpty)
