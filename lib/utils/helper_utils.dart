@@ -1,7 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+enum FileMimeType {
+  pdf,
+  jpg,
+  jpeg,
+  png,
+  gif,
+  webp,
+  svg,
+  mp4,
+  mov,
+  avi,
+  mkv,
+  mp3,
+  wav,
+  aac,
+  doc,
+  docx,
+  xls,
+  xlsx,
+  ppt,
+  pptx,
+  txt,
+  csv,
+  zip,
+  rar,
+  unknown,
+}
+
+enum FileCategory { image, video, pdf, file }
+
 class HelperUtils {
+  static const _imageTypes = {
+    FileMimeType.jpg,
+    FileMimeType.jpeg,
+    FileMimeType.png,
+    FileMimeType.gif,
+    FileMimeType.webp,
+    FileMimeType.svg,
+  };
+
+  static const _videoTypes = {
+    FileMimeType.mp4,
+    FileMimeType.mov,
+    FileMimeType.avi,
+    FileMimeType.mkv,
+  };
+
   static void hideKeyboard(BuildContext context) {
     FocusScope.of(context).unfocus();
     SystemChannels.textInput.invokeMethod('TextInput.hide');
@@ -48,5 +94,29 @@ class HelperUtils {
       tagColor = Colors.black;
     }
     return tagColor;
+  }
+
+  static FileMimeType getFileTypeFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final path = uri.path;
+      final lastDot = path.lastIndexOf('.');
+      if (lastDot != -1 && lastDot < path.length - 1) {
+        final ext = path.substring(lastDot + 1).toLowerCase();
+        return FileMimeType.values.firstWhere(
+          (e) => e.name == ext,
+          orElse: () => FileMimeType.unknown,
+        );
+      }
+    } catch (_) {}
+    return FileMimeType.unknown;
+  }
+
+  static FileCategory getFileCategoryFromUrl(String url) {
+    final type = getFileTypeFromUrl(url);
+    if (_imageTypes.contains(type)) return FileCategory.image;
+    if (_videoTypes.contains(type)) return FileCategory.video;
+    if (type == FileMimeType.pdf) return FileCategory.pdf;
+    return FileCategory.file;
   }
 }

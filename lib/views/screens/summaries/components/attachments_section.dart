@@ -12,7 +12,6 @@ import 'package:image_picker/image_picker.dart';
 class AttachmentsSection extends StatefulWidget {
   final XFile? mainPdf;
   final List<AttachmentModel> attachments;
-  final VoidCallback onViewMainPdf;
   final ValueChanged<AttachmentModel> onViewAttachment;
   final ValueChanged<AttachmentModel> onDeleteAttachment;
   final ValueChanged<FlagAndAttachmentModel>? onAddAttachment;
@@ -21,7 +20,6 @@ class AttachmentsSection extends StatefulWidget {
     super.key,
     required this.mainPdf,
     required this.attachments,
-    required this.onViewMainPdf,
     required this.onViewAttachment,
     required this.onDeleteAttachment,
     this.onAddAttachment,
@@ -72,7 +70,9 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                   label: 'Main Summary PDF',
                   fileName: widget.mainPdf!.name,
                   isMain: true,
-                  onView: widget.onViewMainPdf,
+                  onView: () {
+                    //widget.onViewAttachment(widget.mainPdf!)
+                  },
                 )
                 .animate()
                 .fadeIn(duration: 300.ms, curve: Curves.easeOut)
@@ -98,11 +98,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     );
   }
 
-  Widget _buildAttachmentRow(
-    AttachmentModel item,
-    int index,
-    bool hasMain,
-  ) {
+  Widget _buildAttachmentRow(AttachmentModel item, int index, bool hasMain) {
     final parsed = _parseFlagAndName(item);
     return _attachmentRow(
           label: parsed.flag ?? '',
@@ -157,10 +153,14 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               height: 22,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.12),
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.4),
                 ),
               ),
               child: AppText.bodySmall(
@@ -355,14 +355,20 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
           ),
           title: Row(
             children: [
-              Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
+              Icon(
+                Icons.delete_forever,
+                color: Theme.of(context).colorScheme.error,
+              ),
               const SizedBox(width: 10),
               const Expanded(child: Text('Delete attachment?')),
             ],
           ),
           content: RichText(
             text: TextSpan(
-              style: TextStyle(color: context.appColors.textPrimary, fontSize: 13),
+              style: TextStyle(
+                color: context.appColors.textPrimary,
+                fontSize: 13,
+              ),
               children: [
                 const TextSpan(text: 'Are you sure you want to delete '),
                 TextSpan(

@@ -3,8 +3,12 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/internal_user_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/utils/file_picker_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
+import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/departmental_correspondence_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
@@ -15,6 +19,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -996,8 +1001,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _documentCard() {
     final details = ref.read(summariesController).details;
-    final baseSummary =
-        details?.summary ?? widget.summary ?? SummaryModel();
+    final baseSummary = details?.summary ?? widget.summary ?? SummaryModel();
     final summary = baseSummary.copyWith(body: _currentHtml);
     return SummaryDocumentCard(
       summary: summary,
@@ -1009,18 +1013,63 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   Widget _sidebar() {
     final attachments = AttachmentsSection(
       mainPdf: null,
-      attachments: ref.read(summariesController).details?.attachments ?? const [],
-      onViewMainPdf: () {},
-      onViewAttachment: (_) {},
+      attachments:
+          ref.read(summariesController).details?.attachments ?? const [],
+
+      onViewAttachment: (attachment) {
+        if (attachment.fileUrl == null) {
+          Toast.error(message: 'No file URL found for this attachment.');
+          return;
+        }
+        FileCategory category = HelperUtils.getFileCategoryFromUrl(
+          attachment.fileUrl!,
+        );
+        if (category == FileCategory.pdf) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PdfViewer(
+                url: attachment.fileUrl,
+                title: attachment.originalName ?? 'Attachment',
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (category == FileCategory.image) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GalleryView(
+                imageUrls: [attachment.fileUrl!],
+                initialIndex: 0,
+              ),
+            ),
+          );
+          return;
+        }
+
+        FilePickerService().downloadFile(
+          context,
+          attachment.fileUrl!,
+          attachment.originalName ?? 'Attachment',
+        );
+      },
       onDeleteAttachment: (_) {},
       onAddAttachment: (_) {},
     );
     final movement = MovementTimelineSection(
       movements: ref.read(summariesController).details?.movements ?? const [],
-      currentHolderName: ref.read(summariesController).details?.summary?.currentHolder,
+      currentHolderName: ref
+          .read(summariesController)
+          .details
+          ?.summary
+          ?.currentHolder,
     );
     final internal = DepartmentalCorrespondenceSection(
-      entries: ref.read(summariesController).details?.internalForwards ?? const [],
+      entries:
+          ref.read(summariesController).details?.internalForwards ?? const [],
     );
     final files = InternalFilesSection(
       links: ref.read(summariesController).details?.localLinks ?? const [],
