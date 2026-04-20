@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -105,17 +106,19 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                     mainContent: SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
                       child: SummaryDocumentCard(
-                        barcode: s['barcode'] as String,
-                        summaryNumber: s['summaryNumber'] as String,
-                        summaryDate: DateTime.now(),
-                        department: s['department'] as String,
-                        subject: s['subject'] as String,
-                        htmlContent: s['htmlContent'] as String,
-                        recipientTitle: 'Mr. Chief Minister',
-                        recipientDesignation: 'Chief Minister',
-                        recipientDepartment: 'Chief Minister Secretariat',
-                        recipientTimestamp: DateTime.now(),
-                        destination: 'Quetta',
+                        summary: SummaryModel(
+                          summaryNo: s['summaryNumber'] as String,
+                          summaryDate: DateTime.now(),
+                          originatingDepartment: s['department'] as String,
+                          subject: s['subject'] as String,
+                          body: s['htmlContent'] as String,
+                          currentHolder: 'Mr. Chief Minister',
+                          currentHolderDesignation: 'Chief Minister',
+                          currentDepartment: 'Chief Minister Secretariat',
+                          draftTargetDepartment: 'Quetta',
+                          updatedAt: DateTime.now(),
+                        ),
+                        remarkTrack: const [],
                       ),
                     ),
                     tags: [

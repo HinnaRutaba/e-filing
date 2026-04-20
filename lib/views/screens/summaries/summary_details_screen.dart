@@ -1,13 +1,10 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
-import 'package:efiling_balochistan/models/department/department_user_model.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
-import 'package:efiling_balochistan/models/flag_model.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/internal_user_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/departmental_correspondence_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
@@ -21,7 +18,6 @@ import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_f
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
 
 enum SummaryAction {
@@ -64,37 +60,9 @@ enum SummaryAction {
 }
 
 class SummaryDetailsScreen extends ConsumerStatefulWidget {
-  final SummaryModel summary;
-  final XFile? mainPdf;
-  final List<FlagAndAttachmentModel> attachments;
-  final List<SummaryMovementEntry> movementHistory;
-  final List<InternalCorrespondenceEntry> correspondence;
-  final List<DaakModel> linkedDaak;
-  final List<FileModel> linkedFiles;
+  final SummaryModel? summary;
 
-  SummaryDetailsScreen({
-    super.key,
-    SummaryModel? summary,
-    XFile? mainPdf,
-    List<FlagAndAttachmentModel>? attachments,
-    this.movementHistory = const [
-      SummaryMovementEntry(
-        status: 'Current Pending',
-        stage: 'Draft from Section',
-        department: 'Home Department',
-        user: 'Mr. Secretary',
-        current: true,
-      ),
-    ],
-    List<InternalCorrespondenceEntry>? correspondence,
-    List<DaakModel>? linkedDaak,
-    List<FileModel>? linkedFiles,
-  }) : summary = summary ?? SummaryModel(),
-       mainPdf = mainPdf ?? XFile('main_summary.pdf'),
-       attachments = attachments ?? _demoAttachments(),
-       correspondence = correspondence ?? _demoCorrespondence(),
-       linkedDaak = linkedDaak ?? _demoLinkedDaak(),
-       linkedFiles = linkedFiles ?? _demoLinkedFiles();
+  const SummaryDetailsScreen({super.key, required this.summary});
 
   @override
   ConsumerState<SummaryDetailsScreen> createState() =>
@@ -105,71 +73,13 @@ const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
 
-List<DaakModel> _demoLinkedDaak() => [
-  DaakModel(
-    id: 1,
-    diaryNo: 'DIARY/2026/0001',
-    letterNo: 'LTR-2026-001',
-    subject: 'Budget allocation request for Q2',
-  ),
-];
-
-List<FileModel> _demoLinkedFiles() => [
-  FileModel(
-    fileId: 1,
-    referenceNo: 'FILE/HD/2026/0042',
-    subject: 'Home Department policy review',
-  ),
-  FileModel(
-    fileId: 2,
-    referenceNo: 'FILE/HD/2026/0043',
-    subject: 'Departmental staffing plan',
-  ),
-];
-
-List<InternalCorrespondenceEntry> _demoCorrespondence() => [
-  InternalCorrespondenceEntry(
-    fromUser: 'Mr. Secretary',
-    toUser: 'Mr. Section officer',
-    toDesignation: 'Additional Secretary-II',
-    status: 'Returned',
-    date: DateTime(2026, 4, 15, 11, 45),
-    remarksTitle: "Secretary's Instructions",
-    remarks: 'Add more details',
-  ),
-  InternalCorrespondenceEntry(
-    fromUser: 'Mr. Secretary',
-    toUser: 'Mr. Section officer',
-    toDesignation: 'Additional Secretary-II',
-    status: 'Returned',
-    date: DateTime(2026, 4, 15, 12, 6),
-    remarksTitle: "Secretary's Instructions",
-    remarks: 'Change XYZ',
-  ),
-];
-
-List<FlagAndAttachmentModel> _demoAttachments() => [
-  FlagAndAttachmentModel(
-    flagType: FlagModel(id: 1, title: 'A'),
-    attachment: XFile('annexure_a.pdf'),
-  ),
-  FlagAndAttachmentModel(
-    flagType: FlagModel(id: 2, title: 'B'),
-    attachment: XFile('annexure_b.pdf'),
-  ),
-  FlagAndAttachmentModel(
-    flagType: FlagModel(id: 3, title: 'C'),
-    attachment: XFile('annexure_c.pdf'),
-  ),
-];
-
 class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   SummaryAction? _selectedAction;
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _shareSearchController = TextEditingController();
   final QuillEditorController _editDraftController = QuillEditorController();
   late String _currentHtml;
-  DepartmentUserModel? _shareTarget;
+  InternalUserModel? _shareTarget;
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
@@ -186,38 +96,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   );
   final TextEditingController _destOfficerController = TextEditingController();
 
-  static final List<DepartmentUserModel> _demoDeptMembers = [
-    DepartmentUserModel(
-      userId: 101,
-      userTitle: 'Ms. Ayesha Khan',
-      designation: 'Deputy Secretary (Home)',
-    ),
-    DepartmentUserModel(
-      userId: 102,
-      userTitle: 'Mr. Bilal Ahmed',
-      designation: 'Section Officer (Home-I)',
-    ),
-    DepartmentUserModel(
-      userId: 103,
-      userTitle: 'Ms. Fariha Malik',
-      designation: 'Additional Secretary (Home)',
-    ),
-    DepartmentUserModel(
-      userId: 104,
-      userTitle: 'Mr. Usman Tariq',
-      designation: 'Section Officer (Home-II)',
-    ),
-    DepartmentUserModel(
-      userId: 105,
-      userTitle: 'Ms. Sara Javed',
-      designation: 'Deputy Secretary (Admin)',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
-    _currentHtml = widget.summary.body ?? _kFallbackHtml;
+    _currentHtml = widget.summary?.body ?? _kFallbackHtml;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDetails());
+  }
+
+  Future<void> _loadDetails() async {
+    final details = await ref
+        .read(summariesController.notifier)
+        .fetchSummaryDetails(summaryId: widget.summary?.id);
+    if (!mounted) return;
+    final body = details?.summary?.body;
+    if (body != null && body.isNotEmpty) {
+      setState(() => _currentHtml = body);
+    }
   }
 
   @override
@@ -231,6 +125,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ctrlState = ref.watch(summariesController);
+    final details = ctrlState.details;
+    final isLoading = ctrlState.isLoadingDetails && details == null;
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -249,24 +146,26 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ],
         ),
 
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(context.isMobile ? 12 : 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _documentCard(),
-                    const SizedBox(height: 16),
-                    _sidebar(),
-                  ],
-                ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(context.isMobile ? 12 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _documentCard(),
+                          const SizedBox(height: 16),
+                          _sidebar(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _actionBar(),
+                ],
               ),
-            ),
-            _actionBar(),
-          ],
-        ),
       ),
     );
   }
@@ -682,7 +581,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SearchDropDownField<DepartmentUserModel>(
+        SearchDropDownField<InternalUserModel>(
           controller: _shareSearchController,
           labelText: 'Select Department Members',
           hintText: 'Search users…',
@@ -695,8 +594,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
           suggestionsCallback: (pattern) {
             final q = pattern.toLowerCase();
-            return _demoDeptMembers.where((u) {
-              return (u.userTitle ?? '').toLowerCase().contains(q) ||
+            final users =
+                ref.read(summariesController).meta?.internalUsers ??
+                const <InternalUserModel>[];
+            return users.where((u) {
+              return (u.name ?? '').toLowerCase().contains(q) ||
                   (u.designation ?? '').toLowerCase().contains(q);
             }).toList();
           },
@@ -707,7 +609,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppText.bodyMedium(
-                    item.userTitle ?? '',
+                    item.name ?? '',
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -724,7 +626,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           onSelected: (item) {
             setState(() {
               _shareTarget = item;
-              _shareSearchController.text = item.userTitle ?? '';
+              _shareSearchController.text = item.name ?? '';
             });
           },
         ),
@@ -757,7 +659,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       AppText.bodySmall(
-                        _shareTarget!.userTitle ?? '',
+                        _shareTarget!.name ?? '',
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -1089,41 +991,35 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _documentCard() {
-    final s = widget.summary;
+    final details = ref.read(summariesController).details;
+    final baseSummary =
+        details?.summary ?? widget.summary ?? SummaryModel();
+    final summary = baseSummary.copyWith(body: _currentHtml);
     return SummaryDocumentCard(
-      barcode: s.summaryNo ?? '',
-      summaryNumber: s.summaryNo ?? '',
-      summaryDate: s.summaryDate ?? DateTime.now(),
-      department: s.originatingDepartment ?? '',
-      subject: s.subject ?? '',
-      htmlContent: _currentHtml,
-      recipientTitle: s.currentHolder ?? '',
-      recipientDesignation: s.currentHolderDesignation ?? '',
-      recipientDepartment: s.currentDepartment ?? '',
-      recipientTimestamp: s.updatedAt ?? s.createdAt ?? DateTime.now(),
-      destination: s.draftTargetDepartment ?? '',
+      summary: summary,
+      remarkTrack: details?.remarkTrack ?? const [],
+      actions: details?.actions,
     );
   }
 
   Widget _sidebar() {
     final attachments = AttachmentsSection(
-      mainPdf: widget.mainPdf,
-      attachments: widget.attachments,
-      onViewMainPdf: _onViewMainPdf,
-      onViewAttachment: _onViewAttachment,
-      onDeleteAttachment: (item) =>
-          setState(() => widget.attachments.remove(item)),
-      onAddAttachment: (item) => setState(() => widget.attachments.add(item)),
+      mainPdf: null,
+      attachments: ref.read(summariesController).details?.attachments ?? const [],
+      onViewMainPdf: () {},
+      onViewAttachment: (_) {},
+      onDeleteAttachment: (_) {},
+      onAddAttachment: (_) {},
     );
     final movement = MovementTimelineSection(
-      movementHistory: widget.movementHistory,
+      movements: ref.read(summariesController).details?.movements ?? const [],
+      currentHolderName: ref.read(summariesController).details?.summary?.currentHolder,
     );
     final internal = DepartmentalCorrespondenceSection(
-      entries: widget.correspondence,
+      entries: ref.read(summariesController).details?.internalForwards ?? const [],
     );
     final files = InternalFilesSection(
-      linkedDaak: widget.linkedDaak,
-      linkedFiles: widget.linkedFiles,
+      links: ref.read(summariesController).details?.localLinks ?? const [],
     );
 
     if (context.isMobile) {
@@ -1159,21 +1055,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         const SizedBox(width: 16),
         Expanded(child: right),
       ],
-    );
-  }
-
-  void _onViewAttachment(FlagAndAttachmentModel item) {
-    final name = item.attachment?.name ?? item.flagType?.title ?? 'attachment';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Viewing $name')));
-  }
-
-  void _onViewMainPdf() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing ${widget.mainPdf?.name ?? 'Main Summary PDF'}'),
-      ),
     );
   }
 }

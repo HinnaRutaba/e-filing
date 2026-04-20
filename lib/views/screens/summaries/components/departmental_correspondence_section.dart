@@ -1,31 +1,12 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/models/summaries/summary_internal_forward_model.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
-class InternalCorrespondenceEntry {
-  final String fromUser;
-  final String toUser;
-  final String toDesignation;
-  final String status;
-  final DateTime date;
-  final String remarksTitle;
-  final String remarks;
-
-  const InternalCorrespondenceEntry({
-    required this.fromUser,
-    required this.toUser,
-    required this.toDesignation,
-    required this.status,
-    required this.date,
-    required this.remarksTitle,
-    required this.remarks,
-  });
-}
-
 class DepartmentalCorrespondenceSection extends StatefulWidget {
-  final List<InternalCorrespondenceEntry> entries;
+  final List<SummaryInternalForwardModel> entries;
 
   const DepartmentalCorrespondenceSection({super.key, required this.entries});
 
@@ -99,10 +80,17 @@ class _DepartmentalCorrespondenceSectionState
 
   Widget _correspondenceEntry(
     BuildContext context,
-    InternalCorrespondenceEntry entry,
+    SummaryInternalForwardModel entry,
   ) {
     final theme = Theme.of(context);
     final appColors = context.appColors;
+    final fromUser = entry.forwardedBy ?? '-';
+    final toUser = entry.forwardedTo ?? '-';
+    final toDesignation = entry.forwardedToDesignation ?? '';
+    final fromDesignation = entry.forwardedByDesignation ?? '';
+    final status = entry.statusLabel ?? '-';
+    final date = entry.submittedAt ?? entry.createdAt;
+    final instruction = entry.instruction ?? '';
     return Container(
       decoration: BoxDecoration(
         color: appColors.cardColorLight,
@@ -121,8 +109,8 @@ class _DepartmentalCorrespondenceSectionState
             children: [
               _userChip(
                 context,
-                entry.fromUser,
-                'Secreatary',
+                fromUser,
+                fromDesignation,
                 color: appColors.textSecondary,
               ),
               Icon(
@@ -132,8 +120,8 @@ class _DepartmentalCorrespondenceSectionState
               ),
               _userChip(
                 context,
-                entry.toUser,
-                'DEO',
+                toUser,
+                toDesignation,
                 color: appColors.primaryDark,
               ),
             ],
@@ -143,14 +131,14 @@ class _DepartmentalCorrespondenceSectionState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.bodySmall(
-                entry.remarksTitle,
+                'Instruction',
                 color: theme.colorScheme.error,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.6,
               ),
               Text(
-                entry.remarks,
+                instruction.isEmpty ? '-' : instruction,
                 style: TextStyle(
                   fontStyle: FontStyle.italic,
                   color: appColors.textPrimary,
@@ -161,13 +149,14 @@ class _DepartmentalCorrespondenceSectionState
           const SizedBox(height: 8),
           Row(
             children: [
-              _statusPill(context, entry.status),
+              _statusPill(context, status),
               const Spacer(),
-              AppText.bodySmall(
-                DateFormat('dd MMM yyyy, hh:mm a').format(entry.date),
-                color: appColors.textSecondary,
-                fontSize: 11,
-              ),
+              if (date != null)
+                AppText.bodySmall(
+                  DateFormat('dd MMM yyyy, hh:mm a').format(date),
+                  color: appColors.textSecondary,
+                  fontSize: 11,
+                ),
             ],
           ),
         ],
@@ -201,11 +190,12 @@ class _DepartmentalCorrespondenceSectionState
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
-            AppText.labelSmall(
-              designation,
-              color: appColors.textSecondary,
-              fontSize: 10,
-            ),
+            if (designation.isNotEmpty)
+              AppText.labelSmall(
+                designation,
+                color: appColors.textSecondary,
+                fontSize: 10,
+              ),
           ],
         ),
       ],

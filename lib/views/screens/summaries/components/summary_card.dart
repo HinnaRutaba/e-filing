@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
+import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -125,7 +126,9 @@ class SummaryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                DateTimeHelper.timeAgo(item.summaryDate),
+                                DateTimeHelper.timeAgo(
+                                  item.createdAt ?? item.summaryDate,
+                                ),
                                 style: TextStyle(
                                   color: pillFg,
                                   fontSize: 11,
@@ -167,14 +170,9 @@ class SummaryCard extends StatelessWidget {
                               color: appColors.textSecondary,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              DateTimeHelper.timeAgo(
+                            AppText.labelSmall(
+                              DateTimeHelper.dateFormatddMMYYWithTime(
                                 item.createdAt ?? item.summaryDate,
-                              ),
-                              style: TextStyle(
-                                color: appColors.textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],

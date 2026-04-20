@@ -1,39 +1,28 @@
 import 'dart:typed_data';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/summaries/summary_actions_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_remark_track_model.dart';
+import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/handwritten_strokes_view.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
 
 class SummaryDocumentCard extends StatefulWidget {
-  final String barcode;
-  final String summaryNumber;
-  final DateTime summaryDate;
-  final String department;
-  final String subject;
-  final String htmlContent;
-  final String recipientTitle;
-  final String recipientDesignation;
-  final String recipientDepartment;
-  final DateTime recipientTimestamp;
-  final String destination;
+  final SummaryModel summary;
+  final List<SummaryRemarkTrackModel> remarkTrack;
+  final SummaryActionsModel? actions;
 
   const SummaryDocumentCard({
     super.key,
-    required this.barcode,
-    required this.summaryNumber,
-    required this.summaryDate,
-    required this.department,
-    required this.subject,
-    required this.htmlContent,
-    required this.recipientTitle,
-    required this.recipientDesignation,
-    required this.recipientDepartment,
-    required this.recipientTimestamp,
-    required this.destination,
+    required this.summary,
+    required this.remarkTrack,
+    this.actions,
   });
 
   @override
@@ -48,6 +37,7 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   @override
   void initState() {
     super.initState();
+    debugPrint("REMARK_______${widget.remarkTrack.length}");
     _signatureController = SignatureController(
       penStrokeWidth: 2,
       penColor: AppColors.textPrimary,
@@ -61,10 +51,18 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
     super.dispose();
   }
 
+  SummaryModel get _s => widget.summary;
+  DateTime get _summaryDate => _s.createdAt ?? _s.summaryDate ?? DateTime.now();
+  String get _summaryNo => _s.summaryNo ?? '';
+  String get _department => _s.originatingDepartment ?? '';
+  String get _subject => _s.subject ?? '';
+  String get _htmlContent => _s.body ?? '';
+  String get _destination => _s.draftTargetDepartment ?? '';
+
   @override
   Widget build(BuildContext context) {
     final dateText =
-        'Dated Quetta the ${DateFormat('d MMMM, yyyy').format(widget.summaryDate)}';
+        'Dated Quetta the ${DateTimeHelper.dateFormatddMMYYWithTime(_summaryDate)}';
 
     return Container(
       decoration: BoxDecoration(
@@ -82,98 +80,118 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _barcodeStrip(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: AppText.labelSmall(
-                        dateText,
-                        color: AppColors.textSecondary,
-
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _barcodeStrip(),
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: AppColors.primaryDark, width: 4),
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppText.labelSmall(
+                      dateText,
+                      color: AppColors.textSecondary,
+                      fontFamily: fileFont,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Center(child: Image.asset('assets/govt1.png', height: 48)),
+                  const SizedBox(height: 8),
+                  AppText.titleMedium(
+                    'GOVERNMENT OF BALOCHISTAN',
+                    textAlign: TextAlign.center,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    fontFamily: fileFont,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText.titleMedium(
+                    _department.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    fontFamily: fileFont,
+                  ),
+                  const SizedBox(height: 16),
+                  AppText.titleMedium(
+                    'Summary for Honorable Chief Minister, Balochistan',
+                    textAlign: TextAlign.center,
+                    fontWeight: FontWeight.w800,
+                    underline: true,
+                    color: AppColors.textPrimary,
+                    fontFamily: fileFont,
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText.bodyMedium(
+                        'Subject:',
+                        fontWeight: FontWeight.w700,
                         fontFamily: fileFont,
+                        color: AppColors.textPrimary,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Center(child: Image.asset('assets/govt1.png', height: 48)),
-                    const SizedBox(height: 8),
-                    AppText.titleMedium(
-                      'GOVERNMENT OF BALOCHISTAN',
-                      textAlign: TextAlign.center,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
-                      fontFamily: fileFont,
-                    ),
-                    const SizedBox(height: 2),
-                    AppText.titleMedium(
-                      widget.department.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      fontFamily: fileFont,
-                    ),
-                    const SizedBox(height: 16),
-                    AppText.titleMedium(
-                      'Summary for Honorable Chief Minister, Balochistan',
-                      textAlign: TextAlign.center,
-                      fontWeight: FontWeight.w700,
-                      underline: true,
-                      color: AppColors.textPrimary,
-                      fontFamily: fileFont,
-                    ),
-                    const SizedBox(height: 22),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppText.bodyMedium(
-                          'Subject:',
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText.bodyMedium(
+                          _subject.isEmpty ? '—' : _subject.toUpperCase(),
                           fontWeight: FontWeight.w700,
+                          underline: true,
                           fontFamily: fileFont,
                           color: AppColors.textPrimary,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: AppText.bodyMedium(
-                            widget.subject.isEmpty
-                                ? '—'
-                                : widget.subject.toUpperCase(),
-                            fontWeight: FontWeight.w700,
-                            underline: true,
-                            fontFamily: fileFont,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _htmlBody(),
-                    const SizedBox(height: 28),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _htmlBody(),
+                  Builder(
+                    builder: (_) {
+                      final signedTracks = widget.remarkTrack
+                          .where((t) => t.actionType == 'signed_and_forwarded')
+                          .toList();
+                      if (signedTracks.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 20),
+                          for (final track in signedTracks) ...[
+                            _remarkTrackBlock(track),
+                            const SizedBox(height: 18),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                  if (!(widget.actions?.isDisposed ?? false)) ...[
+                    const SizedBox(height: 10),
                     _signaturePad(),
-                    const SizedBox(height: 8),
-                    _signatoryBlock(),
-                    const SizedBox(height: 24),
+                  ],
+                  const SizedBox(height: 24),
+                  if (_destination.isNotEmpty)
                     AppText.bodyMedium(
-                      widget.destination,
+                      _destination,
                       fontWeight: FontWeight.w700,
                       underline: true,
                       color: AppColors.textPrimary,
                       fontFamily: fileFont,
                     ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -181,21 +199,16 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   Widget _barcodeStrip() {
     return Container(
       width: 44,
-      decoration: const BoxDecoration(
-        border: Border(
-          right: BorderSide(color: AppColors.primaryDark, width: 4),
-        ),
-      ),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          _verticalLabel('BARCODE: ${widget.barcode}'),
+          _verticalLabel('BARCODE: $_summaryNo'),
           const SizedBox(height: 12),
           Container(width: 28, height: 1, color: Colors.grey.shade300),
           const SizedBox(height: 12),
           _verticalLabel(
-            'SUMMARY NO: ${widget.summaryNumber}\n${DateFormat('dd-MM-yyyy').format(widget.summaryDate)}',
+            'SUMMARY NO: $_summaryNo\n${DateFormat('dd-MM-yyyy').format(_summaryDate)}',
           ),
         ],
       ),
@@ -215,23 +228,113 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
   }
 
   Widget _htmlBody() {
-    final hasContent = widget.htmlContent.trim().isNotEmpty;
+    final hasContent = _htmlContent.trim().isNotEmpty;
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 160),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: hasContent
           ? HtmlReader(
-              html: widget.htmlContent,
+              html: _htmlContent,
               textStyle: const TextStyle(
                 color: AppColors.black,
                 fontFamily: fileFont,
+                fontSize: 14,
               ),
             )
           : AppText.bodyMedium(
               'No content provided.',
               color: AppColors.textSecondary,
             ),
+    );
+  }
+
+  Widget _remarkTrackBlock(SummaryRemarkTrackModel track) {
+    final hasHtmlRemarks =
+        (track.remarks ?? '').trim().isNotEmpty &&
+        track.remarks!.trim() != '[handwritten remark]';
+    final hasHandwritten =
+        (track.hasHandwritten ?? false) &&
+        (track.handwrittenStrokes?.strokes.isNotEmpty ?? false);
+    final hasSignature = (track.signatureUrl ?? '').isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasHtmlRemarks)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: HtmlReader(
+              html: track.remarks!,
+              textStyle: const TextStyle(
+                color: AppColors.black,
+                fontFamily: fileFont,
+              ),
+            ),
+          ),
+        if (hasHandwritten)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: HandwrittenStrokesView(
+              strokes: track.handwrittenStrokes!,
+              fallbackColor: AppColors.textPrimary.toString(),
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (hasSignature)
+                Image.network(
+                  track.signatureUrl!,
+                  fit: BoxFit.contain,
+                  width: 80,
+                  height: 80,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.error_outline, color: Colors.redAccent),
+                ),
+              AppText.bodyMedium(
+                track.actorName ?? '',
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                fontFamily: fileFont,
+              ),
+              if ((track.actorDesignation ?? '').isNotEmpty)
+                AppText.bodySmall(
+                  '(${track.actorDesignation})',
+                  color: Colors.grey[900],
+                  fontSize: 12,
+                  fontFamily: fileFont,
+                ),
+              if ((track.fromDepartment ?? '').isNotEmpty)
+                AppText.bodySmall(
+                  track.fromDepartment!,
+                  color: Colors.grey[900],
+                  fontSize: 12,
+                  fontFamily: fileFont,
+                ),
+              if ((track.toDepartment ?? '').isNotEmpty &&
+                  track.toDepartment != track.fromDepartment)
+                AppText.bodySmall(
+                  'To: ${track.toDepartment}',
+                  color: Colors.grey[900],
+                  fontSize: 12,
+                  fontFamily: fileFont,
+                ),
+              if ((track.actionLabel ?? '').isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: AppText.labelSmall(
+                    track.actionLabel!.toUpperCase(),
+                    color: AppColors.secondaryDark,
+                    fontFamily: fileFont,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -402,46 +505,6 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _signatoryBlock() {
-    final stamp = DateFormat(
-      'h:mm a EEE d MMM yyyy',
-    ).format(widget.recipientTimestamp);
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          AppText.bodyMedium(
-            widget.recipientTitle,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            fontFamily: fileFont,
-          ),
-          const SizedBox(height: 2),
-          AppText.bodySmall(
-            '(${widget.recipientDesignation})',
-            color: Colors.grey[900],
-            fontSize: 12,
-            fontFamily: fileFont,
-          ),
-          AppText.bodySmall(
-            widget.recipientDepartment,
-            color: Colors.grey[900],
-            fontSize: 12,
-            fontFamily: fileFont,
-          ),
-          const SizedBox(height: 2),
-          AppText.bodySmall(
-            stamp,
-            color: Colors.grey[900],
-            fontSize: 12,
-            fontFamily: fileFont,
           ),
         ],
       ),

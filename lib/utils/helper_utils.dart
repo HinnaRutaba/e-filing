@@ -12,8 +12,10 @@ class HelperUtils {
 
     //ifString contains space, get 1st letter of first two words
     if (str.contains(' ')) {
-      List<String> words =
-          str.split(' ').where((word) => word.trim().isNotEmpty).toList();
+      List<String> words = str
+          .split(' ')
+          .where((word) => word.trim().isNotEmpty)
+          .toList();
       if (words.length >= 2 && words[0].isNotEmpty && words[1].isNotEmpty) {
         return (words[0][0] + words[1][0]).toUpperCase();
       } else if (words.isNotEmpty && words[0].isNotEmpty) {
@@ -42,6 +44,8 @@ class HelperUtils {
       tagColor = Colors.blue[700]!;
     } else if (colorName == 'secondary') {
       tagColor = Colors.grey[700]!;
+    } else if (colorName == 'dark') {
+      tagColor = Colors.black;
     }
     return tagColor;
   }

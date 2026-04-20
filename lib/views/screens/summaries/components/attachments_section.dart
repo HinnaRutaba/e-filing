@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -10,10 +11,10 @@ import 'package:image_picker/image_picker.dart';
 
 class AttachmentsSection extends StatefulWidget {
   final XFile? mainPdf;
-  final List<FlagAndAttachmentModel> attachments;
+  final List<AttachmentModel> attachments;
   final VoidCallback onViewMainPdf;
-  final ValueChanged<FlagAndAttachmentModel> onViewAttachment;
-  final ValueChanged<FlagAndAttachmentModel> onDeleteAttachment;
+  final ValueChanged<AttachmentModel> onViewAttachment;
+  final ValueChanged<AttachmentModel> onDeleteAttachment;
   final ValueChanged<FlagAndAttachmentModel>? onAddAttachment;
 
   const AttachmentsSection({
@@ -33,13 +34,31 @@ class AttachmentsSection extends StatefulWidget {
 class _AttachmentsSectionState extends State<AttachmentsSection> {
   bool _expanded = true;
 
+  static final RegExp _flagPrefixRegex = RegExp(
+    r'^\s*\[\s*Flag\s*:\s*([^\]]+)\]\s*',
+    caseSensitive: false,
+  );
+
+  ({String? flag, String fileName}) _parseFlagAndName(
+    AttachmentModel attachment,
+  ) {
+    final raw = attachment.originalName ?? '';
+    final match = _flagPrefixRegex.firstMatch(raw);
+    if (match != null) {
+      final flag = match.group(1)?.trim();
+      final rest = raw.substring(match.end).trim();
+      return (
+        flag: (flag == null || flag.isEmpty) ? null : flag,
+        fileName: rest.isEmpty ? raw : rest,
+      );
+    }
+    return (flag: null, fileName: raw);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final flagAttachments = widget.attachments
-        .where((e) => e.flagType != null || e.attachment != null)
-        .toList(growable: false);
     final hasMain = widget.mainPdf != null;
-    final isEmpty = !hasMain && flagAttachments.isEmpty;
+    final isEmpty = !hasMain && widget.attachments.isEmpty;
 
     return _sidebarShell(
       header: 'Attachments',
@@ -63,30 +82,11 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                   duration: 350.ms,
                   curve: Curves.easeOutCubic,
                 ),
-            if (flagAttachments.isNotEmpty) const SizedBox(height: 8),
+            if (widget.attachments.isNotEmpty) const SizedBox(height: 8),
           ],
-          for (int i = 0; i < flagAttachments.length; i++) ...[
+          for (int i = 0; i < widget.attachments.length; i++) ...[
             if (i > 0) const SizedBox(height: 8),
-            _attachmentRow(
-                  label: flagAttachments[i].flagType?.title ?? '?',
-                  fileName: flagAttachments[i].attachment?.name,
-                  onView: () => widget.onViewAttachment(flagAttachments[i]),
-                  onDelete: () =>
-                      _confirmDeleteAttachment(context, flagAttachments[i]),
-                )
-                .animate()
-                .fadeIn(
-                  delay: (80 * (i + (hasMain ? 1 : 0))).ms,
-                  duration: 300.ms,
-                  curve: Curves.easeOut,
-                )
-                .slideX(
-                  begin: -0.15,
-                  end: 0,
-                  delay: (80 * (i + (hasMain ? 1 : 0))).ms,
-                  duration: 350.ms,
-                  curve: Curves.easeOutCubic,
-                ),
+            _buildAttachmentRow(widget.attachments[i], i, hasMain),
           ],
           if (isEmpty)
             AppText.bodySmall(
@@ -98,10 +98,39 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     );
   }
 
+  Widget _buildAttachmentRow(
+    AttachmentModel item,
+    int index,
+    bool hasMain,
+  ) {
+    final parsed = _parseFlagAndName(item);
+    return _attachmentRow(
+          label: parsed.flag ?? '',
+          fileName: parsed.fileName,
+          showFlag: parsed.flag != null,
+          onView: () => widget.onViewAttachment(item),
+          onDelete: () => _confirmDeleteAttachment(context, item),
+        )
+        .animate()
+        .fadeIn(
+          delay: (80 * (index + (hasMain ? 1 : 0))).ms,
+          duration: 300.ms,
+          curve: Curves.easeOut,
+        )
+        .slideX(
+          begin: -0.15,
+          end: 0,
+          delay: (80 * (index + (hasMain ? 1 : 0))).ms,
+          duration: 350.ms,
+          curve: Curves.easeOutCubic,
+        );
+  }
+
   Widget _attachmentRow({
     required String label,
     String? fileName,
     bool isMain = false,
+    bool showFlag = true,
     required VoidCallback onView,
     VoidCallback? onDelete,
   }) {
@@ -122,7 +151,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               size: 18,
               color: Theme.of(context).colorScheme.error,
             )
-          else
+          else if (showFlag)
             Container(
               width: 26,
               height: 22,
@@ -140,6 +169,12 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                 fontWeight: FontWeight.w700,
                 color: context.appColors.secondaryDark,
               ),
+            )
+          else
+            Icon(
+              Icons.insert_drive_file_outlined,
+              size: 18,
+              color: context.appColors.secondaryDark,
             ),
           const SizedBox(width: 10),
           Expanded(
@@ -220,11 +255,15 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   Future<void> _openAddAttachmentDialog() async {
-    final model = FlagAndAttachmentModel(
-      usedFlags: [
-        ...widget.attachments.map((e) => e.flagType).whereType<FlagModel>(),
-      ],
-    );
+    final usedFlags = <FlagModel>[];
+    for (final a in widget.attachments) {
+      final parsed = _parseFlagAndName(a);
+      final flag = parsed.flag;
+      if (flag != null && flag.isNotEmpty) {
+        usedFlags.add(FlagModel(title: flag));
+      }
+    }
+    final model = FlagAndAttachmentModel(usedFlags: usedFlags);
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -301,10 +340,12 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
 
   Future<void> _confirmDeleteAttachment(
     BuildContext context,
-    FlagAndAttachmentModel item,
+    AttachmentModel item,
   ) async {
-    final name =
-        item.attachment?.name ?? item.flagType?.title ?? 'this attachment';
+    final parsed = _parseFlagAndName(item);
+    final name = parsed.fileName.isNotEmpty
+        ? parsed.fileName
+        : (item.originalName ?? 'this attachment');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {

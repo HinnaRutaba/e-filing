@@ -58,16 +58,20 @@ class SummaryDetailsModel {
     return {
       SummaryDetailsSchema.summary: summary?.toJson(),
       SummaryDetailsSchema.movements: movements.map((e) => e.toJson()).toList(),
-      SummaryDetailsSchema.attachments:
-          attachments.map((e) => e.toJson()).toList(),
-      SummaryDetailsSchema.internalForwards:
-          internalForwards.map((e) => e.toJson()).toList(),
-      SummaryDetailsSchema.localLinks:
-          localLinks.map((e) => e.toJson()).toList(),
+      SummaryDetailsSchema.attachments: attachments
+          .map((e) => e.toJson())
+          .toList(),
+      SummaryDetailsSchema.internalForwards: internalForwards
+          .map((e) => e.toJson())
+          .toList(),
+      SummaryDetailsSchema.localLinks: localLinks
+          .map((e) => e.toJson())
+          .toList(),
       SummaryDetailsSchema.briefs: briefs.map((e) => e.toJson()).toList(),
       SummaryDetailsSchema.voiceNotes: voiceNotes,
-      SummaryDetailsSchema.remarkTrack:
-          remarkTrack.map((e) => e.toJson()).toList(),
+      SummaryDetailsSchema.remarkTrack: remarkTrack
+          .map((e) => e.toJson())
+          .toList(),
       SummaryDetailsSchema.actions: actions?.toJson(),
     };
   }
@@ -91,9 +95,7 @@ class SummaryDetailsModel {
       attachments: map[SummaryDetailsSchema.attachments] != null
           ? (map[SummaryDetailsSchema.attachments] as List)
                 .map(
-                  (e) => AttachmentModel.fromJson(
-                    Map<String, dynamic>.from(e),
-                  ),
+                  (e) => AttachmentModel.fromJson(Map<String, dynamic>.from(e)),
                 )
                 .toList()
           : const [],
@@ -118,9 +120,8 @@ class SummaryDetailsModel {
       briefs: map[SummaryDetailsSchema.briefs] != null
           ? (map[SummaryDetailsSchema.briefs] as List)
                 .map(
-                  (e) => SummaryBriefModel.fromJson(
-                    Map<String, dynamic>.from(e),
-                  ),
+                  (e) =>
+                      SummaryBriefModel.fromJson(Map<String, dynamic>.from(e)),
                 )
                 .toList()
           : const [],
@@ -165,6 +166,6 @@ class SummaryDetailsSchema {
   static const String localLinks = 'local_links';
   static const String briefs = 'briefs';
   static const String voiceNotes = 'voice_notes';
-  static const String remarkTrack = 'remark_track';
+  static const String remarkTrack = 'remarks_track';
   static const String actions = 'actions';
 }

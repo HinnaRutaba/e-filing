@@ -1,28 +1,19 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class SummaryMovementEntry {
-  final String status;
-  final String stage;
-  final String department;
-  final String user;
-  final bool current;
-  const SummaryMovementEntry({
-    required this.status,
-    required this.stage,
-    required this.department,
-    required this.user,
-    this.current = false,
-  });
-}
-
 class MovementTimelineSection extends StatefulWidget {
-  final List<SummaryMovementEntry> movementHistory;
+  final List<SummaryMovementModel> movements;
+  final String? currentHolderName;
 
-  const MovementTimelineSection({super.key, required this.movementHistory});
+  const MovementTimelineSection({
+    super.key,
+    required this.movements,
+    this.currentHolderName,
+  });
 
   @override
   State<MovementTimelineSection> createState() =>
@@ -32,14 +23,70 @@ class MovementTimelineSection extends StatefulWidget {
 class _MovementTimelineSectionState extends State<MovementTimelineSection> {
   bool _expanded = true;
 
+  String _humanizeActionType(String? actionType) {
+    if (actionType == null || actionType.trim().isEmpty) return '-';
+    final parts = actionType.split(RegExp(r'[_\s]+'));
+    final buffer = StringBuffer();
+    for (var i = 0; i < parts.length; i++) {
+      final p = parts[i];
+      if (p.isEmpty) continue;
+      if (p.toLowerCase() == 'and') {
+        buffer.write('&');
+      } else {
+        buffer.write(p[0].toUpperCase());
+        if (p.length > 1) buffer.write(p.substring(1).toLowerCase());
+      }
+      if (i < parts.length - 1) buffer.write(' ');
+    }
+    return buffer.toString();
+  }
+
+  String _statusFor(SummaryMovementModel m) {
+    final from = m.fromDepartment?.trim();
+    final to = m.toDepartment?.trim();
+    if (from != null &&
+        from.isNotEmpty &&
+        to != null &&
+        to.isNotEmpty &&
+        from != to) {
+      return '$from → $to';
+    }
+    return to ?? from ?? '-';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final current = widget.movementHistory
-        .where((e) => e.current)
-        .toList(growable: false);
-    final past = widget.movementHistory
-        .where((e) => !e.current)
-        .toList(growable: false);
+    final sorted = [...widget.movements]..sort((a, b) {
+      final ad = a.actedAt;
+      final bd = b.actedAt;
+      if (ad == null && bd == null) return 0;
+      if (ad == null) return -1;
+      if (bd == null) return 1;
+      return ad.compareTo(bd);
+    });
+
+    int currentIndex = -1;
+    if (sorted.isNotEmpty) {
+      final holder = widget.currentHolderName?.trim();
+      final lastTo = sorted.last.toUser?.trim();
+      if (holder != null &&
+          holder.isNotEmpty &&
+          lastTo != null &&
+          lastTo.isNotEmpty &&
+          holder == lastTo) {
+        currentIndex = sorted.length - 1;
+      }
+    }
+
+    final past = <SummaryMovementModel>[];
+    final current = <SummaryMovementModel>[];
+    for (var i = 0; i < sorted.length; i++) {
+      if (i == currentIndex) {
+        current.add(sorted[i]);
+      } else {
+        past.add(sorted[i]);
+      }
+    }
 
     final appColors = context.appColors;
     return _sidebarShell(
@@ -49,14 +96,14 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (past.isEmpty)
+          if (past.isEmpty && current.isEmpty)
             AppText.bodySmall(
               'No movement history yet.',
               color: appColors.textSecondary,
               fontSize: 12,
             ),
           for (int i = 0; i < past.length; i++) ...[
-            _movementEntry(context, past[i])
+            _movementEntry(context, past[i], isCurrent: false)
                 .animate()
                 .fadeIn(
                   delay: (80 * i).ms,
@@ -75,7 +122,7 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
           if (current.isNotEmpty) ...[
             const SizedBox(height: 8),
             for (int i = 0; i < current.length; i++)
-              _movementEntry(context, current[i])
+              _movementEntry(context, current[i], isCurrent: true)
                   .animate()
                   .fadeIn(
                     delay: (80 * (past.length + i)).ms,
@@ -95,12 +142,21 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
     );
   }
 
-  Widget _movementEntry(BuildContext context, SummaryMovementEntry entry) {
+  Widget _movementEntry(
+    BuildContext context,
+    SummaryMovementModel entry, {
+    required bool isCurrent,
+  }) {
     final theme = Theme.of(context);
     final appColors = context.appColors;
-    final accent = entry.current
+    final accent = isCurrent
         ? theme.colorScheme.primary
         : appColors.secondaryLight;
+    final stage = _humanizeActionType(entry.actionType);
+    final status = isCurrent ? 'Current Pending' : _statusFor(entry);
+    final department = entry.toDepartment ?? entry.fromDepartment ?? '-';
+    final user = entry.toUser ?? entry.actor ?? '-';
+    final actedAt = entry.actedAt;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -117,7 +173,7 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
             children: [
               Expanded(
                 child: AppText.bodyMedium(
-                  entry.stage,
+                  stage,
                   fontWeight: FontWeight.w700,
                   color: appColors.textPrimary,
                   fontSize: 13,
@@ -136,8 +192,8 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
                   ),
                   const SizedBox(width: 6),
                   AppText.bodySmall(
-                    entry.status,
-                    color: entry.current
+                    status,
+                    color: isCurrent
                         ? appColors.primaryDark
                         : appColors.secondaryDark,
                     fontSize: 11,
@@ -155,33 +211,34 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppText.titleSmall(
-                      entry.user,
+                      user,
                       color: appColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                     AppText.titleSmall(
-                      '(${entry.department})',
+                      '($department)',
                       color: appColors.textSecondary,
                       fontSize: 11,
                     ),
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_month,
-                    color: appColors.textSecondary,
-                    size: 15,
-                  ),
-                  const SizedBox(width: 4),
-                  AppText.labelSmall(
-                    DateTimeHelper.datFormatSlash(DateTime.now()),
-                    color: appColors.textSecondary,
-                  ),
-                ],
-              ),
+              if (actedAt != null)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_month,
+                      color: appColors.textSecondary,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 4),
+                    AppText.labelSmall(
+                      DateTimeHelper.datFormatSlash(actedAt),
+                      color: appColors.textSecondary,
+                    ),
+                  ],
+                ),
             ],
           ),
         ],

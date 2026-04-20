@@ -1,22 +1,17 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_local_link_model.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class InternalFilesSection extends StatefulWidget {
-  final List<DaakModel> linkedDaak;
-  final List<FileModel> linkedFiles;
-  final ValueChanged<DaakModel>? onViewDaak;
-  final ValueChanged<FileModel>? onViewFile;
+  final List<SummaryLocalLinkModel> links;
+  final ValueChanged<SummaryLocalLinkModel>? onViewLink;
 
   const InternalFilesSection({
     super.key,
-    required this.linkedDaak,
-    required this.linkedFiles,
-    this.onViewDaak,
-    this.onViewFile,
+    required this.links,
+    this.onViewLink,
   });
 
   @override
@@ -29,7 +24,13 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
-    final isEmpty = widget.linkedDaak.isEmpty && widget.linkedFiles.isEmpty;
+    final daakLinks = widget.links
+        .where((l) => (l.linkType ?? '').toLowerCase() == 'daak')
+        .toList(growable: false);
+    final fileLinks = widget.links
+        .where((l) => (l.linkType ?? '').toLowerCase() != 'daak')
+        .toList(growable: false);
+    final isEmpty = daakLinks.isEmpty && fileLinks.isEmpty;
 
     return _sidebarShell(
       context: context,
@@ -37,8 +38,8 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
       headerColor: appColors.primaryDark,
       trailing: _countBadge(
         context,
-        widget.linkedDaak.length,
-        widget.linkedFiles.length,
+        daakLinks.length,
+        fileLinks.length,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,12 +50,12 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
               color: appColors.textSecondary,
               fontSize: 12,
             ),
-          if (widget.linkedDaak.isNotEmpty) ...[
-            _groupLabel(context, 'Linked Daak', widget.linkedDaak.length),
+          if (daakLinks.isNotEmpty) ...[
+            _groupLabel(context, 'Linked Daak', daakLinks.length),
             const SizedBox(height: 6),
-            for (int i = 0; i < widget.linkedDaak.length; i++) ...[
+            for (int i = 0; i < daakLinks.length; i++) ...[
               if (i > 0) const SizedBox(height: 8),
-              _daakTile(context, widget.linkedDaak[i])
+              _daakTile(context, daakLinks[i])
                   .animate()
                   .fadeIn(
                     delay: (80 * i).ms,
@@ -70,24 +71,24 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
                   ),
             ],
           ],
-          if (widget.linkedDaak.isNotEmpty && widget.linkedFiles.isNotEmpty)
+          if (daakLinks.isNotEmpty && fileLinks.isNotEmpty)
             const SizedBox(height: 12),
-          if (widget.linkedFiles.isNotEmpty) ...[
-            _groupLabel(context, 'Linked Files', widget.linkedFiles.length),
+          if (fileLinks.isNotEmpty) ...[
+            _groupLabel(context, 'Linked Files', fileLinks.length),
             const SizedBox(height: 6),
-            for (int i = 0; i < widget.linkedFiles.length; i++) ...[
+            for (int i = 0; i < fileLinks.length; i++) ...[
               if (i > 0) const SizedBox(height: 8),
-              _fileTile(context, widget.linkedFiles[i])
+              _fileTile(context, fileLinks[i])
                   .animate()
                   .fadeIn(
-                    delay: (80 * (widget.linkedDaak.length + i)).ms,
+                    delay: (80 * (daakLinks.length + i)).ms,
                     duration: 300.ms,
                     curve: Curves.easeOut,
                   )
                   .slideX(
                     begin: -0.15,
                     end: 0,
-                    delay: (80 * (widget.linkedDaak.length + i)).ms,
+                    delay: (80 * (daakLinks.length + i)).ms,
                     duration: 350.ms,
                     curve: Curves.easeOutCubic,
                   ),
@@ -150,33 +151,33 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
     );
   }
 
-  Widget _daakTile(BuildContext context, DaakModel daak) {
-    final title = daak.diaryNo ?? daak.letterNo ?? '—';
-    final subject = daak.subject ?? '';
+  Widget _daakTile(BuildContext context, SummaryLocalLinkModel link) {
+    final title = link.file?.referenceNo ?? '—';
+    final subject = link.file?.subject ?? '';
     return _linkedTile(
       context: context,
       icon: Icons.mail_outline_rounded,
       iconColor: Theme.of(context).colorScheme.secondary,
       title: title,
       subtitle: subject,
-      onView: widget.onViewDaak == null
+      onView: widget.onViewLink == null
           ? null
-          : () => widget.onViewDaak!(daak),
+          : () => widget.onViewLink!(link),
     );
   }
 
-  Widget _fileTile(BuildContext context, FileModel file) {
-    final title = file.referenceNo ?? file.barcode ?? '—';
-    final subject = file.subject ?? '';
+  Widget _fileTile(BuildContext context, SummaryLocalLinkModel link) {
+    final title = link.file?.referenceNo ?? '—';
+    final subject = link.file?.subject ?? '';
     return _linkedTile(
       context: context,
       icon: Icons.folder_outlined,
       iconColor: Theme.of(context).colorScheme.secondary,
       title: title,
       subtitle: subject,
-      onView: widget.onViewFile == null
+      onView: widget.onViewLink == null
           ? null
-          : () => widget.onViewFile!(file),
+          : () => widget.onViewLink!(link),
     );
   }
 
