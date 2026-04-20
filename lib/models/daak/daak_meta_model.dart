@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:flutter/material.dart';
 
 enum DaakTags {
@@ -139,35 +140,5 @@ class Tag {
   factory Tag.fromJson(Map<String, dynamic>? json) {
     if (json == null) return Tag();
     return Tag(id: json['id'], title: json['title']);
-  }
-}
-
-class ActiveUserDesg {
-  final int? id;
-  final String? name;
-  final String? designation;
-  final String? section;
-  final String? department;
-  final String? role;
-
-  ActiveUserDesg({
-    this.id,
-    this.name,
-    this.designation,
-    this.section,
-    this.department,
-    this.role,
-  });
-
-  factory ActiveUserDesg.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return ActiveUserDesg();
-    return ActiveUserDesg(
-      id: json['id'],
-      name: json['name'],
-      designation: json['designation'],
-      section: json['section'],
-      department: json['department'],
-      role: json['role'],
-    );
   }
 }

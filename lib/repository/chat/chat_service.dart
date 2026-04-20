@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/models/chat/chat_file_model.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/chat/message_model.dart';
-import 'package:efiling_balochistan/models/department_user_model.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_repo.dart';
 import 'package:efiling_balochistan/services/record_audio_service.dart';
 import 'package:image_picker/image_picker.dart';

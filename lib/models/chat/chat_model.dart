@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:efiling_balochistan/models/department_user_model.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
 
 import 'message_model.dart';
 

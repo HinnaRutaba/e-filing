@@ -1,9 +1,9 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
-import 'package:efiling_balochistan/models/file_model.dart';
+import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
-import 'package:efiling_balochistan/models/new_file_data_model.dart';
+import 'package:efiling_balochistan/models/file/new_file_data_model.dart';
 import 'package:efiling_balochistan/models/section_schema.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 
