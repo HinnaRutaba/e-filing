@@ -8,11 +8,7 @@ class InternalFilesSection extends StatefulWidget {
   final List<SummaryLocalLinkModel> links;
   final ValueChanged<SummaryLocalLinkModel>? onViewLink;
 
-  const InternalFilesSection({
-    super.key,
-    required this.links,
-    this.onViewLink,
-  });
+  const InternalFilesSection({super.key, required this.links, this.onViewLink});
 
   @override
   State<InternalFilesSection> createState() => _InternalFilesSectionState();
@@ -28,7 +24,7 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
         .where((l) => (l.linkType ?? '').toLowerCase() == 'daak')
         .toList(growable: false);
     final fileLinks = widget.links
-        .where((l) => (l.linkType ?? '').toLowerCase() != 'daak')
+        .where((l) => (l.linkType ?? '').toLowerCase() == 'file')
         .toList(growable: false);
     final isEmpty = daakLinks.isEmpty && fileLinks.isEmpty;
 
@@ -36,11 +32,7 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
       context: context,
       header: 'Internal Files (Daak / E-Files)',
       headerColor: appColors.primaryDark,
-      trailing: _countBadge(
-        context,
-        daakLinks.length,
-        fileLinks.length,
-      ),
+      trailing: _countBadge(context, daakLinks.length, fileLinks.length),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -160,24 +152,22 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
       iconColor: Theme.of(context).colorScheme.secondary,
       title: title,
       subtitle: subject,
-      onView: widget.onViewLink == null
-          ? null
-          : () => widget.onViewLink!(link),
+      linkedBy: link.linkedBy,
+      onView: widget.onViewLink == null ? null : () => widget.onViewLink!(link),
     );
   }
 
   Widget _fileTile(BuildContext context, SummaryLocalLinkModel link) {
-    final title = link.file?.referenceNo ?? '—';
+    final title = link.file?.referenceNo ?? 'File';
     final subject = link.file?.subject ?? '';
     return _linkedTile(
       context: context,
       icon: Icons.folder_outlined,
+      linkedBy: link.linkedBy,
       iconColor: Theme.of(context).colorScheme.secondary,
       title: title,
       subtitle: subject,
-      onView: widget.onViewLink == null
-          ? null
-          : () => widget.onViewLink!(link),
+      onView: widget.onViewLink == null ? null : () => widget.onViewLink!(link),
     );
   }
 
@@ -187,6 +177,7 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
     required Color iconColor,
     required String title,
     required String subtitle,
+    required String? linkedBy,
     VoidCallback? onView,
   }) {
     final appColors = context.appColors;
@@ -217,13 +208,21 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppText.bodySmall(
-                  title,
-                  color: appColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppText.bodySmall(
+                        title,
+                        color: appColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    if (linkedBy != null) AppText.labelSmall(linkedBy),
+                  ],
                 ),
                 if (subtitle.isNotEmpty)
                   AppText.bodySmall(
