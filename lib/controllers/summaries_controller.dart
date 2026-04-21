@@ -29,8 +29,8 @@ enum SummarySubTab {
   drafts(
     'Drafts',
     SummaryMainTab.actionRequired,
-    //'draft',
-    'my_drafts',
+    'draft',
+    //'my_drafts',
   ),
   disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
 
@@ -280,6 +280,23 @@ class SummariesController extends BaseControllerState<SummariesState> {
       await loadData(isInitialLoad: false);
       EasyLoading.dismiss();
       RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> deleteAttachment(int attachmentId) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+     
+      await repo.deleteAttachment(attachmentId: attachmentId, desId: desId);
+      //Toast.success(message: "Attachment deleted successfully");
+      EasyLoading.dismiss();
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();

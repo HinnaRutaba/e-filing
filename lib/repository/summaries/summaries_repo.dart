@@ -189,4 +189,22 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+  
+  @override
+  Future<void> deleteAttachment({required int? attachmentId, required int? desId}) async {
+    try {
+      if (attachmentId == null) {
+        throw Exception("Attachment ID is required to delete attachment");
+      }
+      if (desId == null) {
+        throw Exception("Designation ID is required to delete attachment");
+      }
+      await dioClient.delete(
+        url: deleteAttachmentUrl(attachmentId, desId),
+        options: await options(authRequired: true),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

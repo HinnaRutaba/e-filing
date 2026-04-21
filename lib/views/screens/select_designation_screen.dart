@@ -32,15 +32,17 @@ class _SelectDesignationScreenState
           child: Column(
             children: [
               ...widget.designations
-                  .map((designation) =>
-                      DesignationCard(designation: designation))
+                  .map(
+                    (designation) => DesignationCard(designation: designation),
+                  )
                   .toList(),
               const SizedBox(height: 24),
               AppSolidButton(
-                  onPressed: () {
-                    ref.read(authController.notifier).logout(context);
-                  },
-                  text: "Go back to Login"),
+                onPressed: () {
+                  ref.read(authController.notifier).logout(context);
+                },
+                text: "Go back to Login",
+              ),
             ],
           ),
         ),
@@ -72,6 +74,8 @@ class DesignationCard extends ConsumerWidget {
       child: InkWell(
         onTap: () async {
           await ref.read(authController.notifier).setDesignation(designation);
+          ref.read(summariesController.notifier).fetchSummariesMeta();
+          ref.read(daakController.notifier).fetchDaakMeta();
           RouteHelper.navigateTo(Routes.dashboard);
         },
         child: Row(
@@ -81,20 +85,14 @@ class DesignationCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 gradient: const LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.secondary,
-                  ],
+                  colors: [AppColors.primary, AppColors.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
               child: const Padding(
                 padding: EdgeInsets.all(12.0),
-                child: Icon(
-                  Icons.person,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.person, color: Colors.white),
               ),
             ),
             const SizedBox(width: 12),
@@ -108,10 +106,7 @@ class DesignationCard extends ConsumerWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward,
-              color: AppColors.secondary,
-            ),
+            const Icon(Icons.arrow_forward, color: AppColors.secondary),
           ],
         ),
       ),

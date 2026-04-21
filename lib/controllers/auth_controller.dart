@@ -28,8 +28,12 @@ class AuthController extends BaseControllerState<UserModel> {
         state = model.user!;
         localStorage.setToken(model);
         getOpenAIToken();
+        
         if (model.user?.designations.length == 1) {
           await setDesignation(model.user!.designations.first);
+           await fetchLoggedInUser();
+          ref.read(summariesController.notifier).fetchSummariesMeta();
+          ref.read(daakController.notifier).fetchDaakMeta();
           RouteHelper.navigateTo(Routes.dashboard);
         } else {
           RouteHelper.navigateTo(

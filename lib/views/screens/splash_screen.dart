@@ -65,6 +65,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
     ref.read(summariesController.notifier).fetchSummariesMeta();
+    ref.read(daakController.notifier).fetchDaakMeta();
     RouteHelper.navigateTo(Routes.dashboard);
   }
 

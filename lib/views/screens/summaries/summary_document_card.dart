@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_actions_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_remark_track_model.dart';
@@ -10,10 +12,11 @@ import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart'
 import 'package:efiling_balochistan/views/widgets/handwritten_strokes_view.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
 
-class SummaryDocumentCard extends StatefulWidget {
+class SummaryDocumentCard extends ConsumerStatefulWidget {
   final SummaryModel summary;
   final List<SummaryRemarkTrackModel> remarkTrack;
   final SummaryActionsModel? actions;
@@ -26,10 +29,11 @@ class SummaryDocumentCard extends StatefulWidget {
   });
 
   @override
-  State<SummaryDocumentCard> createState() => _SummaryDocumentCardState();
+  ConsumerState<SummaryDocumentCard> createState() =>
+      _SummaryDocumentCardState();
 }
 
-class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
+class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
   bool _signExpanded = false;
   Uint8List? _signatureImage;
   late final SignatureController _signatureController;
@@ -154,12 +158,64 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                   ),
                   const SizedBox(height: 16),
                   _htmlBody(),
+                  if (!(widget.actions?.isDisposed ?? false)) ...[
+                    const SizedBox(height: 8),
+                    if (ref
+                            .read(summariesController)
+                            .meta
+                            ?.activeUserDesg
+                            ?.roleEnum !=
+                        ActiveUserDesgRole.deo)
+                      _signaturePad(),
+                    const SizedBox(height: 8),
+                  ],
                   Builder(
                     builder: (_) {
                       final signedTracks = widget.remarkTrack
                           .where((t) => t.actionType == 'signed_and_forwarded')
                           .toList();
-                      if (signedTracks.isEmpty) return const SizedBox.shrink();
+                      if (signedTracks.isEmpty) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            AppText.bodyMedium(
+                              widget.summary.currentHolder ?? '',
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                              fontFamily: fileFont,
+                            ),
+                            AppText.bodySmall(
+                              '(${widget.summary.currentHolderDesignation})',
+                              color: Colors.grey[900],
+                              fontSize: 12,
+                              fontFamily: fileFont,
+                            ),
+
+                            AppText.bodySmall(
+                              widget.summary.currentDepartment!,
+                              color: Colors.grey[900],
+                              fontSize: 12,
+                              fontFamily: fileFont,
+                            ),
+                            if (widget.summary.updatedAt != null)
+                              AppText.labelSmall(
+                                DateTimeHelper.dateFormatddMMYYWithTime(
+                                  widget.summary.updatedAt!,
+                                ),
+                              ),
+                            const SizedBox(height: 24),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: AppText.bodyMedium(
+                                widget.summary.draftTargetDepartment ?? '',
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontFamily: fileFont,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -172,10 +228,6 @@ class _SummaryDocumentCardState extends State<SummaryDocumentCard> {
                       );
                     },
                   ),
-                  if (!(widget.actions?.isDisposed ?? false)) ...[
-                    const SizedBox(height: 10),
-                    _signaturePad(),
-                  ],
                 ],
               ),
             ),

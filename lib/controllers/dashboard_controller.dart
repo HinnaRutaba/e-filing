@@ -170,7 +170,7 @@ class DashboardController extends BaseControllerState<DashboardModel> {
       daakCtrl.resetData();
 
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
-      daakCtrl.fetchDaakMeta(desId);
+      daakCtrl.fetchDaakMeta();
       final List<DaakModel>? daak = await daakCtrl.fetchDaakInbox(desId: desId);
 
       state = state.copyWith(

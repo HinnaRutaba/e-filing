@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -112,6 +114,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   bool get actionsAvailable {
     SummaryDetailsModel? details = ref.read(summariesController).details;
+    log("ROLE_______${userRole}");
     if (userRole == ActiveUserDesgRole.deo &&
         details?.summary?.summaryStatus == SummaryStatus.draftFromSection) {
       return false;
@@ -971,6 +974,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   StickyTag _buildAttachmentsTag(dynamic details) {
     final attachments = AttachmentsSection(
       canAddMore: actionsAvailable,
+      canDelete: actionsAvailable,
       mainPdf: null,
       attachments: details?.attachments ?? const [],
       onViewAttachment: (attachment) {

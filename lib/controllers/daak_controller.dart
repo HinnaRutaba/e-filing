@@ -76,7 +76,7 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
-    fetchDaakMeta(desId);
+    fetchDaakMeta();
     if (state.selectedFilter == DaakViewFilter.inbox) {
       await fetchDaakInbox(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.nfa) {
@@ -114,8 +114,9 @@ class DaakController extends BaseControllerState<DaakState> {
 
   List<DaakModel> get filteredDaak => state.filteredDaak;
 
-  Future<DaakMeta?> fetchDaakMeta(int? desId) async {
+  Future<DaakMeta?> fetchDaakMeta() async {
     try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
       DaakMeta meta = await repo.fetchDaakMeta(desId);
       state = state.copyWith(daakMeta: meta);
       return meta;
@@ -233,8 +234,6 @@ class DaakController extends BaseControllerState<DaakState> {
     XFile? supportingAttachment,
   }) async {
     try {
-      log("FWD DAAK____${daakId}____${fwdToDesId}_____${daakId}");
-
       EasyLoading.show();
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       await repo.forwardDaakSecretary(

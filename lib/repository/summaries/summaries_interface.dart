@@ -7,6 +7,8 @@ import 'package:efiling_balochistan/models/summaries/summary_details_model.dart'
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 
 abstract class SummariesInterface extends NetworkBase {
+  //========================URLS=============================
+
   String summaryMetaUrl(int desId) =>
       '${baseUrl}summaries/meta?userDesgID=$desId';
 
@@ -35,6 +37,11 @@ abstract class SummariesInterface extends NetworkBase {
       '${baseUrl}summaries/$summaryId/update-draft';
 
   String get secretaryStoreSummaryUrl => '${baseUrl}summaries/store';
+
+  String deleteAttachmentUrl(int attachmentId, int desId) =>
+      '${baseUrl}summaries/attachment/$attachmentId?userDesgID=$desId';
+
+  //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
 
@@ -69,5 +76,10 @@ abstract class SummariesInterface extends NetworkBase {
     required CreateSummaryModel createSummaryModel,
     required int desId,
     required bool isDraft,
+  });
+
+  Future<void> deleteAttachment({
+    required int attachmentId,
+    required int desId,
   });
 }
