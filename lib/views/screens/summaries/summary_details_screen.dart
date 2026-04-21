@@ -2,6 +2,7 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/internal_user_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_brief_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -9,10 +10,12 @@ import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
+import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_forward_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -156,20 +159,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             : Column(
                 children: [
                   Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _loadDetails,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.all(context.isMobile ? 12 : 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _documentCard(),
-                            const SizedBox(height: 16),
-                            _sidebar(),
-                          ],
+                    child: StickyTagDrawer(
+                      panelWidth: MediaQuery.sizeOf(context).width * 0.85,
+                      tagsAlignment: const Alignment(0.0, -0.5),
+                      mainContent: RefreshIndicator(
+                        onRefresh: _loadDetails,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.all(context.isMobile ? 12 : 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _documentCard(),
+                              const SizedBox(height: 16),
+                              _sidebar(),
+                            ],
+                          ),
                         ),
                       ),
+                      tags: [
+                        _buildAttachmentsTag(details),
+                        _buildBriefsTag(details),
+                      ],
                     ),
                   ),
                   _actionBar(),
@@ -266,38 +277,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionDraftBanner() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF3E6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: const Color(0xFFF0A63A).withValues(alpha: 0.35),
-        ),
-      ),
-      child: RichText(
-        text: const TextSpan(
-          style: TextStyle(
-            color: Color(0xFF7A4A10),
-            fontSize: 12.5,
-            height: 1.35,
-          ),
-          children: [
-            TextSpan(
-              text: 'Section Draft',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            TextSpan(
-              text:
-                  ' — drafted by Mr. Section officer. You can edit the drafted remarks, sign & forward, or return for amendments.',
-            ),
-          ],
         ),
       ),
     );
@@ -971,12 +950,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
-  Widget _sidebar() {
+  StickyTag _buildAttachmentsTag(dynamic details) {
     final attachments = AttachmentsSection(
       mainPdf: null,
-      attachments:
-          ref.read(summariesController).details?.attachments ?? const [],
-
+      attachments: details?.attachments ?? const [],
       onViewAttachment: (attachment) {
         if (attachment.fileUrl == null) {
           Toast.error(message: 'No file URL found for this attachment.');
@@ -1020,6 +997,67 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       onDeleteAttachment: (_) {},
       onAddAttachment: (_) {},
     );
+
+    return StickyTag(
+      text: "Attachments",
+      backgroundColor: AppColors.primaryDark,
+      panelContent: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: attachments,
+        ),
+      ),
+    );
+  }
+
+  StickyTag _buildBriefsTag(dynamic details) {
+    final briefs = details?.briefs ?? const <SummaryBriefModel>[];
+
+    return StickyTag(
+      text: "Briefs",
+      backgroundColor: Colors.orange,
+      panelContent: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        physics: const BouncingScrollPhysics(),
+        child: briefs.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AppText.bodyMedium(
+                    "No briefs added yet.",
+                    color: context.appColors.textSecondary,
+                  ),
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < briefs.length; i++) ...[
+                    SummaryBrief(
+                      note:
+                          briefs[i].briefNote != null &&
+                              briefs[i].briefNote!.isNotEmpty
+                          ? null
+                          : null,
+                      paragraphs: [
+                        if (briefs[i].briefNote != null &&
+                            briefs[i].briefNote!.isNotEmpty)
+                          briefs[i].briefNote!,
+                      ],
+                      authorName: briefs[i].actor ?? 'Unknown',
+                      authorDesignation: '',
+                      timestamp: briefs[i].actedAt ?? DateTime.now(),
+                    ),
+                    if (i < briefs.length - 1) const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _sidebar() {
     final movement = MovementTimelineSection(
       movements: ref.read(summariesController).details?.movements ?? const [],
       currentHolderName: ref
@@ -1041,13 +1079,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          attachments,
-          const SizedBox(height: 16),
-          movement,
-          const SizedBox(height: 16),
           internal,
           const SizedBox(height: 16),
           files,
+          const SizedBox(height: 16),
+          movement,
         ],
       );
     }
@@ -1055,9 +1091,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sidebarRow(attachments, movement),
-        const SizedBox(height: 16),
         _sidebarRow(internal, files),
+        const SizedBox(height: 16),
+        _sidebarRow(movement, const SizedBox.shrink()),
       ],
     );
   }

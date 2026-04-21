@@ -15,7 +15,7 @@ class InternalFilesSection extends StatefulWidget {
 }
 
 class _InternalFilesSectionState extends State<InternalFilesSection> {
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {

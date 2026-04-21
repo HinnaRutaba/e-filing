@@ -21,7 +21,7 @@ class MovementTimelineSection extends StatefulWidget {
 }
 
 class _MovementTimelineSectionState extends State<MovementTimelineSection> {
-  bool _expanded = true;
+  bool _expanded = false;
 
   String _humanizeActionType(String? actionType) {
     if (actionType == null || actionType.trim().isEmpty) return '-';

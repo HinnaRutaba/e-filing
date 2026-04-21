@@ -19,7 +19,7 @@ class InternalForwardSection extends StatefulWidget {
 }
 
 class _InternalForwardSectionState extends State<InternalForwardSection> {
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
