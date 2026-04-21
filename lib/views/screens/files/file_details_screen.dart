@@ -24,7 +24,7 @@ import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
 enum FileAction {
   approved(1, "Approved"),
@@ -54,7 +54,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   final ScrollController scrollController = ScrollController();
   final GlobalKey remarksKey = GlobalKey();
 
-  final quillEditorController = QuillEditorController();
+  final quillEditorController = HtmlEditorController();
   String? selectedFileType;
   bool showHtmlEditor = true;
   bool loading = true;
@@ -162,17 +162,12 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     AIAgent().resetMessages();
     attachmentsNotifier.value = [FlagAndAttachmentModel()];
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final delta = {
-        "ops": [
-          {"insert": "\u00A0\u00A0\u00A0"} // three nbsp
-        ]
-      };
-      await quillEditorController.setDelta(delta);
-
+      quillEditorController.setText('&nbsp;&nbsp;&nbsp;');
       fetchData();
     });
     super.initState();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -310,69 +305,14 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                                 .withOpacity(0.5)),
                                         borderRadius: BorderRadius.circular(12),
                                         color: AppColors.white),
-                                    child: Column(
-                                      children: [
-                                        ToolBar(
-                                          activeIconColor: Colors.blue,
-                                          padding: const EdgeInsets.all(8),
-                                          iconSize: 24,
-                                          controller: quillEditorController,
-                                          toolBarConfig: const [
-                                            ToolBarStyle.bold,
-                                            ToolBarStyle.italic,
-                                            ToolBarStyle.underline,
-                                            //ToolBarStyle.listBullet,
-                                            ToolBarStyle.listOrdered,
-                                            ToolBarStyle.size,
-                                            ToolBarStyle.headerOne,
-                                            ToolBarStyle.headerTwo,
-                                            ToolBarStyle.link,
-                                            ToolBarStyle.align,
-                                            ToolBarStyle.color,
-                                            ToolBarStyle.blockQuote,
-                                            ToolBarStyle.codeBlock,
-                                            ToolBarStyle.addTable,
-                                            ToolBarStyle.editTable,
-                                          ],
-                                        ),
-                                        Divider(color: Colors.grey[300]!),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          child: showHtmlEditor
-                                              ? GestureDetector(
-                                                  onLongPress: () {},
-                                                  onLongPressStart: (_) {},
-                                                  onLongPressMoveUpdate: (_) {},
-                                                  child: AbsorbPointer(
-                                                    absorbing: false,
-                                                    child: QuillHtmlEditor(
-                                                      text: '',
-                                                      hintText: "...",
-                                                      autoFocus: true,
-                                                      controller:
-                                                          quillEditorController,
-                                                      minHeight: 270,
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors.black,
-                                                      ),
-                                                      hintTextStyle:
-                                                          const TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      onEditorCreated: () {
-                                                        quillEditorController
-                                                            .requestFocus();
-                                                      },
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox.shrink(),
-                                        ),
-                                      ],
-                                    ),
+                                    child: showHtmlEditor
+                                        ? HtmlEditor(
+                                            controller: quillEditorController,
+                                            initialHtml: '',
+                                            hint: "...",
+                                            height: 270,
+                                          )
+                                        : const SizedBox.shrink(),
                                   ),
                                 ),
                                 const SizedBox(height: 12),

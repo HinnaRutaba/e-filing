@@ -6,41 +6,131 @@ import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
-class InternalForwardSection extends StatelessWidget {
+class InternalForwardSection extends StatefulWidget {
   final List<SummaryInternalForwardModel> forwards;
 
   const InternalForwardSection({super.key, required this.forwards});
 
   @override
-  Widget build(BuildContext context) {
-    if (forwards.isEmpty) return const SizedBox.shrink();
+  State<InternalForwardSection> createState() => _InternalForwardSectionState();
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            'Internal Forwards',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+class _InternalForwardSectionState extends State<InternalForwardSection> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.forwards.isEmpty) return const SizedBox.shrink();
+
+    final appColors = context.appColors;
+    return _sidebarShell(
+      header: 'Internal Forwards',
+      headerColor: appColors.primaryDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.forwards.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) =>
+                _ForwardThread(forward: widget.forwards[index])
+                    .animate()
+                    .fadeIn(
+                      delay: (80 * index).ms,
+                      duration: 300.ms,
+                      curve: Curves.easeOut,
+                    )
+                    .slideX(
+                      begin: -0.15,
+                      end: 0,
+                      delay: (80 * index).ms,
+                      duration: 350.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sidebarShell({
+    required String header,
+    required Color headerColor,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: appColors.secondaryLight.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: appColors.shadow.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              color: headerColor.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: headerColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText.bodyMedium(
+                      header,
+                      fontWeight: FontWeight.w700,
+                      color: headerColor,
+                    ),
+                  ),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: headerColor,
+                    size: 22,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: forwards.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (context, index) =>
-              _ForwardThread(forward: forwards[index]),
-        ),
-        const SizedBox(height: 12),
-      ],
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -23,7 +23,7 @@ import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
 enum SummaryAction {
   returnToSection(
@@ -82,7 +82,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   SummaryAction? _selectedAction;
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _shareSearchController = TextEditingController();
-  final QuillEditorController _editDraftController = QuillEditorController();
+  final HtmlEditorController _editDraftController = HtmlEditorController();
   late String _currentHtml;
   InternalUserModel? _shareTarget;
 
@@ -939,53 +939,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               ),
             ),
             padding: const EdgeInsets.all(6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ToolBar(
-                  activeIconColor: action.color,
-                  padding: const EdgeInsets.all(4),
-                  iconSize: 20,
-                  controller: _editDraftController,
-                  toolBarConfig: const [
-                    ToolBarStyle.bold,
-                    ToolBarStyle.italic,
-                    ToolBarStyle.underline,
-                    ToolBarStyle.listBullet,
-                    ToolBarStyle.listOrdered,
-                    ToolBarStyle.headerOne,
-                    ToolBarStyle.headerTwo,
-                    ToolBarStyle.link,
-                    ToolBarStyle.align,
-                    ToolBarStyle.color,
-                    ToolBarStyle.undo,
-                    ToolBarStyle.redo,
-                    ToolBarStyle.clean,
-                  ],
-                ),
-                Divider(
-                  color: AppColors.secondaryLight.withValues(alpha: 0.35),
-                  height: 1,
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: editorHeight.toDouble(),
-                  child: QuillHtmlEditor(
-                    text: _currentHtml,
-                    hintText: 'Edit draft content…',
-                    controller: _editDraftController,
-                    minHeight: 180,
-                    textStyle: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black,
-                    ),
-                    hintTextStyle: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-              ],
+            child: SizedBox(
+              height: editorHeight.toDouble(),
+              child: HtmlEditor(
+                controller: _editDraftController,
+                initialHtml: _currentHtml,
+                hint: 'Edit draft content…',
+                height: editorHeight.toDouble(),
+              ),
             ),
           ),
         ),

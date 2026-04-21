@@ -23,7 +23,7 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 
 class CreateNewFileScreen extends ConsumerStatefulWidget {
@@ -41,7 +41,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
   final TextEditingController fileMovementNo = TextEditingController();
   final TextEditingController subject = TextEditingController();
 
-  final QuillEditorController quillEditorController = QuillEditorController();
+  final HtmlEditorController quillEditorController = HtmlEditorController();
   bool showHtmlEditor = true;
 
   bool loading = true;
@@ -224,57 +224,14 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                         borderRadius: BorderRadius.circular(12),
                         color: AppColors.white,
                       ),
-                      child: Column(
-                        children: [
-                          ToolBar(
-                            activeIconColor: Colors.blue,
-                            padding: const EdgeInsets.all(8),
-                            iconSize: 24,
-                            controller: quillEditorController,
-                            toolBarConfig: const [
-                              ToolBarStyle.bold,
-                              ToolBarStyle.italic,
-                              ToolBarStyle.underline,
-                              //ToolBarStyle.listBullet,
-                              ToolBarStyle.listOrdered,
-                              ToolBarStyle.size,
-                              ToolBarStyle.headerOne,
-                              ToolBarStyle.headerTwo,
-                              ToolBarStyle.link,
-                              ToolBarStyle.align,
-                              ToolBarStyle.color,
-                              ToolBarStyle.blockQuote,
-                              ToolBarStyle.codeBlock,
-                              ToolBarStyle.addTable,
-                              ToolBarStyle.editTable,
-                            ],
-                          ),
-                          Divider(color: Colors.grey[300]!),
-                          const SizedBox(height: 8),
-                          Container(
-                            child: showHtmlEditor
-                                ? QuillHtmlEditor(
-                                    text: '',
-                                    hintText: "...",
-                                    autoFocus: true,
-                                    controller: quillEditorController,
-                                    minHeight: 270,
-                                    textStyle: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black,
-                                    ),
-                                    hintTextStyle: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
-                                    ),
-                                    onEditorCreated: () {
-                                      quillEditorController.requestFocus();
-                                    },
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      ),
+                      child: showHtmlEditor
+                          ? HtmlEditor(
+                              controller: quillEditorController,
+                              initialHtml: '',
+                              hint: "...",
+                              height: 270,
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ),
                   const SizedBox(height: 12),

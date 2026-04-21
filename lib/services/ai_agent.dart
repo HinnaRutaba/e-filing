@@ -39,6 +39,7 @@ class AIAgent {
   final _messageController = StreamController<List<AIMessage>>.broadcast();
 
   List<AIMessage> get messageHistory => _messageHistory;
+
   static const String _reportFormat = '''Subject: {{subject}}
 
 {{program_code}}
@@ -103,21 +104,22 @@ Submitted for approval and further directions please.
   }
 
   /// Add a message to history
-  void _addMessage(ChatRole role, String content,
-      {bool error = false, bool toShow = true}) {
+  void _addMessage(
+    ChatRole role,
+    String content, {
+    bool error = false,
+    bool toShow = true,
+  }) {
     _messageHistory.add(
-      AIMessage(
-        role: role,
-        content: content,
-        isError: error,
-        toShow: toShow,
-      ),
+      AIMessage(role: role, content: content, isError: error, toShow: toShow),
     );
     _notifyListeners();
   }
 
   Future<void> sendMessage(
-      String userMessage, Map<String, dynamic> fileStr) async {
+    String userMessage,
+    Map<String, dynamic> fileStr,
+  ) async {
     try {
       _addMessage(ChatRole.user, userMessage);
 
@@ -139,8 +141,9 @@ Submitted for approval and further directions please.
 
       final aiResponse = res.text ?? '';
       log(aiResponse);
-      _messageHistory.removeWhere((m) =>
-          m.role == ChatRole.assistant && m.content == "Reading file...");
+      _messageHistory.removeWhere(
+        (m) => m.role == ChatRole.assistant && m.content == "Reading file...",
+      );
       if (aiResponse.isEmpty) {
         _addMessage(
           ChatRole.assistant,
@@ -153,7 +156,8 @@ Submitted for approval and further directions please.
     } catch (e, s) {
       log("AI AGENT ERROR____${e}_____$s");
       _messageHistory.removeWhere(
-          (m) => m.role == ChatRole.assistant && m.content == "Thinking...");
+        (m) => m.role == ChatRole.assistant && m.content == "Thinking...",
+      );
       _addMessage(
         ChatRole.assistant,
         "Unable to generate a response right now",
@@ -163,8 +167,11 @@ Submitted for approval and further directions please.
   }
 
   Stream<String> sendMessageStream(
-      String userMessage, Map<String, dynamic>? fileStr,
-      {bool sendAsUserMessage = true, bool suggestResponse = false}) async* {
+    String userMessage,
+    Map<String, dynamic>? fileStr, {
+    bool sendAsUserMessage = true,
+    bool suggestResponse = false,
+  }) async* {
     _addMessage(ChatRole.user, userMessage, toShow: sendAsUserMessage);
 
     try {
@@ -174,7 +181,8 @@ Submitted for approval and further directions please.
         //yield "No report found for this file. Please upload a report first.";
       } else if (suggestResponse) {
         try {
-          systemMessage = '''${reportContext(fileStr)}
+          systemMessage =
+              '''${reportContext(fileStr)}
        
           if user asks about a response read the whole report, read other peoples comments in the contents and only then suggest a reasonable response
         Ensure to give just a ONE LINE response UNLESS user asks for a detailed response ONLY THEN give response in a paragraph and should not include details like Sender name, designation, paragraph name etc.
@@ -195,6 +203,7 @@ Submitted for approval and further directions please.
       final stream = client.chat.completions.createStream(
         ChatCompletionCreateRequest(
           model: aiModel,
+          temperature: 0,
           messages: [
             ChatMessage.system(systemMessage),
             for (final m in _messageHistory)
@@ -215,15 +224,20 @@ Submitted for approval and further directions please.
       }
 
       final fullResponse = buffer.toString();
-      _messageHistory.removeWhere((m) =>
-          m.role == ChatRole.assistant && m.content == "Reading file...");
+      _messageHistory.removeWhere(
+        (m) => m.role == ChatRole.assistant && m.content == "Reading file...",
+      );
       _addMessage(ChatRole.assistant, fullResponse);
     } catch (e, s) {
       log("AI AGENT STREAM ERROR____${e}_____$s");
       _messageHistory.removeWhere(
-          (m) => m.role == ChatRole.assistant && m.content == "Thinking...");
-      _addMessage(ChatRole.assistant, "Unable to generate a response right now",
-          error: true);
+        (m) => m.role == ChatRole.assistant && m.content == "Thinking...",
+      );
+      _addMessage(
+        ChatRole.assistant,
+        "Unable to generate a response right now",
+        error: true,
+      );
       yield "Unable to generate a response right now";
     }
   }

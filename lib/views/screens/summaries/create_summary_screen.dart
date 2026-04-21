@@ -23,7 +23,7 @@ import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
 class DepartmentModel {
   final int id;
@@ -45,7 +45,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
 
-  final QuillEditorController quillEditorController = QuillEditorController();
+  final HtmlEditorController quillEditorController = HtmlEditorController();
 
   DateTime summaryDate = DateTime.now();
   DepartmentModel? selectedDepartment;
@@ -611,44 +611,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           borderRadius: BorderRadius.circular(12),
           color: Theme.of(context).cardColor,
         ),
-        child: Column(
-          children: [
-            ToolBar(
-              activeIconColor: Theme.of(context).colorScheme.primary,
-              padding: const EdgeInsets.all(6),
-              iconSize: 22,
-              controller: quillEditorController,
-              toolBarConfig: const [
-                ToolBarStyle.bold,
-                ToolBarStyle.italic,
-                ToolBarStyle.underline,
-                ToolBarStyle.listOrdered,
-                ToolBarStyle.size,
-                ToolBarStyle.headerOne,
-                ToolBarStyle.headerTwo,
-                ToolBarStyle.link,
-                ToolBarStyle.align,
-                ToolBarStyle.color,
-                ToolBarStyle.blockQuote,
-              ],
-            ),
-            Divider(color: context.appColors.border),
-            const SizedBox(height: 4),
-            QuillHtmlEditor(
-              text: _summaryHtml,
-              hintText: "Write summary content here…",
-              controller: quillEditorController,
-              minHeight: 220,
-              textStyle: TextStyle(
-                fontSize: 16,
-                color: context.appColors.textPrimary,
-              ),
-              hintTextStyle: TextStyle(
-                fontSize: 16,
-                color: context.appColors.textSecondary,
-              ),
-            ),
-          ],
+        child: HtmlEditor(
+          controller: quillEditorController,
+          initialHtml: _summaryHtml,
+          hint: "Write summary content here…",
+          height: 400,
         ),
       ),
     );

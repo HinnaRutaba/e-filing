@@ -39,7 +39,7 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   webview_flutter: ^4.9.0
   image_picker:
-  file_picker: ^8.0.3
+  file_picker: ^10.2.0
   permission_handler: ^11.3.0
   dio: ^5.8.0+1
   path_provider: ^2.1.4
@@ -60,7 +60,6 @@ dependencies:
   tap_canvas:
   flutter_spinkit: 5.2.1
   fl_chart: 0.69.2
-  quill_html_editor_v2: ^2.2.10
   flutter_chat_ui: ^1.6.15
   flutter_chat_types: ^3.6.1
   flutter_sliding_panel: ^0.0.5
@@ -94,6 +93,7 @@ dependencies:
   pencil_kit: ^2.1.1
   flutter_svg: ^2.0.10+1
   timeago: ^3.7.1
+  html_editor_enhanced: ^2.7.1
 
 dev_dependencies:
   flutter_test:
