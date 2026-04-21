@@ -42,19 +42,25 @@ class _HtmlEditorState extends State<HtmlEditor> {
       htmlEditorOptions: he.HtmlEditorOptions(
         hint: widget.hint,
         initialText: widget.initialHtml,
-        shouldEnsureVisible: true,
+        shouldEnsureVisible: false,
       ),
+
       htmlToolbarOptions: const he.HtmlToolbarOptions(
         toolbarPosition: he.ToolbarPosition.aboveEditor,
         toolbarType: he.ToolbarType.nativeGrid,
+        gridViewVerticalSpacing: -12,
         defaultToolbarButtons: [
-          StyleButtons(),
-          FontSettingButtons(fontSizeUnit: false),
+          FontSettingButtons(fontName: false, fontSizeUnit: false),
           FontButtons(clearAll: false),
+          ListButtons(listStyles: false),
+          ParagraphButtons(caseConverter: false, lineHeight: false),
         ],
       ),
 
-      otherOptions: he.OtherOptions(height: height),
+      otherOptions: he.OtherOptions(
+        height: height,
+        decoration: const BoxDecoration(),
+      ),
       callbacks: he.Callbacks(
         onChangeContent: (content) {
           if (content != null) widget.onChanged?.call(content);

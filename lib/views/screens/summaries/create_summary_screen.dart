@@ -414,112 +414,117 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _secretaryRemarksAlert() {
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      decoration: BoxDecoration(
-        color: context.appColors.warning.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: context.appColors.warning.withValues(alpha: 0.5),
-          width: 1,
+    return Visibility(
+      visible: false,
+      child: Container(
+        margin: const EdgeInsets.only(top: 4),
+        decoration: BoxDecoration(
+          color: context.appColors.warning.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: context.appColors.warning.withValues(alpha: 0.5),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: () => setState(
-              () => _secretaryRemarksExpanded = !_secretaryRemarksExpanded,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: context.appColors.warning,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: AppText.titleMedium(
-                      "Secretary Remarks",
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => setState(
+                () => _secretaryRemarksExpanded = !_secretaryRemarksExpanded,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
                       color: context.appColors.warning,
-                      fontWeight: FontWeight.w700,
+                      size: 20,
                     ),
-                  ),
-                  AnimatedRotation(
-                    turns: _secretaryRemarksExpanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: context.appColors.warning,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AppText.titleMedium(
+                        "Secretary Remarks",
+                        color: context.appColors.warning,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                    AnimatedRotation(
+                      turns: _secretaryRemarksExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: context.appColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            alignment: Alignment.topCenter,
-            child: _secretaryRemarksExpanded
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _secretaryRemarksExpanded
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    AppText.titleSmall(
+                                      "Secretary Name",
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    AppText.bodySmall("(Home Departmentt)"),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Row(
                                 children: [
-                                  AppText.titleSmall(
-                                    "Secretary Name",
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                  Icon(
+                                    Icons.calendar_month,
+                                    size: 16,
+                                    color: context.appColors.textSecondary,
                                   ),
-                                  AppText.bodySmall("(Home Departmentt)"),
+                                  const SizedBox(width: 4),
+                                  AppText.labelSmall(
+                                    DateTimeHelper.datFormatSlash(
+                                      DateTime.now(),
+                                    ),
+                                    color: context.appColors.textSecondary,
+                                  ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_month,
-                                  size: 16,
-                                  color: context.appColors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                AppText.labelSmall(
-                                  DateTimeHelper.datFormatSlash(DateTime.now()),
-                                  color: context.appColors.textSecondary,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          "Remarks added by secretary",
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                        const SizedBox(height: 4),
-                        AppText.labelMedium(
-                          "Make the ammendments suggested by secreatry and resend",
-                          color: context.appColors.warning,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ],
-                    ),
-                  )
-                : const SizedBox(width: double.infinity, height: 0),
-          ),
-        ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Remarks added by secretary",
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                          const SizedBox(height: 4),
+                          AppText.labelMedium(
+                            "Make the ammendments suggested by secreatry and resend",
+                            color: context.appColors.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
+            ),
+          ],
+        ),
       ),
     );
   }
