@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
@@ -32,7 +33,10 @@ class SummariesRepo extends SummariesInterface {
   }
 
   @override
-  Future<SummaryDetailsModel> fetchSummaryDetails({required int? summaryId, required int? desId}) async {
+  Future<SummaryDetailsModel> fetchSummaryDetails({
+    required int? summaryId,
+    required int? desId,
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -46,7 +50,7 @@ class SummariesRepo extends SummariesInterface {
         url: summaryDetailsUrl(summaryId: summaryId, desId: desId),
         options: await options(authRequired: true),
       );
-     return SummaryDetailsModel.fromJson(data['data']);
+      return SummaryDetailsModel.fromJson(data['data']);
     } catch (e) {
       rethrow;
     }
@@ -55,7 +59,7 @@ class SummariesRepo extends SummariesInterface {
   @override
   Future<SummariesMetaModel> fetchSummariesMeta({required int? desId}) async {
     try {
-      if(desId == null) {
+      if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
       }
       Map<String, dynamic> data = await dioClient.get(
@@ -63,6 +67,37 @@ class SummariesRepo extends SummariesInterface {
         options: await options(authRequired: true),
       );
       return SummariesMetaModel.fromJson(data['data']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<DepartmentSecretariesModel>> fetchDepartmentSecretaries({
+    required int? deptId,
+    required int? desId,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+
+      if (deptId == null) {
+        throw Exception(
+          "Department ID is required to fetch department secretaries",
+        );
+      }
+
+      Map<String, dynamic> data = await dioClient.get(
+        url: departmentSecretaryUrl(deptId: deptId, desId: desId),
+        options: await options(authRequired: true),
+      );
+      if (data['data'] == null) {
+        return [];
+      }
+      return (data['data'] as List)
+          .map((e) => DepartmentSecretariesModel.fromJson(e))
+          .toList();
     } catch (e) {
       rethrow;
     }

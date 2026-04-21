@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
@@ -24,6 +25,9 @@ abstract class SummariesInterface extends NetworkBase {
   String summaryDetailsUrl({required int summaryId, required int desId}) =>
       '${baseUrl}summaries/$summaryId?userDesgID=$desId';
 
+  String departmentSecretaryUrl({required int deptId, required int desId}) =>
+      '${baseUrl}summaries/department-secretaries/$deptId?userDesgID=$desId';
+
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
 
   Future<List<SummaryModel>> fetchSummariesList({
@@ -34,6 +38,11 @@ abstract class SummariesInterface extends NetworkBase {
 
   Future<SummaryDetailsModel> fetchSummaryDetails({
     required int summaryId,
+    required int desId,
+  });
+
+  Future<List<DepartmentSecretariesModel>> fetchDepartmentSecretaries({
+    required int deptId,
     required int desId,
   });
 }
