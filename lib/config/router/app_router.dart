@@ -92,7 +92,8 @@ class AppRouter {
       path: Routes.createSummary,
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const CreateSummaryScreen(),
+        builder: (context, state) =>
+            CreateSummaryScreen(summaryId: state.extra as int?),
       ),
     ),
     GoRoute(

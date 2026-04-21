@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
+import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_interface.dart';
+import 'package:tuple/tuple.dart';
 
 class SummariesRepo extends SummariesInterface {
   @override
@@ -98,6 +101,90 @@ class SummariesRepo extends SummariesInterface {
       return (data['data'] as List)
           .map((e) => DepartmentSecretariesModel.fromJson(e))
           .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deoStoreDraftSummary({
+    required CreateSummaryModel createSummaryModel,
+    required int? desId,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+      jsonData = await createSummaryModel.toJson(
+        userDesgId: desId,
+        saveAsDraft: true,
+      );
+      FormData formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      await dioClient.post(
+        url: deoDraftSummaryUrl,
+        options: await options(authRequired: true),
+        formData: formData,
+      
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deoUpdateDraftSummary({
+    required int? summaryId,
+    required CreateSummaryModel createSummaryModel,
+    required int? desId,
+  }) async{
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (summaryId == null) {
+        throw Exception("Summary ID is required to update draft summary");
+      }
+      Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+      jsonData = await createSummaryModel.toJson(
+        userDesgId: desId,
+        saveAsDraft: true,
+      );
+      FormData formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      await dioClient.post(
+        url: deoUpdateDraftSummaryUrl(summaryId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> secretaryStoreSummary({
+    required CreateSummaryModel createSummaryModel,
+    required int? desId,
+    required bool isDraft,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+      jsonData = await createSummaryModel.toJson(
+        userDesgId: desId,
+        saveAsDraft: isDraft,
+      );
+      FormData formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      await dioClient.post(
+        url: secretaryStoreSummaryUrl,
+        options: await options(authRequired: true),
+        formData: formData,
+      );
     } catch (e) {
       rethrow;
     }

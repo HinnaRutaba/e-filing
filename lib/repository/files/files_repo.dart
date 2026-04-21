@@ -23,8 +23,8 @@ class FileRepo extends FilesInterface {
       if (data.isNotEmpty) {
         return data['data'] != null && data['data'] is List
             ? (data['data'] as List)
-                .map((file) => FileModel.fromJson(file))
-                .toList()
+                  .map((file) => FileModel.fromJson(file))
+                  .toList()
             : [];
       }
       return [];
@@ -35,7 +35,9 @@ class FileRepo extends FilesInterface {
 
   @override
   Future<FileDetailsModel?> viewPendingFileDetails(
-      int fileId, int? desId) async {
+    int fileId,
+    int? desId,
+  ) async {
     if (desId == null) {
       throw "Designation id is required";
     }
@@ -95,7 +97,9 @@ class FileRepo extends FilesInterface {
 
   @override
   Future<List<ForwardToModel>> getForwardList(
-      int? sectionId, int? desId) async {
+    int? sectionId,
+    int? desId,
+  ) async {
     if (sectionId == null) {
       throw "Section id is required";
     }
@@ -140,18 +144,19 @@ class FileRepo extends FilesInterface {
   }
 
   @override
-  Future<void> sendPendingFileRemarks(
-      {required int fileId,
-      required int userId,
-      required String content,
-      required int forwardTo,
-      required String fileMovNo,
-      required int lastTrackId,
-      required int designationId,
-      required List<FlagAndAttachmentModel>? flags}) async {
+  Future<void> sendPendingFileRemarks({
+    required int fileId,
+    required int userId,
+    required String content,
+    required int forwardTo,
+    required String fileMovNo,
+    required int lastTrackId,
+    required int designationId,
+    required List<FlagAndAttachmentModel>? flags,
+  }) async {
     try {
       Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
-          jsonData = await FileContentModel.toAddRemarksJson(
+      jsonData = await FileContentModel.toAddRemarksJson(
         fileId: fileId,
         userId: userId,
         content: content,
@@ -186,8 +191,8 @@ class FileRepo extends FilesInterface {
       if (data.isNotEmpty) {
         return data['data'] != null && data['data'] is List
             ? (data['data'] as List)
-                .map((file) => FileModel.fromJson(file))
-                .toList()
+                  .map((file) => FileModel.fromJson(file))
+                  .toList()
             : [];
       }
       return [];
@@ -228,8 +233,8 @@ class FileRepo extends FilesInterface {
       if (data.isNotEmpty) {
         return data['data'] != null && data['data'] is List
             ? (data['data'] as List)
-                .map((file) => FileModel.fromJson(file))
-                .toList()
+                  .map((file) => FileModel.fromJson(file))
+                  .toList()
             : [];
       }
       return [];
@@ -240,7 +245,9 @@ class FileRepo extends FilesInterface {
 
   @override
   Future<FileDetailsModel?> viewActionReqFileDetails(
-      int fileId, int? desId) async {
+    int fileId,
+    int? desId,
+  ) async {
     if (desId == null) {
       throw "Designation id is required";
     }
@@ -259,17 +266,18 @@ class FileRepo extends FilesInterface {
   }
 
   @override
-  Future<void> submitAction(
-      {required int fileId,
-      required int userId,
-      required String content,
-      required int? forwardTo,
-      required int choice,
-      required int designationId,
-      required List<FlagAndAttachmentModel>? flags}) async {
+  Future<void> submitAction({
+    required int fileId,
+    required int userId,
+    required String content,
+    required int? forwardTo,
+    required int choice,
+    required int designationId,
+    required List<FlagAndAttachmentModel>? flags,
+  }) async {
     try {
       Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
-          jsonData = await FileContentModel.toSubmitJson(
+      jsonData = await FileContentModel.toSubmitJson(
         fileId: fileId,
         userId: userId,
         content: content,
@@ -303,9 +311,13 @@ class FileRepo extends FilesInterface {
       if (data.isNotEmpty) {
         return data['data'] != null && data['data'] is List
             ? (data['data'] as List)
-                .map((file) =>
-                    FileModel.fromJson(file, status: FileStatus.reForwarded))
-                .toList()
+                  .map(
+                    (file) => FileModel.fromJson(
+                      file,
+                      status: FileStatus.reForwarded,
+                    ),
+                  )
+                  .toList()
             : [];
       }
       return [];
@@ -316,7 +328,9 @@ class FileRepo extends FilesInterface {
 
   @override
   Future<FileDetailsModel?> viewForwardedFileDetails(
-      int fileId, int? desId) async {
+    int fileId,
+    int? desId,
+  ) async {
     if (desId == null) {
       throw "Designation id is required";
     }
@@ -347,8 +361,8 @@ class FileRepo extends FilesInterface {
       if (data.isNotEmpty) {
         return data['data'] != null && data['data'] is List
             ? (data['data'] as List)
-                .map((file) => FileModel.fromJson(file))
-                .toList()
+                  .map((file) => FileModel.fromJson(file))
+                  .toList()
             : [];
       }
       return [];
@@ -359,7 +373,9 @@ class FileRepo extends FilesInterface {
 
   @override
   Future<FileDetailsModel?> viewArchivedFileDetails(
-      int fileId, int? desId) async {
+    int fileId,
+    int? desId,
+  ) async {
     if (desId == null) {
       throw "Designation id is required";
     }
@@ -378,16 +394,17 @@ class FileRepo extends FilesInterface {
   }
 
   @override
-  Future<void> reopenFile(
-      {required int fileId,
-      required int sectionId,
-      required String content,
-      required int forwardTo,
-      required int designationId,
-      required List<FlagAndAttachmentModel>? flags}) async {
+  Future<void> reopenFile({
+    required int fileId,
+    required int sectionId,
+    required String content,
+    required int forwardTo,
+    required int designationId,
+    required List<FlagAndAttachmentModel>? flags,
+  }) async {
     try {
       Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
-          jsonData = await FileContentModel.toReopenJson(
+      jsonData = await FileContentModel.toReopenJson(
         fileId: fileId,
         sectionId: sectionId,
         content: content,
@@ -427,20 +444,21 @@ class FileRepo extends FilesInterface {
   }
 
   @override
-  Future<void> createNewFile(
-      {required String subject,
-      required int fileType,
-      required String content,
-      required int forwardTo,
-      required String fileMovNumber,
-      required String refNumber,
-      required String partFileNumber,
-      required int tagId,
-      required int designationId,
-      required List<FlagAndAttachmentModel>? flags}) async {
+  Future<void> createNewFile({
+    required String subject,
+    required int fileType,
+    required String content,
+    required int forwardTo,
+    required String fileMovNumber,
+    required String refNumber,
+    required String partFileNumber,
+    required int tagId,
+    required int designationId,
+    required List<FlagAndAttachmentModel>? flags,
+  }) async {
     try {
       Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
-          jsonData = await FileContentModel.toCreateFileJson(
+      jsonData = await FileContentModel.toCreateFileJson(
         subject: subject,
         fileType: fileType,
         content: content,

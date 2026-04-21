@@ -1,13 +1,16 @@
 import 'dart:developer';
 
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 enum SummaryMainTab {
   actionRequired('Action Required', Icons.notifications_none_rounded),
@@ -205,6 +208,84 @@ class SummariesController extends BaseControllerState<SummariesState> {
       Toast.error(message: handleException(e));
       state = state.copyWith(isLoadingDetails: false);
       return null;
+    }
+  }
+
+  Future<bool> deoStoreDraftSummary({
+    required CreateSummaryModel createSummaryModel,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.deoStoreDraftSummary(
+        createSummaryModel: createSummaryModel,
+        desId: desId,
+      );
+      Toast.success(message: "Draft summary created successfully");
+      await loadData(isInitialLoad: false);
+      RouteHelper.pop();
+      EasyLoading.dismiss();
+
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> deoUpdateDraftSummary({
+    required int? summaryId,
+    required CreateSummaryModel createSummaryModel,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.deoUpdateDraftSummary(
+        summaryId: summaryId,
+        createSummaryModel: createSummaryModel,
+        desId: desId,
+      );
+      Toast.success(message: "Draft summary updated successfully");
+      await loadData(isInitialLoad: false);
+      RouteHelper.pop();
+      EasyLoading.dismiss();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> secretaryStoreSummary({
+    required CreateSummaryModel createSummaryModel,
+    required bool isDraft,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.secretaryStoreSummary(
+        createSummaryModel: createSummaryModel,
+        desId: desId,
+        isDraft: isDraft,
+      );
+      Toast.success(
+        message: isDraft
+            ? "Draft summary updated successfully"
+            : "Summary created successfully",
+      );
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
     }
   }
 }

@@ -1,9 +1,16 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:typed_data';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
+import 'package:efiling_balochistan/models/department/department_model.dart';
 import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
+import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -17,22 +24,17 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
-import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
-class DepartmentModel {
-  final int id;
-  final String title;
-  const DepartmentModel({required this.id, required this.title});
-}
-
 class CreateSummaryScreen extends ConsumerStatefulWidget {
-  const CreateSummaryScreen({super.key});
+  final int? summaryId;
+  const CreateSummaryScreen({super.key, this.summaryId});
 
   @override
   ConsumerState<CreateSummaryScreen> createState() =>
@@ -44,30 +46,17 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
+  final TextEditingController departmentSearchController =
+      TextEditingController();
 
   final HtmlEditorController quillEditorController = HtmlEditorController();
 
-  DateTime summaryDate = DateTime.now();
-  DepartmentModel? selectedDepartment;
-  XFile? mainPdf;
+  final CreateSummaryModel _model = CreateSummaryModel();
+
   List<FlagModel> allFlags = [];
-  final List<FlagAndAttachmentModel> attachments = [FlagAndAttachmentModel()];
-
-  final List<DepartmentModel> departments = const [
-    DepartmentModel(id: 1, title: 'Finance Department'),
-    DepartmentModel(id: 2, title: 'Education Department'),
-    DepartmentModel(id: 3, title: 'Health Department'),
-    DepartmentModel(id: 4, title: 'Home Department'),
-  ];
-
-  bool get allAttachmentsValid => attachments.every((e) => e.isValid);
-
-  final List<DaakModel> linkedDaak = [];
-  final List<FileModel> linkedFiles = [];
 
   int _openSection = 0;
   bool _secretaryRemarksExpanded = true;
-  String _summaryHtml = '';
 
   Future fetchData() async {
     final controller = ref.read(filesController.notifier);
@@ -78,29 +67,34 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   @override
   void initState() {
     super.initState();
+    subjectController.text = _model.subject;
+    subjectController.addListener(() {
+      _model.subject = subjectController.text;
+    });
+    dateController.text = DateTimeHelper.datFormatSlash(_model.summaryDate);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchData();
     });
-    dateController.text = DateTimeHelper.datFormatSlash(summaryDate);
   }
 
   @override
   void dispose() {
     subjectController.dispose();
     dateController.dispose();
+    departmentSearchController.dispose();
     super.dispose();
   }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: summaryDate,
+      initialDate: _model.summaryDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        summaryDate = picked;
+        _model.summaryDate = picked;
         dateController.text = DateTimeHelper.datFormatSlash(picked);
       });
     }
@@ -108,9 +102,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   addAttachement() {
     setState(() {
-      attachments.add(
+      _model.attachments.add(
         FlagAndAttachmentModel(
-          usedFlags: [...attachments.map((e) => e.flagType ?? FlagModel())],
+          usedFlags: [
+            ..._model.attachments.map((e) => e.flagType ?? FlagModel()),
+          ],
         ),
       );
     });
@@ -119,20 +115,20 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   Future<void> _pickMainPdf() async {
     final files = await FilePickerService().pickFiles();
     if (files.isNotEmpty) {
-      setState(() => mainPdf = files.first);
+      setState(() => _model.mainPdf = files.first);
     }
   }
 
   Future<String> _currentSummaryHtml() async {
     if (_openSection == 0) {
-      _summaryHtml = await quillEditorController.getText();
+      _model.summaryHtml = await quillEditorController.getText();
     }
-    return _summaryHtml;
+    return _model.summaryHtml;
   }
 
   Future<void> _changeSection(int newSection) async {
     if (_openSection == 0 && newSection != 0) {
-      _summaryHtml = await quillEditorController.getText();
+      _model.summaryHtml = await quillEditorController.getText();
     }
     if (!mounted) return;
     setState(() => _openSection = newSection);
@@ -141,7 +137,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   Future<void> _onSend() async {
     HelperUtils.hideKeyboard(context);
     if (!formKey.currentState!.validate()) return;
-    if (mainPdf == null) {
+    if (_model.department == null) {
+      Toast.error(message: "Please select a target department");
+      return;
+    }
+    if (_model.mainPdf == null) {
       Toast.error(message: "Please attach the Main Summary PDF");
       return;
     }
@@ -150,7 +150,17 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       Toast.error(message: "Please write the summary content");
       return;
     }
-    final incompleteFlags = attachments.where(
+    if (isSecretary) {
+      if (_model.creatorSignatureData == null ||
+          _model.creatorSignatureData!.isEmpty) {
+        final signature = await _captureSignature();
+        if (!mounted) return;
+        if (signature == null) return;
+        _model.creatorSignatureData = signature;
+      }
+    }
+
+    final incompleteFlags = _model.attachments.where(
       (e) => e.flagType != null && e.attachment == null,
     );
     if (incompleteFlags.isNotEmpty) {
@@ -165,20 +175,219 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     Toast.show(message: "Summary ready to send");
   }
 
-  int get _addedFlagsCount =>
-      attachments.where((e) => e.flagType != null).length;
+  Future<String?> _captureSignature() async {
+    final padController = SignaturePadController();
+    final bytes = await showModalBottomSheet<Uint8List>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final appColors = ctx.appColors;
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              16 + MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppText.headlineSmall("Add your signature"),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: appColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                AppText.bodySmall(
+                  "Sign in the box below to authorize this summary.",
+                  color: appColors.textSecondary,
+                ),
+                const SizedBox(height: 12),
+                SignaturePad(controller: padController),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppOutlineButton(
+                        text: "Cancel",
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        color: appColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppSolidButton(
+                        text: "Save",
+                        onPressed: () async {
+                          final result = await padController.toPngBytes();
+                          if (!ctx.mounted) return;
+                          if (result == null) {
+                            Toast.error(message: "Please sign before saving");
+                            return;
+                          }
+                          Navigator.of(ctx).pop(result);
+                        },
+                        backgroundColor: theme.colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (bytes == null) return null;
+    return 'data:image/png;base64,${base64Encode(bytes)}';
+  }
 
-  int get _correspondenceCount => linkedDaak.length + linkedFiles.length;
+  int get _addedFlagsCount => _model.addedFlagsCount;
 
-  bool get _step0Complete =>
-      subjectController.text.trim().isNotEmpty &&
-      selectedDepartment != null &&
-      mainPdf != null &&
-      _summaryHtml.trim().isNotEmpty;
+  int get _correspondenceCount => _model.correspondenceCount;
 
-  bool get _step1Complete => _addedFlagsCount > 0 && allAttachmentsValid;
+  bool get _step0Complete => _model.isSummaryDetailsComplete;
 
-  bool get _step2Complete => _correspondenceCount > 0;
+  bool get _step1Complete => _model.isFlagsStepComplete;
+
+  bool get _step2Complete => _model.isCorrespondenceStepComplete;
+
+  bool get _hasUnsavedChanges => _model.hasAnyInput;
+
+  bool get isSecretary {
+    final role = ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+    return role == ActiveUserDesgRole.secretary;
+  }
+
+  Future<void> _handleBack(bool didPop) async {
+    if (didPop) return;
+
+    if (!isSecretary || !_hasUnsavedChanges) {
+      if (mounted) RouteHelper.pop();
+      return;
+    }
+    final save = await _confirmSaveDraft();
+    if (!mounted) return;
+    if (save == null) return;
+    if (save) {
+      _model.summaryHtml = await quillEditorController.getText();
+      if (!mounted) return;
+      await ref
+          .read(summariesController.notifier)
+          .secretaryStoreSummary(createSummaryModel: _model, isDraft: true);
+      return;
+    }
+    RouteHelper.pop();
+  }
+
+  Future<bool?> _confirmSaveDraft() {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final appColors = ctx.appColors;
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: theme.dialogTheme.backgroundColor ?? theme.cardColor,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 12, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    tooltip: 'Close',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: appColors.textSecondary,
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.secondary.withValues(
+                        alpha: 0.12,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.save_outlined,
+                      size: 30,
+                      color: theme.colorScheme.secondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                AppText.headlineSmall(
+                  "Save as draft?",
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                AppText.bodyMedium(
+                  "You have unsaved changes. Would you like to save this summary as a draft so you can continue later?",
+                  textAlign: TextAlign.center,
+                  color: appColors.textSecondary,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppOutlineButton(
+                        text: "Cancel",
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        color: appColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppSolidButton(
+                        text: "Save",
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        backgroundColor: theme.colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<bool> _confirmSend() async {
     final flagsCount = _addedFlagsCount;
@@ -239,7 +448,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 value: correspondenceCount == 0
                     ? 'None added'
                     : '$correspondenceCount added '
-                          '(${linkedDaak.length} daak, ${linkedFiles.length} files)',
+                          '(${_model.linkedDaak.length} daak, ${_model.linkedFiles.length} files)',
                 muted: correspondenceCount == 0,
               ),
               if (missing.isNotEmpty) ...[
@@ -263,7 +472,18 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             ),
 
             AppSolidButton(
-              onPressed: () => RouteHelper.pop(),
+              onPressed: () {
+                RouteHelper.pop();
+                final controller = ref.read(summariesController.notifier);
+                if (isSecretary) {
+                  controller.secretaryStoreSummary(
+                    createSummaryModel: _model,
+                    isDraft: false,
+                  );
+                } else {
+                  controller.deoStoreDraftSummary(createSummaryModel: _model);
+                }
+              },
               text: "Send",
               backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
@@ -330,13 +550,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       ),
       builder: (ctx) => SummaryPreviewSheet(
         content: content,
-        department: selectedDepartment?.title,
-        summaryDate: summaryDate,
+        department: _model.department?.title,
+        summaryDate: _model.summaryDate,
         subject: subjectController.text.trim(),
-        mainPdf: mainPdf,
-        attachments: attachments,
-        linkedDaak: linkedDaak,
-        linkedFiles: linkedFiles,
+        mainPdf: _model.mainPdf,
+        attachments: _model.attachments,
+        linkedDaak: _model.linkedDaak,
+        linkedFiles: _model.linkedFiles,
         onSubmit: _onSend,
       ),
     );
@@ -344,65 +564,70 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) => _handleBack(didPop),
+      child: GradientScaffold(
+        child: Scaffold(
           backgroundColor: Colors.transparent,
-          title: AppText.headlineSmall(
-            "Create Summary",
-            textAlign: TextAlign.left,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            title: AppText.headlineSmall(
+              "Create Summary",
+              textAlign: TextAlign.left,
+            ),
+            scrolledUnderElevation: 0,
           ),
-          scrolledUnderElevation: 0,
-        ),
 
-        body: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                child: _secretaryRemarksAlert(),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _expandableSection(
-                        index: 0,
-                        icon: Icons.description_outlined,
-                        title: "Summary Details",
-                        subtitle: "Subject, date, department and content",
-                        child: _summaryDetailsBody(),
-                      ),
-                      _expandableSection(
-                        index: 1,
-                        icon: Icons.flag_outlined,
-                        title: "Flags",
-                        subtitle: "Attach supporting flags for this summary",
-                        child: _flagsBody(),
-                      ),
-                      _expandableSection(
-                        index: 2,
-                        icon: Icons.folder_shared_outlined,
-                        title: "Local Correspondence",
-                        subtitle: "Link references from earlier correspondence",
-                        child: _localCorrespondenceBody(),
-                      ),
-                      if (_openSection == -1) ...[
-                        const SizedBox(height: 4),
-                        _stepperOverview(),
+          body: Form(
+            key: formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                  child: _secretaryRemarksAlert(),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _expandableSection(
+                          index: 0,
+                          icon: Icons.description_outlined,
+                          title: "Summary Details",
+                          subtitle: "Subject, date, department and content",
+                          child: _summaryDetailsBody(),
+                        ),
+                        _expandableSection(
+                          index: 1,
+                          icon: Icons.flag_outlined,
+                          title: "Flags",
+                          subtitle: "Attach supporting flags for this summary",
+                          child: _flagsBody(),
+                        ),
+                        _expandableSection(
+                          index: 2,
+                          icon: Icons.folder_shared_outlined,
+                          title: "Local Correspondence",
+                          subtitle:
+                              "Link references from earlier correspondence",
+                          child: _localCorrespondenceBody(),
+                        ),
+                        if (_openSection == -1) ...[
+                          const SizedBox(height: 4),
+                          _stepperOverview(),
+                        ],
+                        const SizedBox(height: 24),
                       ],
-                      const SizedBox(height: 24),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -565,7 +790,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               children: [
                 Icon(
                   Icons.picture_as_pdf_rounded,
-                  color: mainPdf != null
+                  color: _model.mainPdf != null
                       ? Colors.red[400]
                       : context.appColors.secondaryLight,
                   size: 20,
@@ -573,17 +798,17 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: AppText.bodyMedium(
-                    mainPdf?.name ?? "Choose file",
-                    color: mainPdf != null
+                    _model.mainPdf?.name ?? "Choose file",
+                    color: _model.mainPdf != null
                         ? context.appColors.secondaryLight
                         : context.appColors.secondaryLight,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
                 ),
-                if (mainPdf != null)
+                if (_model.mainPdf != null)
                   InkWell(
-                    onTap: () => setState(() => mainPdf = null),
+                    onTap: () => setState(() => _model.mainPdf = null),
                     child: Icon(
                       Icons.cancel,
                       color: Theme.of(context).colorScheme.error,
@@ -618,7 +843,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         ),
         child: HtmlEditor(
           controller: quillEditorController,
-          initialHtml: _summaryHtml,
+          initialHtml: _model.summaryHtml,
           hint: "Write summary content here…",
           height: 400,
         ),
@@ -773,17 +998,37 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       validator: Validators.dateValidator,
     );
 
-    final departmentField = AppDropDownField<DepartmentModel>(
-      items: departments,
+    final departments =
+        ref.watch(summariesController).meta?.departments ?? const [];
+    final departmentField = SearchDropDownField<DepartmentModel>(
+      controller: departmentSearchController,
       labelText: "Target Department",
-      hintText: "Select department",
+      hintText: "Search department",
       isMandatory: true,
-      itemBuilder: (item) => AppText.titleMedium(item?.title ?? ''),
-      onChanged: (item) {
-        setState(() => selectedDepartment = item);
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: context.appColors.secondaryLight.withValues(alpha: 0.5),
+        ),
+      ),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return departments
+            .where((d) => (d.title ?? '').toLowerCase().contains(q))
+            .toList();
       },
-      validator: (item) {
-        if (selectedDepartment == null || item == null) {
+      itemBuilder: (context, item) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: AppText.titleMedium(item.title ?? ''),
+      ),
+      onSelected: (item) {
+        setState(() {
+          _model.department = item;
+          departmentSearchController.text = item.title ?? '';
+        });
+      },
+      validator: (_) {
+        if (_model.department == null) {
           return 'Please select a department';
         }
         return null;
@@ -836,7 +1081,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ListView.separated(
-          itemCount: attachments.length,
+          itemCount: _model.attachments.length,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           separatorBuilder: (_, __) => Divider(
@@ -844,18 +1089,18 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             color: context.appColors.secondaryLight.withValues(alpha: .5),
           ),
           itemBuilder: (ctx, i) {
-            final model = attachments[i];
+            final model = _model.attachments[i];
             return AddFlagAndAttachment(
               key: ValueKey(model),
               model: model,
-              onDelete: attachments.length > 1
-                  ? () => setState(() => attachments.removeAt(i))
+              onDelete: _model.attachments.length > 1
+                  ? () => setState(() => _model.attachments.removeAt(i))
                   : null,
               onAdd: addAttachement,
             );
           },
         ),
-        if (attachments.isEmpty)
+        if (_model.attachments.isEmpty)
           Row(
             children: [
               InkWell(
@@ -912,11 +1157,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           onAdd: _openDaakPicker,
         ),
         const SizedBox(height: 8),
-        if (linkedDaak.isEmpty)
+        if (_model.linkedDaak.isEmpty)
           _emptyLinkPlaceholder("No daak linked yet")
         else
           _linkedItemsLayout(
-            items: [for (final d in linkedDaak) _linkedDaakTile(d)],
+            items: [for (final d in _model.linkedDaak) _linkedDaakTile(d)],
           ),
         const SizedBox(height: 12),
         _linkSubsectionHeader(
@@ -926,11 +1171,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           onAdd: _openFilePicker,
         ),
         const SizedBox(height: 8),
-        if (linkedFiles.isEmpty)
+        if (_model.linkedFiles.isEmpty)
           _emptyLinkPlaceholder("No files linked yet")
         else
           _linkedItemsLayout(
-            items: [for (final f in linkedFiles) _linkedFileTile(f)],
+            items: [for (final f in _model.linkedFiles) _linkedFileTile(f)],
           ),
         const SizedBox(height: 16),
         _sectionActions(previousStep: 1),
@@ -1052,7 +1297,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           ),
           IconButton(
             tooltip: 'Remove',
-            onPressed: () => setState(() => linkedDaak.remove(daak)),
+            onPressed: () => setState(() => _model.linkedDaak.remove(daak)),
             icon: Icon(
               Icons.cancel,
               color: Theme.of(context).colorScheme.error,
@@ -1114,7 +1359,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           ),
           IconButton(
             tooltip: 'Remove',
-            onPressed: () => setState(() => linkedFiles.remove(file)),
+            onPressed: () => setState(() => _model.linkedFiles.remove(file)),
             icon: Icon(
               Icons.cancel,
               color: Theme.of(context).colorScheme.error,
@@ -1146,7 +1391,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         title: "Link Daak Letters",
         itemsBuilder: (ref) => ref.watch(daakController).allDaak,
         isLoadingBuilder: (ref) => ref.watch(daakController).isLoading,
-        alreadyLinked: List.of(linkedDaak),
+        alreadyLinked: List.of(_model.linkedDaak),
         keyOf: (d) => d.id,
         match: (d, q) =>
             (d.diaryNo ?? '').toLowerCase().contains(q) ||
@@ -1164,7 +1409,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     );
     if (result != null) {
       setState(() {
-        linkedDaak
+        _model.linkedDaak
           ..clear()
           ..addAll(result);
       });
@@ -1193,7 +1438,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         title: "Link Files",
         itemsBuilder: (ref) => ref.watch(filesController).files,
         isLoadingBuilder: (ref) => ref.watch(filesController).loadingFiles,
-        alreadyLinked: List.of(linkedFiles),
+        alreadyLinked: List.of(_model.linkedFiles),
         keyOf: (f) => f.fileId,
         match: (f, q) =>
             (f.referenceNo ?? '').toLowerCase().contains(q) ||
@@ -1211,7 +1456,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     );
     if (result != null) {
       setState(() {
-        linkedFiles
+        _model.linkedFiles
           ..clear()
           ..addAll(result);
       });
@@ -1479,7 +1724,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           width: double.infinity,
           child: GradientButton(
             onPressed: _onSend,
-            text: "Send to Secretary for Review",
+            text: isSecretary ? "Send Summary" : "Send to Secretary for Review",
             width: double.infinity,
             icon: Icons.send,
             // height: 52,
