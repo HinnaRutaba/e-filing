@@ -688,7 +688,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       itemCount: daakLetters.length,
-      itemBuilder: (ctx, i) => DaakCard(daak: daakLetters[i]),
+      itemBuilder: (ctx, i) => DaakCard(
+        daak: daakLetters[i],
+        onStatusChange: (filter) async {
+          await ref.read(dashboardController.notifier).fetchDaakLetters();
+        },
+      ),
     );
   }
 }
