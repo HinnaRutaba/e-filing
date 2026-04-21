@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -7,9 +8,10 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-class AttachmentsSection extends StatefulWidget {
+class AttachmentsSection extends ConsumerStatefulWidget {
   final XFile? mainPdf;
   final List<AttachmentModel> attachments;
   final ValueChanged<AttachmentModel> onViewAttachment;
@@ -30,10 +32,10 @@ class AttachmentsSection extends StatefulWidget {
   });
 
   @override
-  State<AttachmentsSection> createState() => _AttachmentsSectionState();
+  ConsumerState<AttachmentsSection> createState() => _AttachmentsSectionState();
 }
 
-class _AttachmentsSectionState extends State<AttachmentsSection> {
+class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
   bool _expanded = true;
 
   static final RegExp _flagPrefixRegex = RegExp(
@@ -270,6 +272,14 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         usedFlags.add(FlagModel(title: flag));
       }
     }
+
+    // Read flags from summaries controller meta
+    final summariesState = ref.read(summariesController);
+    // Ensure meta is loaded with available flags
+    if (summariesState.meta == null) {
+      await ref.read(summariesController.notifier).fetchSummariesMeta();
+    }
+
     final model = FlagAndAttachmentModel(usedFlags: usedFlags);
     final saved = await showDialog<bool>(
       context: context,

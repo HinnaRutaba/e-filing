@@ -114,7 +114,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   bool get actionsAvailable {
     SummaryDetailsModel? details = ref.read(summariesController).details;
-    log("ROLE_______${userRole}");
     if (userRole == ActiveUserDesgRole.deo &&
         details?.summary?.summaryStatus == SummaryStatus.draftFromSection) {
       return false;
@@ -126,13 +125,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   void initState() {
     super.initState();
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDetails());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDetails();
+    });
   }
 
   Future<void> _loadDetails() async {
     final details = await ref
         .read(summariesController.notifier)
         .fetchSummaryDetails(summaryId: widget.summary?.id);
+    ref.read(filesController.notifier).getFlags();
     if (!mounted) return;
     final body = details?.summary?.body;
     if (body != null && body.isNotEmpty) {

@@ -94,7 +94,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   left: BorderSide(color: AppColors.primaryDark, width: 4),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
