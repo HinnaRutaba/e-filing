@@ -1,8 +1,10 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/internal_user_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_brief_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -103,6 +105,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     text: 'Agriculture Department',
   );
   final TextEditingController _destOfficerController = TextEditingController();
+
+  ActiveUserDesgRole? get userRole {
+    return ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+  }
+
+  bool get actionsAvailable {
+    SummaryDetailsModel? details = ref.read(summariesController).details;
+    if (userRole == ActiveUserDesgRole.deo &&
+        details?.summary?.summaryStatus == SummaryStatus.draftFromSection) {
+      return false;
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -223,6 +238,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _actionBar() {
+    if (!actionsAvailable) {
+      return const SizedBox.shrink();
+    }
     final expanded = _selectedAction != null;
     return Container(
       decoration: BoxDecoration(
@@ -952,6 +970,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   StickyTag _buildAttachmentsTag(dynamic details) {
     final attachments = AttachmentsSection(
+      canAddMore: actionsAvailable,
       mainPdf: null,
       attachments: details?.attachments ?? const [],
       onViewAttachment: (attachment) {

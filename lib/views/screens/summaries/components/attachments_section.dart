@@ -15,6 +15,8 @@ class AttachmentsSection extends StatefulWidget {
   final ValueChanged<AttachmentModel> onViewAttachment;
   final ValueChanged<AttachmentModel> onDeleteAttachment;
   final ValueChanged<FlagAndAttachmentModel>? onAddAttachment;
+  final bool canAddMore;
+  final bool canDelete;
 
   const AttachmentsSection({
     super.key,
@@ -23,6 +25,8 @@ class AttachmentsSection extends StatefulWidget {
     required this.onViewAttachment,
     required this.onDeleteAttachment,
     this.onAddAttachment,
+    this.canAddMore = true,
+    this.canDelete = false,
   });
 
   @override
@@ -184,10 +188,10 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+              maxLines: 2,
             ),
           ),
-          if (!isMain && onDelete != null) ...[
+          if (!isMain && onDelete != null && widget.canDelete) ...[
             const SizedBox(width: 8),
             InkWell(
               onTap: onDelete,
@@ -237,6 +241,9 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   Widget _addButton() {
+    if (!widget.canAddMore) {
+      return const SizedBox.shrink();
+    }
     return InkWell(
       onTap: _openAddAttachmentDialog,
       child: Row(

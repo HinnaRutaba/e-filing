@@ -1,6 +1,8 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
@@ -10,6 +12,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -211,21 +214,29 @@ class SummaryPreviewSheet extends StatelessWidget {
                 Divider(color: appColors.border),
                 Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      AppText.bodyMedium(
-                        department,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                      const SizedBox(height: 2),
-                      AppText.bodySmall(
-                        'Additional Secretary-II',
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ],
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      ActiveUserDesg? userDesg = ref
+                          .read(summariesController)
+                          .meta
+                          ?.activeUserDesg;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          AppText.bodyMedium(
+                            userDesg?.department ?? '---',
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                          const SizedBox(height: 2),
+                          AppText.bodySmall(
+                            userDesg?.designation ?? '---',
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 Divider(color: appColors.border),

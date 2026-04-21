@@ -1,6 +1,50 @@
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:flutter/material.dart';
 
+enum SummaryStatus {
+  pendingWithSecretary(1, 'Pending with Secretary', 'warning'),
+  sharedInternallyForFeedback(2, 'Shared Internally for Feedback', 'info'),
+  collectingInternalRemarks(3, 'Collecting Internal Remarks', 'primary'),
+  readyToForward(4, 'Ready to Forward', 'success'),
+  forwardedToNextDepartment(5, 'Forwarded to Next Department', 'secondary'),
+  closedFinal(6, 'Closed / Final', 'dark'),
+  draftFromSection(7, 'Draft from Section', 'danger'),
+  withChiefMinisterForApproval(
+    8,
+    'With Chief Minister for Approval',
+    'primary',
+  ),
+  disposedOff(9, 'Disposed Off', 'dark'),
+  pendingDisposalBySection(10, 'Pending Disposal by Section', 'warning'),
+  withPersonalSecretaryForPreReview(
+    11,
+    'With Personal Secretary for Pre-Review',
+    'info',
+  );
+
+  final int value;
+  final String label;
+  final String tag;
+
+  const SummaryStatus(this.value, this.label, this.tag);
+
+  static SummaryStatus? fromValue(int? statusCode) {
+    if (statusCode == null) return null;
+    try {
+      return SummaryStatus.values.firstWhere(
+        (status) => status.value == statusCode,
+        orElse: () => SummaryStatus.draftFromSection,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Color getStatusColor() {
+    return HelperUtils.getTagColor(tag);
+  }
+}
+
 class SummaryModel {
   final int? id;
   final String? summaryNo;
@@ -20,6 +64,7 @@ class SummaryModel {
   final String? draftTargetDepartment;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final SummaryStatus? summaryStatus;
 
   SummaryModel({
     this.id,
@@ -40,6 +85,7 @@ class SummaryModel {
     this.draftTargetDepartment,
     this.createdAt,
     this.updatedAt,
+    this.summaryStatus,
   });
 
   SummaryModel copyWith({
@@ -61,6 +107,7 @@ class SummaryModel {
     String? draftTargetDepartment,
     DateTime? createdAt,
     DateTime? updatedAt,
+    SummaryStatus? summaryStatus,
   }) {
     return SummaryModel(
       id: id ?? this.id,
@@ -85,6 +132,7 @@ class SummaryModel {
           draftTargetDepartment ?? this.draftTargetDepartment,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      summaryStatus: summaryStatus ?? this.summaryStatus,
     );
   }
 
@@ -137,6 +185,9 @@ class SummaryModel {
       updatedAt: map[SummarySchema.updatedAt] != null
           ? DateTime.tryParse(map[SummarySchema.updatedAt])
           : null,
+      summaryStatus: map[SummarySchema.statusCode] != null
+          ? SummaryStatus.fromValue(map[SummarySchema.statusCode]?.toInt())
+          : null,
     );
   }
 
@@ -162,7 +213,8 @@ class SummaryModel {
         other.currentHolderDesignation == currentHolderDesignation &&
         other.draftTargetDepartment == draftTargetDepartment &&
         other.createdAt == createdAt &&
-        other.updatedAt == updatedAt;
+        other.updatedAt == updatedAt &&
+        other.summaryStatus == summaryStatus;
   }
 
   @override
@@ -184,7 +236,8 @@ class SummaryModel {
         currentHolderDesignation.hashCode ^
         draftTargetDepartment.hashCode ^
         createdAt.hashCode ^
-        updatedAt.hashCode;
+        updatedAt.hashCode ^
+        summaryStatus.hashCode;
   }
 }
 

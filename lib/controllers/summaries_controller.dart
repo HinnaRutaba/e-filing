@@ -29,8 +29,8 @@ enum SummarySubTab {
   drafts(
     'Drafts',
     SummaryMainTab.actionRequired,
-    'draft',
-    //'my_drafts',
+    //'draft',
+    'my_drafts',
   ),
   disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
 
@@ -222,7 +222,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
         desId: desId,
       );
       Toast.success(message: "Draft summary created successfully");
-      await loadData(isInitialLoad: false);
+      await setSubTab(SummarySubTab.drafts);
       RouteHelper.pop();
       EasyLoading.dismiss();
 
