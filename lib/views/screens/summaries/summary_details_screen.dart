@@ -92,6 +92,7 @@ const String _kFallbackHtml = '''
 
 class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   SummaryAction? _selectedAction;
+  bool _loadingAction = false;
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _shareSearchController = TextEditingController();
   final HtmlEditorController _editDraftController = HtmlEditorController();
@@ -104,9 +105,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
-  // ignore: unused_field
+
   DepartmentModel? _selectedDestDept;
-  // ignore: unused_field
   DepartmentSecretariesModel? _selectedDestOfficer;
   int? _officerCacheDeptId;
   List<DepartmentSecretariesModel> _officerCache = const [];
@@ -286,13 +286,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     if (action == SummaryAction.editRemarks) {
       final newHtml = await _editDraftController.getText();
       if (!mounted) return;
+      setState(() {
+        _loadingAction = true;
+      });
       success = await notifier.updateDraftContent(
         summaryId: summaryId,
         body: newHtml,
       );
       if (!mounted) return;
       if (success) {
-        setState(() => _currentHtml = newHtml);
+        setState(() {
+          _loadingAction = false;
+          _currentHtml = newHtml;
+        });
       }
     } else if (action == SummaryAction.returnToSection) {
       final remark = _remarksController.text.trim();
@@ -436,6 +442,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     VoidCallback? onTapOverride,
     double? width,
   }) {
+    if (_loadingAction) {
+      return SizedBox(
+        height: 44,
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: action.color,
+            ),
+          ),
+        ),
+      );
+    }
     final bool selected = _selectedAction == action;
     return SizedBox(
       width: width,

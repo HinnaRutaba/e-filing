@@ -32,7 +32,9 @@ class AuthController extends BaseControllerState<UserModel> {
         if (model.user?.designations.length == 1) {
           await setDesignation(model.user!.designations.first);
            await fetchLoggedInUser();
-          
+           
+          await ref.read(summariesController.notifier).fetchSummariesMeta();
+          await ref.read(daakController.notifier).fetchDaakMeta();
           RouteHelper.navigateTo(Routes.dashboard);
         } else {
           RouteHelper.navigateTo(
@@ -159,8 +161,7 @@ class AuthController extends BaseControllerState<UserModel> {
     try {
       await localStorage.setDesignation(model);
       state = state.copyWith(currentDesignation: model);
-      ref.read(summariesController.notifier).fetchSummariesMeta();
-      ref.read(daakController.notifier).fetchDaakMeta();
+      
       return model;
     } catch (e) {
       Toast.error(message: handleException(e));

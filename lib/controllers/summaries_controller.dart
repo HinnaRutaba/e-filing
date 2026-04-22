@@ -238,9 +238,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
   Future<SummaryDetailsModel?> fetchSummaryDetails({
     required int? summaryId,
+    bool showLoading = true,
   }) async {
     try {
-      state = state.copyWith(isLoadingDetails: true, details: null);
+      state = state.copyWith(isLoadingDetails: showLoading, details: null);
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       SummaryDetailsModel details = await repo.fetchSummaryDetails(
         summaryId: summaryId,
@@ -405,7 +406,6 @@ class SummariesController extends BaseControllerState<SummariesState> {
     required String? body,
   }) async {
     try {
-      EasyLoading.show();
       final desId = ref.read(authController).currentDesignation?.userDesgId;
       await repo.updateDraftContent(
         summaryId: summaryId,
@@ -413,11 +413,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
         desId: desId,
       );
       Toast.success(message: "Draft content updated");
-      await fetchSummaryDetails(summaryId: summaryId);
-      EasyLoading.dismiss();
+      await fetchSummaryDetails(summaryId: summaryId, showLoading: false);
+
       return true;
     } catch (e, s) {
-      EasyLoading.dismiss();
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
       return false;
