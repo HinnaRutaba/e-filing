@@ -38,8 +38,12 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     for (final t in SummarySubTab.values) t: GlobalKey(),
   };
 
-  List<SummarySubTab> _subTabsFor(SummaryMainTab mainTab) =>
-      SummarySubTab.values.where((s) => s.parent == mainTab).toList();
+  List<SummarySubTab> _subTabsFor(SummaryMainTab mainTab) {
+    final role = ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+    return subTabsForRole(
+      role,
+    ).where((s) => s.configFor(role).parent == mainTab).toList();
+  }
 
   @override
   void initState() {
@@ -275,10 +279,15 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final sub = subs[index];
+          final role = ref
+              .watch(summariesController)
+              .meta
+              ?.activeUserDesg
+              ?.roleEnum;
           return KeyedSubtree(
             key: _subTabKeys[sub],
             child: _SubTabChip(
-              label: sub.label,
+              label: sub.configFor(role).label,
               selected: subTab == sub,
               onTap: () {
                 ref.read(summariesController.notifier).setSubTab(sub);

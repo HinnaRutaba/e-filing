@@ -1,5 +1,4 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
-import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
@@ -14,11 +13,11 @@ abstract class SummariesInterface extends NetworkBase {
 
   String fetchSummariesListUrl({
     required int desId,
-    required SummarySubTab subTab,
+    required String filterName,
     String? query,
   }) {
     final String url =
-        '${baseUrl}summaries/inbox?userDesgID=$desId&tab=${subTab.filterName}';
+        '${baseUrl}summaries/inbox?userDesgID=$desId&tab=$filterName';
     if (query != null && query.isNotEmpty) {
       return '$url&q=$query';
     }
@@ -56,7 +55,7 @@ abstract class SummariesInterface extends NetworkBase {
 
   Future<List<SummaryModel>> fetchSummariesList({
     required int desId,
-    required SummarySubTab subTab,
+    required String filterName,
     String? query,
   });
 

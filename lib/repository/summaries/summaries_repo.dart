@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
@@ -12,7 +11,7 @@ class SummariesRepo extends SummariesInterface {
   @override
   Future<List<SummaryModel>> fetchSummariesList({
     required int? desId,
-    required SummarySubTab subTab,
+    required String filterName,
     String? query,
   }) async {
     try {
@@ -21,7 +20,11 @@ class SummariesRepo extends SummariesInterface {
       }
 
       Map<String, dynamic> data = await dioClient.get(
-        url: fetchSummariesListUrl(desId: desId, subTab: subTab, query: query),
+        url: fetchSummariesListUrl(
+          desId: desId,
+          filterName: filterName,
+          query: query,
+        ),
         options: await options(authRequired: true),
       );
       if (data['data'] == null || data['data']['items'] == null) {

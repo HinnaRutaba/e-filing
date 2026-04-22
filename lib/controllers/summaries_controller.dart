@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
@@ -24,29 +25,70 @@ enum SummaryMainTab {
 }
 
 enum SummarySubTab {
-  // Action Required
-  inbox('Inbox', SummaryMainTab.actionRequired, 'inbox'),
-  sharedToMe('Shared to me', SummaryMainTab.actionRequired, 'internal'),
-  drafts(
-    'Drafts',
-    SummaryMainTab.actionRequired,
-    'draft',
-    //'my_drafts',
-  ),
-  disposal('Disposal', SummaryMainTab.actionRequired, 'pending_disposal'),
+  inbox,
+  sharedToMe,
+  drafts,
+  disposal,
+  sentOut,
+  sharedInternally,
+}
 
-  // Sent & Tracked
-  sentOut('Sent Out', SummaryMainTab.sentTracked, 'sent'),
-  sharedInternally(
-    'Shared Internally',
-    SummaryMainTab.sentTracked,
-    'internal_forwarded',
-  );
-
+class SummaryTabConfig {
   final String label;
   final SummaryMainTab parent;
   final String filterName;
-  const SummarySubTab(this.label, this.parent, this.filterName);
+  const SummaryTabConfig({
+    required this.label,
+    required this.parent,
+    required this.filterName,
+  });
+}
+
+extension SummarySubTabX on SummarySubTab {
+  SummaryTabConfig configFor(ActiveUserDesgRole? role) {
+    switch (this) {
+      case SummarySubTab.inbox:
+        return const SummaryTabConfig(
+          label: 'Inbox',
+          parent: SummaryMainTab.actionRequired,
+          filterName: 'inbox',
+        );
+      case SummarySubTab.sharedToMe:
+        return const SummaryTabConfig(
+          label: 'Shared to me',
+          parent: SummaryMainTab.actionRequired,
+          filterName: 'internal',
+        );
+      case SummarySubTab.drafts:
+        return SummaryTabConfig(
+          label: 'Drafts',
+          parent: SummaryMainTab.actionRequired,
+          filterName: role == ActiveUserDesgRole.deo ? 'my_draft' : 'draft',
+        );
+      case SummarySubTab.disposal:
+        return const SummaryTabConfig(
+          label: 'Disposal',
+          parent: SummaryMainTab.actionRequired,
+          filterName: 'pending_disposal',
+        );
+      case SummarySubTab.sentOut:
+        return const SummaryTabConfig(
+          label: 'Sent Out',
+          parent: SummaryMainTab.sentTracked,
+          filterName: 'sent',
+        );
+      case SummarySubTab.sharedInternally:
+        return const SummaryTabConfig(
+          label: 'Shared Internally',
+          parent: SummaryMainTab.sentTracked,
+          filterName: 'internal_forwarded',
+        );
+    }
+  }
+}
+
+List<SummarySubTab> subTabsForRole(ActiveUserDesgRole? role) {
+  return SummarySubTab.values;
 }
 
 class SummariesState {
@@ -146,8 +188,9 @@ class SummariesController extends BaseControllerState<SummariesState> {
   }
 
   Future<void> setMainTab(SummaryMainTab mainTab) async {
-    final firstSub = SummarySubTab.values.firstWhere(
-      (s) => s.parent == mainTab,
+    final role = state.meta?.activeUserDesg?.roleEnum;
+    final firstSub = subTabsForRole(role).firstWhere(
+      (s) => s.configFor(role).parent == mainTab,
       orElse: () => SummarySubTab.inbox,
     );
     state = state.copyWith(selectedMainTab: mainTab, selectedSubTab: firstSub);
@@ -172,9 +215,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
   Future<List<SummaryModel>?> fetchSummariesList({required int? desId}) async {
     try {
+      final role = state.meta?.activeUserDesg?.roleEnum;
       List<SummaryModel> list = await repo.fetchSummariesList(
         desId: desId,
-        subTab: state.selectedSubTab,
+        filterName: state.selectedSubTab.configFor(role).filterName,
         query: state.searchText,
       );
       state = state.copyWith(allSummaries: list, filteredSummaries: list);

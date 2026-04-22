@@ -1163,6 +1163,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   StickyTag _buildAttachmentsTag(dynamic details) {
+    final savedAttachments = details?.attachments ?? const [];
+    final totalAttachments =
+        (savedAttachments as List).length + _pendingAttachments.length;
     final attachments = AttachmentsSection(
       canAddMore: actionsAvailable,
       canDelete: actionsAvailable,
@@ -1225,7 +1228,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
 
     return StickyTag(
-      text: "Attachments",
+      text: "Attachments ($totalAttachments)",
       backgroundColor: AppColors.primaryDark,
       panelContent: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -1241,7 +1244,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final briefs = details?.briefs ?? const <SummaryBriefModel>[];
 
     return StickyTag(
-      text: "Briefs",
+      text: "Briefs (${briefs.length})",
       backgroundColor: Colors.orange,
       panelContent: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 12),
