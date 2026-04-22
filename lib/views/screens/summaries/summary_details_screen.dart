@@ -4,6 +4,8 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:efiling_balochistan/models/department/department_model.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/internal_user_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_brief_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
@@ -28,6 +30,8 @@ import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,21 +96,55 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final TextEditingController _shareSearchController = TextEditingController();
   final HtmlEditorController _editDraftController = HtmlEditorController();
   late String _currentHtml;
-  InternalUserModel? _shareTarget;
+  final List<InternalUserModel> _shareTargets = [];
   final List<FlagAndAttachmentModel> _pendingAttachments = [];
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
 
-  static const List<String> _demoDepartments = [
-    'Agriculture Department',
-    'Home Department',
-    'Finance Department',
-    'Education Department',
-    'Health Department',
-  ];
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
+  // ignore: unused_field
+  DepartmentModel? _selectedDestDept;
+  // ignore: unused_field
+  DepartmentSecretariesModel? _selectedDestOfficer;
+  int? _officerCacheDeptId;
+  List<DepartmentSecretariesModel> _officerCache = const [];
+  Uint8List? _cardSignatureBytes;
+
+  Future<void> _fetchOfficersForCurrentDept() async {
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      if (mounted) {
+        setState(() {
+          _officerCache = const [];
+          _officerCacheDeptId = null;
+        });
+      }
+      return;
+    }
+    if (_officerCacheDeptId == deptId) return;
+    final list = await ref
+        .read(summariesController.notifier)
+        .fetchDepartmentSecretaries(deptId: deptId);
+    if (!mounted) return;
+    setState(() {
+      _officerCache = list;
+      _officerCacheDeptId = deptId;
+    });
+  }
+
+  DepartmentModel? _matchDepartment(String? name) {
+    if (name == null || name.trim().isEmpty) return null;
+    final departments =
+        ref.read(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    final normalized = name.trim().toLowerCase();
+    for (final d in departments) {
+      if ((d.title ?? '').trim().toLowerCase() == normalized) return d;
+    }
+    return null;
+  }
 
   ActiveUserDesgRole? get userRole {
     return ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
@@ -128,9 +166,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final initialTarget = widget.summary?.draftTargetDepartment;
     if (initialTarget != null && initialTarget.isNotEmpty) {
       _destDeptController.text = initialTarget;
+      _selectedDestDept = _matchDepartment(initialTarget);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
+      _fetchOfficersForCurrentDept();
     });
   }
 
@@ -145,10 +185,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() => _currentHtml = body);
     }
     final target = details?.summary?.draftTargetDepartment;
-    if (target != null &&
-        target.isNotEmpty &&
-        _destDeptController.text.isEmpty) {
-      _destDeptController.text = target;
+    if (target != null && target.isNotEmpty) {
+      setState(() {
+        _destDeptController.text = target;
+        _selectedDestDept = _matchDepartment(target);
+      });
+      _fetchOfficersForCurrentDept();
     }
   }
 
@@ -235,21 +277,63 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final action = _selectedAction;
     if (action == null) return;
 
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+    bool success = true;
+
     if (action == SummaryAction.editRemarks) {
       final newHtml = await _editDraftController.getText();
       if (!mounted) return;
+      success = await notifier.updateDraftContent(
+        summaryId: summaryId,
+        body: newHtml,
+      );
+      if (!mounted) return;
+      if (success) {
+        setState(() => _currentHtml = newHtml);
+      }
+    } else if (action == SummaryAction.returnToSection) {
+      final remark = _remarksController.text.trim();
+      if (remark.isEmpty) {
+        Toast.error(message: 'Please enter remarks for the section');
+        return;
+      }
+      success = await notifier.returnToSection(
+        summaryId: summaryId,
+        remark: remark,
+      );
+    } else if (action == SummaryAction.shareInternally) {
+      final recipientIds = _shareTargets
+          .map((u) => u.userDesgId)
+          .whereType<int>()
+          .toList();
+      if (recipientIds.isEmpty) {
+        Toast.error(message: 'Please select at least one department member');
+        return;
+      }
+      success = await notifier.shareInternally(
+        summaryId: summaryId,
+        instruction: _remarksController.text.trim(),
+        recipientDesIds: recipientIds,
+      );
+      if (!mounted) return;
+      if (success) {
+        setState(() {
+          _shareTargets.clear();
+          _shareSearchController.clear();
+        });
+      }
+    }
+
+    if (!mounted) return;
+    if (success) {
       setState(() {
-        _currentHtml = newHtml;
         _selectedAction = null;
         _remarksController.clear();
       });
-      return;
     }
-
-    setState(() {
-      _selectedAction = null;
-      _remarksController.clear();
-    });
   }
 
   Widget _actionBar() {
@@ -618,7 +702,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             final users =
                 ref.read(summariesController).meta?.internalUsers ??
                 const <InternalUserModel>[];
+            final selectedIds = _shareTargets
+                .map((u) => u.userDesgId)
+                .whereType<int>()
+                .toSet();
             return users.where((u) {
+              if (u.userDesgId != null && selectedIds.contains(u.userDesgId)) {
+                return false;
+              }
               return (u.name ?? '').toLowerCase().contains(q) ||
                   (u.designation ?? '').toLowerCase().contains(q);
             }).toList();
@@ -646,68 +737,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           },
           onSelected: (item) {
             setState(() {
-              _shareTarget = item;
-              _shareSearchController.text = item.name ?? '';
+              final alreadyPicked =
+                  item.userDesgId != null &&
+                  _shareTargets.any((u) => u.userDesgId == item.userDesgId);
+              if (!alreadyPicked) {
+                _shareTargets.add(item);
+              }
+              _shareSearchController.clear();
             });
           },
         ),
-        if (_shareTarget != null) ...[
+        if (_shareTargets.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.cardColorLight,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.secondaryLight.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.secondary.withValues(alpha: 0.15),
-                  child: const Icon(
-                    Icons.person,
-                    size: 16,
-                    color: AppColors.secondary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppText.bodySmall(
-                        _shareTarget!.name ?? '',
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                      AppText.bodySmall(
-                        _shareTarget!.designation ?? '',
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ],
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _shareTarget = null;
-                      _shareSearchController.clear();
-                    });
-                  },
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 18,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          for (int i = 0; i < _shareTargets.length; i++) ...[
+            if (i > 0) const SizedBox(height: 6),
+            _shareTargetCard(_shareTargets[i]),
+          ],
         ],
         const SizedBox(height: 12),
         AppTextField(
@@ -717,6 +762,65 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           maxLines: 4,
         ),
       ],
+    );
+  }
+
+  Widget _shareTargetCard(InternalUserModel user) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.cardColorLight,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: AppColors.secondary.withValues(alpha: 0.15),
+            child: const Icon(
+              Icons.person,
+              size: 16,
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText.bodySmall(
+                  user.name ?? '',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                AppText.bodySmall(
+                  user.designation ?? '',
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _shareTargets.removeWhere(
+                  (u) => u.userDesgId == user.userDesgId,
+                );
+              });
+            },
+            child: const Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -793,7 +897,30 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return _forwardingFields();
   }
 
-  Widget _forwardingFields() {
+  Future<void> _submitSignForward() async {
+    if (_cardSignatureBytes == null || _cardSignatureBytes!.isEmpty) {
+      Toast.error(message: 'Please sign before forwarding');
+      return;
+    }
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      Toast.error(message: 'Please select a destination department');
+      return;
+    }
+    final hasOfficers =
+        _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
+    if (hasOfficers && _selectedDestOfficer?.id == null) {
+      Toast.error(message: 'Please select a destination officer');
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _selectedAction = null;
+      _remarksController.clear();
+    });
+  }
+
+  Widget _forwardingFields({bool showForwardButton = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -814,15 +941,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _forwardingLabel('DESTINATION OFFICER'),
         const SizedBox(height: 6),
         _officerDropdown(),
-        const SizedBox(height: 4),
-        Text(
-          'No user found for selected department (required role_id: 4 or 5).',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[600],
-            fontStyle: FontStyle.italic,
+        if (_selectedDestDept?.id != null &&
+            _officerCacheDeptId == _selectedDestDept?.id &&
+            _officerCache.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'No user found for selected department.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.red[700],
+              fontStyle: FontStyle.italic,
+            ),
           ),
-        ),
+        ],
+        if (showForwardButton) ...[
+          const SizedBox(height: 14),
+          _actionButton(
+            SummaryAction.signForward,
+            expand: false,
+            width: double.infinity,
+            onTapOverride: _submitSignForward,
+          ),
+        ],
       ],
     );
   }
@@ -839,7 +979,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _departmentDropdown() {
-    return SearchDropDownField<String>(
+    final departments =
+        ref.watch(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    return SearchDropDownField<DepartmentModel>(
       controller: _destDeptController,
       labelText: 'Destination Department',
       hintText: 'Select department',
@@ -848,15 +991,15 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       border: _forwardingBorder(),
       suggestionsCallback: (pattern) {
         final q = pattern.toLowerCase();
-        return _demoDepartments
-            .where((d) => d.toLowerCase().contains(q))
+        return departments
+            .where((d) => (d.title ?? '').toLowerCase().contains(q))
             .toList(growable: false);
       },
       itemBuilder: (context, item) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: AppText.bodyMedium(
-            item,
+            item.title ?? '',
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
@@ -864,32 +1007,62 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       },
       onSelected: (item) {
         setState(() {
-          _destDeptController.text = item;
+          _selectedDestDept = item;
+          _destDeptController.text = item.title ?? '';
+          _selectedDestOfficer = null;
           _destOfficerController.clear();
+          _officerCacheDeptId = null;
+          _officerCache = const [];
         });
+        _fetchOfficersForCurrentDept();
       },
     );
   }
 
   Widget _officerDropdown() {
-    return SearchDropDownField<String>(
+    final dept = _selectedDestDept;
+    return SearchDropDownField<DepartmentSecretariesModel>(
       controller: _destOfficerController,
       labelText: 'Destination Officer',
       hintText: 'Select officer',
       showLabel: false,
-      enabled: false,
-
+      enabled: dept?.id != null,
       border: _forwardingBorder(),
-      suggestionsCallback: (pattern) async => const <String>[],
-
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return _officerCache
+            .where((o) {
+              return (o.name ?? '').toLowerCase().contains(q) ||
+                  (o.designation ?? '').toLowerCase().contains(q);
+            })
+            .toList(growable: false);
+      },
       itemBuilder: (context, item) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: AppText.bodyMedium(item, color: AppColors.textPrimary),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyMedium(
+                item.name ?? '',
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              if ((item.designation ?? '').isNotEmpty)
+                AppText.bodySmall(
+                  item.designation!,
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+            ],
+          ),
         );
       },
       onSelected: (item) {
-        setState(() => _destOfficerController.text = item);
+        setState(() {
+          _selectedDestOfficer = item;
+          _destOfficerController.text = item.name ?? '';
+        });
       },
     );
   }
@@ -970,11 +1143,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
-  void _onPrint() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Print Summary — not wired up yet')),
-    );
-  }
+  void _onPrint() {}
 
   Widget _documentCard() {
     final details = ref.read(summariesController).details;
@@ -984,7 +1153,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       summary: summary,
       remarkTrack: details?.remarkTrack ?? const [],
       actions: details?.actions,
-      forwardingSection: actionsAvailable ? _forwardingFields() : null,
+      forwardingSection: actionsAvailable
+          ? _forwardingFields(showForwardButton: true)
+          : null,
+      onSignatureChanged: (bytes) {
+        setState(() => _cardSignatureBytes = bytes);
+      },
     );
   }
 

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
@@ -211,6 +212,22 @@ class SummariesController extends BaseControllerState<SummariesState> {
     }
   }
 
+  Future<List<DepartmentSecretariesModel>> fetchDepartmentSecretaries({
+    required int? deptId,
+  }) async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      return await repo.fetchDepartmentSecretaries(
+        deptId: deptId,
+        desId: desId,
+      );
+    } catch (e, s) {
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
+
   Future<bool> deoStoreDraftSummary({
     required CreateSummaryModel createSummaryModel,
   }) async {
@@ -280,6 +297,80 @@ class SummariesController extends BaseControllerState<SummariesState> {
       await loadData(isInitialLoad: false);
       EasyLoading.dismiss();
       RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> returnToSection({
+    required int? summaryId,
+    required String? remark,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.returnToSection(
+        summaryId: summaryId,
+        remark: remark,
+        desId: desId,
+      );
+      Toast.success(message: "Summary returned to section");
+      await fetchSummaryDetails(summaryId: summaryId);
+      EasyLoading.dismiss();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> shareInternally({
+    required int? summaryId,
+    required String instruction,
+    required List<int>? recipientDesIds,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.shareInternally(
+        summaryId: summaryId,
+        instruction: instruction,
+        desId: desId,
+        recipientDesIds: recipientDesIds,
+      );
+      Toast.success(message: "Summary shared internally");
+      await fetchSummaryDetails(summaryId: summaryId);
+      EasyLoading.dismiss();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> updateDraftContent({
+    required int? summaryId,
+    required String? body,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.updateDraftContent(
+        summaryId: summaryId,
+        body: body,
+        desId: desId,
+      );
+      Toast.success(message: "Draft content updated");
+      await fetchSummaryDetails(summaryId: summaryId);
+      EasyLoading.dismiss();
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();

@@ -11,16 +11,17 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/handwritten_strokes_view.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:signature/signature.dart';
 
 class SummaryDocumentCard extends ConsumerStatefulWidget {
   final SummaryModel summary;
   final List<SummaryRemarkTrackModel> remarkTrack;
   final SummaryActionsModel? actions;
   final Widget? forwardingSection;
+  final ValueChanged<Uint8List?>? onSignatureChanged;
 
   const SummaryDocumentCard({
     super.key,
@@ -28,6 +29,7 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
     required this.remarkTrack,
     this.actions,
     this.forwardingSection,
+    this.onSignatureChanged,
   });
 
   @override
@@ -38,22 +40,18 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
 class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
   bool _signExpanded = false;
   Uint8List? _signatureImage;
-  late final SignatureController _signatureController;
+  final SignaturePadController _signaturePadController =
+      SignaturePadController();
+  final GlobalKey _forwardingSectionKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     debugPrint("REMARK_______${widget.remarkTrack.length}");
-    _signatureController = SignatureController(
-      penStrokeWidth: 2,
-      penColor: AppColors.textPrimary,
-      exportBackgroundColor: Colors.transparent,
-    );
   }
 
   @override
   void dispose() {
-    _signatureController.dispose();
     super.dispose();
   }
 
@@ -169,19 +167,10 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                             ?.roleEnum !=
                         ActiveUserDesgRole.deo)
                       _signaturePad(),
-                    if (_signatureImage != null &&
-                        widget.forwardingSection != null) ...[
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 360),
-                          child: widget.forwardingSection!,
-                        ),
-                      ),
-                    ],
+
                     const SizedBox(height: 8),
                   ],
+
                   Builder(
                     builder: (_) {
                       final signedTracks = widget.remarkTrack
@@ -241,6 +230,18 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                       );
                     },
                   ),
+                  if (_signatureImage != null &&
+                      widget.forwardingSection != null) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      key: _forwardingSectionKey,
+                      alignment: Alignment.centerRight,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 360),
+                        child: widget.forwardingSection!,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -520,53 +521,53 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
         ),
       ),
       clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(10),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: 180,
-            child: Signature(
-              controller: _signatureController,
-              backgroundColor: Colors.white,
-            ),
+          SignaturePad(
+            controller: _signaturePadController,
+            canvasHeight: 180,
+            canvasColor: Colors.white,
+            showDescription: false,
           ),
-          Container(
-            color: AppColors.secondaryLight.withValues(alpha: 0.08),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              children: [
-                AppText.labelSmall(
-                  'Sign above',
-                  color: AppColors.textSecondary,
-                ),
-                const Spacer(),
-                AppTextLinkButton(
-                  onPressed: () {
-                    _signatureController.clear();
-                    setState(() => _signatureImage = null);
-                  },
-                  icon: Icons.refresh,
-                  text: "Clear",
-                  color: AppColors.secondaryDark,
-                ),
-                AppTextLinkButton(
-                  onPressed: () async {
-                    if (_signatureController.isNotEmpty) {
-                      final bytes = await _signatureController.toPngBytes();
-                      if (!mounted) return;
-                      setState(() {
-                        _signatureImage = bytes;
-                        _signExpanded = false;
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              AppText.labelSmall('Sign above', color: AppColors.textSecondary),
+              const Spacer(),
+              AppTextLinkButton(
+                onPressed: () async {
+                  if (_signaturePadController.isNotEmpty) {
+                    final bytes = await _signaturePadController.toPngBytes();
+                    if (!mounted) return;
+                    setState(() {
+                      _signatureImage = bytes;
+                      _signExpanded = false;
+                    });
+                    widget.onSignatureChanged?.call(bytes);
+                    if (widget.forwardingSection != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        final ctx = _forwardingSectionKey.currentContext;
+                        if (ctx != null) {
+                          Scrollable.ensureVisible(
+                            ctx,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutCubic,
+                            alignment: 0.1,
+                          );
+                        }
                       });
-                    } else {
-                      setState(() => _signExpanded = false);
                     }
-                  },
-                  icon: Icons.check,
-                  text: "Done",
-                  color: AppColors.secondaryDark,
-                ),
-              ],
-            ),
+                  } else {
+                    setState(() => _signExpanded = false);
+                  }
+                },
+                icon: Icons.check,
+                text: "Done",
+                color: AppColors.secondaryDark,
+              ),
+            ],
           ),
         ],
       ),
