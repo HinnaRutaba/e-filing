@@ -289,17 +289,26 @@ class SummariesController extends BaseControllerState<SummariesState> {
     }
   }
 
-  Future<bool> deleteAttachment(int attachmentId) async {
+  Future<bool> deleteAttachment(int? attachmentId) async {
+    final previousDetails = state.details;
+    if (previousDetails != null) {
+      state = state.copyWith(
+        details: previousDetails.copyWith(
+          attachments: previousDetails.attachments
+              .where((a) => a.id != attachmentId)
+              .toList(),
+        ),
+      );
+    }
+
     try {
-      EasyLoading.show();
       final desId = ref.read(authController).currentDesignation?.userDesgId;
-     
       await repo.deleteAttachment(attachmentId: attachmentId, desId: desId);
-      //Toast.success(message: "Attachment deleted successfully");
-      EasyLoading.dismiss();
       return true;
     } catch (e, s) {
-      EasyLoading.dismiss();
+      if (previousDetails != null) {
+        state = state.copyWith(details: previousDetails);
+      }
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
       return false;

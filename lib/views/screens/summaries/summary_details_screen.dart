@@ -15,6 +15,7 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
+import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_forward_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
@@ -92,6 +93,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final HtmlEditorController _editDraftController = HtmlEditorController();
   late String _currentHtml;
   InternalUserModel? _shareTarget;
+  final List<FlagAndAttachmentModel> _pendingAttachments = [];
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
@@ -979,6 +981,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       canDelete: actionsAvailable,
       mainPdf: null,
       attachments: details?.attachments ?? const [],
+      pendingAttachments: _pendingAttachments,
+      onRemovePendingAttachment: (index) {
+        setState(() {
+          _pendingAttachments.removeAt(index);
+        });
+      },
       onViewAttachment: (attachment) {
         if (attachment.fileUrl == null) {
           Toast.error(message: 'No file URL found for this attachment.');
@@ -1019,8 +1027,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           attachment.originalName ?? 'Attachment',
         );
       },
-      onDeleteAttachment: (_) {},
-      onAddAttachment: (_) {},
+      onDeleteAttachment: (attachment) {
+        ref
+            .read(summariesController.notifier)
+            .deleteAttachment(attachment.id);
+      },
+      onAddAttachment: (model) {
+        setState(() {
+          _pendingAttachments.add(model);
+        });
+      },
     );
 
     return StickyTag(

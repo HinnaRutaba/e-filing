@@ -14,9 +14,11 @@ import 'package:image_picker/image_picker.dart';
 class AttachmentsSection extends ConsumerStatefulWidget {
   final XFile? mainPdf;
   final List<AttachmentModel> attachments;
+  final List<FlagAndAttachmentModel> pendingAttachments;
   final ValueChanged<AttachmentModel> onViewAttachment;
   final ValueChanged<AttachmentModel> onDeleteAttachment;
   final ValueChanged<FlagAndAttachmentModel>? onAddAttachment;
+  final ValueChanged<int>? onRemovePendingAttachment;
   final bool canAddMore;
   final bool canDelete;
 
@@ -24,9 +26,11 @@ class AttachmentsSection extends ConsumerStatefulWidget {
     super.key,
     required this.mainPdf,
     required this.attachments,
+    this.pendingAttachments = const [],
     required this.onViewAttachment,
     required this.onDeleteAttachment,
     this.onAddAttachment,
+    this.onRemovePendingAttachment,
     this.canAddMore = true,
     this.canDelete = false,
   });
@@ -62,7 +66,8 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
   @override
   Widget build(BuildContext context) {
     final hasMain = widget.mainPdf != null;
-    final isEmpty = !hasMain && widget.attachments.isEmpty;
+    final pending = widget.pendingAttachments;
+    final isEmpty = !hasMain && widget.attachments.isEmpty && pending.isEmpty;
 
     return _sidebarShell(
       header: 'Attachments',
@@ -94,11 +99,128 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
             if (i > 0) const SizedBox(height: 8),
             _buildAttachmentRow(widget.attachments[i], i, hasMain),
           ],
+          if (pending.isNotEmpty) ...[
+            if (hasMain || widget.attachments.isNotEmpty)
+              const SizedBox(height: 14),
+            _pendingSectionHeader(),
+            const SizedBox(height: 8),
+            for (int i = 0; i < pending.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              _buildPendingRow(pending[i], i),
+            ],
+          ],
           if (isEmpty)
             AppText.bodySmall(
               'No attachments.',
               color: context.appColors.textSecondary,
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pendingSectionHeader() {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 14,
+          decoration: BoxDecoration(
+            color: context.appColors.secondaryDark,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        AppText.bodySmall(
+          'New Attachments',
+          fontWeight: FontWeight.w700,
+          color: context.appColors.secondaryDark,
+        ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: context.appColors.secondaryDark.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: AppText.bodySmall(
+            'Unsaved',
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: context.appColors.secondaryDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPendingRow(FlagAndAttachmentModel item, int index) {
+    return _pendingAttachmentRow(
+          flag: item.flagType?.title ?? '',
+          fileName: item.attachment?.name ?? '(no file)',
+          onRemove: () => widget.onRemovePendingAttachment?.call(index),
+        )
+        .animate()
+        .fadeIn(duration: 250.ms, curve: Curves.easeOut)
+        .slideX(
+          begin: -0.1,
+          end: 0,
+          duration: 300.ms,
+          curve: Curves.easeOutCubic,
+        );
+  }
+
+  Widget _pendingAttachmentRow({
+    required String flag,
+    required String fileName,
+    required VoidCallback onRemove,
+  }) {
+    final accent = context.appColors.secondaryDark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: accent.withValues(alpha: 0.4)),
+            ),
+            child: AppText.bodySmall(
+              flag,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: accent,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: AppText.bodySmall(
+              fileName,
+              color: context.appColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onRemove,
+            child: Icon(
+              Icons.cancel,
+              color: Theme.of(context).colorScheme.error,
+              size: 20,
+            ),
+          ),
         ],
       ),
     );
@@ -264,20 +386,28 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
   }
 
   Future<void> _openAddAttachmentDialog() async {
-    final usedFlags = <FlagModel>[];
-    for (final a in widget.attachments) {
-      final parsed = _parseFlagAndName(a);
-      final flag = parsed.flag;
-      if (flag != null && flag.isNotEmpty) {
-        usedFlags.add(FlagModel(title: flag));
-      }
-    }
-
     // Read flags from summaries controller meta
     final summariesState = ref.read(summariesController);
     // Ensure meta is loaded with available flags
     if (summariesState.meta == null) {
       await ref.read(summariesController.notifier).fetchSummariesMeta();
+    }
+
+    final availableFlags = ref.read(filesController).flags;
+    final usedFlags = <FlagModel>[];
+    for (final a in widget.attachments) {
+      final parsed = _parseFlagAndName(a);
+      final flag = parsed.flag;
+      if (flag == null || flag.isEmpty) continue;
+      final normalized = flag.toLowerCase().trim();
+      final match = availableFlags.firstWhere(
+        (f) => (f.title ?? '').toLowerCase().trim() == normalized,
+        orElse: () => FlagModel(title: flag),
+      );
+      usedFlags.add(match);
+    }
+    for (final p in widget.pendingAttachments) {
+      if (p.flagType != null) usedFlags.add(p.flagType!);
     }
 
     final model = FlagAndAttachmentModel(usedFlags: usedFlags);
