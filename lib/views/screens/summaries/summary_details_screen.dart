@@ -105,9 +105,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     'Education Department',
     'Health Department',
   ];
-  final TextEditingController _destDeptController = TextEditingController(
-    text: 'Agriculture Department',
-  );
+  final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
 
   ActiveUserDesgRole? get userRole {
@@ -127,6 +125,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   void initState() {
     super.initState();
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
+    final initialTarget = widget.summary?.draftTargetDepartment;
+    if (initialTarget != null && initialTarget.isNotEmpty) {
+      _destDeptController.text = initialTarget;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
     });
@@ -141,6 +143,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final body = details?.summary?.body;
     if (body != null && body.isNotEmpty) {
       setState(() => _currentHtml = body);
+    }
+    final target = details?.summary?.draftTargetDepartment;
+    if (target != null &&
+        target.isNotEmpty &&
+        _destDeptController.text.isEmpty) {
+      _destDeptController.text = target;
     }
   }
 
@@ -782,6 +790,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _forwardingStep(SummaryAction action) {
+    return _forwardingFields();
+  }
+
+  Widget _forwardingFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -972,6 +984,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       summary: summary,
       remarkTrack: details?.remarkTrack ?? const [],
       actions: details?.actions,
+      forwardingSection: actionsAvailable ? _forwardingFields() : null,
     );
   }
 
@@ -1028,9 +1041,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         );
       },
       onDeleteAttachment: (attachment) {
-        ref
-            .read(summariesController.notifier)
-            .deleteAttachment(attachment.id);
+        ref.read(summariesController.notifier).deleteAttachment(attachment.id);
       },
       onAddAttachment: (model) {
         setState(() {

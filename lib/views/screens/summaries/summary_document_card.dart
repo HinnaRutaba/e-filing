@@ -20,12 +20,14 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
   final SummaryModel summary;
   final List<SummaryRemarkTrackModel> remarkTrack;
   final SummaryActionsModel? actions;
+  final Widget? forwardingSection;
 
   const SummaryDocumentCard({
     super.key,
     required this.summary,
     required this.remarkTrack,
     this.actions,
+    this.forwardingSection,
   });
 
   @override
@@ -167,6 +169,17 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                             ?.roleEnum !=
                         ActiveUserDesgRole.deo)
                       _signaturePad(),
+                    if (_signatureImage != null &&
+                        widget.forwardingSection != null) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 360),
+                          child: widget.forwardingSection!,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                   ],
                   Builder(

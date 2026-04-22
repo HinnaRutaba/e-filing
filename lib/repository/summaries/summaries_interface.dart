@@ -41,6 +41,15 @@ abstract class SummariesInterface extends NetworkBase {
   String deleteAttachmentUrl(int attachmentId, int desId) =>
       '${baseUrl}summaries/attachment/$attachmentId?userDesgID=$desId';
 
+  String updateDraftContentUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/update-draft-content';
+
+  String returnToSectionUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/return-to-section';
+
+  String shareInternallyUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/share-internally';
+
   //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
@@ -81,5 +90,24 @@ abstract class SummariesInterface extends NetworkBase {
   Future<void> deleteAttachment({
     required int attachmentId,
     required int desId,
+  });
+
+  Future<void> updateDraftContent({
+    required int summaryId,
+    required String body,
+    required int desId,
+  });
+
+  Future<void> returnToSection({
+    required int summaryId,
+    required String remark,
+    required int desId,
+  });
+
+  Future<void> shareInternally({
+    required int summaryId,
+    required String instruction,
+    required int desId,
+    required List<int> recipientDesIds,
   });
 }

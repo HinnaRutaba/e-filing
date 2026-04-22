@@ -126,7 +126,6 @@ class SummariesRepo extends SummariesInterface {
         url: deoDraftSummaryUrl,
         options: await options(authRequired: true),
         formData: formData,
-      
       );
     } catch (e) {
       rethrow;
@@ -138,7 +137,7 @@ class SummariesRepo extends SummariesInterface {
     required int? summaryId,
     required CreateSummaryModel createSummaryModel,
     required int? desId,
-  }) async{
+  }) async {
     try {
       if (desId == null) {
         throw Exception("Designation ID is required to fetch user details");
@@ -189,9 +188,12 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
-  
+
   @override
-  Future<void> deleteAttachment({required int? attachmentId, required int? desId}) async {
+  Future<void> deleteAttachment({
+    required int? attachmentId,
+    required int? desId,
+  }) async {
     try {
       if (attachmentId == null) {
         throw Exception("Attachment ID is required to delete attachment");
@@ -202,6 +204,89 @@ class SummariesRepo extends SummariesInterface {
       await dioClient.delete(
         url: deleteAttachmentUrl(attachmentId, desId),
         options: await options(authRequired: true),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> returnToSection({
+    required int? summaryId,
+    required String? remark,
+    required int? desId,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception("Summary ID is required to return summary to section");
+      }
+      if (desId == null) {
+        throw Exception(
+          "Designation ID is required to return summary to section",
+        );
+      }
+      await dioClient.post(
+        url: returnToSectionUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {"return_remarks": remark, "userDesgID": desId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> shareInternally({
+    required int? summaryId,
+    required String instruction,
+    required int? desId,
+    required List<int>? recipientDesIds,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception("Summary ID is required to share summary internally");
+      }
+      if (desId == null) {
+        throw Exception(
+          "Designation ID is required to share summary internally",
+        );
+      }
+      if (recipientDesIds == null || recipientDesIds.isEmpty) {
+        throw Exception(
+          "At least one recipient designation ID is required to share summary internally",
+        );
+      }
+      await dioClient.post(
+        url: shareInternallyUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {
+          "instruction": instruction,
+          "userDesgID": desId,
+          "user_desg_ids": recipientDesIds,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateDraftContent({
+    required int? summaryId,
+    required String? body,
+    required int? desId,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception("Summary ID is required to update draft content");
+      }
+      if (desId == null) {
+        throw Exception("Designation ID is required to update draft content");
+      }
+      await dioClient.post(
+        url: updateDraftContentUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {"body": body, "userDesgID": desId},
       );
     } catch (e) {
       rethrow;
