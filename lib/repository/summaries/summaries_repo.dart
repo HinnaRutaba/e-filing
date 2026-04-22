@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_interface.dart';
 import 'package:tuple/tuple.dart';
@@ -291,6 +293,54 @@ class SummariesRepo extends SummariesInterface {
         options: await options(authRequired: true),
         data: {"body": body, "userDesgID": desId},
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<SummaryDaakModel>> searchDaaks({
+    required int? desId,
+    String? query,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to search daaks");
+      }
+      Map<String, dynamic> data = await dioClient.get(
+        url: searchDaaksUrl(desId: desId, query: query),
+        options: await options(authRequired: true),
+      );
+      if (data['data'] == null) {
+        return [];
+      }
+      return (data['data'] as List)
+          .map((e) => SummaryDaakModel.fromJson(e))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<SummaryFileModel>> searchFiles({
+    required int? desId,
+    String? query,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to search files");
+      }
+      Map<String, dynamic> data = await dioClient.get(
+        url: searchFilesUrl(desId: desId, query: query),
+        options: await options(authRequired: true),
+      );
+      if (data['data'] == null) {
+        return [];
+      }
+      return (data['data'] as List)
+          .map((e) => SummaryFileModel.fromJson(e))
+          .toList();
     } catch (e) {
       rethrow;
     }

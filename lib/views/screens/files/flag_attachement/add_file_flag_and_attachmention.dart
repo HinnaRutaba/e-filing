@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -148,11 +149,14 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
               ],
             ),
             const SizedBox(height: 8),
-            if (m.attachment != null)
+            if (m.hasAttachment)
               InkWell(
                 onTap: () async {
                   final files = await FilePickerService().pickFiles();
-                  m.attachment = files.isNotEmpty ? files.first : null;
+                  if (files.isNotEmpty) {
+                    m.attachment = files.first;
+                    m.existingAttachment = null;
+                  }
                   setState(() {});
                 },
                 child: Container(
@@ -183,31 +187,29 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                           children: [
                             const SizedBox(height: 2),
                             AppText.bodyMedium(
-                              m.attachment?.name ?? "Click to add",
-                              color: m.attachment != null
-                                  ? AppColors.secondaryDark
-                                  : AppColors.secondaryLight,
+                              m.attachmentDisplayName ?? "Click to add",
+                              color: AppColors.secondaryDark,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
                           ],
                         ),
                       ),
-                      if (m.attachment != null)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: InkWell(
-                            onTap: () {
-                              m.attachment = null;
-                              setState(() {});
-                            },
-                            child: Icon(
-                              Icons.cancel,
-                              color: Colors.red[800],
-                              size: 18,
-                            ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: InkWell(
+                          onTap: () {
+                            m.attachment = null;
+                            m.existingAttachment = null;
+                            setState(() {});
+                          },
+                          child: Icon(
+                            Icons.cancel,
+                            color: Colors.red[800],
+                            size: 18,
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -283,13 +285,24 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
 class FlagAndAttachmentModel {
   FlagModel? flagType;
   XFile? attachment;
+  AttachmentModel? existingAttachment;
   List<FlagModel>? usedFlags;
 
-  FlagAndAttachmentModel({this.flagType, this.attachment, this.usedFlags});
+  FlagAndAttachmentModel({
+    this.flagType,
+    this.attachment,
+    this.existingAttachment,
+    this.usedFlags,
+  });
+
+  bool get hasAttachment => attachment != null || existingAttachment != null;
+
+  String? get attachmentDisplayName =>
+      attachment?.name ?? existingAttachment?.originalName;
 
   bool get isValid {
     if (flagType == null) return true;
-    if (flagType != null && attachment == null) return false;
+    if (flagType != null && !hasAttachment) return false;
     return true;
   }
 }

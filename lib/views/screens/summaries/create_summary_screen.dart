@@ -13,6 +13,7 @@ import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -31,6 +32,7 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
@@ -60,9 +62,10 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   bool get isReturnedToOriginator {
     final summary = summaryDetails?.summary;
-    return summary?.statusCode == 7 &&
-        summary?.originatingUser != null &&
-        summary?.originatingUser?.trim() == summary?.currentHolder?.trim();
+    if (summary == null) return false;
+    return summary.statusCode == 7 &&
+        summary.originatingUser != null &&
+        summary.originatingUser?.trim() == summary.currentHolder?.trim();
   }
 
   List<FlagModel> allFlags = [];
@@ -89,6 +92,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   }
 
   Future<void> _loadDetails() async {
+    EasyLoading.show();
     final details = await ref
         .read(summariesController.notifier)
         .fetchSummaryDetails(summaryId: widget.summaryId);
@@ -125,9 +129,35 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       }
 
       _existingMainPdf = details.attachments
-          .where((a) => a.attachmentType == 'main_summary_pdf')
+          .where((a) => a.isMainAttachment)
           .firstOrNull;
+
+      final supportingAttachments = details.attachments
+          .where((a) => a.isSupporting)
+          .toList();
+      if (supportingAttachments.isNotEmpty) {
+        _model.attachments = supportingAttachments.map((a) {
+          final flagName = _parseFlagName(a.originalName);
+          final matchedFlag = allFlags.firstWhere(
+            (f) =>
+                f.title?.trim().toLowerCase() == flagName?.trim().toLowerCase(),
+            orElse: () => FlagModel(title: flagName),
+          );
+          return FlagAndAttachmentModel(
+            flagType: matchedFlag,
+            existingAttachment: a,
+          );
+        }).toList();
+      }
     });
+    EasyLoading.dismiss();
+  }
+
+  /// Parses the flag name from an originalName prefixed with "[Flag: <Name>]".
+  String? _parseFlagName(String? originalName) {
+    if (originalName == null) return null;
+    final match = RegExp(r'^\[Flag:\s*(.+?)\]').firstMatch(originalName.trim());
+    return match?.group(1)?.trim();
   }
 
   @override
@@ -138,8 +168,8 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       _model.subject = subjectController.text;
     });
     dateController.text = DateTimeHelper.datFormatSlash(_model.summaryDate);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await fetchData();
       if (widget.summaryId != null) {
         _loadDetails();
       }
@@ -708,8 +738,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _secretaryRemarksAlert() {
+    SummaryMovementModel? movement = summaryDetails?.movements.last;
     return Visibility(
-      visible: false,
+      visible: isReturnedToOriginator && movement != null,
       child: Container(
         margin: const EdgeInsets.only(top: 4),
         decoration: BoxDecoration(
@@ -740,7 +771,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: AppText.titleMedium(
-                        "Secretary Remarks",
+                        "Secretary's Instructions",
                         color: context.appColors.warning,
                         fontWeight: FontWeight.w700,
                       ),
@@ -774,11 +805,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     AppText.titleSmall(
-                                      "Secretary Name",
+                                      movement?.actor ?? '---',
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
-                                    AppText.bodySmall("(Home Departmentt)"),
+                                    AppText.bodySmall(
+                                      "(${movement?.actorDesignation ?? '---'})",
+                                    ),
                                   ],
                                 ),
                               ),
@@ -793,7 +826,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                                   const SizedBox(width: 4),
                                   AppText.labelSmall(
                                     DateTimeHelper.datFormatSlash(
-                                      DateTime.now(),
+                                      movement?.actedAt,
                                     ),
                                     color: context.appColors.textSecondary,
                                   ),
@@ -802,13 +835,13 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            "Remarks added by secretary",
-                            style: TextStyle(fontStyle: FontStyle.italic),
+                          Text(
+                            movement?.remarks ?? 'No instructions provided.',
+                            style: const TextStyle(fontStyle: FontStyle.italic),
                           ),
                           const SizedBox(height: 4),
                           AppText.labelMedium(
-                            "Make the ammendments suggested by secreatry and resend",
+                            "Make the ammendments suggested by secreatry and resubmit",
                             color: context.appColors.warning,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1796,7 +1829,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           width: double.infinity,
           child: GradientButton(
             onPressed: _onSend,
-            text: isSecretary ? "Send Summary" : "Send to Secretary for Review",
+            text: isSecretary
+                ? "Send Summary"
+                : isReturnedToOriginator
+                ? "Resubmit to Secretary"
+                : "Send to Secretary for Review",
             width: double.infinity,
             icon: Icons.send,
             // height: 52,

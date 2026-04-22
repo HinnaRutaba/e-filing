@@ -6,8 +6,10 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -445,6 +447,28 @@ class SummariesController extends BaseControllerState<SummariesState> {
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
       return false;
+    }
+  }
+
+  Future<List<SummaryDaakModel>> searchDaaks({String? query}) async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      return await repo.searchDaaks(desId: desId, query: query);
+    } catch (e, s) {
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
+
+  Future<List<SummaryFileModel>> searchFiles({String? query}) async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      return await repo.searchFiles(desId: desId, query: query);
+    } catch (e, s) {
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return [];
     }
   }
 }

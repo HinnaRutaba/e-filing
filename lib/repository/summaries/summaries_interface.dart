@@ -1,8 +1,10 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 
 abstract class SummariesInterface extends NetworkBase {
@@ -48,6 +50,28 @@ abstract class SummariesInterface extends NetworkBase {
 
   String shareInternallyUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/share-internally';
+
+
+    String searchDaaksUrl({
+    required int desId,
+    String? query,
+  }) {
+    final String url =
+        '${baseUrl}summaries/search-daak?userDesgID=$desId';
+    if (query != null && query.isNotEmpty) {
+      return '$url&q=$query';
+    }
+    return url;
+  } 
+
+
+  String searchFilesUrl({required int desId, String? query}) {
+    final String url = '${baseUrl}summaries/search-files?userDesgID=$desId';
+    if (query != null && query.isNotEmpty) {
+      return '$url&q=$query';
+    }
+    return url;
+  }    
 
   //========================Functions=============================
 
@@ -108,5 +132,16 @@ abstract class SummariesInterface extends NetworkBase {
     required String instruction,
     required int desId,
     required List<int> recipientDesIds,
+  });
+
+  Future<List<SummaryDaakModel>> searchDaaks({
+    required int desId,
+    String? query,
+  });
+
+
+  Future<List<SummaryFileModel>> searchFiles({
+    required int desId,
+    String? query,
   });
 }

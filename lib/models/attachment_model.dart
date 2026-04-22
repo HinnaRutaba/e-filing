@@ -31,6 +31,11 @@ class AttachmentModel {
     );
   }
 
+  bool get isSupporting =>
+      originalName != null && originalName!.trimLeft().startsWith('[Flag:');
+
+  bool get isMainAttachment => !isSupporting;
+
   String? get fileSizeText {
     if (fileSize == null) return null;
     const kb = 1024;
