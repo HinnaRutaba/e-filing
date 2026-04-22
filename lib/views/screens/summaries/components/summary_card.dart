@@ -55,7 +55,11 @@ class SummaryCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             debugPrint('Tapped summary ${item.id}');
-            RouteHelper.push(Routes.summaryDetails, extra: item);
+            if (isReturnedToOriginator) {
+              RouteHelper.push(Routes.createSummary, extra: item.id);
+            } else {
+              RouteHelper.push(Routes.summaryDetails, extra: item);
+            }
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

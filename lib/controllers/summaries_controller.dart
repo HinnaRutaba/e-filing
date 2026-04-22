@@ -356,7 +356,6 @@ class SummariesController extends BaseControllerState<SummariesState> {
     required String? remark,
   }) async {
     try {
-      EasyLoading.show();
       final desId = ref.read(authController).currentDesignation?.userDesgId;
       await repo.returnToSection(
         summaryId: summaryId,
@@ -364,11 +363,11 @@ class SummariesController extends BaseControllerState<SummariesState> {
         desId: desId,
       );
       Toast.success(message: "Summary returned to section");
-      await fetchSummaryDetails(summaryId: summaryId);
-      EasyLoading.dismiss();
+      await loadData(isInitialLoad: false);
+      RouteHelper.pop();
+
       return true;
     } catch (e, s) {
-      EasyLoading.dismiss();
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
       return false;

@@ -10,7 +10,9 @@ import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/models/department/department_model.dart';
 import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
@@ -53,6 +55,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   final CreateSummaryModel _model = CreateSummaryModel();
 
+  SummaryDetailsModel? summaryDetails;
+  AttachmentModel? _existingMainPdf;
+
+  bool get isReturnedToOriginator {
+    final summary = summaryDetails?.summary;
+    return summary?.statusCode == 7 &&
+        summary?.originatingUser != null &&
+        summary?.originatingUser?.trim() == summary?.currentHolder?.trim();
+  }
+
   List<FlagModel> allFlags = [];
 
   int _openSection = 0;
@@ -62,6 +74,60 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     final controller = ref.read(filesController.notifier);
 
     allFlags = await controller.getFlags();
+  }
+
+  DepartmentModel? _matchDepartment(String? name) {
+    if (name == null || name.trim().isEmpty) return null;
+    final departments =
+        ref.read(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    final normalized = name.trim().toLowerCase();
+    for (final d in departments) {
+      if ((d.title ?? '').trim().toLowerCase() == normalized) return d;
+    }
+    return null;
+  }
+
+  Future<void> _loadDetails() async {
+    final details = await ref
+        .read(summariesController.notifier)
+        .fetchSummaryDetails(summaryId: widget.summaryId);
+    if (!mounted || details == null) return;
+    final summary = details.summary;
+
+    // Resolve department before entering setState
+    final targetDept = summary?.draftTargetDepartment;
+    final matchedDept = _matchDepartment(targetDept);
+
+    setState(() {
+      summaryDetails = details;
+
+      if (summary?.subject != null && summary!.subject!.isNotEmpty) {
+        _model.subject = summary.subject!;
+        subjectController.text = summary.subject!;
+      }
+
+      if (summary?.summaryDate != null) {
+        _model.summaryDate = summary!.summaryDate!;
+        dateController.text = DateTimeHelper.datFormatSlash(
+          summary.summaryDate!,
+        );
+      }
+
+      if (targetDept != null && targetDept.isNotEmpty) {
+        _model.department = matchedDept;
+        departmentSearchController.text = matchedDept?.title ?? targetDept;
+      }
+
+      if (summary?.body != null && summary!.body!.isNotEmpty) {
+        _model.summaryHtml = summary.body!;
+        quillEditorController.setText(summary.body!);
+      }
+
+      _existingMainPdf = details.attachments
+          .where((a) => a.attachmentType == 'main_summary_pdf')
+          .firstOrNull;
+    });
   }
 
   @override
@@ -74,6 +140,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     dateController.text = DateTimeHelper.datFormatSlash(_model.summaryDate);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchData();
+      if (widget.summaryId != null) {
+        _loadDetails();
+      }
     });
   }
 
@@ -141,7 +210,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
       Toast.error(message: "Please select a target department");
       return;
     }
-    if (_model.mainPdf == null) {
+    if (_model.mainPdf == null && _existingMainPdf == null) {
       Toast.error(message: "Please attach the Main Summary PDF");
       return;
     }
@@ -790,7 +859,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
               children: [
                 Icon(
                   Icons.picture_as_pdf_rounded,
-                  color: _model.mainPdf != null
+                  color: (_model.mainPdf != null || _existingMainPdf != null)
                       ? Colors.red[400]
                       : context.appColors.secondaryLight,
                   size: 20,
@@ -798,17 +867,20 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: AppText.bodyMedium(
-                    _model.mainPdf?.name ?? "Choose file",
-                    color: _model.mainPdf != null
-                        ? context.appColors.secondaryLight
-                        : context.appColors.secondaryLight,
+                    _model.mainPdf?.name ??
+                        _existingMainPdf?.originalName ??
+                        "Choose file",
+                    color: context.appColors.secondaryLight,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
                 ),
-                if (_model.mainPdf != null)
+                if (_model.mainPdf != null || _existingMainPdf != null)
                   InkWell(
-                    onTap: () => setState(() => _model.mainPdf = null),
+                    onTap: () => setState(() {
+                      _model.mainPdf = null;
+                      _existingMainPdf = null;
+                    }),
                     child: Icon(
                       Icons.cancel,
                       color: Theme.of(context).colorScheme.error,
