@@ -75,8 +75,9 @@ class UserModel {
           : null,
       designation: json[UserSchema.designation] as String?,
       section: json[UserSchema.section] as String?,
-      designations: ((json[UserSchema.designations] ??
-                  json[UserSchema.allDesignations]) as List<dynamic>?)
+      designations:
+          ((json[UserSchema.designations] ?? json[UserSchema.allDesignations])
+                  as List<dynamic>?)
               ?.map((e) => DesignationModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -147,7 +148,7 @@ class UserModel {
       designation: (user ?? this).designation,
       section: (user ?? this).section,
       designations: (user ?? this).designations,
-      currentDesignation: (user ?? this).currentDesignation,
+      currentDesignation: user?.currentDesignation ?? currentDesignation,
     );
   }
 }

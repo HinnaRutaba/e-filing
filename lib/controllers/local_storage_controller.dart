@@ -42,7 +42,9 @@ class LocalStorageController {
 
   Future setDesignation(DesignationModel designation) async {
     await LocalStorage.save(
-        LocalStorageKeys.designation, jsonEncode(designation.toJson()));
+      LocalStorageKeys.designation,
+      jsonEncode(designation.toJson()),
+    );
   }
 
   Future<DesignationModel?> getDesignation() async {
@@ -64,12 +66,23 @@ class LocalStorageController {
   Future<void> removeAll() async {
     return await LocalStorage.clear();
   }
+
+  Future<void> removeUserPrefs() async {
+    await Future.wait([
+      LocalStorage.remove(LocalStorageKeys.userId),
+      LocalStorage.remove(LocalStorageKeys.token),
+      LocalStorage.remove(LocalStorageKeys.designation),
+    ]);
+  }
 }
 
 class LocalStorageKeys {
-  static const String rememberLogin = 'rememberLogin';
+  //=====================USER PREFS=====================
   static const String userId = 'user_id';
   static const String token = 'token';
   static const String designation = 'designation';
+
+  //=====================PERSISTED=====================
+  static const String rememberLogin = 'rememberLogin';
   static const String daakDialogShown = 'daak_dialog_shown';
 }

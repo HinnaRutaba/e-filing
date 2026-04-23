@@ -56,10 +56,7 @@ class AuthRepo extends AuthInterface {
       Map<String, dynamic> data = await dioClient.post(
         url: loginUrl,
         options: await options(authRequired: false),
-        data: {
-          UserSchema.username: username,
-          UserSchema.password: password,
-        },
+        data: {UserSchema.username: username, UserSchema.password: password},
       );
       if (data.isNotEmpty) {
         return TokenModel.fromJson(data);
@@ -73,17 +70,18 @@ class AuthRepo extends AuthInterface {
   @override
   Future<void> logout() async {
     try {
-      await localStorage.removeAll();
+      await localStorage.removeUserPrefs();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<void> changePassword(
-      {required String currentPassword,
-      required String newPassword,
-      required String confirmPassword}) async {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     try {
       Map<String, dynamic> data = await dioClient.post(
         url: changePasswordUrl,
