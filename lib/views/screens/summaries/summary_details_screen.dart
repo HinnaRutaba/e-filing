@@ -35,6 +35,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
+enum _RemarksMode { type, write }
+
 enum SummaryAction {
   returnToSection(
     label: 'Return to Section',
@@ -100,6 +102,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
+
+  // Handwritten remarks
+  _RemarksMode _remarksMode = _RemarksMode.type;
+  final HtmlEditorController _remarksHtmlCtrl = HtmlEditorController();
+  final SignaturePadController _remarksPadCtrl = SignaturePadController();
+  final ScrollController _mainScrollController = ScrollController();
 
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
@@ -203,6 +211,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     _shareSearchController.dispose();
     _destDeptController.dispose();
     _destOfficerController.dispose();
+    _mainScrollController.dispose();
     super.dispose();
   }
 
@@ -240,12 +249,15 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                       mainContent: RefreshIndicator(
                         onRefresh: _loadDetails,
                         child: SingleChildScrollView(
+                          controller: _mainScrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.all(context.isMobile ? 12 : 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _documentCard(),
+                              //const SizedBox(height: 16),
+                              _remarksPanel(),
                               const SizedBox(height: 16),
                               _sidebar(),
                             ],
@@ -876,6 +888,165 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
+  Widget _remarksPanel() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(children: [AppText.titleLarge("Add your remarks")]),
+          const SizedBox(height: 12),
+          _remarksModeToggle(),
+          const SizedBox(height: 4),
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 13,
+                color: AppColors.secondary,
+              ),
+              SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  'Type your remark or switch to Write and use your tablet pen. '
+                  'Your handwriting will appear on the printed summary as proof of authorship.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.secondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _remarksMode == _RemarksMode.type
+                ? _typedRemarksField()
+                : _handwrittenRemarksCanvas(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _remarksModeToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.secondaryLight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        children: [
+          _remarksModeOption(
+            'Type',
+            _RemarksMode.type,
+            Icons.keyboard_alt_outlined,
+          ),
+          _remarksModeOption('Write', _RemarksMode.write, Icons.draw_outlined),
+        ],
+      ),
+    );
+  }
+
+  Widget _remarksModeOption(String label, _RemarksMode mode, IconData icon) {
+    final isSelected = _remarksMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _remarksMode = mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              AppText.labelMedium(
+                label,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _typedRemarksField() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        key: const ValueKey('remarks_typed'),
+        height: 220,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.secondaryLight.withValues(alpha: 0.4),
+          ),
+        ),
+        child: HtmlEditor(
+          controller: _remarksHtmlCtrl,
+          hint: 'Type your remarks here…',
+          height: 240,
+        ),
+      ),
+    );
+  }
+
+  Widget _handwrittenRemarksCanvas() {
+    return SignaturePad(
+      key: const ValueKey('remarks_written'),
+      controller: _remarksPadCtrl,
+      showRuledLines: true,
+      autoExpand: true,
+      autoExpandStep: 120,
+      showStrokeInfo: true,
+      showCustomColorPicker: true,
+      canvasHeight: 280,
+      showDescription: false,
+      canvasColor: Colors.grey.shade50,
+      onExpand: () {
+        if (!_mainScrollController.hasClients) return;
+        _mainScrollController.animateTo(
+          _mainScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      },
+    );
+  }
+
   Widget _stepCard({
     required String stepLabel,
     required String title,
@@ -948,19 +1119,20 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         ref.read(summariesController).details?.summary?.id ??
         widget.summary?.id;
     final notifier = ref.read(summariesController.notifier);
+    final remarks = await _remarksHtmlCtrl.getText();
+    if (!mounted) return;
 
     final success = await notifier.signAndForward(
       summaryId: summaryId,
       signatureBytes: _cardSignatureBytes!,
       targetDepartmentId: deptId,
       targetUserDesgId: _selectedDestOfficer?.userDesgId,
-      remarks: _remarksController.text.trim(),
+      remarks: remarks.trim(),
     );
     if (!mounted) return;
     if (success) {
       setState(() {
         _selectedAction = null;
-        _remarksController.clear();
         _cardSignatureBytes = null;
       });
     }
