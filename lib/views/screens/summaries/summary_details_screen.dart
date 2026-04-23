@@ -171,6 +171,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return true;
   }
 
+  bool get showHandWrittedRemarksSection {
+    SummaryDetailsModel? details = ref.read(summariesController).details;
+    return details?.hasForwardedBefore == true &&
+        details?.isLatestRemarksAdded != true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -257,10 +263,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _documentCard(),
-                              //const SizedBox(height: 16),
-                              _remarksPanel(),
-                              const SizedBox(height: 16),
-
+                              if (showHandWrittedRemarksSection) ...[
+                                _remarksPanel(),
+                                const SizedBox(height: 16),
+                              ],
                               _sidebar(),
                             ],
                           ),
@@ -429,9 +435,18 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _actionButtonRow() {
+    final bool isSignedAndForwarded =
+        ref
+            .read(summariesController)
+            .details
+            ?.isLatestMovementSignedAndForwarded ==
+        true;
+    final allowedActions = isSignedAndForwarded
+        ? [SummaryAction.shareInternally, SummaryAction.signForward]
+        : SummaryAction.values;
     final isMobile = context.isMobile;
-    final buttons = SummaryAction.values
-        .map((a) => _actionButton(a, expand: !isMobile))
+    final buttons = allowedActions
+        .map((a) => _actionButton(a, expand: !isMobile,))
         .toList(growable: false);
     if (!isMobile) {
       return Row(
@@ -1432,8 +1447,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final totalAttachments =
         (savedAttachments as List).length + _pendingAttachments.length;
     final attachments = AttachmentsSection(
-      canAddMore: actionsAvailable,
-      canDelete: actionsAvailable,
+      canAddMore:
+          actionsAvailable && userDesg?.roleEnum == ActiveUserDesgRole.deo,
+      canDelete: false, //actionsAvailable,
       mainPdf: null,
       attachments: details?.attachments ?? const [],
       pendingAttachments: _pendingAttachments,

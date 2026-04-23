@@ -158,7 +158,10 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   ),
                   const SizedBox(height: 16),
                   _htmlBody(),
-                  if (!(widget.actions?.isDisposed ?? false)) ...[
+                  if (!(widget.actions?.isDisposed ?? false) &&
+                      !widget.remarkTrack.any(
+                        (t) => t.actionType == 'signed_and_forwarded',
+                      )) ...[
                     const SizedBox(height: 8),
                     if (ref
                             .read(summariesController)
@@ -221,9 +224,11 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 20),
-                          for (final track in signedTracks) ...[
-                            _remarkTrackBlock(track),
+                          for (int i = 0; i < signedTracks.length; i++) ...[
+                            _remarkTrackBlock(
+                              signedTracks[i],
+                              showRemarks: i != 0,
+                            ),
                             const SizedBox(height: 18),
                           ],
                         ],
@@ -304,11 +309,16 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
     );
   }
 
-  Widget _remarkTrackBlock(SummaryRemarkTrackModel track) {
+  Widget _remarkTrackBlock(
+    SummaryRemarkTrackModel track, {
+    bool showRemarks = true,
+  }) {
     final hasHtmlRemarks =
+        showRemarks &&
         (track.remarks ?? '').trim().isNotEmpty &&
         track.remarks!.trim() != '[handwritten remark]';
     final hasHandwritten =
+        showRemarks &&
         (track.hasHandwritten ?? false) &&
         (track.handwrittenStrokes?.strokes.isNotEmpty ?? false);
     final hasSignature = (track.signatureUrl ?? '').isNotEmpty;

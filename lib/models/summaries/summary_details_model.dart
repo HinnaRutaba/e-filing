@@ -54,6 +54,19 @@ class SummaryDetailsModel {
     );
   }
 
+  SummaryMovementModel? get latestMovement =>
+      movements.isNotEmpty ? movements.last : null;
+
+  bool get hasForwardedBefore =>
+      movements.any((m) => m.actionType == 'signed_and_forwarded') == true;
+
+  bool get isLatestMovementSignedAndForwarded =>
+      movements.isNotEmpty &&
+      movements.last.actionType == 'signed_and_forwarded';
+
+  bool get isLatestRemarksAdded =>
+      movements.isNotEmpty && movements.last.actionType == 'remarks_added';
+
   Map<String, dynamic> toJson() {
     return {
       SummaryDetailsSchema.summary: summary?.toJson(),
