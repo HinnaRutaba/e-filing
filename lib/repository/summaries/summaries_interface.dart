@@ -1,8 +1,8 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
-import 'package:efiling_balochistan/models/summaries/summaries_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';

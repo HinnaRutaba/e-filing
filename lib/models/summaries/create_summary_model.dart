@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/models/department/department_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,8 +14,8 @@ class CreateSummaryModel {
   XFile? mainPdf;
   String summaryHtml;
   List<FlagAndAttachmentModel> attachments;
-  List<DaakModel> linkedDaak;
-  List<FileModel> linkedFiles;
+  List<SummaryDaakModel> linkedDaak;
+  List<SummaryFileModel> linkedFiles;
 
   /// Base64-encoded PNG of the creator's signature.
   /// Captured via the signature pad widget and must be prefixed with
@@ -29,8 +29,8 @@ class CreateSummaryModel {
     this.mainPdf,
     this.summaryHtml = '',
     List<FlagAndAttachmentModel>? attachments,
-    List<DaakModel>? linkedDaak,
-    List<FileModel>? linkedFiles,
+    List<SummaryDaakModel>? linkedDaak,
+    List<SummaryFileModel>? linkedFiles,
     this.creatorSignatureData,
   }) : summaryDate = summaryDate ?? DateTime.now(),
        attachments = attachments ?? [FlagAndAttachmentModel()],
@@ -103,8 +103,7 @@ class CreateSummaryModel {
     }
 
     for (var i = 0; i < linkedFiles.length; i++) {
-      payload['${CreateSummarySchema.linkedFileIds}[$i]'] =
-          linkedFiles[i].fileId;
+      payload['${CreateSummarySchema.linkedFileIds}[$i]'] = linkedFiles[i].id;
     }
 
     return Tuple2(payload, files);

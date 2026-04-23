@@ -1,18 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/models/department/department_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
-import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
+import 'package:efiling_balochistan/models/department/department_model.dart';
+import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
@@ -20,7 +20,6 @@ import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_preview_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -580,7 +579,14 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
                     isDraft: false,
                   );
                 } else {
-                  controller.deoStoreDraftSummary(createSummaryModel: _model);
+                  if (isReturnedToOriginator) {
+                    controller.deoUpdateDraftSummary(
+                      createSummaryModel: _model,
+                      summaryId: widget.summaryId!,
+                    );
+                  } else {
+                    controller.deoStoreDraftSummary(createSummaryModel: _model);
+                  }
                 }
               },
               text: "Send",
@@ -1352,7 +1358,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     );
   }
 
-  Widget _linkedDaakTile(DaakModel daak) {
+  Widget _linkedDaakTile(SummaryDaakModel daak) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1414,7 +1420,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     );
   }
 
-  Widget _linkedFileTile(FileModel file) {
+  Widget _linkedFileTile(SummaryFileModel file) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1478,13 +1484,12 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   Future<void> _openDaakPicker() async {
     HelperUtils.hideKeyboard(context);
-    ref.read(daakController.notifier).loadData(isInitailLoad: true);
-    final result = await showModalBottomSheet<List<DaakModel>>(
+    final result = await showModalBottomSheet<List<SummaryDaakModel>>(
       context: context,
       isScrollControlled: true,
-      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        minHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -1492,22 +1497,17 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           topRight: Radius.circular(16),
         ),
       ),
-      builder: (ctx) => _LinkPickerSheet<DaakModel>(
+      builder: (ctx) => _SummarySearchPickerSheet<SummaryDaakModel>(
         title: "Link Daak Letters",
-        itemsBuilder: (ref) => ref.watch(daakController).allDaak,
-        isLoadingBuilder: (ref) => ref.watch(daakController).isLoading,
+        searcher: (q) =>
+            ref.read(summariesController.notifier).searchDaaks(query: q),
         alreadyLinked: List.of(_model.linkedDaak),
         keyOf: (d) => d.id,
-        match: (d, q) =>
-            (d.diaryNo ?? '').toLowerCase().contains(q) ||
-            (d.letterNo ?? '').toLowerCase().contains(q) ||
-            (d.subject ?? '').toLowerCase().contains(q) ||
-            (d.sourceDepartment ?? '').toLowerCase().contains(q),
         tileBuilder: (ctx, d, selected) => _pickerTile(
           icon: Icons.mail_outline_rounded,
           primary: d.diaryNo ?? d.letterNo ?? '—',
           secondary: d.subject ?? '',
-          tertiary: d.sourceDepartment,
+          tertiary: d.source,
           selected: selected,
         ),
       ),
@@ -1523,13 +1523,9 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   Future<void> _openFilePicker() async {
     HelperUtils.hideKeyboard(context);
-    ref
-        .read(filesController.notifier)
-        .fetchFiles(FileType.my, showLoader: false);
-    final result = await showModalBottomSheet<List<FileModel>>(
+    final result = await showModalBottomSheet<List<SummaryFileModel>>(
       context: context,
       isScrollControlled: true,
-      //backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
@@ -1539,22 +1535,16 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           topRight: Radius.circular(16),
         ),
       ),
-      builder: (ctx) => _LinkPickerSheet<FileModel>(
+      builder: (ctx) => _SummarySearchPickerSheet<SummaryFileModel>(
         title: "Link Files",
-        itemsBuilder: (ref) => ref.watch(filesController).files,
-        isLoadingBuilder: (ref) => ref.watch(filesController).loadingFiles,
+        searcher: (q) =>
+            ref.read(summariesController.notifier).searchFiles(query: q),
         alreadyLinked: List.of(_model.linkedFiles),
-        keyOf: (f) => f.fileId,
-        match: (f, q) =>
-            (f.referenceNo ?? '').toLowerCase().contains(q) ||
-            (f.barcode ?? '').toLowerCase().contains(q) ||
-            (f.subject ?? '').toLowerCase().contains(q) ||
-            (f.sender ?? '').toLowerCase().contains(q),
+        keyOf: (f) => f.id,
         tileBuilder: (ctx, f, selected) => _pickerTile(
           icon: Icons.folder_outlined,
           primary: f.referenceNo ?? f.barcode ?? '—',
           secondary: f.subject ?? '',
-          tertiary: f.sender,
           selected: selected,
         ),
       ),
@@ -1856,6 +1846,209 @@ class _StepProgress {
     required this.complete,
     required this.index,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Search-driven picker sheet (used for Daak and File linking)
+// ---------------------------------------------------------------------------
+
+class _SummarySearchPickerSheet<T> extends StatefulWidget {
+  final String title;
+  final Future<List<T>> Function(String? query) searcher;
+  final List<T> alreadyLinked;
+  final Object? Function(T item) keyOf;
+  final Widget Function(BuildContext context, T item, bool selected)
+  tileBuilder;
+
+  const _SummarySearchPickerSheet({
+    required this.title,
+    required this.searcher,
+    required this.alreadyLinked,
+    required this.keyOf,
+    required this.tileBuilder,
+  });
+
+  @override
+  State<_SummarySearchPickerSheet<T>> createState() =>
+      _SummarySearchPickerSheetState<T>();
+}
+
+class _SummarySearchPickerSheetState<T>
+    extends State<_SummarySearchPickerSheet<T>> {
+  final TextEditingController _searchController = TextEditingController();
+  late final Set<Object?> _selectedKeys;
+  List<T> _items = [];
+  bool _isLoading = false;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedKeys = widget.alreadyLinked.map(widget.keyOf).toSet();
+    _search(null);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _search(String? query) async {
+    setState(() => _isLoading = true);
+    try {
+      final items = await widget.searcher(
+        query == null || query.isEmpty ? null : query,
+      );
+      if (mounted) {
+        setState(() {
+          _items = items;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onQueryChanged(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 450), () {
+      _search(v.trim().isEmpty ? null : v.trim());
+    });
+  }
+
+  bool _isSelected(T item) => _selectedKeys.contains(widget.keyOf(item));
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: () => RouteHelper.pop(),
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: context.appColors.textPrimary,
+                  ),
+                ),
+                Expanded(child: AppText.headlineSmall(widget.title)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AppTextField(
+              controller: _searchController,
+              labelText: "Search",
+              hintText: "Search…",
+              showLabel: false,
+              autoFocus: true,
+              prefix: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+              onChanged: _onQueryChanged,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: _isLoading && _items.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : _items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: AppText.bodyMedium(
+                        "No results",
+                        color: context.appColors.textSecondary,
+                      ),
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                        itemCount: _items.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (ctx, i) {
+                          final item = _items[i];
+                          final selected = _isSelected(item);
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => setState(() {
+                              final k = widget.keyOf(item);
+                              if (selected) {
+                                _selectedKeys.remove(k);
+                              } else {
+                                _selectedKeys.add(k);
+                              }
+                            }),
+                            child: widget.tileBuilder(ctx, item, selected),
+                          );
+                        },
+                      ),
+                      if (_isLoading)
+                        const Positioned(
+                          top: 8,
+                          right: 16,
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: GradientButton(
+                  onPressed: () {
+                    final byKey = <Object?, T>{
+                      for (final i in _items) widget.keyOf(i): i,
+                    };
+                    for (final i in widget.alreadyLinked) {
+                      byKey.putIfAbsent(widget.keyOf(i), () => i);
+                    }
+                    final selectedItems = _selectedKeys
+                        .map((k) => byKey[k])
+                        .whereType<T>()
+                        .toList();
+                    RouteHelper.pop(selectedItems);
+                  },
+                  text: _selectedKeys.isEmpty
+                      ? "Done"
+                      : "Link ${_selectedKeys.length} item${_selectedKeys.length == 1 ? '' : 's'}",
+                  width: double.infinity,
+                  height: 48,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _LinkPickerSheet<T> extends ConsumerStatefulWidget {

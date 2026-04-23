@@ -3,8 +3,8 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -23,8 +23,8 @@ class SummaryPreviewSheet extends StatelessWidget {
   final String subject;
   final XFile? mainPdf;
   final List<FlagAndAttachmentModel> attachments;
-  final List<DaakModel> linkedDaak;
-  final List<FileModel> linkedFiles;
+  final List<SummaryDaakModel> linkedDaak;
+  final List<SummaryFileModel> linkedFiles;
   final VoidCallback onSubmit;
 
   const SummaryPreviewSheet({

@@ -21,10 +21,10 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
   Widget build(BuildContext context) {
     final appColors = context.appColors;
     final daakLinks = widget.links
-        .where((l) => (l.linkType ?? '').toLowerCase() == 'daak')
+        .where((l) => (l.linkType == SummaryLinkType.daak))
         .toList(growable: false);
     final fileLinks = widget.links
-        .where((l) => (l.linkType ?? '').toLowerCase() == 'file')
+        .where((l) => (l.linkType == SummaryLinkType.file))
         .toList(growable: false);
     final isEmpty = daakLinks.isEmpty && fileLinks.isEmpty;
 
@@ -144,8 +144,11 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
   }
 
   Widget _daakTile(BuildContext context, SummaryLocalLinkModel link) {
-    final title = link.file?.referenceNo ?? '—';
-    final subject = link.file?.subject ?? '';
+    final daak = link.attachment is SummaryLocalLinkDaakAttachment
+        ? (link.attachment as SummaryLocalLinkDaakAttachment).daak
+        : null;
+    final title = daak?.diaryNo ?? '—';
+    final subject = daak?.subject ?? '';
     return _linkedTile(
       context: context,
       icon: Icons.mail_outline_rounded,
@@ -158,8 +161,11 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
   }
 
   Widget _fileTile(BuildContext context, SummaryLocalLinkModel link) {
-    final title = link.file?.referenceNo ?? 'File';
-    final subject = link.file?.subject ?? '';
+    final file = link.attachment is SummaryLocalLinkFileAttachment
+        ? (link.attachment as SummaryLocalLinkFileAttachment).file
+        : null;
+    final title = file?.referenceNo ?? '—';
+    final subject = file?.subject ?? '';
     return _linkedTile(
       context: context,
       icon: Icons.folder_outlined,
