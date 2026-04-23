@@ -369,18 +369,23 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         Toast.error(message: 'Please select at least one department member');
         return;
       }
+      setState(() {
+        _loadingAction = true;
+      });
       success = await notifier.shareInternally(
         summaryId: summaryId,
         instruction: _remarksController.text.trim(),
         recipientDesIds: recipientIds,
       );
       if (!mounted) return;
+
       if (success) {
-        setState(() {
-          _shareTargets.clear();
-          _shareSearchController.clear();
-        });
+        _shareTargets.clear();
+        _shareSearchController.clear();
       }
+      setState(() {
+        _loadingAction = false;
+      });
     }
 
     if (!mounted) return;

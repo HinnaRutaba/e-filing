@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
@@ -262,14 +264,17 @@ class SummariesRepo extends SummariesInterface {
           "At least one recipient designation ID is required to share summary internally",
         );
       }
+      final Map<String, dynamic> data = {
+        "instruction": instruction,
+        "userDesgID": desId,
+        "user_desg_ids": recipientDesIds,
+      };
+
       await dioClient.post(
         url: shareInternallyUrl(summaryId),
-        options: await options(authRequired: true),
-        data: {
-          "instruction": instruction,
-          "userDesgID": desId,
-          "user_desg_ids": recipientDesIds,
-        },
+        options: (await options(authRequired: true))
+          ..contentType = Headers.jsonContentType,
+        data: data,
       );
     } catch (e) {
       rethrow;
