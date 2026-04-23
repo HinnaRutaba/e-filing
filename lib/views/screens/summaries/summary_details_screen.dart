@@ -109,6 +109,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final HtmlEditorController _remarksHtmlCtrl = HtmlEditorController();
   final SignaturePadController _remarksPadCtrl = SignaturePadController();
   final ScrollController _mainScrollController = ScrollController();
+  final GlobalKey _remarksPanelKey = GlobalKey();
 
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
@@ -286,6 +287,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   void _onActionTap(SummaryAction action) {
+    if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
+      setState(() => _remarksPanelExpanded = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _remarksPanelKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+            alignment: 0.05,
+          );
+        }
+      });
+      return;
+    }
     setState(() {
       if (_selectedAction == action) {
         _selectedAction = null;
@@ -446,7 +462,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         : SummaryAction.values;
     final isMobile = context.isMobile;
     final buttons = allowedActions
-        .map((a) => _actionButton(a, expand: !isMobile,))
+        .map((a) => _actionButton(a, expand: !isMobile))
         .toList(growable: false);
     if (!isMobile) {
       return Row(
@@ -907,6 +923,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _remarksPanel() {
     return Container(
+      key: _remarksPanelKey,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(4),
