@@ -306,14 +306,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         Toast.error(message: 'Please enter remarks for the section');
         return;
       }
-       setState(() {
+      setState(() {
         _loadingAction = true;
       });
       success = await notifier.returnToSection(
         summaryId: summaryId,
         remark: remark,
       );
-       setState(() {
+      setState(() {
         _loadingAction = true;
       });
     } else if (action == SummaryAction.shareInternally) {

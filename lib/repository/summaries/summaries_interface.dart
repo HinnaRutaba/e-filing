@@ -51,19 +51,13 @@ abstract class SummariesInterface extends NetworkBase {
   String shareInternallyUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/share-internally';
 
-
-    String searchDaaksUrl({
-    required int desId,
-    String? query,
-  }) {
-    final String url =
-        '${baseUrl}summaries/search-daak?userDesgID=$desId';
+  String searchDaaksUrl({required int desId, String? query}) {
+    final String url = '${baseUrl}summaries/search-daak?userDesgID=$desId';
     if (query != null && query.isNotEmpty) {
       return '$url&q=$query';
     }
     return url;
-  } 
-
+  }
 
   String searchFilesUrl({required int desId, String? query}) {
     final String url = '${baseUrl}summaries/search-files?userDesgID=$desId';
@@ -71,7 +65,13 @@ abstract class SummariesInterface extends NetworkBase {
       return '$url&q=$query';
     }
     return url;
-  }    
+  }
+
+  String saveSignForFwdUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/sign';
+
+  String forwardToDepartmentUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/forward';
 
   //========================Functions=============================
 
@@ -138,7 +138,6 @@ abstract class SummariesInterface extends NetworkBase {
     required int desId,
     String? query,
   });
-
 
   Future<List<SummaryFileModel>> searchFiles({
     required int desId,
