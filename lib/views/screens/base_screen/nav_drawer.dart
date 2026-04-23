@@ -234,10 +234,15 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
           AnimatedSize(
             duration: _animDuration,
             curve: Curves.easeOut,
-            child: Image.asset(
-              AssetsConstants.logo,
-              width: _effectiveExpanded ? 100 : 44,
-              height: _effectiveExpanded ? 100 : 44,
+            child: InkWell(
+              onTap: () {
+                RouteHelper.navigateTo(Routes.dashboard);
+              },
+              child: Image.asset(
+                AssetsConstants.logo,
+                width: _effectiveExpanded ? 100 : 44,
+                height: _effectiveExpanded ? 100 : 44,
+              ),
             ),
           ),
         ],
@@ -432,7 +437,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 onPressed: () {
                   ref.read(authController.notifier).logout(context);
                 },
-                icon: Icon(Icons.logout, color: context.appColors.warning),
+                icon: Icon(Icons.logout, color: Colors.red[600]),
               ),
             ),
           ),
