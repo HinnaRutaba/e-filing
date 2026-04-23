@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -80,6 +81,63 @@ class SignaturePadController {
     final s = _state;
     if (s == null || s._signatureController.isEmpty) return null;
     return s._signatureController.toPngBytes();
+  }
+
+  /// Current canvas height in logical pixels (grows when auto-expand is on).
+  double get canvasHeight => _state?._canvasHeight ?? 280.0;
+
+  /// Hex colour string (#rrggbb) for the current pen colour.
+  String get penColorHex =>
+      _hexFromColor(_state?._penColor ?? kDefaultSignatureColors.first);
+
+  /// Serialises the drawn strokes to a JSON string compatible with
+  /// [HandwrittenStrokes.fromJson].  Returns null when the pad is empty.
+  String? toStrokesJson({required double canvasWidth}) {
+    final s = _state;
+    if (s == null || s._signatureController.isEmpty) return null;
+
+    final allPoints = s._signatureController.points;
+    final hexColor = penColorHex;
+    final penWidth = s._currentPen.width;
+
+    final strokes = <Map<String, dynamic>>[];
+    var current = <Map<String, dynamic>>[];
+
+    for (final pt in allPoints) {
+      // PointType.tap = pen-down event → start of a new stroke
+      if (pt.type == PointType.tap && current.isNotEmpty) {
+        strokes.add({
+          'color': hexColor,
+          'widthRange': [penWidth],
+          'points': List<Map<String, dynamic>>.from(current),
+        });
+        current = [];
+      }
+      current.add({
+        'x': pt.offset.dx,
+        'y': pt.offset.dy,
+        'p': pt.pressure,
+        't': null,
+      });
+    }
+    if (current.isNotEmpty) {
+      strokes.add({
+        'color': hexColor,
+        'widthRange': [penWidth],
+        'points': List<Map<String, dynamic>>.from(current),
+      });
+    }
+
+    return jsonEncode({
+      'w': canvasWidth,
+      'h': s._canvasHeight,
+      'strokes': strokes,
+    });
+  }
+
+  static String _hexFromColor(Color color) {
+    final argb = color.toARGB32();
+    return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
   }
 
   void clear() => _state?._clear();

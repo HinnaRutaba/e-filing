@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -110,6 +112,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final SignaturePadController _remarksPadCtrl = SignaturePadController();
   final ScrollController _mainScrollController = ScrollController();
   final GlobalKey _remarksPanelKey = GlobalKey();
+  double _remarksPadWidth = 0;
 
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
@@ -299,6 +302,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             alignment: 0.05,
           );
         }
+        _submitFromRemarksPanel();
       });
       return;
     }
@@ -1008,6 +1012,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                         SignaturePad(controller: _signaturePadController),
                         const SizedBox(height: 16),
                         _forwardingFields(),
+                        const SizedBox(height: 16),
+                        _actionButton(
+                          SummaryAction.signForward,
+                          expand: false,
+                          width: double.infinity,
+                          onTapOverride: _submitFromRemarksPanel,
+                        ),
                         const SizedBox(height: 4),
                       ],
                     ),
@@ -1104,23 +1115,35 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _handwrittenRemarksCanvas() {
-    return SignaturePad(
-      key: const ValueKey('remarks_written'),
-      controller: _remarksPadCtrl,
-      showRuledLines: true,
-      autoExpand: true,
-      autoExpandStep: 120,
-      showStrokeInfo: true,
-      showCustomColorPicker: true,
-      canvasHeight: 280,
-      showDescription: false,
-      canvasColor: Colors.grey.shade50,
-      onExpand: () {
-        if (!_mainScrollController.hasClients) return;
-        _mainScrollController.animateTo(
-          _mainScrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Capture the available width so _submitFromRemarksPanel can encode strokes
+        if (_remarksPadWidth != constraints.maxWidth) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => setState(() => _remarksPadWidth = constraints.maxWidth),
+          );
+        }
+        return SignaturePad(
+          key: const ValueKey('remarks_written'),
+          controller: _remarksPadCtrl,
+          showRuledLines: true,
+          autoExpand: true,
+          autoExpandStep: 120,
+          showStrokeInfo: true,
+          showCustomColorPicker: true,
+          canvasHeight: 280,
+          showDescription: false,
+          canvasColor: Colors.grey.shade50,
+          onExpand: () {
+            if (!_mainScrollController.hasClients) return;
+            final pos = _mainScrollController.position;
+            final target = (pos.pixels + 120).clamp(0.0, pos.maxScrollExtent);
+            _mainScrollController.animateTo(
+              target,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          },
         );
       },
     );
@@ -1175,6 +1198,96 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _forwardingStep(SummaryAction action) {
     return _forwardingFields();
+  }
+
+  /// Submit from the remarks panel (used when [showHandWrittedRemarksSection]
+  /// is true and the user taps Sign & Forward from the action bar).
+  Future<void> _submitFromRemarksPanel() async {
+    // 1 – Validate remarks
+    final bool hasTyped;
+    final String typedRemarks;
+    if (_remarksMode == _RemarksMode.type) {
+      typedRemarks = (await _remarksHtmlCtrl.getText()).trim();
+      if (!mounted) return;
+      hasTyped = typedRemarks.isNotEmpty;
+      if (!hasTyped) {
+        Toast.error(message: 'Please type your remarks before forwarding');
+        return;
+      }
+    } else {
+      typedRemarks = '';
+      if (_remarksPadCtrl.isEmpty) {
+        Toast.error(message: 'Please write your remarks before forwarding');
+        return;
+      }
+    }
+
+    // 2 – Validate signature
+    final signatureBytes = await _signaturePadController.toPngBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign in the "Sign here" section');
+      return;
+    }
+
+    // 3 – Validate forwarding destination
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      Toast.error(message: 'Please select a destination department');
+      return;
+    }
+    final hasOfficers =
+        _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
+    if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
+      Toast.error(message: 'Please select a destination officer');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    bool success;
+    if (_remarksMode == _RemarksMode.write) {
+      // Handwritten path
+      final strokesJson = _remarksPadCtrl.toStrokesJson(
+        canvasWidth: _remarksPadWidth > 0 ? _remarksPadWidth : 600,
+      );
+      final handwrittenPng = await _remarksPadCtrl.toPngBytes();
+      if (!mounted) return;
+      final handwrittenBase64 = handwrittenPng != null
+          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+          : '';
+      final penHex = _remarksPadCtrl.penColorHex;
+      success = await notifier.signAndForward(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+        handwrittenStrokesJson: strokesJson,
+        handwrittenPngBase64: handwrittenBase64,
+        handwrittenWidth: _remarksPadWidth.toInt(),
+        handwrittenHeight: _remarksPadCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: penHex,
+      );
+    } else {
+      // Typed path
+      success = await notifier.signAndForward(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+        remarks: typedRemarks,
+      );
+    }
+
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+      });
+    }
   }
 
   Future<void> _submitSignForward() async {

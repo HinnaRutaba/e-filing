@@ -480,7 +480,14 @@ class SummariesController extends BaseControllerState<SummariesState> {
     required Uint8List signatureBytes,
     required int targetDepartmentId,
     int? targetUserDesgId,
-    required String remarks,
+    // Typed remarks (provide when handwritten params are absent)
+    String? remarks,
+    // Handwritten params (mutually exclusive with remarks)
+    String? handwrittenStrokesJson,
+    String? handwrittenPngBase64,
+    int? handwrittenWidth,
+    int? handwrittenHeight,
+    String? handwrittenPenColor,
   }) async {
     try {
       EasyLoading.show();
@@ -499,12 +506,26 @@ class SummariesController extends BaseControllerState<SummariesState> {
       }
 
       // Step 2 – build payload and forward
-      final payload = TypedSignForwardModel(
-        targetDepartmentId: targetDepartmentId,
-        targetUserDesgId: targetUserDesgId,
-        secretarySignaturePath: signaturePath,
-        remarks: remarks,
-      );
+      final SignForwardModel payload;
+      if (handwrittenStrokesJson != null) {
+        payload = HandwrittenSignForwardModel(
+          targetDepartmentId: targetDepartmentId,
+          targetUserDesgId: targetUserDesgId,
+          secretarySignaturePath: signaturePath,
+          handwrittenStrokesJson: handwrittenStrokesJson,
+          handwrittenPngBase64: handwrittenPngBase64 ?? '',
+          handwrittenWidth: handwrittenWidth ?? 0,
+          handwrittenHeight: handwrittenHeight ?? 0,
+          handwrittenPenColor: handwrittenPenColor ?? '#0D2C6B',
+        );
+      } else {
+        payload = TypedSignForwardModel(
+          targetDepartmentId: targetDepartmentId,
+          targetUserDesgId: targetUserDesgId,
+          secretarySignaturePath: signaturePath,
+          remarks: remarks ?? '',
+        );
+      }
       await repo.signAndForward(
         summaryId: summaryId,
         desId: desId,
