@@ -267,10 +267,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _documentCard(),
-                              if (showHandWrittedRemarksSection) ...[
+                              if (actionsAvailable &&
+                                  showHandWrittedRemarksSection) ...[
                                 _remarksPanel(),
-                                const SizedBox(height: 16),
                               ],
+                              const SizedBox(height: 16),
                               _sidebar(),
                             ],
                           ),
