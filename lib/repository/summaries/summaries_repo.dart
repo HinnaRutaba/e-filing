@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
+import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
@@ -341,6 +342,53 @@ class SummariesRepo extends SummariesInterface {
       return (data['data'] as List)
           .map((e) => SummaryFileModel.fromJson(e))
           .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String?> saveSignForFwd({
+    required int? summaryId,
+    required int? desId,
+    required String signatureBase64,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception('Summary ID is required to save signature');
+      }
+      if (desId == null) {
+        throw Exception('Designation ID is required to save signature');
+      }
+      final Map<String, dynamic> data = await dioClient.post(
+        url: saveSignForFwdUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {'userDesgID': desId, 'signature': signatureBase64},
+      );
+      return data['path'] as String?;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> signAndForward({
+    required int? summaryId,
+    required int? desId,
+    required SignForwardModel payload,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception('Summary ID is required to sign and forward');
+      }
+      if (desId == null) {
+        throw Exception('Designation ID is required to sign and forward');
+      }
+      await dioClient.post(
+        url: forwardToDepartmentUrl(summaryId),
+        options: await options(authRequired: true),
+        data: payload.toJson(desId),
+      );
     } catch (e) {
       rethrow;
     }

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -940,11 +938,27 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       Toast.error(message: 'Please select a destination officer');
       return;
     }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    final success = await notifier.signAndForward(
+      summaryId: summaryId,
+      signatureBytes: _cardSignatureBytes!,
+      targetDepartmentId: deptId,
+      targetUserDesgId: _selectedDestOfficer?.userDesgId,
+      remarks: _remarksController.text.trim(),
+    );
     if (!mounted) return;
-    setState(() {
-      _selectedAction = null;
-      _remarksController.clear();
-    });
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+        _remarksController.clear();
+        _cardSignatureBytes = null;
+      });
+    }
   }
 
   Widget _forwardingFields({bool showForwardButton = false}) {

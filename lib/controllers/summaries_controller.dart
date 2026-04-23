@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
@@ -7,6 +9,7 @@ import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
+import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
@@ -469,6 +472,55 @@ class SummariesController extends BaseControllerState<SummariesState> {
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
       return [];
+    }
+  }
+
+  Future<bool> signAndForward({
+    required int? summaryId,
+    required Uint8List signatureBytes,
+    required int targetDepartmentId,
+    int? targetUserDesgId,
+    required String remarks,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+
+      // Step 1 – upload signature, get back server path
+      final signatureBase64 =
+          'data:image/png;base64,${base64Encode(signatureBytes)}';
+      final signaturePath = await repo.saveSignForFwd(
+        summaryId: summaryId,
+        desId: desId,
+        signatureBase64: signatureBase64,
+      );
+      if (signaturePath == null) {
+        return false;
+      }
+
+      // Step 2 – build payload and forward
+      final payload = TypedSignForwardModel(
+        targetDepartmentId: targetDepartmentId,
+        targetUserDesgId: targetUserDesgId,
+        secretarySignaturePath: signaturePath,
+        remarks: remarks,
+      );
+      await repo.signAndForward(
+        summaryId: summaryId,
+        desId: desId,
+        payload: payload,
+      );
+
+      Toast.success(message: 'Summary signed and forwarded successfully');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
     }
   }
 }
