@@ -144,14 +144,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return null;
   }
 
-  ActiveUserDesgRole? get userRole {
-    return ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+  ActiveUserDesg? get userDesg {
+    return ref.read(summariesController).meta?.activeUserDesg;
   }
 
   bool get actionsAvailable {
+    final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
-    if (userRole == ActiveUserDesgRole.deo &&
+    if (activeUser?.roleEnum == ActiveUserDesgRole.deo &&
         details?.summary?.summaryStatus == SummaryStatus.draftFromSection) {
+      return false;
+    }
+    if (activeUser?.roleEnum == ActiveUserDesgRole.secretary &&
+        details?.summary?.currentHolder != activeUser?.name) {
       return false;
     }
     return true;
