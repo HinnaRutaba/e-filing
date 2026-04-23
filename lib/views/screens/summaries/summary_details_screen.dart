@@ -105,6 +105,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   // Handwritten remarks
   _RemarksMode _remarksMode = _RemarksMode.type;
+  bool _remarksPanelExpanded = true;
   final HtmlEditorController _remarksHtmlCtrl = HtmlEditorController();
   final SignaturePadController _remarksPadCtrl = SignaturePadController();
   final ScrollController _mainScrollController = ScrollController();
@@ -259,6 +260,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                               //const SizedBox(height: 16),
                               _remarksPanel(),
                               const SizedBox(height: 16),
+
                               _sidebar(),
                             ],
                           ),
@@ -890,7 +892,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _remarksPanel() {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(4),
@@ -902,38 +903,84 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(children: [AppText.titleLarge("Add your remarks")]),
-          const SizedBox(height: 12),
-          _remarksModeToggle(),
-          const SizedBox(height: 4),
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 13,
-                color: AppColors.secondary,
-              ),
-              SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  'Type your remark or switch to Write and use your tablet pen. '
-                  'Your handwriting will appear on the printed summary as proof of authorship.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.secondary,
-                    height: 1.4,
+          // Header — always visible
+          InkWell(
+            onTap: () =>
+                setState(() => _remarksPanelExpanded = !_remarksPanelExpanded),
+            borderRadius: _remarksPanelExpanded
+                ? const BorderRadius.vertical(top: Radius.circular(4))
+                : BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              child: Row(
+                children: [
+                  Expanded(child: AppText.titleLarge("Add your remarks")),
+                  AnimatedRotation(
+                    turns: _remarksPanelExpanded ? 0 : -0.5,
+                    duration: const Duration(milliseconds: 250),
+                    child: const Icon(
+                      Icons.expand_more_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _remarksMode == _RemarksMode.type
-                ? _typedRemarksField()
-                : _handwrittenRemarksCanvas(),
+          // Body — animated open/close
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _remarksPanelExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _remarksModeToggle(),
+                        const SizedBox(height: 4),
+                        const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 13,
+                              color: AppColors.secondary,
+                            ),
+                            SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                'Type your remark or switch to Write and use your tablet pen. '
+                                'Your handwriting will appear on the printed summary as proof of authorship.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.secondary,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: _remarksMode == _RemarksMode.type
+                              ? _typedRemarksField()
+                              : _handwrittenRemarksCanvas(),
+                        ),
+                        const Divider(height: 24),
+                        AppText.titleLarge("Sign here"),
+                        const SizedBox(height: 16),
+                        SignaturePad(controller: _signaturePadController),
+                        const SizedBox(height: 16),
+                        _forwardingFields(),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
           ),
         ],
       ),

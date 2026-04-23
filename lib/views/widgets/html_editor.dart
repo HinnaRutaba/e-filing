@@ -37,19 +37,37 @@ class _HtmlEditorState extends State<HtmlEditor> {
   @override
   Widget build(BuildContext context) {
     final height = widget.height ?? MediaQuery.sizeOf(context).height * 0.5;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final buttonColor = isDark ? Colors.white70 : Colors.black87;
+    final buttonFillColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
+    final dropdownDecoration = BoxDecoration(
+      color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.15)
+            : Colors.black.withValues(alpha: 0.12),
+      ),
+    );
     return he.HtmlEditor(
       controller: _controller,
       htmlEditorOptions: he.HtmlEditorOptions(
         hint: widget.hint,
         initialText: widget.initialHtml,
         shouldEnsureVisible: false,
+        darkMode: isDark,
       ),
 
-      htmlToolbarOptions: const he.HtmlToolbarOptions(
+      htmlToolbarOptions: he.HtmlToolbarOptions(
         toolbarPosition: he.ToolbarPosition.aboveEditor,
         toolbarType: he.ToolbarType.nativeGrid,
         gridViewVerticalSpacing: -12,
-        defaultToolbarButtons: [
+        buttonColor: buttonColor,
+        buttonFillColor: buttonFillColor,
+        dropdownBoxDecoration: dropdownDecoration,
+        defaultToolbarButtons: const [
           FontSettingButtons(fontName: false, fontSizeUnit: false),
           FontButtons(clearAll: false),
           ListButtons(listStyles: false),

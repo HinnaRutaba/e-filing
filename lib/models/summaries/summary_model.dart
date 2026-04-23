@@ -55,12 +55,17 @@ class SummaryModel {
   final int? statusCode;
   final String? statusLabel;
   final Color? statusBadge;
+  final int? originatingDepartmentId;
   final String? originatingDepartment;
+  final int? currentDepartmentId;
   final String? currentDepartment;
+  final int? originatingUserDesgId;
   final String? originatingUser;
   final String? originatingDesignation;
+  final int? currentHolderUserDesgId;
   final String? currentHolder;
   final String? currentHolderDesignation;
+  final int? draftTargetDepartmentId;
   final String? draftTargetDepartment;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -76,12 +81,17 @@ class SummaryModel {
     this.statusCode,
     this.statusLabel,
     this.statusBadge,
+    this.originatingDepartmentId,
     this.originatingDepartment,
+    this.currentDepartmentId,
     this.currentDepartment,
+    this.originatingUserDesgId,
     this.originatingUser,
     this.originatingDesignation,
+    this.currentHolderUserDesgId,
     this.currentHolder,
     this.currentHolderDesignation,
+    this.draftTargetDepartmentId,
     this.draftTargetDepartment,
     this.createdAt,
     this.updatedAt,
@@ -98,12 +108,17 @@ class SummaryModel {
     int? statusCode,
     String? statusLabel,
     Color? statusBadge,
+    int? originatingDepartmentId,
     String? originatingDepartment,
+    int? currentDepartmentId,
     String? currentDepartment,
+    int? originatingUserDesgId,
     String? originatingUser,
     String? originatingDesignation,
+    int? currentHolderUserDesgId,
     String? currentHolder,
     String? currentHolderDesignation,
+    int? draftTargetDepartmentId,
     String? draftTargetDepartment,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -119,15 +134,24 @@ class SummaryModel {
       statusCode: statusCode ?? this.statusCode,
       statusLabel: statusLabel ?? this.statusLabel,
       statusBadge: statusBadge ?? this.statusBadge,
+      originatingDepartmentId:
+          originatingDepartmentId ?? this.originatingDepartmentId,
       originatingDepartment:
           originatingDepartment ?? this.originatingDepartment,
+      currentDepartmentId: currentDepartmentId ?? this.currentDepartmentId,
       currentDepartment: currentDepartment ?? this.currentDepartment,
+      originatingUserDesgId:
+          originatingUserDesgId ?? this.originatingUserDesgId,
       originatingUser: originatingUser ?? this.originatingUser,
       originatingDesignation:
           originatingDesignation ?? this.originatingDesignation,
+      currentHolderUserDesgId:
+          currentHolderUserDesgId ?? this.currentHolderUserDesgId,
       currentHolder: currentHolder ?? this.currentHolder,
       currentHolderDesignation:
           currentHolderDesignation ?? this.currentHolderDesignation,
+      draftTargetDepartmentId:
+          draftTargetDepartmentId ?? this.draftTargetDepartmentId,
       draftTargetDepartment:
           draftTargetDepartment ?? this.draftTargetDepartment,
       createdAt: createdAt ?? this.createdAt,
@@ -147,12 +171,17 @@ class SummaryModel {
       SummarySchema.statusCode: statusCode,
       SummarySchema.statusLabel: statusLabel,
       SummarySchema.statusBadge: statusBadge,
+      SummarySchema.originatingDepartmentId: originatingDepartmentId,
       SummarySchema.originatingDepartment: originatingDepartment,
+      SummarySchema.currentDepartmentId: currentDepartmentId,
       SummarySchema.currentDepartment: currentDepartment,
+      SummarySchema.originatingUserDesgId: originatingUserDesgId,
       SummarySchema.originatingUser: originatingUser,
       SummarySchema.originatingDesignation: originatingDesignation,
+      SummarySchema.currentHolderUserDesgId: currentHolderUserDesgId,
       SummarySchema.currentHolder: currentHolder,
       SummarySchema.currentHolderDesignation: currentHolderDesignation,
+      SummarySchema.draftTargetDepartmentId: draftTargetDepartmentId,
       SummarySchema.draftTargetDepartment: draftTargetDepartment,
       SummarySchema.createdAt: createdAt?.toIso8601String(),
       SummarySchema.updatedAt: updatedAt?.toIso8601String(),
@@ -172,12 +201,20 @@ class SummaryModel {
       statusCode: map[SummarySchema.statusCode]?.toInt(),
       statusLabel: map[SummarySchema.statusLabel],
       statusBadge: HelperUtils.getTagColor(map[SummarySchema.statusBadge]),
+      originatingDepartmentId: map[SummarySchema.originatingDepartmentId]
+          ?.toInt(),
       originatingDepartment: map[SummarySchema.originatingDepartment],
+      currentDepartmentId: map[SummarySchema.currentDepartmentId]?.toInt(),
       currentDepartment: map[SummarySchema.currentDepartment],
+      originatingUserDesgId: map[SummarySchema.originatingUserDesgId]?.toInt(),
       originatingUser: map[SummarySchema.originatingUser],
       originatingDesignation: map[SummarySchema.originatingDesignation],
+      currentHolderUserDesgId: map[SummarySchema.currentHolderUserDesgId]
+          ?.toInt(),
       currentHolder: map[SummarySchema.currentHolder],
       currentHolderDesignation: map[SummarySchema.currentHolderDesignation],
+      draftTargetDepartmentId: map[SummarySchema.draftTargetDepartmentId]
+          ?.toInt(),
       draftTargetDepartment: map[SummarySchema.draftTargetDepartment],
       createdAt: map[SummarySchema.createdAt] != null
           ? DateTime.tryParse(map[SummarySchema.createdAt])
@@ -205,12 +242,17 @@ class SummaryModel {
         other.statusCode == statusCode &&
         other.statusLabel == statusLabel &&
         other.statusBadge == statusBadge &&
+        other.originatingDepartmentId == originatingDepartmentId &&
         other.originatingDepartment == originatingDepartment &&
+        other.currentDepartmentId == currentDepartmentId &&
         other.currentDepartment == currentDepartment &&
+        other.originatingUserDesgId == originatingUserDesgId &&
         other.originatingUser == originatingUser &&
         other.originatingDesignation == originatingDesignation &&
+        other.currentHolderUserDesgId == currentHolderUserDesgId &&
         other.currentHolder == currentHolder &&
         other.currentHolderDesignation == currentHolderDesignation &&
+        other.draftTargetDepartmentId == draftTargetDepartmentId &&
         other.draftTargetDepartment == draftTargetDepartment &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -228,12 +270,17 @@ class SummaryModel {
         statusCode.hashCode ^
         statusLabel.hashCode ^
         statusBadge.hashCode ^
+        originatingDepartmentId.hashCode ^
         originatingDepartment.hashCode ^
+        currentDepartmentId.hashCode ^
         currentDepartment.hashCode ^
+        originatingUserDesgId.hashCode ^
         originatingUser.hashCode ^
         originatingDesignation.hashCode ^
+        currentHolderUserDesgId.hashCode ^
         currentHolder.hashCode ^
         currentHolderDesignation.hashCode ^
+        draftTargetDepartmentId.hashCode ^
         draftTargetDepartment.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode ^
@@ -251,12 +298,17 @@ class SummarySchema {
   static const String statusCode = 'status_code';
   static const String statusLabel = 'status_label';
   static const String statusBadge = 'status_badge';
+  static const String originatingDepartmentId = 'originating_department_id';
   static const String originatingDepartment = 'originating_department';
+  static const String currentDepartmentId = 'current_department_id';
   static const String currentDepartment = 'current_department';
+  static const String originatingUserDesgId = 'originating_user_desg_id';
   static const String originatingUser = 'originating_user';
   static const String originatingDesignation = 'originating_designation';
+  static const String currentHolderUserDesgId = 'current_holder_user_desg_id';
   static const String currentHolder = 'current_holder';
   static const String currentHolderDesignation = 'current_holder_designation';
+  static const String draftTargetDepartmentId = 'draft_target_department_id';
   static const String draftTargetDepartment = 'draft_target_department';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
