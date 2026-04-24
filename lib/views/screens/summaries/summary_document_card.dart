@@ -235,6 +235,26 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                       );
                     },
                   ),
+
+                  Builder(
+                    builder: (_) {
+                      final userRole = ref
+                          .read(summariesController)
+                          .meta
+                          ?.activeUserDesg
+                          ?.roleEnum;
+                      final isLastRemarksAdded =
+                          widget.remarkTrack.isNotEmpty &&
+                          widget.remarkTrack.last.actionType == 'remarks_added';
+                      if (isLastRemarksAdded &&
+                          userRole == ActiveUserDesgRole.secretary) {
+                        return _remarksAddedPendingSection(
+                          widget.remarkTrack.last,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                   if (_signatureImage != null &&
                       widget.forwardingSection != null) ...[
                     const SizedBox(height: 12),
@@ -306,6 +326,140 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
               'No content provided.',
               color: AppColors.textSecondary,
             ),
+    );
+  }
+
+  Widget _remarksAddedPendingSection(SummaryRemarkTrackModel track) {
+    const draftBadgeBg = Color(0xFFFFF3CD);
+    const draftBadgeFg = Color(0xFF8A6D1A);
+    const accentOrange = Color(0xFFE08A2B);
+
+    final hasHtmlRemarks =
+        (track.remarks ?? '').trim().isNotEmpty &&
+        track.remarks!.trim() != '[handwritten remark]';
+    final hasHandwritten =
+        (track.hasHandwritten ?? false) &&
+        (track.handwrittenStrokes?.strokes.isNotEmpty ?? false);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: draftBadgeBg,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.edit_note_outlined,
+                    size: 18,
+                    color: draftBadgeFg,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText.labelMedium(
+                    'DRAFT — PENDING SECRETARY SIGNATURE',
+                    color: draftBadgeFg,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontFamily: fileFont,
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+              ),
+              children: [
+                const TextSpan(text: 'Drafted by '),
+                TextSpan(
+                  text: track.actorName ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if ((track.actorDesignation ?? '').isNotEmpty)
+                  TextSpan(text: ', ${track.actorDesignation}'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (hasHtmlRemarks)
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+              decoration: const BoxDecoration(
+                border: Border(left: BorderSide(color: accentOrange, width: 3)),
+              ),
+              child: HtmlReader(
+                html: track.remarks!,
+                textStyle: const TextStyle(
+                  color: AppColors.black,
+                  fontFamily: fileFont,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          if (hasHandwritten)
+            Container(
+              margin: EdgeInsets.only(top: hasHtmlRemarks ? 8 : 0),
+              padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+              decoration: const BoxDecoration(
+                border: Border(left: BorderSide(color: accentOrange, width: 3)),
+              ),
+              child: HandwrittenStrokesView(
+                strokes: track.handwrittenStrokes!,
+                fallbackColor: AppColors.textPrimary.toString(),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                AppText.bodyMedium(
+                  track.toUserName ?? '',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  fontFamily: fileFont,
+                ),
+                if ((track.toUserDesignation ?? '').isNotEmpty)
+                  Text(
+                    '(${track.toUserDesignation})',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontFamily: fileFont,
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                if ((track.toDepartment ?? '').isNotEmpty)
+                  AppText.bodySmall(
+                    track.toDepartment!,
+                    color: Colors.grey[900],
+                    fontSize: 12,
+                    fontFamily: fileFont,
+                  ),
+                if (track.actedAtDisplay != null)
+                  AppText.labelSmall(track.actedAtDisplay!),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
