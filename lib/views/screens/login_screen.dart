@@ -54,18 +54,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Left — login form
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
             child: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-                  ),
-                  color: Theme.of(context).cardColor.withValues(alpha: .8),
-                ),
+              child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
-                child: _wideLoginForm(),
+                child: _loginForm(isWide: true),
               ),
             ),
           ),
@@ -172,97 +165,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // ── Wide form (sign-in heading + fields only) ─────────────────────────────
+  // ── Login form ──────────────────────────────────────────────────────────────
 
-  Widget _wideLoginForm() {
+  Widget _loginForm({bool isWide = false}) {
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          //SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
-          AppText.headlineMedium("Sign In", color: AppColors.secondary),
-          const SizedBox(height: 8),
-          AppText.titleSmall(
-            "Sign in to your Dashboard",
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          AppTextField(
-            controller: usernameController,
-            labelText: 'Username',
-            hintText: 'Username',
-            showLabel: false,
-            prefix: const Icon(Icons.person),
-            validator: Validators.notEmptyValidator,
-          ),
-          const SizedBox(height: 24),
-          AppTextField(
-            controller: passwordController,
-            labelText: 'Password',
-            hintText: "Password",
-            obscureText: obscurePassword,
-            showLabel: false,
-            prefix: const Icon(Icons.lock),
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscurePassword
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-              ),
-              onPressed: () {
-                setState(() {
-                  obscurePassword = !obscurePassword;
-                });
-              },
+          if (!isWide) ...[
+            SizedBox(height: MediaQuery.sizeOf(context).height * 0.10),
+            Hero(
+              tag: HeroTags.logo,
+              child: Image.asset(AssetsConstants.logo, width: 140, height: 80),
             ),
-            validator: Validators.passwordValidator,
-          ),
-          const SizedBox(height: 24),
-          AppSolidButton(
-            onPressed: () async {
-              FocusScope.of(context).unfocus();
-              if (formKey.currentState?.validate() != true) return;
-              ref
-                  .read(authController.notifier)
-                  .login(
-                    username: usernameController.text,
-                    password: passwordController.text,
-                  );
-            },
-            width: double.infinity,
-            text: "Sign In",
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Shared form (mobile) ────────────────────────────────────────────────────
-
-  Widget _loginForm({double topSpacingFraction = 0.10}) {
-    return Form(
-      key: formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * topSpacingFraction,
-          ),
-          Hero(
-            tag: HeroTags.logo,
-            child: Image.asset(AssetsConstants.logo, width: 140, height: 80),
-          ),
-          const SizedBox(height: 16),
-          AppText.headlineMedium(
-            "CMDU E-Filing System",
-            color: AppColors.secondary,
-          ),
-          const SizedBox(height: 8),
-          AppText.titleSmall(
-            "Sign in to Dashboard",
-            textAlign: TextAlign.center,
-          ),
+            const SizedBox(height: 16),
+            AppText.headlineMedium(
+              "CMDU E-Filing System",
+              color: AppColors.secondary,
+            ),
+            const SizedBox(height: 8),
+            AppText.titleSmall(
+              "Sign in to Dashboard",
+              textAlign: TextAlign.center,
+            ),
+          ] else ...[
+            AppText.headlineMedium("Sign In", color: AppColors.secondary),
+            const SizedBox(height: 8),
+            AppText.titleSmall(
+              "Sign in to your Dashboard",
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: 24),
           AppTextField(
             controller: usernameController,
@@ -309,46 +243,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             width: double.infinity,
             text: "Sign In",
           ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                AppText.titleSmall("Powered By"),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: Image.asset(AssetsConstants.cmduLogo, height: 48),
-                    ),
-                    const SizedBox(width: 16),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(1.0),
-                      child: Image.asset(AssetsConstants.govtLogo, height: 40),
-                    ),
-                  ],
-                ),
-              ],
+          if (!isWide) ...[
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  AppText.titleSmall("Powered By"),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.asset(
+                          AssetsConstants.cmduLogo,
+                          height: 48,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(1.0),
+                        child: Image.asset(
+                          AssetsConstants.govtLogo,
+                          height: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          FutureBuilder(
-            future: VersionSyncService().getAppVersionString(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox();
-              }
-              return Padding(
-                padding: const EdgeInsets.only(top: 48.0),
-                child: AppText.bodySmall(
-                  "Version: ${snapshot.data}",
-                  textAlign: TextAlign.center,
-                  color: AppColors.textSecondary,
-                ),
-              );
-            },
-          ),
+            FutureBuilder(
+              future: VersionSyncService().getAppVersionString(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 48.0),
+                  child: AppText.bodySmall(
+                    "Version: ${snapshot.data}",
+                    textAlign: TextAlign.center,
+                    color: AppColors.textSecondary,
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
