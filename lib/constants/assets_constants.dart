@@ -16,6 +16,7 @@ class AssetsConstants {
   static const String cmduLogo = 'assets/CMDU.png';
   static const String govtLogo = 'assets/govt1.png';
   static const String fingerprint = 'assets/fingerprint.png';
-    static const String chatBG = 'assets/chat_bg.png';
-     static const String dashboardBG = 'assets/dashboard_header.svg';
+  static const String chatBG = 'assets/chat_bg.png';
+  static const String dashboardBG = 'assets/dashboard_header.svg';
+  static const String loginBgAnimated = 'assets/login_looping animation.json';
 }

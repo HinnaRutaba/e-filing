@@ -94,6 +94,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   timeago: ^3.7.1
   html_editor_enhanced: ^2.7.1
+  lottie: ^3.3.3
 
 dev_dependencies:
   flutter_test:

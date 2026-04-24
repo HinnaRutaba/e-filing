@@ -3,14 +3,15 @@ import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -27,17 +28,82 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: MediaQuery.sizeOf(context).height * 0.10,
+    final isMobile = context.isMobile;
+    return GradientScaffold(child: isMobile ? _mobileLayout() : _wideLayout());
+  }
+
+  // ── Mobile ──────────────────────────────────────────────────────────────────
+
+  Widget _mobileLayout() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: _loginForm(),
+        ),
+      ),
+    );
+  }
+
+  // ── Tablet / Desktop ────────────────────────────────────────────────────────
+
+  Widget _wideLayout() {
+    return Row(
+      children: [
+        // Left — login form
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                  color: Theme.of(context).cardColor.withValues(alpha: .8),
+                ),
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: _wideLoginForm(),
               ),
+            ),
+          ),
+        ),
+        // Right — animated lottie panel
+        Expanded(child: _lottiePannel()),
+      ],
+    );
+  }
+
+  Widget _lottiePannel() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A3A5C), Color(0xFF102040)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background — Lottie fills the entire panel
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Lottie.asset(
+                AssetsConstants.loginBgAnimated,
+                fit: BoxFit.contain,
+                repeat: true,
+                errorBuilder: (context, error, stack) =>
+                    const SizedBox.shrink(),
+              ),
+            ),
+          ),
+          // Foreground — branding anchored to top & bottom
+          Column(
+            children: [
+              const Spacer(),
               Hero(
                 tag: HeroTags.logo,
                 child: Image.asset(
@@ -46,80 +112,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 80,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               AppText.headlineMedium(
                 "CMDU E-Filing System",
-                color: AppColors.secondary,
+                color: Colors.white,
               ),
-              const SizedBox(height: 8),
-              AppText.titleSmall(
-                "Sign in to Dashboard",
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              AppTextField(
-                controller: usernameController,
-                labelText: 'Username',
-                //labelColor: AppColors.white,
-                hintText: 'Username',
-                showLabel: false,
-                prefix: const Icon(Icons.person),
-                validator: Validators.notEmptyValidator,
-              ),
-              const SizedBox(height: 24),
-              AppTextField(
-                controller: passwordController,
-                labelText: 'Password',
-                hintText: "Password",
-                obscureText: obscurePassword,
-                showLabel: false,
-                // labelColor: AppColors.white,
-                prefix: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      obscurePassword = !obscurePassword;
-                    });
-                  },
-                ),
-                validator: Validators.passwordValidator,
-              ),
-              const SizedBox(height: 24),
-              AppSolidButton(
-                onPressed: () async {
-                  FocusScope.of(context).unfocus();
+              const Spacer(flex: 3),
 
-                  if (formKey.currentState?.validate() != true) return;
-                  ref.read(authController.notifier).login(
-                        username: usernameController.text,
-                        password: passwordController.text,
-                      );
-                },
-                width: double.infinity,
-                text: "Sign In",
-              ),
-              const SizedBox(height: 24),
-              // AppText.bodyMedium(
-              //   "Or use fingerprint to sign in ",
-              //   textAlign: TextAlign.center,
-              // ),
-              // const SizedBox(height: 8),
-              // Image.asset(
-              //   AssetsConstants.fingerprint,
-              //   width: 48,
-              //   height: 48,
-              // ),
-              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    AppText.titleSmall("Powered By"),
+                    AppText.titleSmall("Powered By", color: Colors.white70),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -138,45 +142,214 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             AssetsConstants.govtLogo,
                             height: 40,
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               FutureBuilder(
                 future: VersionSyncService().getAppVersionString(),
                 builder: (context, snapshot) {
-                
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox();
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 48.0),
-                      child: AppText.bodySmall(
-                        "Version: ${snapshot.data}",
-                        textAlign: TextAlign.center,
-                        color: AppColors.textSecondary,
-                      ),
-                    );
                   }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: AppText.bodySmall(
+                      "Version: ${snapshot.data}",
+                      textAlign: TextAlign.center,
+                      color: Colors.white54,
+                    ),
+                  );
                 },
-              )
+              ),
+              const SizedBox(height: 40),
             ],
-            // .animate(
-            //   interval: const Duration(milliseconds: 20),
-            // )
-            // .slideY(
-            //   begin: 3.8,
-            //   duration: const Duration(milliseconds: 600),
-            //   curve: Curves.easeInOutQuad,
-            // )
-            // .fade(
-            //   duration: const Duration(milliseconds: 600),
-            // ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  // ── Wide form (sign-in heading + fields only) ─────────────────────────────
+
+  Widget _wideLoginForm() {
+    return Form(
+      key: formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          //SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
+          AppText.headlineMedium("Sign In", color: AppColors.secondary),
+          const SizedBox(height: 8),
+          AppText.titleSmall(
+            "Sign in to your Dashboard",
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          AppTextField(
+            controller: usernameController,
+            labelText: 'Username',
+            hintText: 'Username',
+            showLabel: false,
+            prefix: const Icon(Icons.person),
+            validator: Validators.notEmptyValidator,
+          ),
+          const SizedBox(height: 24),
+          AppTextField(
+            controller: passwordController,
+            labelText: 'Password',
+            hintText: "Password",
+            obscureText: obscurePassword,
+            showLabel: false,
+            prefix: const Icon(Icons.lock),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() {
+                  obscurePassword = !obscurePassword;
+                });
+              },
+            ),
+            validator: Validators.passwordValidator,
+          ),
+          const SizedBox(height: 24),
+          AppSolidButton(
+            onPressed: () async {
+              FocusScope.of(context).unfocus();
+              if (formKey.currentState?.validate() != true) return;
+              ref
+                  .read(authController.notifier)
+                  .login(
+                    username: usernameController.text,
+                    password: passwordController.text,
+                  );
+            },
+            width: double.infinity,
+            text: "Sign In",
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Shared form (mobile) ────────────────────────────────────────────────────
+
+  Widget _loginForm({double topSpacingFraction = 0.10}) {
+    return Form(
+      key: formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: MediaQuery.sizeOf(context).height * topSpacingFraction,
+          ),
+          Hero(
+            tag: HeroTags.logo,
+            child: Image.asset(AssetsConstants.logo, width: 140, height: 80),
+          ),
+          const SizedBox(height: 16),
+          AppText.headlineMedium(
+            "CMDU E-Filing System",
+            color: AppColors.secondary,
+          ),
+          const SizedBox(height: 8),
+          AppText.titleSmall(
+            "Sign in to Dashboard",
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          AppTextField(
+            controller: usernameController,
+            labelText: 'Username',
+            hintText: 'Username',
+            showLabel: false,
+            prefix: const Icon(Icons.person),
+            validator: Validators.notEmptyValidator,
+          ),
+          const SizedBox(height: 24),
+          AppTextField(
+            controller: passwordController,
+            labelText: 'Password',
+            hintText: "Password",
+            obscureText: obscurePassword,
+            showLabel: false,
+            prefix: const Icon(Icons.lock),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() {
+                  obscurePassword = !obscurePassword;
+                });
+              },
+            ),
+            validator: Validators.passwordValidator,
+          ),
+          const SizedBox(height: 24),
+          AppSolidButton(
+            onPressed: () async {
+              FocusScope.of(context).unfocus();
+              if (formKey.currentState?.validate() != true) return;
+              ref
+                  .read(authController.notifier)
+                  .login(
+                    username: usernameController.text,
+                    password: passwordController.text,
+                  );
+            },
+            width: double.infinity,
+            text: "Sign In",
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                AppText.titleSmall("Powered By"),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.asset(AssetsConstants.cmduLogo, height: 48),
+                    ),
+                    const SizedBox(width: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(1.0),
+                      child: Image.asset(AssetsConstants.govtLogo, height: 40),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          FutureBuilder(
+            future: VersionSyncService().getAppVersionString(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 48.0),
+                child: AppText.bodySmall(
+                  "Version: ${snapshot.data}",
+                  textAlign: TextAlign.center,
+                  color: AppColors.textSecondary,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
