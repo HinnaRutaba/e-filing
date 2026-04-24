@@ -311,6 +311,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       });
       return;
     }
+
+    if (action == SummaryAction.signForward) {
+      final hasSigned =
+          _cardSignatureBytes != null && _cardSignatureBytes!.isNotEmpty;
+      final hasDept = _selectedDestDept?.id != null;
+      final hasOfficer =
+          _selectedDestOfficer?.userDesgId != null ||
+          (_officerCacheDeptId == _selectedDestDept?.id &&
+              _officerCache.isEmpty);
+      if (hasSigned && hasDept && hasOfficer) {
+        _submitSignForward();
+        return;
+      }
+    }
+
     setState(() {
       if (_selectedAction == action) {
         _selectedAction = null;
@@ -1321,7 +1336,15 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         ref.read(summariesController).details?.summary?.id ??
         widget.summary?.id;
     final notifier = ref.read(summariesController.notifier);
-    final remarks = await _remarksHtmlCtrl.getText();
+
+    String remarks = '';
+    if (_selectedAction == SummaryAction.signForward) {
+      try {
+        remarks = (await _remarksHtmlCtrl.getText()).trim();
+      } catch (_) {
+        remarks = '';
+      }
+    }
     if (!mounted) return;
 
     final success = await notifier.signAndForward(
