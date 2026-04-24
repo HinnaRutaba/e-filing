@@ -67,6 +67,12 @@ class SummaryDetailsModel {
   bool get isLatestRemarksAdded =>
       movements.isNotEmpty && movements.last.actionType == 'remarks_added';
 
+  List<String> get supportingFlagNames => attachments
+      .where((a) => a.isSupporting)
+      .map((a) => a.flagName)
+      .whereType<String>()
+      .toList();
+
   Map<String, dynamic> toJson() {
     return {
       SummaryDetailsSchema.summary: summary?.toJson(),

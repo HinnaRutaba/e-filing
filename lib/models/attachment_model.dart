@@ -36,6 +36,12 @@ class AttachmentModel {
 
   bool get isMainAttachment => !isSupporting;
 
+  String? get flagName {
+    if (!isSupporting) return null;
+    final match = RegExp(r'\[Flag:\s*([^\]]+)\]').firstMatch(originalName!);
+    return match?.group(1)?.trim();
+  }
+
   String? get fileSizeText {
     if (fileSize == null) return null;
     const kb = 1024;

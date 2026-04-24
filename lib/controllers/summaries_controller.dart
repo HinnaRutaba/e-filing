@@ -68,7 +68,7 @@ extension SummarySubTabX on SummarySubTab {
         return SummaryTabConfig(
           label: 'Drafts',
           parent: SummaryMainTab.actionRequired,
-          filterName: role == ActiveUserDesgRole.deo ? 'my_draft' : 'draft',
+          filterName: role == ActiveUserDesgRole.deo ? 'my_drafts' : 'draft',
         );
       case SummarySubTab.disposal:
         return const SummaryTabConfig(

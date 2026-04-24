@@ -135,18 +135,26 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           .where((a) => a.isSupporting)
           .toList();
       if (supportingAttachments.isNotEmpty) {
-        _model.attachments = supportingAttachments.map((a) {
+        // Resolve all matched flags first so we can cross-reference usedFlags.
+        final matchedFlags = supportingAttachments.map((a) {
           final flagName = _parseFlagName(a.originalName);
-          final matchedFlag = allFlags.firstWhere(
+          return allFlags.firstWhere(
             (f) =>
                 f.title?.trim().toLowerCase() == flagName?.trim().toLowerCase(),
             orElse: () => FlagModel(title: flagName),
           );
-          return FlagAndAttachmentModel(
-            flagType: matchedFlag,
-            existingAttachment: a,
-          );
         }).toList();
+
+        _model.attachments = List.generate(supportingAttachments.length, (i) {
+          return FlagAndAttachmentModel(
+            flagType: matchedFlags[i],
+            existingAttachment: supportingAttachments[i],
+            usedFlags: [
+              for (int j = 0; j < matchedFlags.length; j++)
+                if (j != i) matchedFlags[j],
+            ],
+          );
+        });
       }
     });
     EasyLoading.dismiss();
@@ -359,6 +367,15 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
   int get _addedFlagsCount => _model.addedFlagsCount;
 
   int get _correspondenceCount => _model.correspondenceCount;
+
+  List<FlagModel> get _usedFlags {
+    final names = summaryDetails?.supportingFlagNames ?? [];
+    if (names.isEmpty) return [];
+    return allFlags.where((f) {
+      final title = f.title?.trim().toLowerCase() ?? '';
+      return names.any((n) => n.trim().toLowerCase() == title);
+    }).toList();
+  }
 
   bool get _step0Complete => _model.isSummaryDetailsComplete;
 

@@ -142,6 +142,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     setState(() {
       _officerCache = list;
       _officerCacheDeptId = deptId;
+      if (list.length == 1) {
+        _selectedDestOfficer = list.first;
+        _destOfficerController.text = list.first.name ?? '';
+      }
     });
   }
 
@@ -1725,11 +1729,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          internal,
-          const SizedBox(height: 16),
           files,
           const SizedBox(height: 16),
           movement,
+          const SizedBox(height: 16),
+          internal,
         ],
       );
     }
@@ -1737,9 +1741,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sidebarRow(internal, files),
+        _sidebarRow(files, movement),
         const SizedBox(height: 16),
-        _sidebarRow(movement, const SizedBox.shrink()),
+        _sidebarRow(internal, const SizedBox.shrink()),
       ],
     );
   }

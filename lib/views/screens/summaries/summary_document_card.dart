@@ -8,7 +8,7 @@ import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_remark_track_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/handwritten_strokes_view.dart';
 import 'package:efiling_balochistan/views/widgets/html_reader.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
@@ -240,7 +240,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                     const SizedBox(height: 12),
                     Align(
                       key: _forwardingSectionKey,
-                      alignment: Alignment.centerRight,
+                      alignment: Alignment.centerLeft,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 360),
                         child: widget.forwardingSection!,
@@ -546,7 +546,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
             children: [
               AppText.labelSmall('Sign above', color: AppColors.textSecondary),
               const Spacer(),
-              AppTextLinkButton(
+              AppOutlineButton(
                 onPressed: () async {
                   if (_signaturePadController.isNotEmpty) {
                     final bytes = await _signaturePadController.toPngBytes();

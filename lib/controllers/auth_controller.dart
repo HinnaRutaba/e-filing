@@ -105,14 +105,19 @@ class AuthController extends BaseControllerState<UserModel> {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => const ConfirmationDialog(
-        title: 'Log out?',
-        message: 'You will need to sign in again to continue.',
-        icon: Icons.logout_rounded,
-        iconColor: Colors.red,
-        confirmText: 'Log out',
-        cancelText: 'Cancel',
-        destructive: true,
+      builder: (_) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: const ConfirmationDialog(
+            title: 'Log out?',
+            message: 'You will need to sign in again to continue.',
+            icon: Icons.logout_rounded,
+            iconColor: Colors.red,
+            confirmText: 'Log out',
+            cancelText: 'Cancel',
+            destructive: true,
+          ),
+        ),
       ),
     );
 
