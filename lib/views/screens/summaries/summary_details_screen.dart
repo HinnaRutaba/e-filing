@@ -36,6 +36,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
+import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
 
 enum _RemarksMode { type, write }
 
@@ -62,6 +63,12 @@ enum SummaryAction {
     label: 'Sign & Forward',
     icon: Icons.arrow_forward_rounded,
     color: Colors.deepPurpleAccent,
+    filled: true,
+  ),
+  draftRemarks(
+    label: 'Draft Remarks',
+    icon: Icons.edit_note_rounded,
+    color: AppColors.primary,
     filled: true,
   );
 
@@ -169,9 +176,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
     if (activeUser?.roleEnum == ActiveUserDesgRole.deo &&
-        details?.summary?.summaryStatus == SummaryStatus.draftFromSection) {
+        (details?.summary?.summaryStatus == SummaryStatus.draftFromSection ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.pendingWithSecretary ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.withPersonalSecretaryForPreReview)) {
       return false;
     }
+
     if (activeUser?.roleEnum == ActiveUserDesgRole.secretary &&
         details?.summary?.currentHolder != activeUser?.name) {
       return false;
@@ -272,7 +284,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                             children: [
                               _documentCard(),
                               if (actionsAvailable &&
-                                  showHandWrittedRemarksSection) ...[
+                                  showHandWrittedRemarksSection &&
+                                  !(userDesg?.roleEnum ==
+                                          ActiveUserDesgRole.deo &&
+                                      details?.isLatestMovementSignedAndForwarded ==
+                                          true)) ...[
                                 _remarksPanel(),
                               ],
                               const SizedBox(height: 16),
@@ -295,6 +311,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   void _onActionTap(SummaryAction action) {
+    if (action == SummaryAction.draftRemarks) {
+      final summaryId =
+          ref.read(summariesController).details?.summary?.id ??
+          widget.summary?.id;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CreateSummaryScreen(summaryId: summaryId),
+        ),
+      ).then((_) => _loadDetails());
+      return;
+    }
+
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
       setState(() => _remarksPanelExpanded = true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -480,15 +509,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _actionButtonRow() {
+    final details = ref.read(summariesController).details;
     final bool isSignedAndForwarded =
-        ref
-            .read(summariesController)
-            .details
-            ?.isLatestMovementSignedAndForwarded ==
-        true;
-    final allowedActions = isSignedAndForwarded
-        ? [SummaryAction.shareInternally, SummaryAction.signForward]
-        : SummaryAction.values;
+        details?.isLatestMovementSignedAndForwarded == true;
+    final bool isDeo = userDesg?.roleEnum == ActiveUserDesgRole.deo;
+
+    List<SummaryAction> allowedActions;
+    if (isDeo && isSignedAndForwarded) {
+      // DEO after a sign-and-forward: only Draft Remarks + Share Internally
+      allowedActions = [
+        SummaryAction.draftRemarks,
+        SummaryAction.shareInternally,
+      ];
+    } else if (isSignedAndForwarded) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
+    } else {
+      allowedActions = SummaryAction.values
+          .where((a) => a != SummaryAction.draftRemarks)
+          .toList();
+    }
     final isMobile = context.isMobile;
     final buttons = allowedActions
         .map((a) => _actionButton(a, expand: !isMobile))
@@ -659,6 +701,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     _shareInternallyBody(action)
                   else if (action == SummaryAction.signForward)
                     _signForwardBody(action)
+                  else if (action == SummaryAction.draftRemarks)
+                    const SizedBox.shrink()
                   else
                     AppTextField(
                       controller: _remarksController,
