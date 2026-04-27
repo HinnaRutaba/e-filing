@@ -4,15 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 
 class Toast {
-  static void show(
-      {required String message,
-      Color color = AppColors.secondary,
-      Widget? detail}) {
+  static void show({
+    required String message,
+    Color color = AppColors.secondary,
+    Widget? detail,
+  }) {
     toastification.show(
-      title: AppText.titleLarge(
-        message,
-        color: AppColors.white,
-      ),
+      title: AppText.titleLarge(message, color: AppColors.white),
       description: detail,
       direction: TextDirection.ltr,
       alignment: Alignment.topCenter,
@@ -37,14 +35,9 @@ class Toast {
       alignment: Alignment.topCenter,
       margin: const EdgeInsets.all(16),
       icon: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
         elevation: 4,
-        child: const Icon(
-          Icons.check_circle_outline,
-          color: AppColors.primary,
-        ),
+        child: const Icon(Icons.check_circle_outline, color: AppColors.primary),
       ),
       autoCloseDuration: const Duration(seconds: 5),
       backgroundColor: AppColors.primary,
@@ -64,10 +57,7 @@ class Toast {
       direction: TextDirection.ltr,
       alignment: Alignment.topCenter,
       margin: const EdgeInsets.all(16),
-      icon: const Icon(
-        Icons.warning_amber_rounded,
-        color: AppColors.error,
-      ),
+      icon: const Icon(Icons.warning_amber_rounded, color: AppColors.error),
       autoCloseDuration: const Duration(seconds: 5),
       backgroundColor: AppColors.error.withOpacity(0.9),
       borderSide: const BorderSide(color: AppColors.error),

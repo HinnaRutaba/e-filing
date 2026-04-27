@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
+import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_local_link_model.dart';
@@ -21,6 +22,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/gradient_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +48,7 @@ class _CreateDraftRemarksScreenState
   List<SummaryFileModel> _linkedFiles = [];
   final Set<int?> _preloadedDaakIds = {};
   final Set<int?> _preloadedFileIds = {};
+  int? _internalForwardId;
 
   final Set<int> _openSections = {0, 1, 2, 3};
 
@@ -68,6 +71,7 @@ class _CreateDraftRemarksScreenState
     if (!mounted || details == null) return;
 
     setState(() {
+      _internalForwardId = details.actions?.myInternalForwardId;
       _populateFlags(details);
       _populateLocalLinks(details);
     });
@@ -236,8 +240,42 @@ class _CreateDraftRemarksScreenState
     }
   }
 
-  void _onSubmit() {
-    // TODO: implement submit
+  Future<void> _onSubmit() async {
+    final desId = ref.read(summariesController).meta?.activeUserDesg?.id;
+    if (desId == null) return;
+
+    final body = await _remarksController.getText();
+    final briefNote = _briefsController.text.trim();
+
+    final newFlags = _attachments
+        .where((a) => a.existingAttachment == null)
+        .toList();
+
+    final incompleteFlags = newFlags.where(
+      (f) => f.flagType != null && !f.hasAttachment,
+    );
+    if (incompleteFlags.isNotEmpty) {
+      Toast.error(
+        message:
+            'One or more flags are missing attachments. Add a file and try again.',
+      );
+      return;
+    }
+
+    final model = DraftRemarksModel(
+      summaryId: _s.id!,
+      userDesgId: desId,
+      internalForwardId: _internalForwardId,
+      body: body,
+      briefNote: briefNote,
+      newFlags: newFlags,
+      linkedDaak: _linkedDaak,
+      linkedFiles: _linkedFiles,
+    );
+
+    await ref
+        .read(summariesController.notifier)
+        .submitDraftRemarks(model: model);
   }
 
   @override

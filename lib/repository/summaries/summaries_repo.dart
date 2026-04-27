@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
@@ -237,6 +238,22 @@ class SummariesRepo extends SummariesInterface {
         url: returnToSectionUrl(summaryId),
         options: await options(authRequired: true),
         data: {"return_remarks": remark, "userDesgID": desId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> submitDraftRemarks({required DraftRemarksModel model}) async {
+    try {
+      final jsonData = await model.toJson();
+      final formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      await dioClient.post(
+        url: submitRemarksUrl(model.summaryId),
+        options: await options(authRequired: true),
+        formData: formData,
       );
     } catch (e) {
       rethrow;

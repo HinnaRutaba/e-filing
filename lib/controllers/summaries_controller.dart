@@ -8,6 +8,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
@@ -351,6 +352,23 @@ class SummariesController extends BaseControllerState<SummariesState> {
     } catch (e, s) {
       EasyLoading.dismiss();
       log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> submitDraftRemarks({required DraftRemarksModel model}) async {
+    try {
+      EasyLoading.show();
+      await repo.submitDraftRemarks(model: model);
+      Toast.success(message: "Remarks submitted successfully");
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('submitDraftRemarks error: $e\n$s');
       Toast.error(message: handleException(e));
       return false;
     }

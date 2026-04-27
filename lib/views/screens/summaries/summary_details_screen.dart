@@ -187,8 +187,15 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
 
+    // if (isDeoCurrentHolder &&
+    //     ((details?.internalForwards == null ||
+    //             details!.internalForwards.isEmpty) &&
+    //         details?.internalForwards.last.remarks?.isNotEmpty == true)) {
+    //   return false;
+    // }
+
     if (isDeo &&
-        !isDeoCurrentHolder &&
+        //!isDeoCurrentHolder &&
         (details?.summary?.summaryStatus == SummaryStatus.draftFromSection ||
             details?.summary?.summaryStatus ==
                 SummaryStatus.pendingWithSecretary ||
