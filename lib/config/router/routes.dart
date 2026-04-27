@@ -27,10 +27,10 @@ class Routes {
   static const String createSummary = '/createSummary';
   static const String summaryDetails = '/summaryDetails';
   static const String secretarySummary = '/secretarySummary';
+  static const String summaryDraftRemarks = '/summaryDraftRemarks';
   static const String daak = '/daak';
-    static String daakDetails([daakId]) =>
+  static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
-
 
   // Sub Routes
   static const String profile = 'profile';

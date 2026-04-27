@@ -25,7 +25,7 @@ class SummaryPreviewSheet extends StatelessWidget {
   final List<FlagAndAttachmentModel> attachments;
   final List<SummaryDaakModel> linkedDaak;
   final List<SummaryFileModel> linkedFiles;
-  final VoidCallback onSubmit;
+  final VoidCallback? onSubmit;
 
   const SummaryPreviewSheet({
     super.key,
@@ -38,7 +38,7 @@ class SummaryPreviewSheet extends StatelessWidget {
     required this.linkedDaak,
     required this.linkedFiles,
     required this.onSubmit,
-  });
+  });    
 
   @override
   Widget build(BuildContext context) {
@@ -468,19 +468,21 @@ class SummaryPreviewSheet extends StatelessWidget {
                   vertical: 12,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppSolidButton(
-                  onPressed: () {
-                    RouteHelper.pop();
-                    onSubmit();
-                  },
-                  text: 'Looks Good — Submit',
-                  icon: Icons.check_circle_outline,
-                  width: double.infinity,
-                  backgroundColor: theme.colorScheme.secondary,
+              if (onSubmit != null) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppSolidButton(
+                    onPressed: () {
+                      RouteHelper.pop();
+                      onSubmit?.call();
+                    },
+                    text: 'Looks Good — Submit',
+                    icon: Icons.check_circle_outline,
+                    width: double.infinity,
+                    backgroundColor: theme.colorScheme.secondary,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ],

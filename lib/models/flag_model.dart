@@ -35,4 +35,12 @@ class FlagModel {
       title: title ?? this.title,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FlagModel && other.id != null && id != null && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:developer';
 
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -37,7 +38,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
-import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
 
 enum _RemarksMode { type, write }
 
@@ -325,14 +325,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   void _onActionTap(SummaryAction action) {
     if (action == SummaryAction.draftRemarks) {
-      final summaryId =
-          ref.read(summariesController).details?.summary?.id ??
-          widget.summary?.id;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CreateSummaryScreen(summaryId: summaryId),
-        ),
+      final summary =
+          ref.read(summariesController).details?.summary ?? widget.summary;
+      if (summary == null) return;
+      RouteHelper.push(
+        Routes.summaryDraftRemarks,
+        extra: summary,
       ).then((_) => _loadDetails());
       return;
     }

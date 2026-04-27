@@ -25,6 +25,7 @@ import 'package:efiling_balochistan/views/screens/settings/sections_screen.dart'
 import 'package:efiling_balochistan/views/screens/settings/settings_screen.dart';
 import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/create_draft_remarks_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/secretary_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
@@ -94,6 +95,14 @@ class AppRouter {
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) =>
             CreateSummaryScreen(summaryId: state.extra as int?),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaryDraftRemarks,
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) =>
+            CreateDraftRemarksScreen(summary: state.extra as SummaryModel),
       ),
     ),
     GoRoute(

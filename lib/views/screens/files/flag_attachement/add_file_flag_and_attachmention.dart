@@ -60,6 +60,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                                 ),
                               )
                               .toList(),
+                    value: m.flagType,
                     onChanged: (item) {
                       setState(() {
                         m.flagType = item;
@@ -167,7 +168,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                   ),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: AppColors.secondaryLight.withOpacity(0.5),
+                      color: AppColors.secondaryLight.withValues(alpha: 0.5),
                     ),
                     borderRadius: BorderRadius.circular(10),
                     color: AppColors.white,

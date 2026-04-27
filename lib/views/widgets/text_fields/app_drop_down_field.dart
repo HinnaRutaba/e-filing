@@ -21,6 +21,7 @@ class AppDropDownField<T> extends StatelessWidget {
   final DropdownButtonBuilder? selectedItemBuilder;
   final double? buttonHeight;
   final double? buttonWidth;
+  final T? value;
 
   const AppDropDownField({
     super.key,
@@ -41,6 +42,7 @@ class AppDropDownField<T> extends StatelessWidget {
     this.selectedItemBuilder,
     this.buttonHeight,
     this.buttonWidth,
+    this.value,
   });
 
   @override
@@ -116,10 +118,11 @@ class AppDropDownField<T> extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
+          value: value,
           validator: validator,
           selectedItemBuilder: selectedItemBuilder,
-          items: items.map((T value) {
-            return DropdownMenuItem<T>(value: value, child: itemBuilder(value));
+          items: items.map((T item) {
+            return DropdownMenuItem<T>(value: item, child: itemBuilder(item));
           }).toList(),
           onChanged: enabled ? onChanged : null,
         ),
