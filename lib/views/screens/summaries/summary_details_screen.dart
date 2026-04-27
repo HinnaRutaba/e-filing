@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -172,10 +173,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     return ref.read(summariesController).meta?.activeUserDesg;
   }
 
+  bool get isDeo => userDesg?.roleEnum == ActiveUserDesgRole.deo;
+
+  bool get isDeoCurrentHolder {
+    final details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.summary?.currentHolderUserDesgId != null &&
+        details?.summary?.currentHolderUserDesgId == userDesg?.id &&
+        details?.hasForwardedBefore == true;
+  }
+
   bool get actionsAvailable {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
-    if (activeUser?.roleEnum == ActiveUserDesgRole.deo &&
+
+    if (isDeo &&
+        !isDeoCurrentHolder &&
         (details?.summary?.summaryStatus == SummaryStatus.draftFromSection ||
             details?.summary?.summaryStatus ==
                 SummaryStatus.pendingWithSecretary ||
@@ -283,10 +296,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _documentCard(),
-                              if (actionsAvailable &&
+                              if (!isDeo &&
+                                  actionsAvailable &&
                                   showHandWrittedRemarksSection &&
-                                  !(userDesg?.roleEnum ==
-                                          ActiveUserDesgRole.deo &&
+                                  !(isDeo &&
                                       details?.isLatestMovementSignedAndForwarded ==
                                           true)) ...[
                                 _remarksPanel(),
@@ -365,6 +378,31 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     });
   }
 
+  Future<void> _onAcceptDraftedRemarks() async {
+    final details = ref.read(summariesController).details;
+    if (details?.isLastMovemenRemarksAdded != true) return;
+    final remarks = (details?.movements.last.remarks ?? '').trim();
+    if (remarks.isEmpty) {
+      Toast.error(message: 'No drafted remarks to accept.');
+      return;
+    }
+    final summaryId = details?.summary?.id ?? widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+    setState(() => _loadingAction = true);
+    final success = await notifier.updateDraftContent(
+      summaryId: summaryId,
+      body: remarks,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingAction = false;
+      if (success) {
+        _currentHtml = remarks;
+        _selectedAction = SummaryAction.signForward;
+      }
+    });
+  }
+
   Future<void> _onSubmitAction() async {
     final action = _selectedAction;
     if (action == null) return;
@@ -439,7 +477,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     if (!mounted) return;
     if (success) {
       setState(() {
-        _selectedAction = null;
+        _selectedAction = action == SummaryAction.editRemarks
+            ? SummaryAction.signForward
+            : null;
         _remarksController.clear();
       });
     }
@@ -510,18 +550,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   Widget _actionButtonRow() {
     final details = ref.read(summariesController).details;
-    final bool isSignedAndForwarded =
-        details?.isLatestMovementSignedAndForwarded == true;
-    final bool isDeo = userDesg?.roleEnum == ActiveUserDesgRole.deo;
 
     List<SummaryAction> allowedActions;
-    if (isDeo && isSignedAndForwarded) {
-      // DEO after a sign-and-forward: only Draft Remarks + Share Internally
+    if (isDeoCurrentHolder) {
       allowedActions = [
-        SummaryAction.draftRemarks,
         SummaryAction.shareInternally,
+        SummaryAction.draftRemarks,
       ];
-    } else if (isSignedAndForwarded) {
+    } else if (details?.isLatestMovementSignedAndForwarded == true) {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.signForward,
@@ -1570,6 +1606,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final editorHeight = keyboardInset > 0
         ? (available * 0.30).clamp(140.0, 260.0)
         : (mq.size.height * 0.32).clamp(200.0, 360.0);
+    final details = ref.read(summariesController).details;
+    final lastRemarks = details?.isLastMovemenRemarksAdded == true
+        ? (details?.movements.last.remarks ?? '').trim()
+        : '';
+    final initialHtml = lastRemarks.isNotEmpty ? lastRemarks : _currentHtml;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -1619,7 +1660,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               height: editorHeight.toDouble(),
               child: HtmlEditor(
                 controller: _editDraftController,
-                initialHtml: _currentHtml,
+                initialHtml: initialHtml,
                 hint: 'Edit draft content…',
                 height: editorHeight.toDouble(),
               ),
@@ -1646,6 +1687,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       onSignatureChanged: (bytes) {
         setState(() => _cardSignatureBytes = bytes);
       },
+      onEditRemarks: () => _onActionTap(SummaryAction.editRemarks),
+      onAcceptRemarks: _onAcceptDraftedRemarks,
     );
   }
 

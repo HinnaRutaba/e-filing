@@ -22,6 +22,8 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
   final SummaryActionsModel? actions;
   final Widget? forwardingSection;
   final ValueChanged<Uint8List?>? onSignatureChanged;
+  final VoidCallback? onEditRemarks;
+  final VoidCallback? onAcceptRemarks;
 
   const SummaryDocumentCard({
     super.key,
@@ -30,6 +32,8 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
     this.actions,
     this.forwardingSection,
     this.onSignatureChanged,
+    this.onEditRemarks,
+    this.onAcceptRemarks,
   });
 
   @override
@@ -346,31 +350,109 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: draftBadgeBg,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.edit_note_outlined,
-                    size: 18,
-                    color: draftBadgeFg,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: draftBadgeBg,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.edit_note_outlined,
+                        size: 18,
+                        color: draftBadgeFg,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: AppText.labelMedium(
+                          'DRAFT — PENDING SECRETARY SIGNATURE',
+                          color: draftBadgeFg,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (widget.onEditRemarks != null) ...[
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: widget.onEditRemarks,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.secondaryLight.withValues(
+                              alpha: 0.45,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color: AppColors.secondaryDark,
+                            ),
+                            const SizedBox(width: 6),
+                            AppText.labelMedium(
+                              'Edit',
+                              color: AppColors.secondaryDark,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  AppText.labelMedium(
-                    'DRAFT — PENDING SECRETARY SIGNATURE',
-                    color: draftBadgeFg,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
                 ],
-              ),
+                if (widget.onAcceptRemarks != null)
+                  Material(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      onTap: widget.onAcceptRemarks,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 6),
+                            AppText.labelMedium(
+                              'Accept',
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
