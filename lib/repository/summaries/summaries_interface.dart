@@ -74,6 +74,9 @@ abstract class SummariesInterface extends NetworkBase {
   String forwardToDepartmentUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/forward';
 
+  String submitRemarksUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/submit-internal-action';    
+
   //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
@@ -155,5 +158,11 @@ abstract class SummariesInterface extends NetworkBase {
     required int summaryId,
     required int desId,
     required SignForwardModel payload,
+  });
+
+    Future<void> submitInternalRemarks({
+    required CreateSummaryModel createSummaryModel,
+    required int desId,
+    required int summaryId,
   });
 }

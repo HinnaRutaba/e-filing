@@ -14,11 +14,13 @@ class AddFlagAndAttachment extends ConsumerStatefulWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onAdd;
   final FlagAndAttachmentModel model;
+  final bool isReadOnly;
   const AddFlagAndAttachment({
     super.key,
     this.onDelete,
     required this.model,
     this.onAdd,
+    this.isReadOnly = false,
   });
 
   @override
@@ -61,11 +63,14 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                               )
                               .toList(),
                     value: m.flagType,
-                    onChanged: (item) {
-                      setState(() {
-                        m.flagType = item;
-                      });
-                    },
+                    enabled: !widget.isReadOnly,
+                    onChanged: widget.isReadOnly
+                        ? null
+                        : (item) {
+                            setState(() {
+                              m.flagType = item;
+                            });
+                          },
                     labelText: "Flag Type",
                     hintText: "Select flag type",
                     prefix: state.loadingFlag ? fieldLoader : null,
@@ -79,80 +84,84 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                 const SizedBox(width: 8),
 
                 // Attachment Button - Expanded
-                Flexible(
-                  flex: 2,
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: AppText.labelSmall(
-                          "Attachment",
-                          color: context.appColors.textPrimary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                if (!widget.isReadOnly)
+                  Flexible(
+                    flex: 2,
+                    child: Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: AppText.labelSmall(
+                            "Attachment",
+                            color: context.appColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () async {
-                          final files = await FilePickerService().pickFiles();
-                          m.attachment = files.isNotEmpty ? files.first : null;
-                          setState(() {});
-                        },
-                        child: Container(
-                          height: 48,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: AppColors.secondaryLight.withValues(
-                                alpha: .5,
-                              ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            final files = await FilePickerService().pickFiles();
+                            m.attachment = files.isNotEmpty
+                                ? files.first
+                                : null;
+                            setState(() {});
+                          },
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
                             ),
-                            borderRadius: BorderRadius.circular(10),
-                            color: AppColors.secondaryLight.withValues(
-                              alpha: 0.1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.attachment,
-                                color: AppColors.secondaryDark,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AppText.bodyMedium(
-                                      "Add attachment",
-                                      color: m.attachment != null
-                                          ? AppColors.secondaryDark
-                                          : AppColors.secondaryLight,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ],
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.secondaryLight.withValues(
+                                  alpha: .5,
                                 ),
                               ),
-                            ],
+                              borderRadius: BorderRadius.circular(10),
+                              color: AppColors.secondaryLight.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.attachment,
+                                  color: AppColors.secondaryDark,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.bodyMedium(
+                                        "Add attachment",
+                                        color: m.attachment != null
+                                            ? AppColors.secondaryDark
+                                            : AppColors.secondaryLight,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 8),
             if (m.hasAttachment)
               InkWell(
-                onTap: () async {
+                onTap: widget.isReadOnly ? null : () async {
                   final files = await FilePickerService().pickFiles();
                   if (files.isNotEmpty) {
                     m.attachment = files.first;
@@ -196,21 +205,22 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: InkWell(
-                          onTap: () {
-                            m.attachment = null;
-                            m.existingAttachment = null;
-                            setState(() {});
-                          },
-                          child: Icon(
-                            Icons.cancel,
-                            color: Colors.red[800],
-                            size: 18,
+                      if (!widget.isReadOnly)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: InkWell(
+                            onTap: () {
+                              m.attachment = null;
+                              m.existingAttachment = null;
+                              setState(() {});
+                            },
+                            child: Icon(
+                              Icons.cancel,
+                              color: Colors.red[800],
+                              size: 18,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -218,66 +228,67 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            if (widget.onDelete != null)
-              InkWell(
-                onTap: widget.onDelete,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red[800]!),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Icon(
-                        Icons.cancel_outlined,
-                        color: Colors.red[800],
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      AppText.bodySmall(
-                        "Remove",
-                        color: Colors.red[800],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(width: 12),
-            if (widget.onAdd != null)
-              InkWell(
-                onTap: widget.onAdd,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primaryDark),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Icon(
-                        Icons.add,
-                        color: AppColors.primaryDark,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      AppText.bodySmall(
-                        "Add More",
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ],
+        if (!widget.isReadOnly)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              if (widget.onDelete != null)
+                InkWell(
+                  onTap: widget.onDelete,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red[800]!),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.cancel_outlined,
+                          color: Colors.red[800],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        AppText.bodySmall(
+                          "Remove",
+                          color: Colors.red[800],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              if (widget.onAdd != null)
+                InkWell(
+                  onTap: widget.onAdd,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primaryDark),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Icon(
+                          Icons.add,
+                          color: AppColors.primaryDark,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        AppText.bodySmall(
+                          "Add More",
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
       ],
     );
   }

@@ -44,6 +44,8 @@ class _CreateDraftRemarksScreenState
   List<FlagAndAttachmentModel> _attachments = [FlagAndAttachmentModel()];
   List<SummaryDaakModel> _linkedDaak = [];
   List<SummaryFileModel> _linkedFiles = [];
+  final Set<int?> _preloadedDaakIds = {};
+  final Set<int?> _preloadedFileIds = {};
 
   final Set<int> _openSections = {0, 1, 2, 3};
 
@@ -107,6 +109,9 @@ class _CreateDraftRemarksScreenState
         .where((l) => l.linkType == SummaryLinkType.file)
         .map((l) => (l.attachment as SummaryLocalLinkFileAttachment).file)
         .toList();
+
+    _preloadedDaakIds.addAll(_linkedDaak.map((d) => d.id));
+    _preloadedFileIds.addAll(_linkedFiles.map((f) => f.id));
   }
 
   String? _parseFlagName(String? originalName) {
@@ -414,6 +419,10 @@ class _CreateDraftRemarksScreenState
   }
 
   Widget _flagsSection() {
+    final newFlags = _attachments
+        .where((a) => a.existingAttachment == null)
+        .toList();
+
     return _expandableSection(
       index: 2,
       icon: Icons.flag_outlined,
@@ -432,17 +441,27 @@ class _CreateDraftRemarksScreenState
             ),
             itemBuilder: (ctx, i) {
               final model = _attachments[i];
+              final isPreexisting = model.existingAttachment == null
+                  ? false
+                  : true;
+              final isLastNew = !isPreexisting && model == newFlags.last;
               return AddFlagAndAttachment(
                 key: ValueKey(model),
                 model: model,
-                onDelete: _attachments.length > 1
-                    ? () => setState(() => _attachments.removeAt(i))
-                    : null,
-                onAdd: _addAttachment,
+                isReadOnly: isPreexisting,
+                onDelete: isPreexisting
+                    ? null
+                    : () => setState(() => _attachments.removeAt(i)),
+                onAdd: isLastNew ? _addAttachment : null,
               );
             },
           ),
-          if (_attachments.isEmpty)
+          if (newFlags.isEmpty) ...[
+            if (_attachments.isNotEmpty)
+              Divider(
+                height: 32,
+                color: context.appColors.secondaryLight.withValues(alpha: 0.5),
+              ),
             InkWell(
               onTap: _addAttachment,
               child: Container(
@@ -469,6 +488,7 @@ class _CreateDraftRemarksScreenState
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -797,15 +817,16 @@ class _CreateDraftRemarksScreenState
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Remove',
-            onPressed: () => setState(() => _linkedDaak.remove(daak)),
-            icon: Icon(
-              Icons.cancel,
-              color: Theme.of(context).colorScheme.error,
-              size: 20,
+          if (!_preloadedDaakIds.contains(daak.id))
+            IconButton(
+              tooltip: 'Remove',
+              onPressed: () => setState(() => _linkedDaak.remove(daak)),
+              icon: Icon(
+                Icons.cancel,
+                color: Theme.of(context).colorScheme.error,
+                size: 20,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -859,15 +880,16 @@ class _CreateDraftRemarksScreenState
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Remove',
-            onPressed: () => setState(() => _linkedFiles.remove(file)),
-            icon: Icon(
-              Icons.cancel,
-              color: Theme.of(context).colorScheme.error,
-              size: 20,
+          if (!_preloadedFileIds.contains(file.id))
+            IconButton(
+              tooltip: 'Remove',
+              onPressed: () => setState(() => _linkedFiles.remove(file)),
+              icon: Icon(
+                Icons.cancel,
+                color: Theme.of(context).colorScheme.error,
+                size: 20,
+              ),
             ),
-          ),
         ],
       ),
     );

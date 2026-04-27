@@ -398,4 +398,34 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<void> submitInternalRemarks({
+    required CreateSummaryModel createSummaryModel,
+    required int? desId,
+    required int? summaryId,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch user details");
+      }
+      if (summaryId == null) {
+        throw Exception("Summary ID is required to fetch user details");
+      }
+      Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+      jsonData = await createSummaryModel.toJson(
+        userDesgId: desId,
+        saveAsDraft: true,
+      );
+      FormData formData = FormData.fromMap(jsonData.item1);
+      formData.files.addAll(jsonData.item2);
+      await dioClient.post(
+        url: returnToSectionUrl(summaryId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
