@@ -135,15 +135,19 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           .where((a) => a.isSupporting)
           .toList();
       if (supportingAttachments.isNotEmpty) {
-        // Resolve all matched flags first so we can cross-reference usedFlags.
         final matchedFlags = supportingAttachments.map((a) {
-          final flagName = _parseFlagName(a.originalName);
-          return allFlags.firstWhere(
-            (f) =>
-                f.title?.trim().toLowerCase() == flagName?.trim().toLowerCase(),
-            orElse: () => FlagModel(title: flagName),
-          );
-        }).toList();
+          final flagName = a.flagName ?? _parseFlagName(a.originalName);
+          if (flagName == null) return null;
+          try {
+            return allFlags.firstWhere(
+              (f) =>
+                  f.title?.trim().toLowerCase() ==
+                  flagName.trim().toLowerCase(),
+            );
+          } catch (_) {
+            return null;
+          }
+        }).toList(); // List<FlagModel?>
 
         _model.attachments = List.generate(supportingAttachments.length, (i) {
           return FlagAndAttachmentModel(
@@ -151,7 +155,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             existingAttachment: supportingAttachments[i],
             usedFlags: [
               for (int j = 0; j < matchedFlags.length; j++)
-                if (j != i) matchedFlags[j],
+                if (j != i && matchedFlags[j] != null) matchedFlags[j]!,
             ],
           );
         });
@@ -160,7 +164,6 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     EasyLoading.dismiss();
   }
 
-  /// Parses the flag name from an originalName prefixed with "[Flag: <Name>]".
   String? _parseFlagName(String? originalName) {
     if (originalName == null) return null;
     final match = RegExp(r'^\[Flag:\s*(.+?)\]').firstMatch(originalName.trim());
