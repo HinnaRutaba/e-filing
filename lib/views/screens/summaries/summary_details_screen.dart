@@ -193,15 +193,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
 
-    // if (isDeoCurrentHolder &&
-    //     ((details?.internalForwards == null ||
-    //             details!.internalForwards.isEmpty) &&
-    //         details?.internalForwards.last.remarks?.isNotEmpty == true)) {
-    //   return false;
-    // }
+    if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
+      return false;
+    }
 
     if (isDeo &&
-        //!isDeoCurrentHolder &&
         (details?.summary?.summaryStatus == SummaryStatus.draftFromSection ||
             details?.summary?.summaryStatus ==
                 SummaryStatus.pendingWithSecretary ||
@@ -223,8 +219,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     if (summary == null) return false;
     final isSecretary = userDesg?.roleEnum == ActiveUserDesgRole.secretary;
     if (!isSecretary) return false;
-    final originatingId = summary.originatingUserDesgId;
-    final currentHolderId = summary.currentHolderUserDesgId;
+    final originatingId = summary.originatingDepartmentId;
+    final currentHolderId = summary.currentDepartmentId;
     if (originatingId == null ||
         currentHolderId == null ||
         originatingId != currentHolderId) {
@@ -499,6 +495,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() {
         _loadingAction = false;
       });
+    } else if (action == SummaryAction.signForward) {
+      await _submitSignForward();
+      return;
     } else if (action == SummaryAction.disposedOff) {
       setState(() => _loadingAction = true);
       success = await notifier.disposeOffSummary(
@@ -1480,7 +1479,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Future<void> _submitSignForward() async {
-    if (_cardSignatureBytes == null || _cardSignatureBytes!.isEmpty) {
+    Uint8List? signatureBytes = _cardSignatureBytes;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      signatureBytes = await _signaturePadController.toPngBytes();
+      if (!mounted) return;
+    }
+    if (signatureBytes == null || signatureBytes.isEmpty) {
       Toast.error(message: 'Please sign before forwarding');
       return;
     }
@@ -1513,7 +1517,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
     final success = await notifier.signAndForward(
       summaryId: summaryId,
-      signatureBytes: _cardSignatureBytes!,
+      signatureBytes: signatureBytes,
       targetDepartmentId: deptId,
       targetUserDesgId: _selectedDestOfficer?.userDesgId,
       remarks: remarks.trim(),

@@ -23,11 +23,12 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 enum SummaryMainTab {
   actionRequired('Action Required', Icons.notifications_none_rounded),
   sentTracked('Sent & Tracked', Icons.check_circle_outline_rounded),
-  archive('Archive', Icons.archive_outlined);
+  archive('Archive', Icons.archive_outlined, apiValue: 'disposed');
 
   final String label;
   final IconData icon;
-  const SummaryMainTab(this.label, this.icon);
+  final String? apiValue;
+  const SummaryMainTab(this.label, this.icon, {this.apiValue});
 }
 
 enum SummarySubTab {
@@ -222,9 +223,12 @@ class SummariesController extends BaseControllerState<SummariesState> {
   Future<List<SummaryModel>?> fetchSummariesList({required int? desId}) async {
     try {
       final role = state.meta?.activeUserDesg?.roleEnum;
+      final filterName =
+          state.selectedMainTab.apiValue ??
+          state.selectedSubTab.configFor(role).filterName;
       List<SummaryModel> list = await repo.fetchSummariesList(
         desId: desId,
-        filterName: state.selectedSubTab.configFor(role).filterName,
+        filterName: filterName,
         query: state.searchText,
       );
       state = state.copyWith(allSummaries: list, filteredSummaries: list);

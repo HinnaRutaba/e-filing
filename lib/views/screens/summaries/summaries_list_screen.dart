@@ -336,9 +336,7 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
 
   Widget _helperBanner(String text) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark
-        ? const Color(0xFF3B2A0E)
-        : const Color(0xFFFFF7EC);
+    final bgColor = isDark ? const Color(0xFF3B2A0E) : const Color(0xFFFFF7EC);
     final borderColor = isDark
         ? const Color(0xFF8A5A1A)
         : const Color(0xFFF1C99A);
