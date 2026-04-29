@@ -161,7 +161,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
             const SizedBox(height: 8),
             if (m.hasAttachment)
               InkWell(
-                onTap: widget.isReadOnly ? null : () async {
+                onTap: (widget.isReadOnly || !m.canDeleteExisting) ? null : () async {
                   final files = await FilePickerService().pickFiles();
                   if (files.isNotEmpty) {
                     m.attachment = files.first;
@@ -205,7 +205,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                           ],
                         ),
                       ),
-                      if (!widget.isReadOnly)
+                      if (!widget.isReadOnly && m.canDeleteExisting)
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: InkWell(
@@ -300,11 +300,17 @@ class FlagAndAttachmentModel {
   AttachmentModel? existingAttachment;
   List<FlagModel>? usedFlags;
 
+  /// Whether the existing server-side attachment may be deleted/replaced.
+  /// Callers compute this from [AttachmentModel.canDelete] and pass the
+  /// result in — keeping domain logic out of this generic widget model.
+  bool canDeleteExisting;
+
   FlagAndAttachmentModel({
     this.flagType,
     this.attachment,
     this.existingAttachment,
     this.usedFlags,
+    this.canDeleteExisting = true,
   });
 
   bool get hasAttachment => attachment != null || existingAttachment != null;

@@ -141,18 +141,24 @@ class FilePickerService {
       EasyLoading.dismiss();
 
       if (result != null && result.files.isNotEmpty) {
-        final tempDir = await getTemporaryDirectory();
+        // Use the app's support directory — unlike the cache/temp directory
+        // this is never cleared by the OS, so paths remain valid until the
+        // user submits the form. A UUID prefix prevents collisions when the
+        // same filename is picked more than once.
+        final supportDir = await getApplicationSupportDirectory();
+        final pickDir = Directory(p.join(supportDir.path, 'picked_files'));
+        if (!await pickDir.exists()) await pickDir.create(recursive: true);
         int oversizedCount = 0;
         for (final file in result.xFiles) {
           final fileLength = await file.length();
           if (fileLength > 10 * 1024 * 1024) {
             oversizedCount++;
           } else {
-            // Copy to app-owned temp dir so the path survives subsequent
-            // file_picker calls that clear the plugin's own cache directory.
-            final dest = File(p.join(tempDir.path, p.basename(file.path)));
+            final ext = p.extension(file.path);
+            final name = '${const Uuid().v4()}$ext';
+            final dest = File(p.join(pickDir.path, name));
             await File(file.path).copy(dest.path);
-            picked.add(XFile(dest.path));
+            picked.add(XFile(dest.path, name: p.basename(file.path)));
           }
         }
         if (oversizedCount > 0) {

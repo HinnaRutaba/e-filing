@@ -13,6 +13,7 @@ import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_local_link_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
@@ -131,9 +132,30 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
           .where((a) => a.isMainAttachment)
           .firstOrNull;
 
+      // Last signed_and_forwarded movement date — used to lock pre-forward flags.
+      final lastForwardedAt = details.movements.reversed
+          .where((m) => m.actionType == 'signed_and_forwarded')
+          .firstOrNull
+          ?.actedAt;
+
       final supportingAttachments = details.attachments
           .where((a) => a.isSupporting)
           .toList();
+      // Prepopulate linked daak and files from local links.
+      _model.linkedDaak = details.localLinks
+          .where((l) => l.linkType == SummaryLinkType.daak)
+          .map((l) => l.attachment)
+          .whereType<SummaryLocalLinkDaakAttachment>()
+          .map((l) => l.daak)
+          .toList();
+
+      _model.linkedFiles = details.localLinks
+          .where((l) => l.linkType == SummaryLinkType.file)
+          .map((l) => l.attachment)
+          .whereType<SummaryLocalLinkFileAttachment>()
+          .map((l) => l.file)
+          .toList();
+
       if (supportingAttachments.isNotEmpty) {
         final matchedFlags = supportingAttachments.map((a) {
           final flagName = a.flagName ?? _parseFlagName(a.originalName);
@@ -150,9 +172,11 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         }).toList(); // List<FlagModel?>
 
         _model.attachments = List.generate(supportingAttachments.length, (i) {
+          final attachment = supportingAttachments[i];
           return FlagAndAttachmentModel(
             flagType: matchedFlags[i],
-            existingAttachment: supportingAttachments[i],
+            existingAttachment: attachment,
+            canDeleteExisting: attachment.canDelete(lastForwardedAt),
             usedFlags: [
               for (int j = 0; j < matchedFlags.length; j++)
                 if (j != i && matchedFlags[j] != null) matchedFlags[j]!,
@@ -270,7 +294,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
     }
 
     final incompleteFlags = _model.attachments.where(
-      (e) => e.flagType != null && e.attachment == null,
+      (e) => e.flagType != null && !e.hasAttachment,
     );
     if (incompleteFlags.isNotEmpty) {
       Toast.error(
@@ -1224,7 +1248,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
             return AddFlagAndAttachment(
               key: ValueKey(model),
               model: model,
-              onDelete: _model.attachments.length > 1
+              onDelete: _model.attachments.length > 1 && model.canDeleteExisting
                   ? () => setState(() => _model.attachments.removeAt(i))
                   : null,
               onAdd: addAttachement,

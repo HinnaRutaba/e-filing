@@ -42,6 +42,20 @@ class AttachmentModel {
     return match?.group(1)?.trim();
   }
 
+  /// Whether this attachment may be deleted by the user.
+  ///
+  /// Pass [lastForwardedAt] as the `actedAt` of the last
+  /// `signed_and_forwarded` movement, or null if no forward has occurred.
+  ///
+  /// - No forward yet → always deletable.
+  /// - Forward exists → deletable only if this attachment was uploaded
+  ///   *after* that forward (pre-forward flags are locked).
+  bool canDelete(DateTime? lastForwardedAt) {
+    if (lastForwardedAt == null) return true;
+    if (uploadedAt == null) return false;
+    return uploadedAt!.isAfter(lastForwardedAt);
+  }
+
   String? get fileSizeText {
     if (fileSize == null) return null;
     const kb = 1024;
