@@ -49,7 +49,8 @@ class AppRouter {
       path: Routes.login,
       pageBuilder: GoTransitions.fade.build(
         settings: GoTransitionSettings(duration: 200.ms),
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) =>
+            LoginScreen(static: state.extra != false),
       ),
     ),
     GoRoute(

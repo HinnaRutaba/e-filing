@@ -5,12 +5,12 @@ import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
-import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/web_view/file_support_web_view.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   final bool navigate;
@@ -21,47 +21,35 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  navigateToWebView() {
-    if (widget.navigate) {
-      try {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) =>
-                  const InAppWebViewWithFileUpload(),
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-            ),
-          );
-        });
-      } catch (e, s) {
-        print("ERRR_______${e}_____$s");
-      }
-    }
+  static const _darkGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1A3A5C), Color(0xFF102040)],
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.navigate) fetchData();
   }
 
-  navigateToApp() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      RouteHelper.navigateTo(Routes.login);
-    });
-  }
-
-  fetchData() async {
+  Future<void> fetchData() async {
     bool laterPressed = await VersionSyncService().showUpdateDialog();
     if (!laterPressed) return;
+
     final ctrl = ref.read(authController.notifier);
     final loggedIn = await ctrl.isLoggedIn();
+
     if (!loggedIn) {
-      RouteHelper.navigateTo(Routes.login);
+      RouteHelper.navigateTo(Routes.login, extra: false);
       return;
     }
-    
+
     await ctrl.fetchLoggedInUser();
     ctrl.getOpenAIToken();
     DesignationModel? designation = await ctrl.fetchDesignation();
     if (designation == null) {
-      RouteHelper.navigateTo(Routes.login);
+      RouteHelper.navigateTo(Routes.login, extra: false);
       return;
     }
     ref.read(summariesController.notifier).fetchSummariesMeta();
@@ -69,77 +57,94 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     RouteHelper.navigateTo(Routes.dashboard);
   }
 
-  @override
-  void initState() {
-    //navigateToWebView();
+  Widget _poweredBySection(bool isMobile) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppText.titleSmall(
+          "Powered By",
+          color: isMobile ? Colors.black54 : Colors.white70,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(AssetsConstants.cmduLogo, height: 72),
+            ),
+            const SizedBox(width: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(1),
+              child: Image.asset(AssetsConstants.govtLogo, height: 64),
+            ),
+          ],
+        ),
+      ],
+    );
 
-    fetchData();
-    super.initState();
-  }
+    if (!isMobile) {
+      return Padding(padding: const EdgeInsets.all(16), child: content);
+    }
 
-  Widget logo() {
-    return Hero(
-      tag: HeroTags.logo,
-      child: Image.asset(AssetsConstants.logo, height: 200),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: content,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 48),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              const Spacer(),
-              widget.navigate
-                  ? logo().animate()
-                    // .scale(
-                    //   duration: const Duration(milliseconds: 600),
-                    // )
-                    .fade(
-                      // delay: const Duration(milliseconds: 100),
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    )
-                  : logo(),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    AppText.titleSmall("Powered By"),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Image.asset(
-                            AssetsConstants.cmduLogo,
-                            height: 72,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(1.0),
-                          child: Image.asset(
-                            AssetsConstants.govtLogo,
-                            height: 64,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    final isMobile = context.isMobile;
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Dark gradient base
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(gradient: _darkGradient),
+            ),
           ),
-        ),
+
+          // Lottie animation
+          Positioned.fill(
+            child: Lottie.asset(
+              AssetsConstants.loginBgAnimated,
+              fit: BoxFit.contain,
+              repeat: true,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+
+          // Branding
+          Positioned.fill(
+            child: Column(
+              children: [
+                Spacer(flex: isMobile ? 2 : 3),
+                Hero(
+                  tag: HeroTags.logo,
+                  child: Image.asset(AssetsConstants.logo, height: 200),
+                ).animate().fade(duration: const Duration(milliseconds: 400)),
+                Spacer(flex: isMobile ? 1 : 2),
+                _poweredBySection(isMobile),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
