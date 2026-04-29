@@ -417,6 +417,32 @@ class SummariesRepo extends SummariesInterface {
   }
 
   @override
+  Future<void> disposeOffSummary({
+    required int? summaryId,
+    required String instruction,
+    required int? desId,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception('Summary ID is required to dispose off');
+      }
+      if (desId == null) {
+        throw Exception('Designation ID is required to dispose off');
+      }
+      await dioClient.post(
+        url: disposeOffSummaryUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {
+          'userDesgID': desId,
+          if (instruction.isNotEmpty) 'remarks': instruction,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> submitInternalRemarks({
     required CreateSummaryModel createSummaryModel,
     required int? desId,

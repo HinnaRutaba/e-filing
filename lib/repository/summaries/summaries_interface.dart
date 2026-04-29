@@ -76,7 +76,10 @@ abstract class SummariesInterface extends NetworkBase {
       '${baseUrl}summaries/$summaryId/forward';
 
   String submitRemarksUrl(int summaryId) =>
-      '${baseUrl}summaries/$summaryId/submit-internal-action';    
+      '${baseUrl}summaries/$summaryId/submit-internal-action';  
+
+  String disposeOffSummaryUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/dispose-off';
 
   //========================Functions=============================
 
@@ -170,4 +173,12 @@ abstract class SummariesInterface extends NetworkBase {
     required int desId,
     required int summaryId,
   });
+
+
+ Future<void> disposeOffSummary({
+    required int summaryId,
+    required String instruction,
+    required int desId,
+  });
+
 }

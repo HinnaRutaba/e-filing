@@ -71,6 +71,12 @@ enum SummaryAction {
     icon: Icons.edit_note_rounded,
     color: AppColors.primary,
     filled: true,
+  ),
+  disposedOff(
+    label: 'Dispose Off',
+    icon: Icons.archive_outlined,
+    color: Colors.teal,
+    filled: false,
   );
 
   final String label;
@@ -209,6 +215,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return false;
     }
     return true;
+  }
+
+  bool get showDisposedOff {
+    final details = ref.read(summariesController).details;
+    final summary = details?.summary;
+    if (summary == null) return false;
+    final isSecretary = userDesg?.roleEnum == ActiveUserDesgRole.secretary;
+    if (!isSecretary) return false;
+    final originatingId = summary.originatingUserDesgId;
+    final currentHolderId = summary.currentHolderUserDesgId;
+    if (originatingId == null ||
+        currentHolderId == null ||
+        originatingId != currentHolderId) {
+      return false;
+    }
+    return details?.hasForwardedBefore == true;
   }
 
   bool get showHandWrittedRemarksSection {
@@ -477,6 +499,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() {
         _loadingAction = false;
       });
+    } else if (action == SummaryAction.disposedOff) {
+      setState(() => _loadingAction = true);
+      success = await notifier.disposeOffSummary(
+        summaryId: summaryId,
+        remarks: _remarksController.text.trim(),
+      );
+      if (!mounted) return;
+      setState(() => _loadingAction = false);
     }
 
     if (!mounted) return;
@@ -566,10 +596,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.signForward,
+        if (showDisposedOff) SummaryAction.disposedOff,
       ];
     } else {
       allowedActions = SummaryAction.values
           .where((a) => a != SummaryAction.draftRemarks)
+          .where((a) => a != SummaryAction.disposedOff || showDisposedOff)
           .toList();
     }
     final isMobile = context.isMobile;
@@ -744,6 +776,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     _signForwardBody(action)
                   else if (action == SummaryAction.draftRemarks)
                     const SizedBox.shrink()
+                  else if (action == SummaryAction.disposedOff)
+                    _disposedOffBody()
                   else
                     AppTextField(
                       controller: _remarksController,
@@ -1010,6 +1044,51 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _disposedOffBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: Colors.teal.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.teal.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.archive_outlined,
+                  size: 16,
+                  color: Colors.teal,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  'This will mark the summary as disposed off. The action cannot be undone. Optionally add closing remarks.',
+                  color: Colors.teal,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _remarksController,
+          labelText: 'Closing Remarks (Optional)',
+          hintText: 'Add any closing remarks…',
+          maxLines: 4,
+        ),
+      ],
     );
   }
 

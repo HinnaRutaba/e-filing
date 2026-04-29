@@ -560,4 +560,29 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return false;
     }
   }
+
+  Future<bool> disposeOffSummary({
+    required int? summaryId,
+    required String remarks,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.disposeOffSummary(
+        summaryId: summaryId,
+        instruction: remarks,
+        desId: desId,
+      );
+      Toast.success(message: 'Summary disposed off');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
 }

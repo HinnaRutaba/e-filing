@@ -141,13 +141,18 @@ class FilePickerService {
       EasyLoading.dismiss();
 
       if (result != null && result.files.isNotEmpty) {
+        final tempDir = await getTemporaryDirectory();
         int oversizedCount = 0;
         for (final file in result.xFiles) {
           final fileLength = await file.length();
           if (fileLength > 10 * 1024 * 1024) {
             oversizedCount++;
           } else {
-            picked.add(file);
+            // Copy to app-owned temp dir so the path survives subsequent
+            // file_picker calls that clear the plugin's own cache directory.
+            final dest = File(p.join(tempDir.path, p.basename(file.path)));
+            await File(file.path).copy(dest.path);
+            picked.add(XFile(dest.path));
           }
         }
         if (oversizedCount > 0) {

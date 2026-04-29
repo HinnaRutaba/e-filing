@@ -75,7 +75,7 @@ class AuthController extends BaseControllerState<UserModel> {
         state = state.copyWhole(model);
       }
       return model;
-    } catch (e, s) {
+    } catch (e) {
       Toast.error(message: handleException(e));
       return null;
     }
