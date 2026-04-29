@@ -119,6 +119,12 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
       );
+    } else {
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
@@ -136,7 +142,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     const headerHeight = 148.0;
     final dashboardState = ref.watch(dashboardController);
     final bool canBack = _currentPage > 0;
-    final bool canNext = _currentPage < _summaries.length - 1;
+    const bool canNext = true;
 
     //return Scaffold(body: VectorHandwritingSheet());
 
