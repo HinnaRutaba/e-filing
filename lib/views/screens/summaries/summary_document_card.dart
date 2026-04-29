@@ -24,6 +24,7 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
   final ValueChanged<Uint8List?>? onSignatureChanged;
   final VoidCallback? onEditRemarks;
   final VoidCallback? onAcceptRemarks;
+  final bool showSignPad;
 
   const SummaryDocumentCard({
     super.key,
@@ -34,6 +35,7 @@ class SummaryDocumentCard extends ConsumerStatefulWidget {
     this.onSignatureChanged,
     this.onEditRemarks,
     this.onAcceptRemarks,
+    this.showSignPad = false,
   });
 
   @override
@@ -162,18 +164,16 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   ),
                   const SizedBox(height: 16),
                   _htmlBody(),
-                  if (!(widget.actions?.isDisposed ?? false) &&
-                      !widget.remarkTrack.any(
-                        (t) => t.actionType == 'signed_and_forwarded',
-                      )) ...[
+                  if (ref
+                              .read(summariesController)
+                              .meta
+                              ?.activeUserDesg
+                              ?.roleEnum !=
+                          ActiveUserDesgRole.deo &&
+                      widget.showSignPad) ...[
                     const SizedBox(height: 8),
-                    if (ref
-                            .read(summariesController)
-                            .meta
-                            ?.activeUserDesg
-                            ?.roleEnum !=
-                        ActiveUserDesgRole.deo)
-                      _signaturePad(),
+
+                    _signaturePad(),
 
                     const SizedBox(height: 8),
                   ],

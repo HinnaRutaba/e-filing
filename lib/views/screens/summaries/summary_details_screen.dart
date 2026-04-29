@@ -28,6 +28,7 @@ import 'package:efiling_balochistan/views/screens/summaries/components/summary_b
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
@@ -38,8 +39,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
-
-enum _RemarksMode { type, write }
 
 enum SummaryAction {
   returnToSection(
@@ -119,14 +118,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final SignaturePadController _signaturePadController =
       SignaturePadController();
 
-  // Handwritten remarks
-  _RemarksMode _remarksMode = _RemarksMode.type;
-  bool _remarksPanelExpanded = true;
-  final HtmlEditorController _remarksHtmlCtrl = HtmlEditorController();
-  final SignaturePadController _remarksPadCtrl = SignaturePadController();
+  final RemarksSignPanelController _remarksPanelCtrl =
+      RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
   final GlobalKey _remarksPanelKey = GlobalKey();
-  double _remarksPadWidth = 0;
 
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
@@ -231,8 +226,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   bool get showHandWrittedRemarksSection {
     SummaryDetailsModel? details = ref.read(summariesController).details;
-    return details?.hasForwardedBefore == true &&
-        details?.isLatestRemarksAdded != true;
+    return (details?.hasForwardedBefore == true &&
+            details?.isLatestRemarksAdded != true) ||
+        (details?.movements.last.actionType == 'sent_to_department' &&
+            details?.movements.last.fromDepartment !=
+                details?.movements.last.toDepartment);
   }
 
   @override
@@ -327,7 +325,25 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                   !(isDeo &&
                                       details?.isLatestMovementSignedAndForwarded ==
                                           true)) ...[
-                                _remarksPanel(),
+                                RemarksSignPanel(
+                                  key: _remarksPanelKey,
+                                  controller: _remarksPanelCtrl,
+                                  scrollController: _mainScrollController,
+                                  bottomContent: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _forwardingFields(),
+                                      const SizedBox(height: 16),
+                                      _actionButton(
+                                        SummaryAction.signForward,
+                                        expand: false,
+                                        width: double.infinity,
+                                        onTapOverride: _submitFromRemarksPanel,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 16),
                               _sidebar(),
@@ -361,7 +377,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     }
 
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
-      setState(() => _remarksPanelExpanded = true);
+      _remarksPanelCtrl.expand();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctx = _remarksPanelKey.currentContext;
         if (ctx != null) {
@@ -1113,230 +1129,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
-  Widget _remarksPanel() {
-    return Container(
-      key: _remarksPanelKey,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header — always visible
-          InkWell(
-            onTap: () =>
-                setState(() => _remarksPanelExpanded = !_remarksPanelExpanded),
-            borderRadius: _remarksPanelExpanded
-                ? const BorderRadius.vertical(top: Radius.circular(4))
-                : BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-              child: Row(
-                children: [
-                  Expanded(child: AppText.titleLarge("Add your remarks")),
-                  AnimatedRotation(
-                    turns: _remarksPanelExpanded ? 0 : -0.5,
-                    duration: const Duration(milliseconds: 250),
-                    child: const Icon(
-                      Icons.expand_more_rounded,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Body — animated open/close
-          AnimatedSize(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: _remarksPanelExpanded
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _remarksModeToggle(),
-                        const SizedBox(height: 4),
-                        const Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.info_outline_rounded,
-                              size: 13,
-                              color: AppColors.secondary,
-                            ),
-                            SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                'Type your remark or switch to Write and use your tablet pen. '
-                                'Your handwriting will appear on the printed summary as proof of authorship.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.secondary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: _remarksMode == _RemarksMode.type
-                              ? _typedRemarksField()
-                              : _handwrittenRemarksCanvas(),
-                        ),
-                        const Divider(height: 24),
-                        AppText.titleLarge("Sign here"),
-                        const SizedBox(height: 16),
-                        SignaturePad(controller: _signaturePadController),
-                        const SizedBox(height: 16),
-                        _forwardingFields(),
-                        const SizedBox(height: 16),
-                        _actionButton(
-                          SummaryAction.signForward,
-                          expand: false,
-                          width: double.infinity,
-                          onTapOverride: _submitFromRemarksPanel,
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                    ),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _remarksModeToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.secondaryLight.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        children: [
-          _remarksModeOption(
-            'Type',
-            _RemarksMode.type,
-            Icons.keyboard_alt_outlined,
-          ),
-          _remarksModeOption('Write', _RemarksMode.write, Icons.draw_outlined),
-        ],
-      ),
-    );
-  }
-
-  Widget _remarksModeOption(String label, _RemarksMode mode, IconData icon) {
-    final isSelected = _remarksMode == mode;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _remarksMode = mode),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              AppText.labelMedium(
-                label,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _typedRemarksField() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        key: const ValueKey('remarks_typed'),
-        height: 220,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: AppColors.secondaryLight.withValues(alpha: 0.4),
-          ),
-        ),
-        child: HtmlEditor(
-          controller: _remarksHtmlCtrl,
-          hint: 'Type your remarks here…',
-          height: 240,
-        ),
-      ),
-    );
-  }
-
-  Widget _handwrittenRemarksCanvas() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Capture the available width so _submitFromRemarksPanel can encode strokes
-        if (_remarksPadWidth != constraints.maxWidth) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => setState(() => _remarksPadWidth = constraints.maxWidth),
-          );
-        }
-        return SignaturePad(
-          key: const ValueKey('remarks_written'),
-          controller: _remarksPadCtrl,
-          showRuledLines: true,
-          autoExpand: true,
-          autoExpandStep: 120,
-          showStrokeInfo: true,
-          showCustomColorPicker: true,
-          canvasHeight: 280,
-          showDescription: false,
-          canvasColor: Colors.grey.shade50,
-          onExpand: () {
-            if (!_mainScrollController.hasClients) return;
-            final pos = _mainScrollController.position;
-            final target = (pos.pixels + 120).clamp(0.0, pos.maxScrollExtent);
-            _mainScrollController.animateTo(
-              target,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          },
-        );
-      },
-    );
-  }
-
   Widget _stepCard({
     required String stepLabel,
     required String title,
@@ -1392,26 +1184,24 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   /// is true and the user taps Sign & Forward from the action bar).
   Future<void> _submitFromRemarksPanel() async {
     // 1 – Validate remarks
-    final bool hasTyped;
     final String typedRemarks;
-    if (_remarksMode == _RemarksMode.type) {
-      typedRemarks = (await _remarksHtmlCtrl.getText()).trim();
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
+      typedRemarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
       if (!mounted) return;
-      hasTyped = typedRemarks.isNotEmpty;
-      if (!hasTyped) {
+      if (typedRemarks.isEmpty) {
         Toast.error(message: 'Please type your remarks before forwarding');
         return;
       }
     } else {
       typedRemarks = '';
-      if (_remarksPadCtrl.isEmpty) {
+      if (_remarksPanelCtrl.isWrittenEmpty) {
         Toast.error(message: 'Please write your remarks before forwarding');
         return;
       }
     }
 
     // 2 – Validate signature
-    final signatureBytes = await _signaturePadController.toPngBytes();
+    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       Toast.error(message: 'Please sign in the "Sign here" section');
@@ -1437,17 +1227,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final notifier = ref.read(summariesController.notifier);
 
     bool success;
-    if (_remarksMode == _RemarksMode.write) {
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
       // Handwritten path
-      final strokesJson = _remarksPadCtrl.toStrokesJson(
-        canvasWidth: _remarksPadWidth > 0 ? _remarksPadWidth : 600,
-      );
-      final handwrittenPng = await _remarksPadCtrl.toPngBytes();
+      final strokesJson = _remarksPanelCtrl.getStrokesJson();
+      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
       if (!mounted) return;
       final handwrittenBase64 = handwrittenPng != null
           ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
           : '';
-      final penHex = _remarksPadCtrl.penColorHex;
       success = await notifier.signAndForward(
         summaryId: summaryId,
         signatureBytes: signatureBytes,
@@ -1455,9 +1242,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         targetUserDesgId: _selectedDestOfficer?.userDesgId,
         handwrittenStrokesJson: strokesJson,
         handwrittenPngBase64: handwrittenBase64,
-        handwrittenWidth: _remarksPadWidth.toInt(),
-        handwrittenHeight: _remarksPadCtrl.canvasHeight.toInt(),
-        handwrittenPenColor: penHex,
+        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
       );
     } else {
       // Typed path
@@ -1508,7 +1295,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     String remarks = '';
     if (_selectedAction == SummaryAction.signForward) {
       try {
-        remarks = (await _remarksHtmlCtrl.getText()).trim();
+        remarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
       } catch (_) {
         remarks = '';
       }
@@ -1777,6 +1564,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       },
       onEditRemarks: () => _onActionTap(SummaryAction.editRemarks),
       onAcceptRemarks: _onAcceptDraftedRemarks,
+      showSignPad:
+          !showHandWrittedRemarksSection &&
+          userDesg?.roleEnum != ActiveUserDesgRole.deo,
     );
   }
 
