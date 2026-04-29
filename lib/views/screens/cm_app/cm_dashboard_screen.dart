@@ -8,11 +8,12 @@ import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:signature/signature.dart';
 
 class CMDashboardScreen extends ConsumerStatefulWidget {
   const CMDashboardScreen({super.key});
@@ -24,6 +25,10 @@ class CMDashboardScreen extends ConsumerStatefulWidget {
 class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  final RemarksSignPanelController _remarksPanelCtrl =
+      RemarksSignPanelController();
+  final ScrollController _mainScrollController = ScrollController();
+  final GlobalKey _remarksPanelKey = GlobalKey();
 
   final List<Map<String, dynamic>> _summaries = [
     {
@@ -55,7 +60,57 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _mainScrollController.dispose();
+    _remarksPanelCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitFromRemarksPanel() async {
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
+      final text = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      if (!mounted) return;
+      if (text.isEmpty) {
+        Toast.error(message: 'Please type your remarks before approving');
+        return;
+      }
+    } else {
+      if (_remarksPanelCtrl.isWrittenEmpty) {
+        Toast.error(message: 'Please write your remarks before approving');
+        return;
+      }
+    }
+
+    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign before approving');
+      return;
+    }
+
+    // TODO: call the CM approve API with signatureBytes, remarks/strokes
+    Toast.success(message: 'Approved successfully');
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: _submitFromRemarksPanel,
+        icon: const Icon(Icons.check_rounded, size: 18),
+        label: const Text(
+          'Approve & Sign',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+    );
   }
 
   void _goNext() {
@@ -105,20 +160,30 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                     tagsAlignment: const Alignment(0.0, -0.5),
                     mainContent: SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
-                      child: SummaryDocumentCard(
-                        summary: SummaryModel(
-                          summaryNo: s['summaryNumber'] as String,
-                          summaryDate: DateTime.now(),
-                          originatingDepartment: s['department'] as String,
-                          subject: s['subject'] as String,
-                          body: s['htmlContent'] as String,
-                          currentHolder: 'Mr. Chief Minister',
-                          currentHolderDesignation: 'Chief Minister',
-                          currentDepartment: 'Chief Minister Secretariat',
-                          draftTargetDepartment: 'Quetta',
-                          updatedAt: DateTime.now(),
-                        ),
-                        remarkTrack: const [],
+                      child: Column(
+                        children: [
+                          SummaryDocumentCard(
+                            summary: SummaryModel(
+                              summaryNo: s['summaryNumber'] as String,
+                              summaryDate: DateTime.now(),
+                              originatingDepartment: s['department'] as String,
+                              subject: s['subject'] as String,
+                              body: s['htmlContent'] as String,
+                              currentHolder: 'Mr. Chief Minister',
+                              currentHolderDesignation: 'Chief Minister',
+                              currentDepartment: 'Chief Minister Secretariat',
+                              draftTargetDepartment: 'Quetta',
+                              updatedAt: DateTime.now(),
+                            ),
+                            remarkTrack: const [],
+                          ),
+                          RemarksSignPanel(
+                            key: _remarksPanelKey,
+                            controller: _remarksPanelCtrl,
+                            scrollController: _mainScrollController,
+                            bottomContent: _submitButton(),
+                          ),
+                        ],
                       ),
                     ),
                     tags: [
@@ -451,110 +516,4 @@ class _ConcaveConnectorClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
-}
-
-class VectorHandwritingSheet extends StatefulWidget {
-  @override
-  _VectorHandwritingSheetState createState() => _VectorHandwritingSheetState();
-}
-
-class _VectorHandwritingSheetState extends State<VectorHandwritingSheet> {
-  // 1. Initialize your controller
-  final SignatureController _controller = SignatureController(
-    penStrokeWidth: 3,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.transparent,
-  );
-
-  String? _svgString;
-
-  // 2. The magic function: Points -> SVG String
-  String exportToSvg(List<Point> points, double width, double height) {
-    if (points.isEmpty) return "";
-
-    String pathData = "";
-
-    for (int i = 0; i < points.length; i++) {
-      final point = points[i];
-      final x = point.offset.dx;
-      final y = point.offset.dy;
-
-      if (i == 0 || points[i - 1].type == PointType.tap) {
-        // Start a new line segment
-        pathData += "M $x $y ";
-      } else if (point.type == PointType.move) {
-        // Draw line to next point
-        pathData += "L $x $y ";
-      }
-    }
-
-    return '''
-    <svg viewBox="0 0 $width $height" xmlns="http://www.w3.org/2000/svg">
-      <path d="$pathData" fill="none" stroke="black" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
-    </svg>
-    ''';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Handwriting to Vector")),
-      body: Column(
-        children: [
-          // The Drawing Area
-          Expanded(
-            child: Signature(
-              controller: _controller,
-              backgroundColor: Colors.grey[200]!,
-            ),
-          ),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              IconButton(
-                icon: Icon(Icons.clear),
-                onPressed: () => _controller.clear(),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // 3. Convert to SVG String
-                  final svg = exportToSvg(
-                    _controller.points,
-                    context.size!.width,
-                    context.size!.height,
-                  );
-                  setState(() => _svgString = svg);
-
-                  // You can now store 'svg' in your Database as a String!
-                  print("Stored SVG: $svg");
-                },
-                child: Text("Extract Vector"),
-              ),
-            ],
-          ),
-
-          // 4. Preview the Stored Vector
-          if (_svgString != null)
-            Container(
-              height: 400,
-              width: double.infinity,
-              color: Colors.white,
-              child: Column(
-                children: [
-                  Text("Preview from DB (SVG):"),
-                  Expanded(
-                    child: SvgPicture.string(
-                      _svgString!,
-                      height: 200,
-                      width: double.infinity,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
