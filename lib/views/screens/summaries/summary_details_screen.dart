@@ -587,7 +587,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final details = ref.read(summariesController).details;
 
     List<SummaryAction> allowedActions;
-    if (isDeoCurrentHolder) {
+    if (isDeo) {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.draftRemarks,
