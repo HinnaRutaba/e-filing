@@ -82,11 +82,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ),
         Positioned.fill(
-          child: Lottie.asset(
-            AssetsConstants.loginBgAnimated,
-            fit: BoxFit.contain,
-            repeat: true,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 140),
+            child: Lottie.asset(
+              AssetsConstants.loginBgAnimated,
+              fit: BoxFit.contain,
+              repeat: true,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
           ),
         ),
       ],
@@ -330,7 +333,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Spacer(),
+        //const Spacer(),
+        const SizedBox(height: 116),
         Hero(
           tag: HeroTags.logo,
           child: Image.asset(AssetsConstants.logo, width: 140, height: 80),
