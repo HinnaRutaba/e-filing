@@ -12,8 +12,8 @@ class TokenModel {
         user: UserModel.fromJson(json[TokenSchema.user]),
         token: json[TokenSchema.token],
       );
-    } catch (e, s) {
-      print("Token Error_____${e}_____$s");
+    } catch (e) {
+    
       return TokenModel(user: UserModel(), token: '');
     }
   }

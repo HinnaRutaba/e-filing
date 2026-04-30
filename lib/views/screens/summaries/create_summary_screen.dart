@@ -395,15 +395,6 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
 
   int get _correspondenceCount => _model.correspondenceCount;
 
-  List<FlagModel> get _usedFlags {
-    final names = summaryDetails?.supportingFlagNames ?? [];
-    if (names.isEmpty) return [];
-    return allFlags.where((f) {
-      final title = f.title?.trim().toLowerCase() ?? '';
-      return names.any((n) => n.trim().toLowerCase() == title);
-    }).toList();
-  }
-
   bool get _step0Complete => _model.isSummaryDetailsComplete;
 
   bool get _step1Complete => _model.isFlagsStepComplete;

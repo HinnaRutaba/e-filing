@@ -74,19 +74,20 @@ class FilesController extends BaseControllerState<FileViewModel> {
 
   FileRepo get repo => ref.read(filesRepo);
 
-  Future<List<FileModel>> fetchFiles(FileType fileType,
-      {bool showLoader = true}) async {
+  Future<List<FileModel>> fetchFiles(
+    FileType fileType, {
+    bool showLoader = true,
+  }) async {
     List<FileModel> files = [];
     state = state.copyWith(loadingFiles: true);
     try {
       Future.delayed(Duration.zero, () {
-        state = state.copyWith(
-          files: files,
-          filteredFiles: files,
-        );
+        state = state.copyWith(files: files, filteredFiles: files);
       });
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       if (showLoader) EasyLoading.show();
       if (fileType == FileType.pending) {
         files = await repo.fetchPendingFiles(designationId);
@@ -99,12 +100,8 @@ class FilesController extends BaseControllerState<FileViewModel> {
       } else if (fileType == FileType.archived) {
         files = await repo.fetchArchivedFiles(designationId);
       }
-      state = state.copyWith(
-        files: files,
-        filteredFiles: files,
-      );
-    } catch (e, s) {
-      print("ERROR GETTING FILES______${e}____$s");
+      state = state.copyWith(files: files, filteredFiles: files);
+    } catch (e) {
       Toast.error(message: handleException(e));
     } finally {
       state = state.copyWith(loadingFiles: false);
@@ -115,8 +112,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
 
   Future<List<FileModel>> getFilesForDashboard(FileType fileType) async {
     try {
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
 
       if (fileType == FileType.pending) {
         return await repo.fetchPendingFiles(designationId);
@@ -132,7 +131,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
 
       return [];
     } catch (e) {
-      print("Dashboard files error: $e");
       return [];
     }
   }
@@ -153,12 +151,17 @@ class FilesController extends BaseControllerState<FileViewModel> {
     }
   }
 
-  Future<FileDetailsModel?> fetchFileDetails(int fileId, FileType fileType,
-      {bool showLoader = false}) async {
+  Future<FileDetailsModel?> fetchFileDetails(
+    int fileId,
+    FileType fileType, {
+    bool showLoader = false,
+  }) async {
     FileDetailsModel? file;
     try {
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       if (showLoader) EasyLoading.show();
       if (fileType == FileType.pending) {
         file = await repo.viewPendingFileDetails(fileId, designationId);
@@ -181,8 +184,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
 
   Future<String> autoGenerateFileMovNumber() async {
     try {
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       return await repo.generateFileMovNumber(designationId) ?? '';
     } catch (e) {
       // Toast.error(message: handleException(e));
@@ -195,12 +200,13 @@ class FilesController extends BaseControllerState<FileViewModel> {
     state = state.copyWith(loadingSections: true);
     try {
       if (showLoader) EasyLoading.show();
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       sections = await repo.getSections(designationId);
       state = state.copyWith(sections: sections, loadingSections: false);
-    } catch (e, s) {
-      print("SECTIONS ERROR______${e}____$s");
+    } catch (e) {
       // Toast.error(message: handleException(e));
       state = state.copyWith(loadingSections: false);
     } finally {
@@ -209,18 +215,21 @@ class FilesController extends BaseControllerState<FileViewModel> {
     return sections;
   }
 
-  Future<List<ForwardToModel>> getForwardTo(int? sectionId,
-      {bool showLoader = false}) async {
+  Future<List<ForwardToModel>> getForwardTo(
+    int? sectionId, {
+    bool showLoader = false,
+  }) async {
     List<ForwardToModel> forwardTo = [];
     state = state.copyWith(loadingForwardList: true);
     try {
       if (showLoader) EasyLoading.show();
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       forwardTo = await repo.getForwardList(sectionId, designationId);
       state = state.copyWith(loadingForwardList: false);
-    } catch (e, s) {
-      print("FORWARD TO ERROR______${e}____$s");
+    } catch (e) {
       Toast.error(message: handleException(e));
       state = state.copyWith(loadingForwardList: false);
     } finally {
@@ -229,14 +238,18 @@ class FilesController extends BaseControllerState<FileViewModel> {
     return forwardTo;
   }
 
-  Future<List<FlagModel>> getFlags(
-      {bool showLoader = false, bool onlyFinal = false}) async {
+  Future<List<FlagModel>> getFlags({
+    bool showLoader = false,
+    bool onlyFinal = false,
+  }) async {
     List<FlagModel> flags = [];
     state = state.copyWith(loadingFlag: true);
     try {
       if (showLoader) EasyLoading.show();
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       flags = await repo.getFlags(designationId);
       if (onlyFinal) {
         flags = flags
@@ -244,8 +257,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
             .toList();
       }
       state = state.copyWith(flags: flags, loadingFlag: false);
-    } catch (e, s) {
-      print("FLAGS ERROR______${e}____$s");
+    } catch (e) {
       // Toast.error(message: handleException(e));
       state = state.copyWith(loadingFlag: false);
     } finally {
@@ -265,8 +277,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
     try {
       int? uid = await ref.read(authRepo).fetchLoggedInUserId();
       EasyLoading.show(status: "Adding Remarks...");
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       await repo.sendPendingFileRemarks(
         fileId: fileId,
         userId: uid!,
@@ -281,8 +295,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       Toast.success(message: "File forwarded and remarks added successfully.");
       EasyLoading.dismiss();
       RouteHelper.navigateTo(Routes.dashboard);
-    } catch (e, s) {
-      print("SEND PENDING FILE ERROR______${e}____$s");
+    } catch (e) {
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }
@@ -299,8 +312,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
     try {
       int? uid = await ref.read(authRepo).fetchLoggedInUserId();
       EasyLoading.show(status: "Submitting...");
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       await repo.submitAction(
         fileId: fileId,
         userId: uid!,
@@ -314,8 +329,8 @@ class FilesController extends BaseControllerState<FileViewModel> {
       Toast.success(message: "File ${action.label} successfully.");
       EasyLoading.dismiss();
       RouteHelper.navigateTo(Routes.dashboard);
-    } catch (e, s) {
-      print("SUBMIT FILE ERROR______${e}____$s");
+    } catch (e) {
+      
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }
@@ -330,8 +345,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
   }) async {
     try {
       EasyLoading.show();
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       await repo.reopenFile(
         fileId: fileId,
         sectionId: sectionId!,
@@ -344,8 +361,8 @@ class FilesController extends BaseControllerState<FileViewModel> {
       Toast.success(message: "File reopened successfully.");
       EasyLoading.dismiss();
       RouteHelper.navigateTo(Routes.dashboard);
-    } catch (e, s) {
-      print("Reopen FILE ERROR______${e}____$s");
+    } catch (e) {
+      
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }
@@ -355,13 +372,15 @@ class FilesController extends BaseControllerState<FileViewModel> {
     NewFileDataModel? data;
     state = state.copyWith(loadingNewFileData: true);
     try {
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       if (showLoader) EasyLoading.show();
       data = await repo.fetchCreateFileData(designationId);
       state = state.copyWith(newFileData: data, loadingNewFileData: false);
-    } catch (e, s) {
-      print("FILE DATA ERROR______${e}____$s");
+    } catch (e) {
+
       //Toast.error(message: handleException(e));
       state = state.copyWith(loadingNewFileData: false);
     } finally {
@@ -383,8 +402,10 @@ class FilesController extends BaseControllerState<FileViewModel> {
   }) async {
     try {
       EasyLoading.show();
-      int? designationId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      int? designationId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       await repo.createNewFile(
         subject: subject!,
         fileType: fileType!,
@@ -401,8 +422,8 @@ class FilesController extends BaseControllerState<FileViewModel> {
       Toast.success(message: "File created successfully.");
       EasyLoading.dismiss();
       RouteHelper.navigateTo(Routes.dashboard);
-    } catch (e, s) {
-      print("Create FILE ERROR______${e}____$s");
+    } catch (e) {
+
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }

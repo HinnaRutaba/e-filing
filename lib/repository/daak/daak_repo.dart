@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
@@ -121,7 +119,7 @@ class DaakRepo extends DaakInterface {
       }
 
       Map<String, dynamic> data = await dioClient.get(
-        url: daakFwdShowUrl(daakId!, desId),
+        url: daakFwdShowUrl(daakId, desId),
         options: await options(authRequired: true),
       );
       return DaakModel.fromDetails(data['data']);
@@ -180,8 +178,6 @@ class DaakRepo extends DaakInterface {
         if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
       };
 
-      print("JSON_______${json}");
-
       final FormData formData = FormData.fromMap(json);
 
       if (supportingAttachment != null) {
@@ -232,8 +228,6 @@ class DaakRepo extends DaakInterface {
         if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
       };
 
-      print("JSON_______${json}");
-
       final FormData formData = FormData.fromMap(json);
 
       if (supportingAttachment != null) {
@@ -279,8 +273,6 @@ class DaakRepo extends DaakInterface {
 
         if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
       };
-
-      print("JSON_______${json}");
 
       final FormData formData = FormData.fromMap(json);
 
@@ -337,8 +329,6 @@ class DaakRepo extends DaakInterface {
         'userDesgID': desId,
         if (remarks != null && remarks.isNotEmpty) 'remarks': remarks,
       };
-
-      print("JSON_______${json}");
 
       final FormData formData = FormData.fromMap(json);
 

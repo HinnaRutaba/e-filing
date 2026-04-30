@@ -317,7 +317,7 @@ class FilePickerService {
 
       // Prepare file path
       final filePath = '${eFilingDir.path}/$fileName';
-      final file = File(filePath);
+  
 
       // Show downloading snackbar
       if (context.mounted) {

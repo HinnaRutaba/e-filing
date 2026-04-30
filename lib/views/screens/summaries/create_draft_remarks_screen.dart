@@ -1116,11 +1116,12 @@ class _SearchPickerSheetState<T> extends State<_SearchPickerSheet<T>> {
       final items = await widget.searcher(
         query == null || query.isEmpty ? null : query,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _items = items;
           _isLoading = false;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }

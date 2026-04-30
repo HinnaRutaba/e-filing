@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -83,7 +81,7 @@ class AuthRepo extends AuthInterface {
     required String confirmPassword,
   }) async {
     try {
-      Map<String, dynamic> data = await dioClient.post(
+      await dioClient.post(
         url: changePasswordUrl,
         options: await options(authRequired: true),
         data: {

@@ -70,8 +70,7 @@ class MessageModel {
           'local_files': json['local_files'],
         },
       );
-    } catch (e, s) {
-      print("Message Model Error____${e}_____$s");
+    } catch (e) {
       return MessageModel(
         id: '',
         text: '',

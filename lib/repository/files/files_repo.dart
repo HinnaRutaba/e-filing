@@ -168,7 +168,7 @@ class FileRepo extends FilesInterface {
       );
       FormData formData = FormData.fromMap(jsonData.item1);
       formData.files.addAll(jsonData.item2);
-      Map<String, dynamic> data = await dioClient.post(
+     await dioClient.post(
         url: pendingFileSendUrl,
         options: await options(),
         formData: formData,
@@ -288,7 +288,7 @@ class FileRepo extends FilesInterface {
       );
       FormData formData = FormData.fromMap(jsonData.item1);
       formData.files.addAll(jsonData.item2);
-      Map<String, dynamic> data = await dioClient.post(
+      await dioClient.post(
         url: submitActionUrl,
         options: await options(),
         formData: formData,
@@ -414,7 +414,7 @@ class FileRepo extends FilesInterface {
       );
       FormData formData = FormData.fromMap(jsonData.item1);
       formData.files.addAll(jsonData.item2);
-      Map<String, dynamic> data = await dioClient.post(
+      await dioClient.post(
         url: reopenFileUrl,
         options: await options(),
         formData: formData,
@@ -472,7 +472,7 @@ class FileRepo extends FilesInterface {
       );
       FormData formData = FormData.fromMap(jsonData.item1);
       formData.files.addAll(jsonData.item2);
-      Map<String, dynamic> data = await dioClient.post(
+      await dioClient.post(
         url: createFileUrl,
         options: await options(),
         formData: formData,

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -302,8 +300,9 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                         color: Colors.yellow[400],
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.yellow[600]!
-                                              .withOpacity(0.3),
+                                          color: Colors.yellow[600]!.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           width: 0.5,
                                         ),
                                       ),
@@ -353,7 +352,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ),
                                             border: Border.all(
                                               color: Colors.yellow[600]!
-                                                  .withOpacity(0.3),
+                                                  .withValues(alpha: 0.3),
                                               width: 0.5,
                                             ),
                                           ),
@@ -695,7 +694,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                 Expanded(
                   child: AppText.titleSmall(
                     attachment != null
-                        ? attachment!.name
+                        ? attachment.name
                         : 'Select file to attach',
                   ),
                 ),

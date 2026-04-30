@@ -34,7 +34,7 @@ class _SectionsScreenState extends State<SectionsScreen> {
                   hintText: "Search by name or username",
                   itemBuilder: (BuildContext context, void item) {
                     // Build the item widget
-                    return ListTile(
+                    return const ListTile(
                       title: Text("Item"), // Customize as needed
                     );
                   }),

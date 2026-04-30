@@ -190,8 +190,8 @@ Submitted for approval and further directions please.
         The response should be in next line after the line '$responseKey'
         Only give the response if user asks for it
         ''';
-        } catch (e, s) {
-          print(s);
+        } catch (e) {
+       
         }
       } else {
         systemMessage = reportContext(fileStr);

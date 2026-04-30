@@ -18,11 +18,11 @@ class SecretarySummaryScreen extends StatefulWidget {
 class _SecretarySummaryScreenState extends State<SecretarySummaryScreen> {
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
+    return const BaseScreen(
       isdash: false,
       title: 'Secretary Summary',
       body: Padding(
-        padding: const EdgeInsets.only(left: 16.0),
+        padding: EdgeInsets.only(left: 16.0),
         child: HandwritingPage(),
       ),
     );
@@ -301,22 +301,22 @@ class _HandwritingPageState extends State<HandwritingPage> {
                 drawingPolicy: PencilKitIos14DrawingPolicy.anyInput,
                 backgroundColor: Colors.yellow.withValues(alpha: 0.1),
                 isOpaque: false,
-                toolPickerVisibilityDidChange: (isVisible) =>
-                    print('toolPickerVisibilityDidChange $isVisible'),
-                toolPickerIsRulerActiveDidChange: (isRulerActive) =>
-                    print('toolPickerIsRulerActiveDidChange $isRulerActive'),
-                toolPickerFramesObscuredDidChange: () =>
-                    print('toolPickerFramesObscuredDidChange'),
-                toolPickerSelectedToolDidChange: () =>
-                    print('toolPickerSelectedToolDidChange'),
-                canvasViewDidBeginUsingTool: () =>
-                    print('canvasViewDidBeginUsingTool'),
-                canvasViewDidEndUsingTool: () =>
-                    print('canvasViewDidEndUsingTool'),
-                canvasViewDrawingDidChange: () =>
-                    print('canvasViewDrawingDidChange'),
-                canvasViewDidFinishRendering: () =>
-                    print('canvasViewDidFinishRendering'),
+                // toolPickerVisibilityDidChange: (isVisible) =>
+                //     print('toolPickerVisibilityDidChange $isVisible'),
+                // toolPickerIsRulerActiveDidChange: (isRulerActive) =>
+                //     print('toolPickerIsRulerActiveDidChange $isRulerActive'),
+                // toolPickerFramesObscuredDidChange: () =>
+                //     print('toolPickerFramesObscuredDidChange'),
+                // toolPickerSelectedToolDidChange: () =>
+                //     print('toolPickerSelectedToolDidChange'),
+                // canvasViewDidBeginUsingTool: () =>
+                //     print('canvasViewDidBeginUsingTool'),
+                // canvasViewDidEndUsingTool: () =>
+                //     print('canvasViewDidEndUsingTool'),
+                // canvasViewDrawingDidChange: () =>
+                //     print('canvasViewDrawingDidChange'),
+                // canvasViewDidFinishRendering: () =>
+                //     print('canvasViewDidFinishRendering'),
               ),
             ),
           ],

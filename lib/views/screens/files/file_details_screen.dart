@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -121,10 +120,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
         FlagAndAttachmentModel(
           usedFlags: [
             ...flagsUsed,
-            ...attachmentsNotifier.value
-                    .map((e) => e.flagType ?? FlagModel())
-                    .toList() ??
-                [],
+            ...attachmentsNotifier.value.map((e) => e.flagType ?? FlagModel()),
           ],
         ),
       ];
@@ -317,7 +313,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: AppColors.secondaryLight
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                       ),
                                       borderRadius: BorderRadius.circular(12),
                                       color: AppColors.white,
@@ -570,7 +566,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                                       border: Border.all(
                                                         color: Colors
                                                             .yellow[600]!
-                                                            .withOpacity(0.3),
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
                                                         width: 0.5,
                                                       ),
                                                     ),
@@ -665,8 +663,8 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   separatorBuilder: (_, i) => Divider(
                                     height: 40,
-                                    color: AppColors.secondaryLight.withOpacity(
-                                      0.5,
+                                    color: AppColors.secondaryLight.withValues(
+                                      alpha: 0.5,
                                     ),
                                   ),
                                   itemBuilder: (ctx, i) {
@@ -703,14 +701,10 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                             FlagAndAttachmentModel(
                                               usedFlags: [
                                                 ...flagsUsed,
-                                                ...attachments
-                                                        .map(
-                                                          (e) =>
-                                                              e.flagType ??
-                                                              FlagModel(),
-                                                        )
-                                                        .toList() ??
-                                                    [],
+                                                ...attachments.map(
+                                                  (e) =>
+                                                      e.flagType ?? FlagModel(),
+                                                ),
                                               ],
                                             ),
                                           );
@@ -772,7 +766,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   }
                                   String spacedText = text;
                                   controller.reopenFile(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo?.userDesgId,
                                     sectionId: selectedSection?.id,
@@ -812,25 +806,24 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                               if (widget.fileType == FileType.pending) {
                                 try {
                                   await controller.sendPendingFileRemarks(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo!.userDesgId!,
                                     fileMovNo: autoGeneratedFileNumber,
-                                    lastTrackId:
-                                        details!.content!.last!.trackId!,
+                                    lastTrackId: details!.content.last.trackId!,
                                     flags: attachments,
                                   );
                                   submissionSuccess = true;
                                 } catch (e) {
                                   submissionSuccess = false;
-                                  print("Error: $e");
+
                                   Toast.error(message: "Failed to submit file");
                                 }
                               } else if (widget.fileType ==
                                   FileType.actionRequired) {
                                 try {
                                   await controller.submitFile(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo?.userDesgId,
                                     fileMovNo: autoGeneratedFileNumber,
@@ -840,7 +833,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   submissionSuccess = true;
                                 } catch (e) {
                                   submissionSuccess = false;
-                                  print("Error: $e");
+
                                   Toast.error(message: "Failed to submit file");
                                 }
                               }
@@ -862,7 +855,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     RouteHelper.pop();
                                   }
                                 } catch (e) {
-                                  print("Error: $e");
                                   if (mounted) {
                                     RouteHelper.pop();
                                   }

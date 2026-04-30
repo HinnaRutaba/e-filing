@@ -22,8 +22,7 @@ class LocalAuthService {
         ),
       );
       return isAuthenticated;
-    } catch (e, s) {
-      print("AUTH ERROR_______${e}_____$s");
+    } catch (e) {
       return false;
     }
   }

@@ -33,7 +33,7 @@ class ChatParticipantsView extends ConsumerStatefulWidget {
 
 class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
   late TextEditingController _searchController;
-  late ChatModel _chatData;
+  ChatModel? _chatData;
   late StreamSubscription<ChatModel> _chatSubscription;
   bool _isLoading = true;
 
@@ -75,20 +75,20 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_chatData == null && widget.participantsToAdd.isEmpty) {
+    if (_chatData == null) {
       return const Center(child: Text("No participants found"));
     }
 
     final notInChatParticipants = widget.participantsToAdd
         .where(
-          (p) => !_chatData.activeParticipants.any(
+          (p) => !_chatData!.activeParticipants.any(
             (ap) => ap.userId == p.userId && !ap.removed,
           ),
         )
         .toList();
 
     final activeParticipants =
-        _chatData.activeParticipants.where((ap) => !ap.removed).toList()..sort(
+        _chatData!.activeParticipants.where((ap) => !ap.removed).toList()..sort(
           (a, b) => (b.joinedAt ?? DateTime.now()).compareTo(
             a.joinedAt ?? DateTime.now(),
           ),

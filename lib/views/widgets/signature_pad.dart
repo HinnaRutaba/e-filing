@@ -368,7 +368,7 @@ class _SignaturePadState extends State<SignaturePad> {
             fit: StackFit.expand,
             children: [
               if (widget.showRuledLines)
-                CustomPaint(painter: _RuledLinesPainter()),
+                const CustomPaint(painter: _RuledLinesPainter()),
               Signature(
                 controller: _signatureController,
                 backgroundColor: Colors.transparent,

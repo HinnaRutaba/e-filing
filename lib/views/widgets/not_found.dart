@@ -15,7 +15,7 @@ class NotFound extends StatelessWidget {
         Icon(
           Icons.search_off,
           size: 48,
-          color: AppColors.primary.withOpacity(0.6),
+          color: AppColors.primary.withValues(alpha: 0.6),
         ),
         AppText.bodyLarge(
           "Nothing to show",

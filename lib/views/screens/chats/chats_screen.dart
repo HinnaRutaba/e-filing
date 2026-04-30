@@ -353,8 +353,6 @@ class ChatsListView extends StatelessWidget {
                           lastMsg = "No messages yet";
                         }
 
-                        final int activeUsers = chat.activeParticipants.length;
-
                         return Animate(
                           effects: [
                             FadeEffect(duration: 300.ms),

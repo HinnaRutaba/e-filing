@@ -18,7 +18,7 @@ class PreviewFile extends StatelessWidget {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.7),
+            color: AppColors.primary.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(8.0),
           ),
           padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
@@ -119,7 +119,7 @@ class PreviewFile extends StatelessWidget {
                                                     NetworkBase.base,
                                                   )
                                                   ? e.signature!
-                                                  : e.signatureUrl!,
+                                                  : e.signatureUrl,
                                               width: 80,
                                             ),
                                           const SizedBox(height: 8),
@@ -155,7 +155,7 @@ class PreviewFile extends StatelessWidget {
                               ),
                             ],
                           );
-                        }).toList(),
+                        }),
                       ],
                     );
                   },

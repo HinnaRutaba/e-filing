@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
@@ -41,8 +42,9 @@ class _AdminWebViewState extends State<AdminWebView> {
           onPageStarted: (String url) {},
           onPageFinished: (String url) {},
           onHttpError: (HttpResponseError error) {
-            print(
-                "ERRR______${error.response?.statusCode}_____${error.response?.headers}");
+            log(
+              "ERRR______${error.response?.statusCode}_____${error.response?.headers}",
+            );
           },
           onUrlChange: (url) {
             setState(() {
@@ -65,18 +67,21 @@ class _AdminWebViewState extends State<AdminWebView> {
 
   initFilePicker() async {
     if (Platform.isAndroid) {
-      final androidController = (controller.platform
-          as webview_flutter_android.AndroidWebViewController);
+      final androidController =
+          (controller.platform
+              as webview_flutter_android.AndroidWebViewController);
       await androidController.setOnShowFileSelector(_androidFilePicker);
     }
   }
 
   Future<List<String>> _androidFilePicker(
-      webview_flutter_android.FileSelectorParams params) async {
+    webview_flutter_android.FileSelectorParams params,
+  ) async {
     if (params.acceptTypes.any((type) => type == 'image/*')) {
       final picker = image_picker.ImagePicker();
-      final photo =
-          await picker.pickImage(source: image_picker.ImageSource.camera);
+      final photo = await picker.pickImage(
+        source: image_picker.ImageSource.camera,
+      );
 
       if (photo == null) {
         return [];
@@ -85,7 +90,9 @@ class _AdminWebViewState extends State<AdminWebView> {
     } else if (params.acceptTypes.any((type) => type == 'video/*')) {
       final picker = image_picker.ImagePicker();
       final vidFile = await picker.pickVideo(
-          source: ImageSource.camera, maxDuration: const Duration(seconds: 10));
+        source: ImageSource.camera,
+        maxDuration: const Duration(seconds: 10),
+      );
       if (vidFile == null) {
         return [];
       }
@@ -94,10 +101,11 @@ class _AdminWebViewState extends State<AdminWebView> {
       try {
         if (params.mode == webview_flutter_android.FileSelectorMode.open) {
           final attachments = await FilePicker.platform.pickFiles(
-              allowMultiple: false,
-              type: FileType.custom,
-              allowedExtensions: ['pdf'],
-              allowCompression: true);
+            allowMultiple: false,
+            type: FileType.custom,
+            allowedExtensions: ['pdf'],
+            compressionQuality: 50,
+          );
           if (attachments == null) return [];
 
           return attachments.files
@@ -126,9 +134,9 @@ class _AdminWebViewState extends State<AdminWebView> {
           ? const SplashScreen(navigate: false)
           : Stack(
               children: [
-                WebViewWidget(controller: controller)
-                    .animate()
-                    .fade(duration: 900.milliseconds),
+                WebViewWidget(
+                  controller: controller,
+                ).animate().fade(duration: 900.milliseconds),
                 if (pageProgress < 100)
                   Positioned(
                     top: 0,

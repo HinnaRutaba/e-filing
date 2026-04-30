@@ -23,27 +23,30 @@ class NotificationService {
 
   Future initNotification() async {
     try {
-      NotificationSettings settings =
-          await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        provisional: false,
-        sound: true,
-      );
+      NotificationSettings settings = await _firebaseMessaging
+          .requestPermission(
+            alert: true,
+            badge: true,
+            provisional: false,
+            sound: true,
+          );
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
         Toast.show(
-            message:
-                "Please allow notification permission to receive notifications about your jobs.");
+          message:
+              "Please allow notification permission to receive notifications about your jobs.",
+        );
         return;
       }
       bool? grantedLocalPermission = await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
       if (grantedLocalPermission == false) {
         Toast.show(
-            message:
-                "Please allow notification permission to receive notifications about your jobs.");
+          message:
+              "Please allow notification permission to receive notifications about your jobs.",
+        );
         return;
       }
       await getToken();
@@ -53,9 +56,7 @@ class NotificationService {
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@drawable/notification_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(
-        android: initializationSettingsAndroid,
-      );
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
@@ -75,20 +76,20 @@ class NotificationService {
 
   Future<void> getToken() async {
     _fcmToken = await _firebaseMessaging.getToken();
-    print('FCM Token: $_fcmToken');
   }
 
   void _showNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'your_channel_id',
-      'your_channel_name',
-      channelDescription: 'your_channel_description',
-      importance: Importance.max,
-      priority: Priority.high,
+          'your_channel_id',
+          'your_channel_name',
+          channelDescription: 'your_channel_description',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
       message.hashCode,

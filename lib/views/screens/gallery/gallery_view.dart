@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
 class GalleryView extends StatefulWidget {
-  var imageUrls;
+  final dynamic imageUrls;
   final int initialIndex;
 
-  GalleryView({
+  const GalleryView({
     super.key,
     required this.imageUrls,
     required this.initialIndex,

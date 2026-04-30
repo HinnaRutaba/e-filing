@@ -4,7 +4,6 @@ library waved_audio_player;
 
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
@@ -56,9 +55,7 @@ class AudioCacheManager {
       if (await cacheFile.exists()) {
         return await cacheFile.readAsBytes();
       }
-    } catch (e) {
-      print('Error reading cache: $e');
-    }
+    } catch (e) {}
     return null;
   }
 
@@ -66,9 +63,7 @@ class AudioCacheManager {
     try {
       final cacheFile = await _getCacheFile(url);
       await cacheFile.writeAsBytes(audioBytes);
-    } catch (e) {
-      print('Error writing cache: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> clearCache() async {
@@ -78,9 +73,7 @@ class AudioCacheManager {
         await cacheDir.delete(recursive: true);
       }
       _cacheDirectory = null;
-    } catch (e) {
-      print('Error clearing cache: $e');
-    }
+    } catch (e) {}
   }
 }
 
@@ -135,34 +128,35 @@ class AudioPlayerController {
 }
 
 class WavedAudioPlayer extends StatefulWidget {
-  Source source;
-  Color playedColor;
-  Color unplayedColor;
-  Color iconColor;
-  Color iconBackgoundColor;
-  double barWidth;
-  double spacing;
-  double waveHeight;
-  double buttonSize;
-  double waveWidth;
-  bool showTiming;
-  TextStyle? timingStyle;
-  void Function(WavedAudioPlayerError)? onError;
-  WavedAudioPlayer(
-      {super.key,
-      required this.source,
-      this.playedColor = Colors.blue,
-      this.unplayedColor = Colors.grey,
-      this.iconColor = Colors.blue,
-      this.iconBackgoundColor = Colors.white,
-      this.barWidth = 2,
-      this.spacing = 4,
-      this.waveWidth = 200,
-      this.buttonSize = 40,
-      this.showTiming = true,
-      this.timingStyle,
-      this.onError,
-      this.waveHeight = 35});
+  final Source source;
+  final Color playedColor;
+  final Color unplayedColor;
+  final Color iconColor;
+  final Color iconBackgoundColor;
+  final double barWidth;
+  final double spacing;
+  final double waveHeight;
+  final double buttonSize;
+  final double waveWidth;
+  final bool showTiming;
+  final TextStyle? timingStyle;
+  final void Function(WavedAudioPlayerError)? onError;
+  const WavedAudioPlayer({
+    super.key,
+    required this.source,
+    this.playedColor = Colors.blue,
+    this.unplayedColor = Colors.grey,
+    this.iconColor = Colors.blue,
+    this.iconBackgoundColor = Colors.white,
+    this.barWidth = 2,
+    this.spacing = 4,
+    this.waveWidth = 200,
+    this.buttonSize = 40,
+    this.showTiming = true,
+    this.timingStyle,
+    this.onError,
+    this.waveHeight = 35,
+  });
 
   @override
   _WavedAudioPlayerState createState() => _WavedAudioPlayerState();
@@ -200,13 +194,16 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
       if (_audioBytes == null) {
         if (widget.source is AssetSource) {
           _audioBytes = await _loadAssetAudioWaveform(
-              (widget.source as AssetSource).path);
+            (widget.source as AssetSource).path,
+          );
         } else if (widget.source is UrlSource) {
-          _audioBytes =
-              await _loadRemoteAudioWaveform((widget.source as UrlSource).url);
+          _audioBytes = await _loadRemoteAudioWaveform(
+            (widget.source as UrlSource).url,
+          );
         } else if (widget.source is DeviceFileSource) {
           _audioBytes = await _loadDeviceFileAudioWaveform(
-              (widget.source as DeviceFileSource).path);
+            (widget.source as DeviceFileSource).path,
+          );
         } else if (widget.source is BytesSource) {
           _audioBytes = (widget.source as BytesSource).bytes;
         }
@@ -214,7 +211,8 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
         setState(() {});
       }
       _audioPlayer.setSource(
-          BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+        BytesSource(_audioBytes!, mimeType: widget.source.mimeType),
+      );
     } catch (e) {
       _callOnError(WavedAudioPlayerError("Error loading audio: $e"));
     }
@@ -246,27 +244,26 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
       // First, check if audio is cached
       Uint8List? cachedBytes = await _cacheManager.getCachedAudio(url);
       if (cachedBytes != null) {
-        print('Using cached audio for: $url');
         return cachedBytes;
       }
-
-      print('Downloading and caching audio for: $url');
       // If not cached, download from URL
       final HttpClient httpClient = HttpClient();
       final HttpClientRequest request = await httpClient.getUrl(Uri.parse(url));
       final HttpClientResponse response = await request.close();
 
       if (response.statusCode == 200) {
-        final Uint8List audioBytes =
-            await consolidateHttpClientResponseBytes(response);
+        final Uint8List audioBytes = await consolidateHttpClientResponseBytes(
+          response,
+        );
 
         // Cache the downloaded audio for future use
         await _cacheManager.cacheAudio(url, audioBytes);
 
         return audioBytes;
       } else {
-        _callOnError(WavedAudioPlayerError(
-            "Failed to load audio: ${response.statusCode}"));
+        _callOnError(
+          WavedAudioPlayerError("Failed to load audio: ${response.statusCode}"),
+        );
       }
 
       httpClient.close();
@@ -278,7 +275,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
 
   _callOnError(WavedAudioPlayerError error) {
     if (widget.onError == null) return;
-    print('\x1B[31m ${error.message}\x1B[0m');
+
     widget.onError!(error);
   }
 
@@ -339,9 +336,10 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
 
   List<double> _extractWaveformData(Uint8List audioBytes) {
     List<double> waveData = [];
-    int step = (audioBytes.length /
-            (widget.waveWidth / (widget.barWidth + widget.spacing)))
-        .floor();
+    int step =
+        (audioBytes.length /
+                (widget.waveWidth / (widget.barWidth + widget.spacing)))
+            .floor();
     for (int i = 0; i < audioBytes.length; i += step) {
       waveData.add(audioBytes[i] / 255);
     }
@@ -365,7 +363,8 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
     if (hasCompleted) {
       await _audioPlayer.stop();
       await _audioPlayer.setSource(
-          BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+        BytesSource(_audioBytes!, mimeType: widget.source.mimeType),
+      );
       setState(() {
         hasCompleted = false;
         currentPosition = Duration.zero;
@@ -376,7 +375,8 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
       isPausing
           ? _audioPlayer.resume()
           : _audioPlayer.play(
-              BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
+              BytesSource(_audioBytes!, mimeType: widget.source.mimeType),
+            );
     }
   }
 
@@ -416,9 +416,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
                   size: 4 * widget.buttonSize / 5,
                 ),
               ),
-              const SizedBox(
-                width: 10,
-              ),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTapDown: (TapDownDetails details) {
                   // Call _onWaveformTap when the user taps on the waveform
@@ -427,26 +425,25 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
                 child: CustomPaint(
                   size: Size(widget.waveWidth, widget.waveHeight),
                   painter: WaveformPainter(
-                      waveformData,
-                      currentPosition.inMilliseconds /
-                          (audioDuration.inMilliseconds == 0
-                              ? 1
-                              : audioDuration.inMilliseconds),
-                      playedColor: widget.playedColor,
-                      unplayedColor: widget.unplayedColor,
-                      barWidth: widget.barWidth), // Use your wave data
+                    waveformData,
+                    currentPosition.inMilliseconds /
+                        (audioDuration.inMilliseconds == 0
+                            ? 1
+                            : audioDuration.inMilliseconds),
+                    playedColor: widget.playedColor,
+                    unplayedColor: widget.unplayedColor,
+                    barWidth: widget.barWidth,
+                  ), // Use your wave data
                 ),
               ),
-              if (widget.showTiming)
-                const SizedBox(
-                  width: 10,
-                ),
+              if (widget.showTiming) const SizedBox(width: 10),
               if (widget.showTiming)
                 Center(
-                    child: Text(
-                  _formatDuration(currentPosition),
-                  style: widget.timingStyle,
-                ))
+                  child: Text(
+                    _formatDuration(currentPosition),
+                    style: widget.timingStyle,
+                  ),
+                ),
             ],
           )
         : SizedBox(

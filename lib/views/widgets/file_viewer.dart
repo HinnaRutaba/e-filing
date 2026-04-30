@@ -86,7 +86,7 @@ class _FileViewerState extends State<FileViewer> {
         height: _containerSize,
         decoration: BoxDecoration(
           borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
-          border: Border.all(color: AppColors.secondaryLight.withOpacity(0.3)),
+          border: Border.all(color: AppColors.secondaryLight.withValues(alpha: 0.3)),
           color: widget.backgroundColor ?? AppColors.cardColor,
         ),
         child: Stack(
@@ -315,7 +315,6 @@ class _FileViewerState extends State<FileViewer> {
       _videoThumbnailCache[cacheKey] = thumbnail;
       return thumbnail;
     } catch (e) {
-      print('Error generating video thumbnail: $e');
       return null;
     }
   }
@@ -371,10 +370,6 @@ class _FileViewerState extends State<FileViewer> {
 
   bool _isPresentationFile() {
     return ['ppt', 'pptx', 'odp'].contains(_fileExtension);
-  }
-
-  static void clearVideoThumbnailCache() {
-    _videoThumbnailCache.clear();
   }
 }
 

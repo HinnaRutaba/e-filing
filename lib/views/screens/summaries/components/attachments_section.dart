@@ -411,6 +411,7 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
     }
 
     final model = FlagAndAttachmentModel(usedFlags: usedFlags);
+   
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) {

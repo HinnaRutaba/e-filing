@@ -11,7 +11,7 @@ class UserCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       color: AppColors.white,
       elevation: 3.5,
-      shadowColor: AppColors.secondaryLight.withOpacity(0.5),
+      shadowColor: AppColors.secondaryLight.withValues(alpha: .5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(13),
       ),
@@ -85,7 +85,7 @@ class UserCard extends StatelessWidget {
                     bottomLeft: Radius.circular(12),
                     bottomRight: Radius.circular(12),
                   ),
-                  color: AppColors.secondaryLight.withOpacity(0.15),
+                  color: AppColors.secondaryLight.withValues(alpha: 0.15),
                 ),
                 padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
                 child: Row(

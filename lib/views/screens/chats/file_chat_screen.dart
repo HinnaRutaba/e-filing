@@ -32,7 +32,6 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
-import 'package:audio_waveforms/audio_waveforms.dart';
 
 class FileChatScreen extends ConsumerStatefulWidget {
   final int? fileId;
@@ -222,10 +221,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
 
       String subject = '';
       if (file != null &&
-          file!.content != null &&
-          file!.content!.isNotEmpty &&
-          file!.content!.first.subject != null) {
-        subject = file!.content!.first.subject!;
+          file!.content.isNotEmpty &&
+          file!.content.first.subject != null) {
+        subject = file!.content.first.subject!;
       }
 
       final chatId =
@@ -776,13 +774,9 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                           final joinedAt = participant?.joinedAt;
                           final latest = snapshot.data!
                               .where(
-                                (e) =>
-                                    !(e.hiddenFrom?.contains(
-                                          _currentUser!
-                                              .currentDesignation!
-                                              .userDesgId,
-                                        ) ??
-                                        false),
+                                (e) => !(e.hiddenFrom.contains(
+                                  _currentUser.currentDesignation!.userDesgId,
+                                )),
                               )
                               .where(
                                 (e) => joinedAt == null
@@ -880,7 +874,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                             vertical: 8,
                                           ),
                                           child: ChatInputBar(
-                                            chat: chat!,
+                                            chat: chat,
                                             chatService: chatService,
                                             userId: _currentUser.id!,
                                             userDesignationId: _currentUser

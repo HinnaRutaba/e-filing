@@ -530,12 +530,10 @@ class ChatService {
               validChats.sort((a, b) {
                 final aTime =
                     a.lastMessage?.sentAt ??
-                    a.createdAt ??
-                    DateTime.fromMillisecondsSinceEpoch(0);
+                    a.createdAt;
                 final bTime =
                     b.lastMessage?.sentAt ??
-                    b.createdAt ??
-                    DateTime.fromMillisecondsSinceEpoch(0);
+                    b.createdAt;
                 return bTime.compareTo(aTime); // newest first
               });
 

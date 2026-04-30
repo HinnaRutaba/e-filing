@@ -54,7 +54,6 @@ class DateTimeHelper {
 
       return DateTime(date.year, date.month, date.day, hour, minute);
     } catch (e) {
-      print("Error parsing time: $e");
       return null;
     }
   }
@@ -74,7 +73,6 @@ class DateTimeHelper {
 
       return '$hour:$minute $period';
     } catch (e) {
-      print("Error formatting time: $e");
       return timeStr;
     }
   }

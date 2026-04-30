@@ -76,8 +76,7 @@ class FileContentModel {
         tagColor: json[FileContentSchema.tagColor] as String?,
         fileContentNumber: json[FileContentSchema.partFileNo] as String?,
       );
-    } catch (e, s) {
-      print("ERROR FILEEEEEE_____${e}______$s");
+    } catch (e) {
       return FileContentModel();
     }
   }
@@ -128,8 +127,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(
@@ -202,8 +201,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(
@@ -246,8 +245,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(

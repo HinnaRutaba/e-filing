@@ -30,7 +30,7 @@ class _UserSettingsScreenState extends State<SettingsScreen> {
                 Hero(
                   tag: HeroTags.profile,
                   child: CircleAvatar(
-                    backgroundColor: AppColors.primaryLight.withOpacity(0.2),
+                    backgroundColor: AppColors.primaryLight.withValues(alpha: .2),
                     radius: 30,
                     child: const Icon(
                       Icons.person,
@@ -68,7 +68,7 @@ class _UserSettingsScreenState extends State<SettingsScreen> {
       child: ListTile(
         title: AppText.titleMedium(title),
         leading: CircleAvatar(
-          backgroundColor: AppColors.secondaryLight.withOpacity(0.2),
+          backgroundColor: AppColors.secondaryLight.withValues(alpha: 0.2),
           radius: 18,
           child: Icon(
             icon,
