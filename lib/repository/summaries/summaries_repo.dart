@@ -471,4 +471,58 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<void> forwardToCM({
+    required int? summaryId,
+    required int? desgId,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception('Summary ID is required to forward to CM');
+      }
+      if (desgId == null) {
+        throw Exception('Designation ID is required to forward to CM');
+      }
+      await dioClient.post(
+        url: forwardToCMUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {'userDesgID': desgId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> psToSectForward({
+    required int summaryId,
+    required int desgId,
+  }) async {
+    try {
+      await dioClient.post(
+        url: forwardPsToSectUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {'userDesgID': desgId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> signAndReturnCM({
+    required int summaryId,
+    required int desgId,
+  }) async {
+    try {
+      await dioClient.post(
+        url: cmSignAndReturnUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {'userDesgID': desgId},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -76,10 +76,19 @@ abstract class SummariesInterface extends NetworkBase {
       '${baseUrl}summaries/$summaryId/forward';
 
   String submitRemarksUrl(int summaryId) =>
-      '${baseUrl}summaries/$summaryId/submit-internal-action';  
+      '${baseUrl}summaries/$summaryId/submit-internal-action';
 
   String disposeOffSummaryUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/dispose-off';
+
+  String forwardPsToSectUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/forward-ps-to-secretary';
+
+  String forwardToCMUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/forward-to-cm';
+
+  String cmSignAndReturnUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/cm-sign-and-return';
 
   //========================Functions=============================
 
@@ -135,9 +144,7 @@ abstract class SummariesInterface extends NetworkBase {
     required int desId,
   });
 
-  Future<void> submitDraftRemarks({
-    required DraftRemarksModel model,
-  });
+  Future<void> submitDraftRemarks({required DraftRemarksModel model});
 
   Future<void> shareInternally({
     required int summaryId,
@@ -168,17 +175,24 @@ abstract class SummariesInterface extends NetworkBase {
     required SignForwardModel payload,
   });
 
-    Future<void> submitInternalRemarks({
+  Future<void> submitInternalRemarks({
     required CreateSummaryModel createSummaryModel,
     required int desId,
     required int summaryId,
   });
 
-
- Future<void> disposeOffSummary({
+  Future<void> disposeOffSummary({
     required int summaryId,
     required String instruction,
     required int desId,
   });
+
+  Future<void> psToSectForward({required int summaryId, required int desgId});
+
+
+  Future<void> forwardToCM({required int summaryId, required int desgId});
+
+  Future<void> signAndReturnCM({required int summaryId, required int desgId});
+
 
 }
