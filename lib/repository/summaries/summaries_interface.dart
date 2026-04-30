@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
+import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
@@ -89,6 +90,19 @@ abstract class SummariesInterface extends NetworkBase {
 
   String cmSignAndReturnUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/cm-sign-and-return';
+
+  String uploadVoiceNotesUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/voice-notes';
+
+  String listVoiceNotesUrl(int summaryId, int desgId) =>
+      '${baseUrl}summaries/$summaryId/voice-notes?userDesgID=$desgId';
+
+  String streamVoiceNotesUrl({
+    required int summaryId,
+    required int voiceNoteId,
+    required int desgId,
+  }) =>
+      '${baseUrl}summaries/$summaryId/voice-notes/$voiceNoteId/stream?userDesgID=$desgId';
 
   //========================Functions=============================
 
@@ -189,7 +203,6 @@ abstract class SummariesInterface extends NetworkBase {
 
   Future<void> psToSectForward({required int summaryId, required int desgId});
 
-
   Future<void> forwardToCM({required int summaryId, required int desgId});
 
   Future<void> signAndReturnCM({
@@ -198,5 +211,9 @@ abstract class SummariesInterface extends NetworkBase {
     required SignForwardModel payload,
   });
 
-
+  Future<void> uploadVoiceNote({
+    required int summaryId,
+    required int desgId,
+    required VoiceNoteUploadModel model,
+  });
 }

@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
+import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
@@ -519,6 +520,30 @@ class SummariesRepo extends SummariesInterface {
         url: cmSignAndReturnUrl(summaryId),
         options: await options(authRequired: true),
         data: payload.toJson(desgId),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> uploadVoiceNote({
+    required int summaryId,
+    required int desgId,
+    required VoiceNoteUploadModel model,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        ...model.toJson(desgId),
+        'audio': MultipartFile.fromBytes(
+          model.audioBytes,
+          filename: model.audioFilename,
+        ),
+      });
+      await dioClient.post(
+        url: uploadVoiceNotesUrl(summaryId),
+        options: await options(authRequired: true),
+        formData: formData,
       );
     } catch (e) {
       rethrow;
