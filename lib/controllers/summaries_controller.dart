@@ -565,6 +565,113 @@ class SummariesController extends BaseControllerState<SummariesState> {
     }
   }
 
+  Future<bool> forwardToCM({required int? summaryId}) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.forwardToCM(summaryId: summaryId, desgId: desId);
+      Toast.success(message: 'Summary forwarded to CM');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> psToSectForward({required int? summaryId}) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.psToSectForward(
+        summaryId: summaryId!,
+        desgId: desId!,
+      );
+      Toast.success(message: 'Summary forwarded to section');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> signAndReturnCM({
+    required int? summaryId,
+    required Uint8List signatureBytes,
+    // Typed remarks
+    String? body,
+    // Handwritten params
+    String? handwrittenStrokesJson,
+    String? handwrittenPngBase64,
+    int? handwrittenWidth,
+    int? handwrittenHeight,
+    String? handwrittenPenColor,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+
+      // Step 1 – upload signature, get back server path
+      final signatureBase64 =
+          'data:image/png;base64,${base64Encode(signatureBytes)}';
+      final signaturePath = await repo.saveSignForFwd(
+        summaryId: summaryId,
+        desId: desId,
+        signatureBase64: signatureBase64,
+      );
+      if (signaturePath == null) {
+        EasyLoading.dismiss();
+        return false;
+      }
+
+      // Step 2 – build payload and return to CM
+      final SignForwardModel payload;
+      if (handwrittenStrokesJson != null) {
+        payload = HandwrittenSignForwardModel(
+          targetDepartmentId: 0,
+          secretarySignaturePath: signaturePath,
+          handwrittenStrokesJson: handwrittenStrokesJson,
+          handwrittenPngBase64: handwrittenPngBase64 ?? '',
+          handwrittenWidth: handwrittenWidth ?? 0,
+          handwrittenHeight: handwrittenHeight ?? 0,
+          handwrittenPenColor: handwrittenPenColor ?? '#0D2C6B',
+        );
+      } else {
+        payload = TypedSignForwardModel(
+          targetDepartmentId: 0,
+          secretarySignaturePath: signaturePath,
+          remarks: body ?? '',
+        );
+      }
+
+      await repo.signAndReturnCM(
+        summaryId: summaryId!,
+        desgId: desId!,
+        payload: payload,
+      );
+
+      Toast.success(message: 'Summary signed and returned to CM');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
   Future<bool> disposeOffSummary({
     required int? summaryId,
     required String remarks,

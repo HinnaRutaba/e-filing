@@ -74,7 +74,7 @@ class DashboardModel {
           loadingForwardedFiles ?? this.loadingForwardedFiles,
       daakLetters: daakLetters ?? this.daakLetters,
       loadingDaakLetters: loadingDaakLetters ?? this.loadingDaakLetters,
-      animated: backdropAnimated ?? this.animated,
+      animated: backdropAnimated ?? animated,
     );
   }
 }

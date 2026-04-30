@@ -192,7 +192,11 @@ abstract class SummariesInterface extends NetworkBase {
 
   Future<void> forwardToCM({required int summaryId, required int desgId});
 
-  Future<void> signAndReturnCM({required int summaryId, required int desgId});
+  Future<void> signAndReturnCM({
+    required int summaryId,
+    required int desgId,
+    required SignForwardModel payload,
+  });
 
 
 }

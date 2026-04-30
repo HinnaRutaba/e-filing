@@ -29,6 +29,7 @@ final class TypedSignForwardModel extends SignForwardModel {
       'target_department_id': targetDepartmentId,
       'target_user_desg_id': targetUserDesgId,
       'remarks': remarks,
+      'body': remarks,
       'secretary_signature_path': secretarySignaturePath,
       'handwritten_mode': 'type',
     };
@@ -60,6 +61,7 @@ final class HandwrittenSignForwardModel extends SignForwardModel {
       'target_department_id': targetDepartmentId,
       'target_user_desg_id': targetUserDesgId,
       'remarks': '',
+      'body': '',
       'secretary_signature_path': secretarySignaturePath,
       'handwritten_mode': 'write',
       'handwritten_strokes_json': handwrittenStrokesJson,

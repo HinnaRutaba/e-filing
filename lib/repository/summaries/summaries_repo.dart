@@ -514,12 +514,13 @@ class SummariesRepo extends SummariesInterface {
   Future<void> signAndReturnCM({
     required int summaryId,
     required int desgId,
+    required SignForwardModel payload,
   }) async {
     try {
       await dioClient.post(
         url: cmSignAndReturnUrl(summaryId),
         options: await options(authRequired: true),
-        data: {'userDesgID': desgId},
+        data: payload.toJson(desgId),
       );
     } catch (e) {
       rethrow;
