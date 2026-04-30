@@ -82,13 +82,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ),
         Positioned.fill(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 140),
-            child: Lottie.asset(
-              AssetsConstants.loginBgAnimated,
-              fit: BoxFit.contain,
-              repeat: true,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          child: RepaintBoundary(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 140),
+              child: Lottie.asset(
+                AssetsConstants.loginBgAnimated,
+                fit: BoxFit.contain,
+                repeat: true,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
             ),
           ),
         ),
@@ -347,13 +349,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AppText.titleSmall("Powered By", color: Colors.white),
+              AppText.titleSmall("Powered By", color: Colors.white70),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.white38,
+                  color: Colors.white,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -399,7 +401,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.50),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
