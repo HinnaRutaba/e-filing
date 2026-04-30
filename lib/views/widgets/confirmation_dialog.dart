@@ -80,7 +80,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(28.0),
           child: Column(
@@ -119,7 +119,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog>
               AppText.bodyMedium(
                 widget.message,
                 textAlign: TextAlign.center,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 28),
               Row(

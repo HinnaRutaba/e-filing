@@ -58,6 +58,9 @@ class _HtmlEditorState extends State<HtmlEditor> {
         initialText: widget.initialHtml,
         shouldEnsureVisible: false,
         darkMode: isDark,
+        spellCheck: true,
+        autoAdjustHeight: true,
+        adjustHeightForKeyboard: true,
       ),
 
       htmlToolbarOptions: he.HtmlToolbarOptions(
@@ -80,6 +83,12 @@ class _HtmlEditorState extends State<HtmlEditor> {
         decoration: const BoxDecoration(),
       ),
       callbacks: he.Callbacks(
+        onInit: () {
+          _controller.editorController?.evaluateJavascript(
+            source:
+                "document.querySelector('.note-editable')?.setAttribute('spellcheck','true');",
+          );
+        },
         onChangeContent: (content) {
           if (content != null) widget.onChanged?.call(content);
         },
