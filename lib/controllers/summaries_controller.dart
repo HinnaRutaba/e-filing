@@ -16,6 +16,7 @@ import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -724,6 +725,26 @@ class SummariesController extends BaseControllerState<SummariesState> {
     } catch (e, s) {
       log('uploadVoiceNote error: $e\n$s');
       return false;
+    }
+  }
+
+  Future<List<SummaryVoiceNoteModel>> listVoiceNotes({
+    required int? summaryId,
+    required VoiceNoteVisibility visibility,
+  }) async {
+    try {
+      List<SummaryVoiceNoteModel> voiceNotes = [];
+      if (summaryId == null) return [];
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return [];
+      voiceNotes = await repo.listVoiceNotes(
+        summaryId: summaryId,
+        desgId: desId,
+      );
+      return voiceNotes.where((note) => note.visibility == visibility).toList();
+    } catch (e, s) {
+      log('listVoiceNotes error: $e\n$s');
+      return [];
     }
   }
 }

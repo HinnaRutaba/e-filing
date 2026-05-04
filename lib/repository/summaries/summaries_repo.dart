@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
@@ -546,6 +547,32 @@ class SummariesRepo extends SummariesInterface {
         options: await options(authRequired: true),
         formData: formData,
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<SummaryVoiceNoteModel>> listVoiceNotes({
+    required int? summaryId,
+    required int? desgId,
+  }) async {
+    try {
+      if (summaryId == null || desgId == null) {
+        throw Exception(
+          "Summary ID and Designation ID are required to list voice notes",
+        );
+      }
+      Map<String, dynamic> data = await dioClient.get(
+        url: listVoiceNotesUrl(summaryId, desgId),
+        options: await options(authRequired: true),
+      );
+      if (data['data'] == null) {
+        return [];
+      }
+      return (data['data'] as List)
+          .map((e) => SummaryVoiceNoteModel.fromJson(e))
+          .toList();
     } catch (e) {
       rethrow;
     }

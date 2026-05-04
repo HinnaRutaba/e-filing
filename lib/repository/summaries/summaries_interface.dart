@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/models/summaries/create_summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
 import 'package:efiling_balochistan/models/summaries/summaries_meta_model.dart';
 import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
@@ -215,5 +216,10 @@ abstract class SummariesInterface extends NetworkBase {
     required int summaryId,
     required int desgId,
     required VoiceNoteUploadModel model,
+  });
+
+  Future<List<SummaryVoiceNoteModel>> listVoiceNotes({
+    required int summaryId,
+    required int desgId,
   });
 }

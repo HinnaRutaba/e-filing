@@ -24,6 +24,7 @@ import 'package:efiling_balochistan/views/screens/summaries/components/attachmen
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_forward_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/voice_notes_section.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -1938,6 +1939,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       links: ref.read(summariesController).details?.localLinks ?? const [],
     );
 
+    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
+
     if (context.isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1947,6 +1950,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           movement,
           const SizedBox(height: 16),
           internal,
+          if (isPsToCm) ...[
+            // const SizedBox(height: 16),
+            const VoiceNotesSection(voiceNotes: []),
+          ],
         ],
       );
     }
@@ -1957,6 +1964,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _sidebarRow(files, movement),
         const SizedBox(height: 16),
         _sidebarRow(internal, const SizedBox.shrink()),
+        if (isPsToCm) ...[
+          const SizedBox(height: 16),
+          VoiceNotesSection(voiceNotes: const []),
+        ],
       ],
     );
   }
