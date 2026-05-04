@@ -174,7 +174,7 @@ class SignaturePad extends StatefulWidget {
     this.pens = kDefaultSignaturePens,
     this.colors = kDefaultSignatureColors,
     this.initialPenColor = const Color(0xFF0D2C6B),
-    this.initialPenIndex = 0,
+    this.initialPenIndex = 2,
     this.canvasHeight,
     this.canvasColor = AppColors.cardColorLight,
     this.onChanged,

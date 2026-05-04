@@ -38,7 +38,8 @@ enum ActiveUserDesgRole {
   deo('deo', 2),
   keeper('keeper', 3),
   cm('cm', 4),
-  secretary('secretary', 5);
+  secretary('secretary', 5),
+  pstocm('pstocm', 6);
 
   final String label;
   final int value;
