@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
@@ -15,6 +16,7 @@ import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -587,10 +589,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
     try {
       EasyLoading.show();
       final desId = ref.read(authController).currentDesignation?.userDesgId;
-      await repo.psToSectForward(
-        summaryId: summaryId!,
-        desgId: desId!,
-      );
+      await repo.psToSectForward(summaryId: summaryId!, desgId: desId!);
       Toast.success(message: 'Summary forwarded to section');
       await loadData(isInitialLoad: false);
       EasyLoading.dismiss();
@@ -693,6 +692,37 @@ class SummariesController extends BaseControllerState<SummariesState> {
       EasyLoading.dismiss();
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
+  Future<bool> uploadVoiceNote({
+    required int? summaryId,
+    required String filePath,
+    required int durationSec,
+    required VoiceNoteVisibility visibility,
+    VoiceNoteContext? context,
+  }) async {
+    try {
+      if (summaryId == null) return false;
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return false;
+      final bytes = await File(filePath).readAsBytes();
+      final filename = filePath.split('/').last;
+      await repo.uploadVoiceNote(
+        summaryId: summaryId,
+        desgId: desId,
+        model: VoiceNoteUploadModel(
+          audioBytes: bytes,
+          audioFilename: filename,
+          visibility: visibility,
+          durationSec: durationSec,
+          context: context,
+        ),
+      );
+      return true;
+    } catch (e, s) {
+      log('uploadVoiceNote error: $e\n$s');
       return false;
     }
   }

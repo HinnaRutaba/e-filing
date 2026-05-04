@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -40,6 +39,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
+import 'package:efiling_balochistan/views/widgets/voice_note_recorder.dart';
+import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 
 enum SummaryAction {
   returnToSection(
@@ -138,6 +139,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   int? _officerCacheDeptId;
   List<DepartmentSecretariesModel> _officerCache = const [];
   Uint8List? _cardSignatureBytes;
+
+  String? _shareVoiceNotePath;
+  int _shareVoiceNoteDurationSec = 0;
+
+  String? _cmVoiceNotePath;
+  int _cmVoiceNoteDurationSec = 0;
 
   Future<void> _fetchOfficersForCurrentDept() async {
     final deptId = _selectedDestDept?.id;
@@ -512,6 +519,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       if (!mounted) return;
 
       if (success) {
+        final voicePath = _shareVoiceNotePath;
+        final voiceDur = _shareVoiceNoteDurationSec;
+        if (voicePath != null && voiceDur > 0) {
+          await notifier.uploadVoiceNote(
+            summaryId: summaryId,
+            filePath: voicePath,
+            durationSec: voiceDur,
+            visibility: VoiceNoteVisibility.internal,
+            context: VoiceNoteContext.shareInternal,
+          );
+          _shareVoiceNotePath = null;
+          _shareVoiceNoteDurationSec = 0;
+        }
         _shareTargets.clear();
         _shareSearchController.clear();
       }
@@ -533,6 +553,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() => _loadingAction = true);
       success = await notifier.forwardToCM(summaryId: summaryId);
       if (!mounted) return;
+      if (success) {
+        final voicePath = _cmVoiceNotePath;
+        final voiceDur = _cmVoiceNoteDurationSec;
+        if (voicePath != null && voiceDur > 0) {
+          await notifier.uploadVoiceNote(
+            summaryId: summaryId,
+            filePath: voicePath,
+            durationSec: voiceDur,
+            visibility: VoiceNoteVisibility.cm,
+            context: VoiceNoteContext.forwardToCM,
+          );
+          _cmVoiceNotePath = null;
+          _cmVoiceNoteDurationSec = 0;
+        }
+      }
       setState(() => _loadingAction = false);
     }
 
@@ -830,7 +865,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                   else if (action == SummaryAction.disposedOff)
                     _disposedOffBody()
                   else if (action == SummaryAction.forwardToCM)
-                    const SizedBox.shrink()
+                    _forwardToCMBody()
                   else
                     AppTextField(
                       controller: _remarksController,
@@ -1037,6 +1072,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           hintText: '',
           maxLines: 4,
         ),
+        if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm) ...[
+          const SizedBox(height: 12),
+          VoiceNoteRecorder(
+            onVoiceNoteReady: (path, dur) {
+              _shareVoiceNotePath = path;
+              _shareVoiceNoteDurationSec = dur;
+            },
+            onVoiceNoteCleared: () {
+              _shareVoiceNotePath = null;
+              _shareVoiceNoteDurationSec = 0;
+            },
+          ),
+        ],
       ],
     );
   }
@@ -1140,6 +1188,145 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           labelText: 'Closing Remarks (Optional)',
           hintText: 'Add any closing remarks…',
           maxLines: 4,
+        ),
+      ],
+    );
+  }
+
+  Widget _forwardToCMBody() {
+    const cmColor = Color(0xFF1565C0);
+    const cmColorLight = Color(0xFFE8EAF6);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Info card
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          decoration: BoxDecoration(
+            color: cmColorLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cmColor.withValues(alpha: 0.25)),
+          ),
+          child: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.55,
+                color: Color(0xFF1A237E),
+              ),
+              children: [
+                TextSpan(text: 'You are about to forward this summary to the '),
+                TextSpan(
+                  text: 'Chief Minister',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(text: ' for approval.\n\n'),
+                TextSpan(
+                  text: 'Your signature will not appear on the summary. ',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text:
+                      'Only the Chief Minister signs and adds remarks at this stage. '
+                      'Any briefs added by you or your staff will be visible to the '
+                      'Chief Minister but will not leave the department.\n\n',
+                ),
+                TextSpan(
+                  text:
+                      'After the Chief Minister signs, the summary will return to your '
+                      'inbox so you can forward it onward.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Voice note card
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          decoration: BoxDecoration(
+            color: cmColorLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cmColor.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.mic_rounded, size: 16, color: cmColor),
+                  const SizedBox(width: 6),
+                  const Expanded(
+                    child: Text(
+                      'Voice note for Chief Minister (optional)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: cmColor,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cmColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _cmVoiceNotePath != null ? 'Recorded' : 'Idle',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: cmColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 13,
+                    color: Color(0xFF3949AB),
+                  ),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Record a short voice note that only the Chief Minister will hear before signing. Max 5 minutes.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF3949AB),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              VoiceNoteRecorder(
+                onVoiceNoteReady: (path, dur) {
+                  setState(() {
+                    _cmVoiceNotePath = path;
+                    _cmVoiceNoteDurationSec = dur;
+                  });
+                },
+                onVoiceNoteCleared: () {
+                  setState(() {
+                    _cmVoiceNotePath = null;
+                    _cmVoiceNoteDurationSec = 0;
+                  });
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
