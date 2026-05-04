@@ -65,7 +65,7 @@ class AppRouter {
     GoRoute(
       path: Routes.dashboard,
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 800.ms),
+        settings: GoTransitionSettings(duration: 400.ms),
         builder: (context, state) => const DashboardScreen(),
       ),
     ),

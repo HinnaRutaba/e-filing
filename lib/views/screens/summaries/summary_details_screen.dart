@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -76,6 +77,12 @@ enum SummaryAction {
     icon: Icons.archive_outlined,
     color: Colors.teal,
     filled: false,
+  ),
+  forwardToCM(
+    label: 'Forward to Chief Minister',
+    icon: Icons.account_balance_rounded,
+    color: Color(0xFF1565C0),
+    filled: true,
   );
 
   final String label;
@@ -522,6 +529,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       );
       if (!mounted) return;
       setState(() => _loadingAction = false);
+    } else if (action == SummaryAction.forwardToCM) {
+      setState(() => _loadingAction = true);
+      success = await notifier.forwardToCM(summaryId: summaryId);
+      if (!mounted) return;
+      setState(() => _loadingAction = false);
     }
 
     if (!mounted) return;
@@ -611,6 +623,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.signForward,
+        if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm)
+          SummaryAction.forwardToCM,
         if (showDisposedOff) SummaryAction.disposedOff,
       ];
     } else {
@@ -631,6 +645,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             Expanded(child: buttons[i]),
           ],
         ],
+      );
+    }
+    // Mobile: if exactly 3 buttons, first two share a row, third spans full width.
+    if (buttons.length == 3) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final halfWidth = (constraints.maxWidth - 10) / 2;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  SizedBox(width: halfWidth, child: buttons[0]),
+                  const SizedBox(width: 10),
+                  SizedBox(width: halfWidth, child: buttons[1]),
+                ],
+              ),
+              const SizedBox(height: 10),
+              buttons[2],
+            ],
+          );
+        },
       );
     }
     return LayoutBuilder(
@@ -793,6 +829,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     const SizedBox.shrink()
                   else if (action == SummaryAction.disposedOff)
                     _disposedOffBody()
+                  else if (action == SummaryAction.forwardToCM)
+                    const SizedBox.shrink()
                   else
                     AppTextField(
                       controller: _remarksController,
