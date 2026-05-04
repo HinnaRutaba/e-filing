@@ -203,6 +203,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
 
+    if (activeUser?.roleEnum != ActiveUserDesgRole.cm &&
+        details?.summary?.summaryStatus ==
+            SummaryStatus.withChiefMinisterForApproval) {
+      return false;
+    }
+
     if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
       return false;
     }
