@@ -1940,6 +1940,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
 
     final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
+    final isCm = userDesg?.roleEnum == ActiveUserDesgRole.cm;
 
     if (context.isMobile) {
       return Column(
@@ -1952,7 +1953,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           internal,
           if (isPsToCm) ...[
             // const SizedBox(height: 16),
-            const VoiceNotesSection(voiceNotes: []),
+            VoiceNotesSection(
+              summaryId: widget.summary?.id,
+              visibility: isCm
+                  ? VoiceNoteVisibility.cm
+                  : VoiceNoteVisibility.internal,
+            ),
           ],
         ],
       );
@@ -1966,7 +1972,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _sidebarRow(internal, const SizedBox.shrink()),
         if (isPsToCm) ...[
           const SizedBox(height: 16),
-          VoiceNotesSection(voiceNotes: const []),
+          VoiceNotesSection(
+            summaryId: widget.summary?.id,
+            visibility: isCm
+                ? VoiceNoteVisibility.cm
+                : VoiceNoteVisibility.internal,
+          ),
         ],
       ],
     );

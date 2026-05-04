@@ -747,4 +747,24 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return [];
     }
   }
+
+  Future<bool> deleteVoiceNote({
+    required int? summaryId,
+    required int voiceNoteId,
+  }) async {
+    try {
+      if (summaryId == null) return false;
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return false;
+      await repo.deleteVoiceNote(
+        summaryId: summaryId,
+        voiceNoteId: voiceNoteId,
+        desgId: desId,
+      );
+      return true;
+    } catch (e, s) {
+      log('deleteVoiceNote error: $e\n$s');
+      return false;
+    }
+  }
 }

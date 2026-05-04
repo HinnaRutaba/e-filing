@@ -105,6 +105,13 @@ abstract class SummariesInterface extends NetworkBase {
   }) =>
       '${baseUrl}summaries/$summaryId/voice-notes/$voiceNoteId/stream?userDesgID=$desgId';
 
+  String deleteVoiceNoteUrl({
+    required int summaryId,
+    required int voiceNoteId,
+    required int desgId,
+  }) =>
+      '${baseUrl}summaries/$summaryId/voice-notes/$voiceNoteId?userDesgID=$desgId';
+
   //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
@@ -222,4 +229,10 @@ abstract class SummariesInterface extends NetworkBase {
     required int summaryId,
     required int desgId,
   });
+
+  Future<void> deleteVoiceNote({
+    required int summaryId,
+    required int voiceNoteId,
+    required int desgId,
+  }); 
 }

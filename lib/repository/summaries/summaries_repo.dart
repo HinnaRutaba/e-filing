@@ -577,6 +577,32 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<void> deleteVoiceNote({
+    required int? summaryId,
+    required int? voiceNoteId,
+    required int? desgId,
+  }) async {
+    try {
+      if (summaryId == null || voiceNoteId == null || desgId == null) {
+        throw Exception(
+          "Summary ID, Voice Note ID and Designation ID are required to delete voice note",
+        );
+      }
+
+      await dioClient.delete(
+        url: deleteVoiceNoteUrl(
+          summaryId: summaryId,
+          voiceNoteId: voiceNoteId,
+          desgId: desgId,
+        ),
+        options: await options(authRequired: true),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 DioMediaType _audioMediaType(String filename) {
