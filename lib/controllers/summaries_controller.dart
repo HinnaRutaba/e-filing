@@ -41,6 +41,8 @@ enum SummarySubTab {
   disposal,
   sentOut,
   sharedInternally,
+  cmReturned,
+  withCm,
 }
 
 class SummaryTabConfig {
@@ -58,10 +60,10 @@ extension SummarySubTabX on SummarySubTab {
   SummaryTabConfig configFor(ActiveUserDesgRole? role) {
     switch (this) {
       case SummarySubTab.inbox:
-        return const SummaryTabConfig(
+        return SummaryTabConfig(
           label: 'Inbox',
           parent: SummaryMainTab.actionRequired,
-          filterName: 'inbox',
+          filterName: role == ActiveUserDesgRole.pstocm ? 'ps_inbox' : 'inbox',
         );
       case SummarySubTab.sharedToMe:
         return const SummaryTabConfig(
@@ -93,12 +95,35 @@ extension SummarySubTabX on SummarySubTab {
           parent: SummaryMainTab.sentTracked,
           filterName: 'internal_forwarded',
         );
+      case SummarySubTab.cmReturned:
+        return const SummaryTabConfig(
+          label: 'CM Returned',
+          parent: SummaryMainTab.actionRequired,
+          filterName: 'cm_returned',
+        );
+      case SummarySubTab.withCm:
+        return const SummaryTabConfig(
+          label: 'With CM',
+          parent: SummaryMainTab.sentTracked,
+          filterName: 'with_cm',
+        );
     }
   }
 }
 
 List<SummarySubTab> subTabsForRole(ActiveUserDesgRole? role) {
-  return SummarySubTab.values;
+  const base = [
+    SummarySubTab.inbox,
+    SummarySubTab.sharedToMe,
+    SummarySubTab.drafts,
+    SummarySubTab.disposal,
+    SummarySubTab.sentOut,
+    SummarySubTab.sharedInternally,
+  ];
+  if (role == ActiveUserDesgRole.pstocm) {
+    return [...base, SummarySubTab.cmReturned, SummarySubTab.withCm];
+  }
+  return base;
 }
 
 class SummariesState {

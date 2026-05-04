@@ -111,6 +111,10 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
         return 'Summaries you have already dispatched.';
       case SummarySubTab.sharedInternally:
         return 'Summaries shared internally within your section.';
+      case SummarySubTab.cmReturned:
+        return 'Summaries returned to you by the Chief Minister.';
+      case SummarySubTab.withCm:
+        return 'Summaries currently with the Chief Minister.';
     }
   }
 

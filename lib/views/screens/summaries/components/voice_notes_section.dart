@@ -1,4 +1,6 @@
 import 'package:audioplayers/audioplayers.dart' as ap;
+import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/views/widgets/audio_player/audio_waved_player.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
@@ -13,7 +15,11 @@ class VoiceNotesSection extends ConsumerStatefulWidget {
   final int? summaryId;
   final VoiceNoteVisibility visibility;
 
-  const VoiceNotesSection({super.key, required this.summaryId, required this.visibility});
+  const VoiceNotesSection({
+    super.key,
+    required this.summaryId,
+    required this.visibility,
+  });
 
   @override
   ConsumerState<VoiceNotesSection> createState() => _VoiceNotesSectionState();
@@ -24,67 +30,26 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
   bool _loading = false;
   List<SummaryVoiceNoteModel> _voiceNotes = const [];
 
-  final ap.AudioPlayer _player = ap.AudioPlayer();
-  int? _playingId;
-  bool _isPlaying = false;
-  int _playedSeconds = 0;
-
   @override
   void initState() {
     super.initState();
-    _player.onPlayerStateChanged.listen((state) {
-      if (!mounted) return;
-      setState(() => _isPlaying = state == ap.PlayerState.playing);
-    });
-    _player.onPositionChanged.listen((pos) {
-      if (!mounted) return;
-      setState(() => _playedSeconds = pos.inSeconds);
-    });
-    _player.onPlayerComplete.listen((_) {
-      if (!mounted) return;
-      setState(() {
-        _isPlaying = false;
-        _playedSeconds = 0;
-        _playingId = null;
-      });
-    });
     _fetch();
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
   }
 
   Future<void> _fetch() async {
     setState(() => _loading = true);
     final notes = await ref
         .read(summariesController.notifier)
-        .listVoiceNotes(summaryId: widget.summaryId, visibility: widget.visibility);
+        .listVoiceNotes(
+          summaryId: widget.summaryId,
+          visibility: widget.visibility,
+        );
     if (mounted) {
       setState(() {
         _voiceNotes = notes;
         _loading = false;
       });
     }
-  }
-
-  Future<void> _togglePlay(SummaryVoiceNoteModel note) async {
-    if (_playingId == note.id && _isPlaying) {
-      await _player.pause();
-      return;
-    }
-    if (_playingId == note.id && !_isPlaying) {
-      await _player.resume();
-      return;
-    }
-    await _player.stop();
-    setState(() {
-      _playingId = note.id;
-      _playedSeconds = 0;
-    });
-    await _player.play(ap.UrlSource(note.streamUrl));
   }
 
   Future<void> _delete(SummaryVoiceNoteModel note) async {
@@ -106,26 +71,14 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
       ),
     );
     if (confirmed != true) return;
-    if (_playingId == note.id) {
-      await _player.stop();
-      setState(() {
-        _playingId = null;
-        _isPlaying = false;
-        _playedSeconds = 0;
-      });
-    }
     final ok = await ref
         .read(summariesController.notifier)
         .deleteVoiceNote(summaryId: widget.summaryId, voiceNoteId: note.id);
     if (ok && mounted) {
-      setState(() => _voiceNotes = _voiceNotes.where((n) => n.id != note.id).toList());
+      setState(
+        () => _voiceNotes = _voiceNotes.where((n) => n.id != note.id).toList(),
+      );
     }
-  }
-
-  String _fmt(int sec) {
-    final m = sec ~/ 60;
-    final s = sec % 60;
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -163,8 +116,18 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                   if (i > 0) const SizedBox(height: 8),
                   _voiceNoteTile(context, _voiceNotes[i])
                       .animate()
-                      .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
-                      .slideX(begin: -0.15, end: 0, delay: (80 * i).ms, duration: 350.ms, curve: Curves.easeOutCubic),
+                      .fadeIn(
+                        delay: (80 * i).ms,
+                        duration: 300.ms,
+                        curve: Curves.easeOut,
+                      )
+                      .slideX(
+                        begin: -0.15,
+                        end: 0,
+                        delay: (80 * i).ms,
+                        duration: 350.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
                 ],
               ],
             ),
@@ -178,7 +141,9 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
       decoration: BoxDecoration(
         color: appColors.primaryDark.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: appColors.primaryDark.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: appColors.primaryDark.withValues(alpha: 0.25),
+        ),
       ),
       child: AppText.bodySmall(
         '$count note${count == 1 ? '' : 's'}',
@@ -192,49 +157,31 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
   Widget _voiceNoteTile(BuildContext context, SummaryVoiceNoteModel note) {
     final appColors = context.appColors;
     final isCm = note.visibility == VoiceNoteVisibility.cm;
-    final visibilityColor = isCm ? appColors.primaryDark : appColors.secondaryLight;
+    final visibilityColor = isCm
+        ? appColors.primaryDark
+        : appColors.secondaryLight;
     final visibilityLabel = isCm ? 'CM' : 'Internal';
-    final isThisPlaying = _playingId == note.id && _isPlaying;
-    final isThisActive = _playingId == note.id;
-    final displayedSec = isThisActive ? _playedSeconds : 0;
-    final totalSec = note.durationSec;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: appColors.cardColorLight,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: appColors.secondaryLight.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: appColors.secondaryLight.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: () => _togglePlay(note),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: appColors.primaryDark.withValues(alpha: isThisActive ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: appColors.primaryDark.withValues(alpha: 0.25)),
-                  ),
-                  child: Icon(
-                    isThisPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    size: 20,
-                    color: appColors.primaryDark,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: AppText.bodySmall(
@@ -250,22 +197,16 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                         _chip(context, visibilityLabel, visibilityColor),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time_rounded, size: 12, color: appColors.textSecondary),
-                        const SizedBox(width: 4),
-                        AppText.labelSmall(
-                          isThisActive
-                              ? '${_fmt(displayedSec)} / ${note.formattedDuration}'
-                              : note.formattedDuration,
-                          color: appColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        if (note.uploadedAt != null) ...[
-                          const SizedBox(width: 10),
-                          Icon(Icons.calendar_month, size: 12, color: appColors.textSecondary),
+                    if (note.uploadedAt != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_month,
+                            size: 12,
+                            color: appColors.textSecondary,
+                          ),
                           const SizedBox(width: 4),
                           AppText.labelSmall(
                             DateTimeHelper.datFormatSlash(note.uploadedAt!),
@@ -273,8 +214,8 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                             fontSize: 11,
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -288,25 +229,37 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.25),
+                    ),
                   ),
-                  child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red.shade400),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red.shade400,
+                  ),
                 ),
               ),
             ],
           ),
-          if (isThisActive && totalSec > 0) ...[
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: displayedSec / totalSec,
-                minHeight: 3,
-                backgroundColor: appColors.primaryDark.withValues(alpha: 0.12),
-                valueColor: AlwaysStoppedAnimation<Color>(appColors.primaryDark),
-              ),
+          const SizedBox(height: 10),
+          WavedAudioPlayer(
+            source: ap.UrlSource(note.streamUrl, mimeType: 'audio/x-wav'),
+            iconColor: AppColors.white,
+            iconBackgoundColor: appColors.primaryDark,
+            playedColor: appColors.primaryDark,
+            unplayedColor: appColors.primaryDark.withValues(alpha: 0.2),
+            waveWidth: double.infinity,
+            barWidth: 3,
+            buttonSize: 36,
+            showTiming: true,
+            timingStyle: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: appColors.textSecondary,
             ),
-          ],
+            onError: (_) {},
+          ),
         ],
       ),
     );
@@ -342,7 +295,9 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: appColors.secondaryLight.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: appColors.secondaryLight.withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
             color: appColors.shadow.withValues(alpha: 0.08),
