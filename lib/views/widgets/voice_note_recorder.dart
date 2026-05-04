@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/services/record_audio_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
 
 enum _RecorderState { idle, recording, recorded }
 
@@ -70,7 +71,7 @@ class _VoiceNoteRecorderState extends State<VoiceNoteRecorder> {
 
   Future<void> _startRecording() async {
     try {
-      await _recordService.startRecordingToFile();
+      await _recordService.startRecordingToFile(encoder: AudioEncoder.wav);
       _recorderController.record();
       _elapsedSeconds = 0;
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {

@@ -538,6 +538,7 @@ class SummariesRepo extends SummariesInterface {
         'audio': MultipartFile.fromBytes(
           model.audioBytes,
           filename: model.audioFilename,
+          contentType: _audioMediaType(model.audioFilename),
         ),
       });
       await dioClient.post(
@@ -549,4 +550,20 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+}
+
+DioMediaType _audioMediaType(String filename) {
+  final ext = filename.split('.').last.toLowerCase();
+  return switch (ext) {
+    'm4a' => DioMediaType('audio', 'mp4'),
+    'mp3' => DioMediaType('audio', 'mpeg'),
+    'wav' => DioMediaType('audio', 'wav'),
+    'ogg' || 'oga' => DioMediaType('audio', 'ogg'),
+    'opus' => DioMediaType('audio', 'opus'),
+    'webm' || 'weba' => DioMediaType('audio', 'webm'),
+    'aac' => DioMediaType('audio', 'aac'),
+    'amr' => DioMediaType('audio', 'amr'),
+    'flac' => DioMediaType('audio', 'flac'),
+    _ => DioMediaType('audio', 'mp4'),
+  };
 }
