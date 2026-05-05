@@ -1930,6 +1930,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       onEditRemarks: () => _onActionTap(SummaryAction.editRemarks),
       onAcceptRemarks: _onAcceptDraftedRemarks,
       showSignPad:
+          actionsAvailable &&
           !showHandWrittedRemarksSection &&
           userDesg?.roleEnum != ActiveUserDesgRole.deo &&
           !isPsToCmCmReturned,
@@ -2104,21 +2105,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       );
     }
 
+    final voiceNotes = (isPsToCm || isCm)
+        ? VoiceNotesSection(
+            summaryId: widget.summary?.id,
+            visibility: isCm
+                ? VoiceNoteVisibility.cm
+                : VoiceNoteVisibility.internal,
+          )
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sidebarRow(files, movement),
         const SizedBox(height: 16),
-        _sidebarRow(internal, const SizedBox.shrink()),
-        if (isPsToCm || isCm) ...[
-          const SizedBox(height: 16),
-          VoiceNotesSection(
-            summaryId: widget.summary?.id,
-            visibility: isCm
-                ? VoiceNoteVisibility.cm
-                : VoiceNoteVisibility.internal,
-          ),
-        ],
+        _sidebarRow(internal, voiceNotes ?? const SizedBox.shrink()),
       ],
     );
   }
