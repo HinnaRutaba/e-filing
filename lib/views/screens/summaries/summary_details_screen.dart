@@ -2081,7 +2081,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
 
     final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
-    final isCm = userDesg?.roleEnum == ActiveUserDesgRole.cm;
 
     if (context.isMobile) {
       return Column(
@@ -2092,25 +2091,27 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           movement,
           const SizedBox(height: 16),
           internal,
-          if (isPsToCm || isCm) ...[
+          if (isPsToCm || isCM) ...[
             // const SizedBox(height: 16),
             VoiceNotesSection(
               summaryId: widget.summary?.id,
-              visibility: isCm
+              visibility: isCM
                   ? VoiceNoteVisibility.cm
                   : VoiceNoteVisibility.internal,
+              canDelete: !isCM,
             ),
           ],
         ],
       );
     }
 
-    final voiceNotes = (isPsToCm || isCm)
+    final voiceNotes = (isPsToCm || isCM)
         ? VoiceNotesSection(
             summaryId: widget.summary?.id,
-            visibility: isCm
+            visibility: isCM
                 ? VoiceNoteVisibility.cm
                 : VoiceNoteVisibility.internal,
+            canDelete: !isCM,
           )
         : null;
 

@@ -14,11 +14,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class VoiceNotesSection extends ConsumerStatefulWidget {
   final int? summaryId;
   final VoiceNoteVisibility visibility;
+  final bool canDelete;
 
   const VoiceNotesSection({
     super.key,
     required this.summaryId,
     required this.visibility,
+    this.canDelete = true,
   });
 
   @override
@@ -220,26 +222,27 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                 ),
               ),
               const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () => _delete(note),
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.25),
+              if (widget.canDelete)
+                GestureDetector(
+                  onTap: () => _delete(note),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: Colors.red.shade400,
                     ),
                   ),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 16,
-                    color: Colors.red.shade400,
-                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 10),
