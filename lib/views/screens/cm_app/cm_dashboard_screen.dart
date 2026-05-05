@@ -1,10 +1,9 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -30,18 +29,38 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const headerHeight = 148.0;
+    const headerHeight = 164.0;
+    const cardsOverlap = 80.0;
     final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
+    final bool isMobile = context.isMobile;
+    final statsCardTop = isMobile ? 104.0 : 132.0;
+
+    final Widget headerBackground = Positioned(
+      left: 0,
+      right: 0,
+      top: 0,
+      child: _buildHeader(context, headerHeight),
+    );
 
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Column(
           children: [
-            _buildHeader(context, dashboardState, headerHeight),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _buildStatsCard(context, dashboardState),
+            SizedBox(
+              height: headerHeight + cardsOverlap,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  headerBackground,
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    top: statsCardTop,
+                    child: _buildStatsCard(context, dashboardState),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -49,11 +68,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    CMDashboardModel dashboardState,
-    double headerHeight,
-  ) {
+  Widget _buildHeader(BuildContext context, double headerHeight) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
       child: SizedBox(
@@ -84,7 +99,10 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Column(
@@ -95,6 +113,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                           Expanded(
                             child: Text.rich(
                               const TextSpan(
+                                style: TextStyle(fontSize: 20),
                                 children: [
                                   TextSpan(
                                     text: 'Welcome, ',
@@ -126,7 +145,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                         children: [
                           Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
+                                  color: Colors.white.withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(100),
                                 ),
                                 padding: const EdgeInsets.all(10),
@@ -135,7 +154,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                                   children: [
                                     const Icon(
                                       Icons.summarize,
-                                      color: Colors.white,
+                                      color: AppColors.secondaryDark,
                                       size: 22,
                                     ),
                                     ClipRect(
@@ -144,7 +163,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                                         child: RichText(
                                           text: const TextSpan(
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: AppColors.secondaryDark,
                                               fontSize: 14,
                                             ),
                                             children: [
@@ -180,7 +199,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                                 child: Container(
                                   width: 20,
                                   height: 24,
-                                  color: Colors.white.withValues(alpha: 0.15),
+                                  color: Colors.white.withValues(alpha: 0.7),
                                 ),
                               )
                               .animate(delay: 300.ms)
@@ -199,13 +218,13 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: Colors.white.withValues(alpha: 0.7),
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                   padding: const EdgeInsets.all(8),
                                   child: AppText.titleSmall(
-                                    "View All >",
-                                    color: Colors.white,
+                                    "Open Pending Approvals",
+                                    color: AppColors.secondaryDark,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
