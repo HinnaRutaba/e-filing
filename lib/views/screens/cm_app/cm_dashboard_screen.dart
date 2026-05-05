@@ -9,6 +9,10 @@ import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_summaries_list_screen.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_awaiting_approval_section.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_department_distribution_section.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_recently_approved_section.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_top_departments_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
@@ -61,21 +65,30 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
           index: activeTab.index,
           children: [
             // Tab 0: Dashboard
-            Column(
-              children: [
-                SizedBox(
-                  height: headerHeight + cardsOverlap,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      headerBackground,
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        top: statsCardTop,
-                        child: _buildStatsCard(context, dashboardState),
-                      ),
-                    ],
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: headerHeight + cardsOverlap,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        headerBackground,
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          top: statsCardTop,
+                          child: _buildStatsCard(context, dashboardState),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildDashboardSections(
+                    context,
+                    dashboardState,
+                    isMobile,
                   ),
                 ),
               ],
@@ -344,6 +357,69 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
           if (i != cards.length - 1) const SizedBox(width: 12),
         ],
       ],
+    );
+  }
+
+  Widget _buildDashboardSections(
+    BuildContext context,
+    CMDashboardModel state,
+    bool isMobile,
+  ) {
+    final awaitingSection = CMAwaitingApprovalSection(state: state);
+    final deptSection = CMDepartmentDistributionSection(state: state);
+    final recentSection = CMRecentlyApprovedSection(state: state);
+    final topDeptsSection = CMTopDepartmentsSection(state: state);
+
+    // Bottom padding accounts for the floating bottom nav bar
+    const bottomPadding = SizedBox(height: 100);
+
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Column(
+          children: [
+            awaitingSection,
+            const SizedBox(height: 16),
+            recentSection,
+            const SizedBox(height: 16),
+            deptSection,
+            const SizedBox(height: 16),
+            topDeptsSection,
+            bottomPadding,
+          ],
+        ),
+      );
+    }
+
+    // Tablet / Desktop: two-column layout
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              children: [
+                awaitingSection,
+                const SizedBox(height: 16),
+                deptSection,
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                recentSection,
+                const SizedBox(height: 16),
+                topDeptsSection,
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
