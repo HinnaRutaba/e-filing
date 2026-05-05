@@ -718,6 +718,69 @@ class SummariesController extends BaseControllerState<SummariesState> {
     }
   }
 
+  /// Same as [signAndReturnCM] but does not pop the route.
+  /// Used by [CMApprovalDesk] which manages its own navigation after signing.
+  Future<bool> signAndReturnCMDesk({
+    required int? summaryId,
+    required Uint8List signatureBytes,
+    String? body,
+    String? handwrittenStrokesJson,
+    String? handwrittenPngBase64,
+    int? handwrittenWidth,
+    int? handwrittenHeight,
+    String? handwrittenPenColor,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+
+      final signatureBase64 =
+          'data:image/png;base64,${base64Encode(signatureBytes)}';
+      final signaturePath = await repo.saveSignForFwd(
+        summaryId: summaryId,
+        desId: desId,
+        signatureBase64: signatureBase64,
+      );
+      if (signaturePath == null) {
+        EasyLoading.dismiss();
+        return false;
+      }
+
+      final SignForwardModel payload;
+      if (handwrittenStrokesJson != null) {
+        payload = HandwrittenSignForwardModel(
+          targetDepartmentId: 0,
+          secretarySignaturePath: signaturePath,
+          handwrittenStrokesJson: handwrittenStrokesJson,
+          handwrittenPngBase64: handwrittenPngBase64 ?? '',
+          handwrittenWidth: handwrittenWidth ?? 0,
+          handwrittenHeight: handwrittenHeight ?? 0,
+          handwrittenPenColor: handwrittenPenColor ?? '#0D2C6B',
+        );
+      } else {
+        payload = TypedSignForwardModel(
+          targetDepartmentId: 0,
+          secretarySignaturePath: signaturePath,
+          remarks: body ?? '',
+        );
+      }
+
+      await repo.signAndReturnCM(
+        summaryId: summaryId!,
+        desgId: desId!,
+        payload: payload,
+      );
+
+      EasyLoading.dismiss();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('ERRR________${e}______$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
   Future<bool> disposeOffSummary({
     required int? summaryId,
     required String remarks,

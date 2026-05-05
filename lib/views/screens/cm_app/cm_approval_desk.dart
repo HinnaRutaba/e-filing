@@ -1,5 +1,11 @@
+import 'dart:convert';
+
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
@@ -26,21 +32,39 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
 
+  /// Local copy of the summaries list — managed independently so we can
+  /// remove items on success without waiting for a full controller re-fetch.
+  List<SummaryModel> _localSummaries = [];
+  bool _initialized = false;
+  bool _allCaughtUp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(summariesController.notifier).setSubTab(SummarySubTab.inbox);
+    });
+  }
+
   Future<void> _submitFromRemarksPanel() async {
+    // 1 – Validate remarks
+    final String typedRemarks;
     if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
-      final text = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      typedRemarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
       if (!mounted) return;
-      if (text.isEmpty) {
+      if (typedRemarks.isEmpty) {
         Toast.error(message: 'Please type your remarks before approving');
         return;
       }
     } else {
+      typedRemarks = '';
       if (_remarksPanelCtrl.isWrittenEmpty) {
         Toast.error(message: 'Please write your remarks before approving');
         return;
       }
     }
 
+    // 2 – Validate signature
     final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
@@ -48,54 +72,55 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
       return;
     }
 
-    // TODO: call the CM approve API with signatureBytes, remarks/strokes
-    Toast.success(message: 'Approved successfully');
+    final summaryId = _localSummaries[_currentPage].id;
+    final notifier = ref.read(summariesController.notifier);
+
+    bool success;
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+      final strokesJson = _remarksPanelCtrl.getStrokesJson();
+      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+      if (!mounted) return;
+      final handwrittenBase64 = handwrittenPng != null
+          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+          : '';
+      success = await notifier.signAndReturnCMDesk(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        handwrittenStrokesJson: strokesJson,
+        handwrittenPngBase64: handwrittenBase64,
+        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+      );
+    } else {
+      success = await notifier.signAndReturnCMDesk(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        body: typedRemarks,
+      );
+    }
+
+    if (!mounted) return;
+    if (!success) return;
+
+    Toast.success(message: 'Summary signed and returned successfully');
+
+    setState(() {
+      _localSummaries.removeAt(_currentPage);
+      if (_localSummaries.isEmpty) {
+        _allCaughtUp = true;
+      } else if (_currentPage >= _localSummaries.length) {
+        // Was on the last page — stay on the new last
+        _currentPage = _localSummaries.length - 1;
+        _pageController.jumpToPage(_currentPage);
+      }
+      // Otherwise the PageView naturally shows the next summary at the same index
+    });
   }
 
-  final List<SummaryModel> _summaries = [
-    SummaryModel(
-      summaryNo: 'No. 01/CM/2026',
-      summaryDate: DateTime.now(),
-      originatingDepartment: 'Home Department',
-      subject: 'Sample Summary Subject One',
-      body:
-          '<p>This is a placeholder summary document content for item one.</p>',
-      currentHolder: 'Mr. Chief Minister',
-      currentHolderDesignation: 'Chief Minister',
-      currentDepartment: 'Chief Minister Secretariat',
-      draftTargetDepartment: 'Quetta',
-      updatedAt: DateTime.now(),
-    ),
-    SummaryModel(
-      summaryNo: 'No. 02/CM/2026',
-      summaryDate: DateTime.now(),
-      originatingDepartment: 'Finance Department',
-      subject: 'Sample Summary Subject Two',
-      body:
-          '<p>This is a placeholder summary document content for item two.</p>',
-      currentHolder: 'Mr. Chief Minister',
-      currentHolderDesignation: 'Chief Minister',
-      currentDepartment: 'Chief Minister Secretariat',
-      draftTargetDepartment: 'Quetta',
-      updatedAt: DateTime.now(),
-    ),
-    SummaryModel(
-      summaryNo: 'No. 03/CM/2026',
-      summaryDate: DateTime.now(),
-      originatingDepartment: 'Education Department',
-      subject: 'Sample Summary Subject Three',
-      body:
-          '<p>This is a placeholder summary document content for item three.</p>',
-      currentHolder: 'Mr. Chief Minister',
-      currentHolderDesignation: 'Chief Minister',
-      currentDepartment: 'Chief Minister Secretariat',
-      draftTargetDepartment: 'Quetta',
-      updatedAt: DateTime.now(),
-    ),
-  ];
-
   void _goNext() {
-    if (_currentPage < _summaries.length - 1) {
+    final total = _localSummaries.length;
+    if (_currentPage < total - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
@@ -128,8 +153,79 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
 
   @override
   Widget build(BuildContext context) {
+    final ctrlState = ref.watch(summariesController);
+    final isLoading = ctrlState.isLoading;
+
+    // Populate local list once the first fetch completes
+    ref.listen<SummariesState>(summariesController, (prev, next) {
+      if (!_initialized && !next.isLoading) {
+        setState(() {
+          _localSummaries = List.of(next.allSummaries);
+          _initialized = true;
+        });
+      }
+    });
+
     final bool canBack = _currentPage > 0;
     const bool canNext = true;
+
+    Widget body;
+    if (isLoading && !_initialized) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (_allCaughtUp || _localSummaries.isEmpty) {
+      body = Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle_outline_rounded,
+              size: 72,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 16),
+            AppText.headlineSmall("You're all caught up!"),
+            const SizedBox(height: 8),
+            AppText.bodyMedium(
+              'No summaries are pending your approval.',
+              color: AppColors.secondaryDark,
+            ),
+            const SizedBox(height: 16),
+            AppOutlineButton(
+              onPressed: () {
+                RouteHelper.push(Routes.cmDashboard);
+              },
+              text: "Open Dashboard",
+            ),
+          ],
+        ),
+      );
+    } else if (!_initialized) {
+      body = const Center(child: CircularProgressIndicator());
+    } else {
+      body = Padding(
+        padding: const EdgeInsets.only(bottom: 52.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: SummaryDeskPager(
+                summaries: _localSummaries,
+                pageController: _pageController,
+                onPageChanged: (i) => setState(() => _currentPage = i),
+                remarksPanelController: _remarksPanelCtrl,
+                mainScrollController: _mainScrollController,
+                bottomContent: _submitButton(),
+                initialRemarksMode: RemarksPanelMode.write,
+              ),
+            ),
+            _buildPager(
+              canBack: canBack,
+              canNext: canNext,
+              total: _localSummaries.length,
+            ),
+          ],
+        ),
+      );
+    }
 
     return GradientScaffold(
       child: SafeArea(
@@ -141,32 +237,17 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
               FloatingActionButtonLocation.centerDocked,
           extendBody: true,
           bottomNavigationBar: const CMBottomNavBar(),
-          body: Padding(
-            padding: const EdgeInsets.only(bottom: 40.0),
-            child: Column(
-              children: [
-                Expanded(
-                  child: SummaryDeskPager(
-                    summaries: _summaries,
-                    pageController: _pageController,
-                    onPageChanged: (i) => setState(() => _currentPage = i),
-                    remarksPanelController: _remarksPanelCtrl,
-                    mainScrollController: _mainScrollController,
-
-                    bottomContent: _submitButton(),
-                    initialRemarksMode: RemarksPanelMode.write,
-                  ),
-                ),
-                _buildPager(canBack: canBack, canNext: canNext),
-              ],
-            ),
-          ),
+          body: body,
         ),
       ),
     );
   }
 
-  Widget _buildPager({required bool canBack, required bool canNext}) {
+  Widget _buildPager({
+    required bool canBack,
+    required bool canNext,
+    required int total,
+  }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
       child: Row(
@@ -180,7 +261,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
           AppText.labelLarge(
-            '${_currentPage + 1} / ${_summaries.length}',
+            '${_currentPage + 1} / $total',
             color: context.appColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
@@ -198,24 +279,11 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
   }
 
   Widget _submitButton() {
-    return SizedBox(
+    return AppSolidButton(
+      onPressed: _submitFromRemarksPanel,
+      text: 'Sign and Return',
+      icon: Icons.check_rounded,
       width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: _submitFromRemarksPanel,
-        icon: const Icon(Icons.check_rounded, size: 18),
-        label: const Text(
-          'Approve & Sign',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      ),
     );
   }
 }
