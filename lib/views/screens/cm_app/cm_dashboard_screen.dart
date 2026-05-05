@@ -1,3 +1,5 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
@@ -232,7 +234,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                               .fadeIn(delay: 450.ms, duration: 150.ms),
                           InkWell(
                                 onTap: () {
-                                  //RouteHelper.push(Routes.summaries);
+                                  RouteHelper.push(Routes.cmSummaries);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(

@@ -16,7 +16,6 @@ class SummaryDeskPager extends StatelessWidget {
     required this.remarksPanelController,
     required this.mainScrollController,
     required this.bottomContent,
-    this.remarksPanelKey,
     this.panelWidthFactor = 0.8,
     this.tagsAlignment = const Alignment(0.0, -0.5),
     this.initialRemarksMode = RemarksPanelMode.type,
@@ -28,7 +27,6 @@ class SummaryDeskPager extends StatelessWidget {
   final RemarksSignPanelController remarksPanelController;
   final ScrollController mainScrollController;
   final Widget bottomContent;
-  final GlobalKey? remarksPanelKey;
   final double panelWidthFactor;
   final Alignment tagsAlignment;
   final RemarksPanelMode initialRemarksMode;
@@ -42,6 +40,7 @@ class SummaryDeskPager extends StatelessWidget {
       onPageChanged: onPageChanged,
       itemBuilder: (_, i) {
         final summary = summaries[i];
+        final pageKey = PageStorageKey<int>(i);
         return StickyTagDrawer(
           panelWidth: MediaQuery.sizeOf(context).width * panelWidthFactor,
           tagsAlignment: tagsAlignment,
@@ -57,7 +56,7 @@ class SummaryDeskPager extends StatelessWidget {
                 children: [
                   SummaryDocumentCard(summary: summary, remarkTrack: const []),
                   RemarksSignPanel(
-                    key: remarksPanelKey,
+                    key: pageKey,
                     controller: remarksPanelController,
                     scrollController: mainScrollController,
                     initialMode: initialRemarksMode,

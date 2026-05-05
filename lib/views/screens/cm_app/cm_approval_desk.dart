@@ -2,27 +2,29 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_desk_pager.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyWidget extends ConsumerStatefulWidget {
-  const MyWidget({super.key});
+class CMApprovalDesk extends ConsumerStatefulWidget {
+  const CMApprovalDesk({super.key});
 
   @override
-  ConsumerState<MyWidget> createState() => _MyWidgetState();
+  ConsumerState<CMApprovalDesk> createState() => _CMApprovalDeskState();
 }
 
-class _MyWidgetState extends ConsumerState<MyWidget> {
+class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final RemarksSignPanelController _remarksPanelCtrl =
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
-  final GlobalKey _remarksPanelKey = GlobalKey();
 
   Future<void> _submitFromRemarksPanel() async {
     if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
@@ -130,24 +132,35 @@ class _MyWidgetState extends ConsumerState<MyWidget> {
     const bool canNext = true;
 
     return GradientScaffold(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Column(
-          children: [
-            Expanded(
-              child: SummaryDeskPager(
-                summaries: _summaries,
-                pageController: _pageController,
-                onPageChanged: (i) => setState(() => _currentPage = i),
-                remarksPanelController: _remarksPanelCtrl,
-                mainScrollController: _mainScrollController,
-                remarksPanelKey: _remarksPanelKey,
-                bottomContent: _submitButton(),
-                initialRemarksMode: RemarksPanelMode.write,
-              ),
+      child: SafeArea(
+        bottom: false,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          floatingActionButton: const CMPendingApprovalsFAB(),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          extendBody: true,
+          bottomNavigationBar: const CMBottomNavBar(),
+          body: Padding(
+            padding: const EdgeInsets.only(bottom: 40.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SummaryDeskPager(
+                    summaries: _summaries,
+                    pageController: _pageController,
+                    onPageChanged: (i) => setState(() => _currentPage = i),
+                    remarksPanelController: _remarksPanelCtrl,
+                    mainScrollController: _mainScrollController,
+
+                    bottomContent: _submitButton(),
+                    initialRemarksMode: RemarksPanelMode.write,
+                  ),
+                ),
+                _buildPager(canBack: canBack, canNext: canNext),
+              ],
             ),
-            _buildPager(canBack: canBack, canNext: canNext),
-          ],
+          ),
         ),
       ),
     );
@@ -159,70 +172,27 @@ class _MyWidgetState extends ConsumerState<MyWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _navButton(
+          AppOutlineButton(
+            onPressed: canBack ? _goBack : null,
+            text: 'Back',
             icon: Icons.arrow_back_rounded,
-            label: 'Back',
-            enabled: canBack,
-            onTap: _goBack,
+            color: AppColors.secondaryDark,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
           AppText.labelLarge(
             '${_currentPage + 1} / ${_summaries.length}',
             color: context.appColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
-          _navButton(
+          AppSolidButton(
+            onPressed: canNext ? _goNext : null,
+            text: 'Next',
             icon: Icons.arrow_forward_rounded,
-            label: 'Next',
-            enabled: canNext,
-            onTap: _goNext,
-            iconTrailing: true,
+            backgroundColor: AppColors.secondaryDark,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            width: null,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _navButton({
-    required IconData icon,
-    required String label,
-    required bool enabled,
-    required VoidCallback onTap,
-    bool iconTrailing = false,
-  }) {
-    final color = enabled
-        ? context.appColors.textPrimary
-        : context.appColors.textPrimary.withValues(alpha: 0.35);
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: enabled ? onTap : null,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!iconTrailing) ...[
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 6),
-              ],
-              AppText.labelLarge(
-                label,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-              if (iconTrailing) ...[
-                const SizedBox(width: 6),
-                Icon(icon, size: 16, color: color),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }

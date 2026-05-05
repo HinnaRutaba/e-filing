@@ -51,6 +51,8 @@ class CMBottomNavBar extends ConsumerWidget {
       onTap: (index) {
         final tab = CMNavTab.values[index];
         ref.read(cmNavController.notifier).select(tab);
+        if (index == 0) RouteHelper.push(Routes.cmDashboard);
+        if (index == 1) RouteHelper.push(Routes.cmSummaries);
       },
     );
   }
@@ -68,7 +70,7 @@ class CMPendingApprovalsFAB extends StatelessWidget {
       backgroundColor: color,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-      onPressed: () => RouteHelper.push(Routes.actionRequiredFiles),
+      onPressed: () => RouteHelper.push(Routes.cmApprovalDesk),
       child: const Icon(Icons.pending_actions, color: Colors.white, size: 28),
     );
   }
