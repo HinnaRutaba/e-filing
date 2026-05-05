@@ -38,12 +38,13 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const headerHeight = 164.0;
-    const cardsOverlap = 80.0;
+    final bool isMobile = context.isMobile;
+    final double headerHeight = isMobile ? 180.0 : 164.0;
+    final double cardsOverlap = isMobile ? 160.0 : 80.0;
     final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
     final CMNavTab activeTab = ref.watch(cmNavController);
-    final bool isMobile = context.isMobile;
-    final statsCardTop = isMobile ? 104.0 : 132.0;
+
+    final statsCardTop = isMobile ? 154.0 : 132.0;
 
     final Widget headerBackground = Positioned(
       left: 0,
@@ -176,75 +177,79 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                       ),
                       Row(
                         children: [
-                          Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.summarize,
-                                      color: AppColors.secondaryDark,
-                                      size: 22,
-                                    ),
-                                    ClipRect(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: RichText(
-                                          text: const TextSpan(
-                                            style: TextStyle(
-                                              color: AppColors.secondaryDark,
-                                              fontSize: 14,
-                                            ),
-                                            children: [
-                                              TextSpan(text: 'You have '),
-                                              TextSpan(
-                                                text: '3 ',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w800,
+                          if (!context.isMobile) ...[
+                            Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.summarize,
+                                        color: AppColors.secondaryDark,
+                                        size: 22,
+                                      ),
+                                      ClipRect(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                          ),
+                                          child: RichText(
+                                            text: const TextSpan(
+                                              style: TextStyle(
+                                                color: AppColors.secondaryDark,
+                                                fontSize: 14,
+                                              ),
+                                              children: [
+                                                TextSpan(text: 'You have '),
+                                                TextSpan(
+                                                  text: '3 ',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
                                                 ),
-                                              ),
-                                              TextSpan(
-                                                text: "summaries to review",
-                                              ),
-                                            ],
+                                                TextSpan(
+                                                  text: "summaries to review",
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                              .animate(delay: 300.ms)
-                              .scale(
-                                alignment: Alignment.centerLeft,
-                                begin: const Offset(0, 1),
-                                end: const Offset(1, 1),
-                                duration: 450.ms,
-                                curve: Curves.easeOutCubic,
-                              )
-                              .fadeIn(duration: 250.ms),
-                          ClipPath(
-                                clipper: _ConcaveConnectorClipper(),
-                                child: Container(
-                                  width: 20,
-                                  height: 24,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                ),
-                              )
-                              .animate(delay: 300.ms)
-                              .scale(
-                                delay: 450.ms,
-                                alignment: Alignment.centerLeft,
-                                begin: const Offset(0, 1),
-                                end: const Offset(1, 1),
-                                duration: 250.ms,
-                                curve: Curves.easeOutCubic,
-                              )
-                              .fadeIn(delay: 450.ms, duration: 150.ms),
+                                    ],
+                                  ),
+                                )
+                                .animate(delay: 300.ms)
+                                .scale(
+                                  alignment: Alignment.centerLeft,
+                                  begin: const Offset(0, 1),
+                                  end: const Offset(1, 1),
+                                  duration: 450.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .fadeIn(duration: 250.ms),
+                            ClipPath(
+                                  clipper: _ConcaveConnectorClipper(),
+                                  child: Container(
+                                    width: 20,
+                                    height: 24,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                )
+                                .animate(delay: 300.ms)
+                                .scale(
+                                  delay: 450.ms,
+                                  alignment: Alignment.centerLeft,
+                                  begin: const Offset(0, 1),
+                                  end: const Offset(1, 1),
+                                  duration: 250.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .fadeIn(delay: 450.ms, duration: 150.ms),
+                          ],
                           InkWell(
                                 onTap: () {
                                   RouteHelper.push(Routes.cmSummaries);
@@ -349,6 +354,28 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     );
 
     final cards = [awaitingCard, activeCard, summariesCard, closedCard];
+
+    if (context.isMobile) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: animated(cards[0], 0)),
+              const SizedBox(width: 12),
+              Expanded(child: animated(cards[1], 1)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: animated(cards[2], 2)),
+              const SizedBox(width: 12),
+              Expanded(child: animated(cards[3], 3)),
+            ],
+          ),
+        ],
+      );
+    }
 
     return Row(
       children: [
