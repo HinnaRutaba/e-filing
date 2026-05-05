@@ -43,6 +43,8 @@ enum SummarySubTab {
   sharedInternally,
   cmReturned,
   withCm,
+  cmApprovedReturned,
+  disposed,
 }
 
 class SummaryTabConfig {
@@ -61,7 +63,7 @@ extension SummarySubTabX on SummarySubTab {
     switch (this) {
       case SummarySubTab.inbox:
         return SummaryTabConfig(
-          label: 'Inbox',
+          label: role == ActiveUserDesgRole.cm ? 'Pending Approval' : 'Inbox',
           parent: SummaryMainTab.actionRequired,
           filterName: role == ActiveUserDesgRole.pstocm ? 'ps_inbox' : 'inbox',
         );
@@ -107,11 +109,30 @@ extension SummarySubTabX on SummarySubTab {
           parent: SummaryMainTab.sentTracked,
           filterName: 'with_cm',
         );
+      case SummarySubTab.cmApprovedReturned:
+        return const SummaryTabConfig(
+          label: 'Approved and Returned',
+          parent: SummaryMainTab.sentTracked,
+          filterName: 'sent',
+        );
+      case SummarySubTab.disposed:
+        return const SummaryTabConfig(
+          label: 'Disposed',
+          parent: SummaryMainTab.archive,
+          filterName: 'disposed',
+        );
     }
   }
 }
 
 List<SummarySubTab> subTabsForRole(ActiveUserDesgRole? role) {
+  if (role == ActiveUserDesgRole.cm) {
+    return [
+      SummarySubTab.inbox,
+      SummarySubTab.cmApprovedReturned,
+      SummarySubTab.disposed,
+    ];
+  }
   const base = [
     SummarySubTab.inbox,
     SummarySubTab.sharedToMe,

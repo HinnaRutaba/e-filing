@@ -4,6 +4,8 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -121,9 +123,12 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   }
 
   String? _helperBannerText(SummarySubTab subTab) {
+    final role = ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
     switch (subTab) {
       case SummarySubTab.inbox:
-        return 'Summaries received by you and awaiting your action.';
+        return role == ActiveUserDesgRole.cm
+            ? 'Summaries pending your approval.'
+            : 'Summaries received by you and awaiting your action.';
       case SummarySubTab.sharedToMe:
         return 'Summaries shared with you by colleagues.';
       case SummarySubTab.drafts:
@@ -138,6 +143,10 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
         return 'The Chief Minister has signed and returned these summaries. Forward each one to the action department — no further signature from you is required.';
       case SummarySubTab.withCm:
         return 'Summaries currently with the Chief Minister awaiting signature.';
+      case SummarySubTab.cmApprovedReturned:
+        return 'Summaries you have approved and returned to the originating department.';
+      case SummarySubTab.disposed:
+        return 'Summaries that have been fully disposed off and closed.';
     }
   }
 

@@ -191,6 +191,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   bool get isDeo => userDesg?.roleEnum == ActiveUserDesgRole.deo;
 
+  bool get isCM => userDesg?.roleEnum == ActiveUserDesgRole.cm;
+
+  bool get isCMCurrentHolder {
+    final details = ref.read(summariesController).details;
+    return isCM &&
+        details?.summary?.currentHolder != null &&
+        details?.summary?.currentHolder?.toLowerCase().trim() ==
+            ('Mr Chief Minister').toLowerCase().trim();
+  }
+
   bool get isDeoCurrentHolder {
     final details = ref.read(summariesController).details;
     return isDeo &&
@@ -203,7 +213,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
 
-    if (activeUser?.roleEnum != ActiveUserDesgRole.cm &&
+    if (isCM) {
+      return false;
+    }
+
+    if (!isCM &&
         details?.summary?.summaryStatus ==
             SummaryStatus.withChiefMinisterForApproval) {
       return false;
@@ -357,12 +371,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _documentCard(),
-                                if (!isDeo &&
-                                    actionsAvailable &&
-                                    showHandWrittedRemarksSection &&
-                                    !(isDeo &&
-                                        details?.isLatestMovementSignedAndForwarded ==
-                                            true)) ...[
+                                if (isCMCurrentHolder ||
+                                    (!isDeo &&
+                                        actionsAvailable &&
+                                        showHandWrittedRemarksSection &&
+                                        !(isDeo &&
+                                            details?.isLatestMovementSignedAndForwarded ==
+                                                true))) ...[
                                   RemarksSignPanel(
                                     key: _remarksPanelKey,
                                     controller: _remarksPanelCtrl,
@@ -2009,7 +2024,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           movement,
           const SizedBox(height: 16),
           internal,
-          if (isPsToCm) ...[
+          if (isPsToCm || isCm) ...[
             // const SizedBox(height: 16),
             VoiceNotesSection(
               summaryId: widget.summary?.id,
@@ -2028,7 +2043,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _sidebarRow(files, movement),
         const SizedBox(height: 16),
         _sidebarRow(internal, const SizedBox.shrink()),
-        if (isPsToCm) ...[
+        if (isPsToCm || isCm) ...[
           const SizedBox(height: 16),
           VoiceNotesSection(
             summaryId: widget.summary?.id,
