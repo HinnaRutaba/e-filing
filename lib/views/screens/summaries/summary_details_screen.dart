@@ -29,6 +29,7 @@ import 'package:efiling_balochistan/views/screens/summaries/components/summary_b
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
@@ -380,23 +381,33 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                                 true))) ...[
                                   RemarksSignPanel(
                                     key: _remarksPanelKey,
+
                                     controller: _remarksPanelCtrl,
                                     scrollController: _mainScrollController,
-                                    bottomContent: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        _forwardingFields(),
-                                        const SizedBox(height: 16),
-                                        _actionButton(
-                                          SummaryAction.signForward,
-                                          expand: false,
-                                          width: double.infinity,
-                                          onTapOverride:
-                                              _submitFromRemarksPanel,
-                                        ),
-                                      ],
-                                    ),
+                                    initialMode: isCM
+                                        ? RemarksPanelMode.write
+                                        : RemarksPanelMode.type,
+                                    bottomContent: isCMCurrentHolder
+                                        ? AppSolidButton(
+                                            onPressed: _submitSignAndReturnCM,
+                                            text: 'Sign and Return',
+                                            width: double.infinity,
+                                          )
+                                        : Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              _forwardingFields(),
+                                              const SizedBox(height: 16),
+                                              _actionButton(
+                                                SummaryAction.signForward,
+                                                expand: false,
+                                                width: double.infinity,
+                                                onTapOverride:
+                                                    _submitFromRemarksPanel,
+                                              ),
+                                            ],
+                                          ),
                                   ),
                                 ],
                                 const SizedBox(height: 16),
@@ -1544,6 +1555,62 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() {
         _selectedAction = null;
       });
+    }
+  }
+
+  Future<void> _submitSignAndReturnCM() async {
+    // 1 – Validate remarks
+    final String typedRemarks;
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
+      typedRemarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      if (!mounted) return;
+      if (typedRemarks.isEmpty) {
+        Toast.error(message: 'Please type your remarks before returning');
+        return;
+      }
+    } else {
+      typedRemarks = '';
+      if (_remarksPanelCtrl.isWrittenEmpty) {
+        Toast.error(message: 'Please write your remarks before returning');
+        return;
+      }
+    }
+
+    // 2 – Validate signature
+    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign in the "Sign here" section');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+      final strokesJson = _remarksPanelCtrl.getStrokesJson();
+      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+      if (!mounted) return;
+      final handwrittenBase64 = handwrittenPng != null
+          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+          : '';
+      await notifier.signAndReturnCM(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        handwrittenStrokesJson: strokesJson,
+        handwrittenPngBase64: handwrittenBase64,
+        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+      );
+    } else {
+      await notifier.signAndReturnCM(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        body: typedRemarks,
+      );
     }
   }
 
