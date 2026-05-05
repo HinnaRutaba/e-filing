@@ -26,7 +26,6 @@ class Routes {
   static const String summaries = '/summaries';
   static const String createSummary = '/createSummary';
   static const String summaryDetails = '/summaryDetails';
-  static const String secretarySummary = '/secretarySummary';
   static const String summaryDraftRemarks = '/summaryDraftRemarks';
   static const String daak = '/daak';
   static String daakDetails([daakId]) =>

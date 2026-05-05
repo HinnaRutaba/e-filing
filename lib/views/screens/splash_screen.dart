@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
@@ -47,6 +48,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     await ctrl.fetchLoggedInUser();
     ctrl.getOpenAIToken();
+    UserModel? user = ref.read(authController);
     DesignationModel? designation = await ctrl.fetchDesignation();
     if (designation == null) {
       RouteHelper.navigateTo(Routes.login, extra: false);
@@ -54,7 +56,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
     ref.read(summariesController.notifier).fetchSummariesMeta();
     ref.read(daakController.notifier).fetchDaakMeta();
-    RouteHelper.navigateTo(Routes.dashboard);
+    if (user?.userDesgRole == ActiveUserDesgRole.cm) {
+      RouteHelper.navigateTo(Routes.cmDashboard);
+    } else {
+      RouteHelper.navigateTo(Routes.dashboard);
+    }
+
   }
 
   Widget _poweredBySection(bool isMobile) {

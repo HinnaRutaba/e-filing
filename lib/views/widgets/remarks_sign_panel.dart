@@ -35,10 +35,9 @@ class RemarksSignPanelController extends ChangeNotifier {
   Future<Uint8List?> getSignatureBytes() => _signCtrl.toPngBytes();
 
   /// Returns the handwritten strokes as a JSON string for persistence.
-  String? getStrokesJson() =>
-      _writtenCtrl.toStrokesJson(
-        canvasWidth: _canvasWidth > 0 ? _canvasWidth : 600,
-      );
+  String? getStrokesJson() => _writtenCtrl.toStrokesJson(
+    canvasWidth: _canvasWidth > 0 ? _canvasWidth : 600,
+  );
 
   /// Returns the handwritten canvas rendered as PNG bytes.
   Future<Uint8List?> getWrittenPngBytes() => _writtenCtrl.toPngBytes();
@@ -81,6 +80,9 @@ class RemarksSignPanelController extends ChangeNotifier {
 class RemarksSignPanel extends StatefulWidget {
   final RemarksSignPanelController controller;
 
+  /// Sets which remarks input mode is selected when the panel is first shown.
+  final RemarksPanelMode initialMode;
+
   /// Rendered below the signature pad — typically forwarding fields
   /// and a submit button wired to the parent's submit callback.
   final Widget? bottomContent;
@@ -96,6 +98,7 @@ class RemarksSignPanel extends StatefulWidget {
     this.bottomContent,
     this.scrollController,
     this.initiallyExpanded = true,
+    this.initialMode = RemarksPanelMode.type,
   });
 
   @override
@@ -110,7 +113,12 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   @override
   void initState() {
     super.initState();
-    if (widget.initiallyExpanded) { _ctrl.expand(); } else { _ctrl.collapse(); }
+    _ctrl.mode = widget.initialMode;
+    if (widget.initiallyExpanded) {
+      _ctrl.expand();
+    } else {
+      _ctrl.collapse();
+    }
     _ctrl.addListener(_onControllerChanged);
   }
 
@@ -234,7 +242,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
       padding: const EdgeInsets.all(3),
       child: Row(
         children: [
-          _modeOption('Type', RemarksPanelMode.type, Icons.keyboard_alt_outlined),
+          _modeOption(
+            'Type',
+            RemarksPanelMode.type,
+            Icons.keyboard_alt_outlined,
+          ),
           _modeOption('Write', RemarksPanelMode.write, Icons.draw_outlined),
         ],
       ),
@@ -310,9 +322,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
       builder: (context, constraints) {
         if (_ctrl._canvasWidth != constraints.maxWidth) {
           WidgetsBinding.instance.addPostFrameCallback(
-            (_) => setState(
-              () => _ctrl._updateCanvasWidth(constraints.maxWidth),
-            ),
+            (_) =>
+                setState(() => _ctrl._updateCanvasWidth(constraints.maxWidth)),
           );
         }
         return SignaturePad(

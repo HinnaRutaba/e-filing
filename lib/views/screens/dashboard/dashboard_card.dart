@@ -1,11 +1,17 @@
-part of 'dashboard_screen.dart';
+import 'dart:ui';
+
+import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class DashboardCard extends StatelessWidget {
   final Color cardColor;
   final Color iconColor;
   final String title;
   final String? value;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool loading;
   final bool showSmallCard;
   final IconData icon;
@@ -29,66 +35,70 @@ class DashboardCard extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           _buildCard(context),
-          Positioned(
-            top: showSmallCard ? -8 : 6,
-            right: showSmallCard
-                ? value == null
-                      ? -8
-                      : 12
-                : 6,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child:
-                  InkWell(
-                    onTap: onTap,
-                    child: Container(
-                      padding: showSmallCard
-                          ? const EdgeInsets.all(4)
-                          : const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
+          if (onTap != null)
+            Positioned(
+              top: showSmallCard ? -8 : 6,
+              right: showSmallCard
+                  ? value == null
+                        ? -8
+                        : 12
+                  : 6,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child:
+                    InkWell(
+                      onTap: onTap,
+                      child: Container(
+                        padding: showSmallCard
+                            ? const EdgeInsets.all(4)
+                            : const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                        decoration: BoxDecoration(
+                          color: appColors.accent.withValues(alpha: 0.38),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: appColors.accent,
+                            width: 0.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: cardColor.withValues(alpha: 0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
-                      decoration: BoxDecoration(
-                        color: appColors.accent.withValues(alpha: 0.38),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: appColors.accent, width: 0.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: cardColor.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                          BoxShadow(
-                            color: iconColor.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                            BoxShadow(
+                              color: iconColor.withValues(alpha: 0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: showSmallCard
+                            ? Icon(
+                                Icons.chevron_right,
+                                size: 20,
+                                color: appColors.secondaryDark,
+                              )
+                            : AppText.titleSmall(
+                                "Open",
+                                fontWeight: FontWeight.w700,
+                                color: appColors.secondaryDark,
+                                fontSize: 10,
+                              ),
                       ),
-                      child: showSmallCard
-                          ? Icon(
-                              Icons.chevron_right,
-                              size: 20,
-                              color: appColors.secondaryDark,
-                            )
-                          : AppText.titleSmall(
-                              "Open",
-                              fontWeight: FontWeight.w700,
-                              color: appColors.secondaryDark,
-                              fontSize: 10,
-                            ),
+                    ).animate().shimmer(
+                      duration: 1600.ms,
+                      delay: 1200.ms,
+                      colors: [
+                        appColors.accent.withValues(alpha: 0.0),
+                        appColors.accent.withValues(alpha: 0.9),
+                        appColors.accent.withValues(alpha: 0.0),
+                      ],
                     ),
-                  ).animate().shimmer(
-                    duration: 1600.ms,
-                    delay: 1200.ms,
-                    colors: [
-                      appColors.accent.withValues(alpha: 0.0),
-                      appColors.accent.withValues(alpha: 0.9),
-                      appColors.accent.withValues(alpha: 0.0),
-                    ],
-                  ),
+              ),
             ),
-          ),
         ],
       ),
     );

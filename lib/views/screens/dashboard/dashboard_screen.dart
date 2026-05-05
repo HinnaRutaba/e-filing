@@ -25,11 +25,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 part 'bar_chart.dart';
-part 'dashboard_card.dart';
 part 'pie_chart.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {

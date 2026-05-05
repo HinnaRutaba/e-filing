@@ -90,11 +90,11 @@ dependencies:
   signature: ^5.5.0
   speech_to_text: ^7.3.0
   device_info_plus: 12.3.0
-  pencil_kit: ^2.1.1
   flutter_svg: ^2.0.10+1
   timeago: ^3.7.1
   html_editor_enhanced: ^2.7.1
   lottie: ^3.3.3
+  animated_bottom_navigation_bar: ^1.4.0
 
 dev_dependencies:
   flutter_test:

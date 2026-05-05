@@ -1,15 +1,14 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
-import 'package:efiling_balochistan/models/summaries/summary_model.dart';
-import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
-import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
-import 'package:efiling_balochistan/views/widgets/toast.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,128 +22,16 @@ class CMDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  final RemarksSignPanelController _remarksPanelCtrl =
-      RemarksSignPanelController();
-  final ScrollController _mainScrollController = ScrollController();
-  final GlobalKey _remarksPanelKey = GlobalKey();
-
-  final List<Map<String, dynamic>> _summaries = [
-    {
-      'barcode': 'SUM-001',
-      'summaryNumber': 'No. 01/CM/2026',
-      'department': 'Home Department',
-      'subject': 'Sample Summary Subject One',
-      'htmlContent':
-          '<p>This is a placeholder summary document content for item one.</p>',
-    },
-    {
-      'barcode': 'SUM-002',
-      'summaryNumber': 'No. 02/CM/2026',
-      'department': 'Finance Department',
-      'subject': 'Sample Summary Subject Two',
-      'htmlContent':
-          '<p>This is a placeholder summary document content for item two.</p>',
-    },
-    {
-      'barcode': 'SUM-003',
-      'summaryNumber': 'No. 03/CM/2026',
-      'department': 'Education Department',
-      'subject': 'Sample Summary Subject Three',
-      'htmlContent':
-          '<p>This is a placeholder summary document content for item three.</p>',
-    },
-  ];
-
   @override
-  void dispose() {
-    _pageController.dispose();
-    _mainScrollController.dispose();
-    _remarksPanelCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitFromRemarksPanel() async {
-    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
-      final text = (await _remarksPanelCtrl.getTypedRemarks()).trim();
-      if (!mounted) return;
-      if (text.isEmpty) {
-        Toast.error(message: 'Please type your remarks before approving');
-        return;
-      }
-    } else {
-      if (_remarksPanelCtrl.isWrittenEmpty) {
-        Toast.error(message: 'Please write your remarks before approving');
-        return;
-      }
-    }
-
-    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
-    if (!mounted) return;
-    if (signatureBytes == null || signatureBytes.isEmpty) {
-      Toast.error(message: 'Please sign before approving');
-      return;
-    }
-
-    // TODO: call the CM approve API with signatureBytes, remarks/strokes
-    Toast.success(message: 'Approved successfully');
-  }
-
-  Widget _submitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: _submitFromRemarksPanel,
-        icon: const Icon(Icons.check_rounded, size: 18),
-        label: const Text(
-          'Approve & Sign',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _goNext() {
-    if (_currentPage < _summaries.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
-    } else {
-      _pageController.animateToPage(
-        0,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-      );
-    }
-  }
-
-  void _goBack() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
-    }
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(cmDashboardController.notifier).initData());
   }
 
   @override
   Widget build(BuildContext context) {
     const headerHeight = 148.0;
-    final dashboardState = ref.watch(dashboardController);
-    final bool canBack = _currentPage > 0;
-    const bool canNext = true;
-
-    //return Scaffold(body: VectorHandwritingSheet());
+    final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
 
     return GradientScaffold(
       child: Scaffold(
@@ -152,87 +39,10 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
         body: Column(
           children: [
             _buildHeader(context, dashboardState, headerHeight),
-
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _summaries.length,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (i) => setState(() => _currentPage = i),
-                itemBuilder: (ctx, i) {
-                  final s = _summaries[i];
-                  return StickyTagDrawer(
-                    panelWidth: MediaQuery.sizeOf(context).width * 0.8,
-                    tagsAlignment: const Alignment(0.0, -0.5),
-                    mainContent: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          SummaryDocumentCard(
-                            summary: SummaryModel(
-                              summaryNo: s['summaryNumber'] as String,
-                              summaryDate: DateTime.now(),
-                              originatingDepartment: s['department'] as String,
-                              subject: s['subject'] as String,
-                              body: s['htmlContent'] as String,
-                              currentHolder: 'Mr. Chief Minister',
-                              currentHolderDesignation: 'Chief Minister',
-                              currentDepartment: 'Chief Minister Secretariat',
-                              draftTargetDepartment: 'Quetta',
-                              updatedAt: DateTime.now(),
-                            ),
-                            remarkTrack: const [],
-                          ),
-                          RemarksSignPanel(
-                            key: _remarksPanelKey,
-                            controller: _remarksPanelCtrl,
-                            scrollController: _mainScrollController,
-                            bottomContent: _submitButton(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    tags: [
-                      StickyTag(
-                        text: "Attachment",
-                        backgroundColor: AppColors.primary,
-                        panelContent: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Container(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: Center(
-                              child: AppText.bodyMedium(
-                                "No attachments available",
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      StickyTag(
-                        text: "Brief",
-                        backgroundColor: Colors.orange,
-                        panelContent: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          physics: const BouncingScrollPhysics(),
-                          child: SummaryBrief(
-                            note:
-                                'Will not appear on the printed summary as it will be meant for internal departments.',
-                            paragraphs: const [
-                              '03. Furthermore, it is submitted that the initial presentation, all suggested changes have been incorporated, and the system is now ready for deployment. As an initial step, it is proposed to deploy the E-Filing System in the Admin Section of the Chief Minister Secretariat as a pilot project. Upon successful implementation and evaluation, the system can be expanded to the entire Chief Minister Secretariat and eventually deployed across other government departments.',
-                              '04. In this regard, it is kindly requested to approve the deployment of the E-Filing System in the Admin Section of the Chief Minister Secretariat as a pilot project and provide directions for its phased expansion.',
-                            ],
-                            authorName: 'Mumtaz Haider Khan',
-                            authorDesignation: 'Deputy Coordinator (CM)',
-                            timestamp: DateTime(2025, 4, 14, 16, 27),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: _buildStatsCard(context, dashboardState),
             ),
-            _buildPager(canBack: canBack, canNext: canNext),
           ],
         ),
       ),
@@ -241,7 +51,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   Widget _buildHeader(
     BuildContext context,
-    dynamic dashboardState,
+    CMDashboardModel dashboardState,
     double headerHeight,
   ) {
     return ClipRRect(
@@ -292,7 +102,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                                       fontWeight: FontWeight.normal,
                                     ),
                                   ),
-                                  TextSpan(text: 'CM'),
+                                  TextSpan(text: 'Mr, Chief Minister'),
                                 ],
                               ),
                               style: Theme.of(context).textTheme.headlineSmall
@@ -424,77 +234,77 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     );
   }
 
-  Widget _buildPager({required bool canBack, required bool canNext}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _navButton(
-            icon: Icons.arrow_back_rounded,
-            label: 'Back',
-            enabled: canBack,
-            onTap: _goBack,
-          ),
-          AppText.labelLarge(
-            '${_currentPage + 1} / ${_summaries.length}',
-            color: context.appColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-          _navButton(
-            icon: Icons.arrow_forward_rounded,
-            label: 'Next',
-            enabled: canNext,
-            onTap: _goNext,
-            iconTrailing: true,
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildStatsCard(
+    BuildContext context,
+    CMDashboardModel dashboardState,
+  ) {
+    Widget animated(Widget child, int index) {
+      final delay = (index * 120).ms;
+      return child
+          .animate()
+          .scale(
+            delay: delay,
+            duration: 400.ms,
+            begin: const Offset(0.8, 0.8),
+            end: const Offset(1, 1),
+            curve: Curves.easeOutBack,
+          )
+          .fadeIn(delay: delay, duration: 300.ms);
+    }
 
-  Widget _navButton({
-    required IconData icon,
-    required String label,
-    required bool enabled,
-    required VoidCallback onTap,
-    bool iconTrailing = false,
-  }) {
-    final color = enabled
-        ? context.appColors.textPrimary
-        : context.appColors.textPrimary.withValues(alpha: 0.35);
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: enabled ? onTap : null,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!iconTrailing) ...[
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 6),
-              ],
-              AppText.labelLarge(
-                label,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-              if (iconTrailing) ...[
-                const SizedBox(width: 6),
-                Icon(icon, size: 16, color: color),
-              ],
-            ],
-          ),
-        ),
-      ),
+    final awaitingCard = DashboardCard(
+      cardColor: context.appColors.warning,
+      iconColor: Colors.yellowAccent,
+      title: "Awaiting Approval",
+      value: "${dashboardState.awaitingApprovalCount}",
+      onTap: null,
+      loading: dashboardState.loading,
+      icon: Icons.pending_actions,
+      showSmallCard: false,
+    );
+
+    final activeCard = DashboardCard(
+      cardColor: Theme.of(context).colorScheme.error,
+      iconColor: Colors.red[900]!,
+      title: "Active In Progress",
+      value: "${dashboardState.activeInProgressCount}",
+      onTap: null,
+      loading: dashboardState.loading,
+      icon: Icons.autorenew,
+      showSmallCard: false,
+    );
+
+    final summariesCard = DashboardCard(
+      cardColor: context.appColors.secondaryLight,
+      iconColor: context.appColors.secondaryDark,
+      title: "Total Summaries",
+      value: "${dashboardState.totalSummariesCount}",
+      onTap: null,
+      loading: dashboardState.loading,
+      icon: Icons.summarize,
+      showSmallCard: false,
+    );
+
+    final closedCard = DashboardCard(
+      cardColor: Colors.green[200]!,
+      iconColor: Colors.green[800]!,
+      title: "Closed / Disposed",
+      value: "${dashboardState.closedDisposedCount}",
+      onTap: null,
+      loading: dashboardState.loading,
+      icon: Icons.check_circle_outline,
+      showSmallCard: false,
+    );
+
+    final cards = [awaitingCard, activeCard, summariesCard, closedCard];
+
+    return Row(
+      children: [
+        for (var i = 0; i < cards.length; i++) ...[
+          Expanded(child: animated(cards[i], i)),
+          if (i != cards.length - 1) const SizedBox(width: 12),
+        ],
+      ],
     );
   }
 }

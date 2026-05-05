@@ -100,11 +100,6 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       routeName: Routes.summaries,
     ),
     DrawerMenu(
-      title: "Secretary Summary",
-      icon: Icons.assignment_ind_outlined,
-      routeName: Routes.cmDashboard, //Routes.secretarySummary,
-    ),
-    DrawerMenu(
       title: "Create New File",
       icon: Icons.add_link,
       routeName: Routes.createFile,

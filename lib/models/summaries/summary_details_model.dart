@@ -70,6 +70,10 @@ class SummaryDetailsModel {
   bool get isLastMovemenRemarksAdded =>
       movements.isNotEmpty && movements.last.actionType == 'remarks_added';
 
+  bool get isLatestMovementCmSignedAndReturned =>
+      movements.isNotEmpty &&
+      movements.last.actionType == 'cm_signed_and_returned';
+
   List<String> get supportingFlagNames => attachments
       .where((a) => a.isSupporting)
       .map((a) => a.flagName)

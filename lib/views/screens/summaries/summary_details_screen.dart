@@ -63,7 +63,7 @@ enum SummaryAction {
     filled: false,
   ),
   signForward(
-    label: 'Sign & Forward',
+    label: 'Forward to Department',
     icon: Icons.arrow_forward_rounded,
     color: Colors.deepPurpleAccent,
     filled: true,
@@ -209,6 +209,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return false;
     }
 
+    if (activeUser?.roleEnum == ActiveUserDesgRole.pstocm &&
+        details?.isLatestMovementSignedAndForwarded == true) {
+      return false;
+    }
+
     if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
       return false;
     }
@@ -222,7 +227,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return false;
     }
 
-    if (activeUser?.roleEnum == ActiveUserDesgRole.secretary &&
+    if ((activeUser?.roleEnum == ActiveUserDesgRole.secretary ||
+            activeUser?.roleEnum == ActiveUserDesgRole.pstocm) &&
         details?.summary?.currentHolder != activeUser?.name) {
       return false;
     }
@@ -243,6 +249,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return false;
     }
     return details?.hasForwardedBefore == true;
+  }
+
+  bool get isPsToCmCmReturned {
+    final details = ref.read(summariesController).details;
+    return userDesg?.roleEnum == ActiveUserDesgRole.pstocm &&
+        details?.isLatestMovementCmSignedAndReturned == true;
   }
 
   bool get showHandWrittedRemarksSection {
@@ -332,43 +344,50 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                       tagsAlignment: const Alignment(0.0, -0.5),
                       mainContent: RefreshIndicator(
                         onRefresh: _loadDetails,
-                        child: SingleChildScrollView(
+                        child: Scrollbar(
                           controller: _mainScrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.all(context.isMobile ? 12 : 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _documentCard(),
-                              if (!isDeo &&
-                                  actionsAvailable &&
-                                  showHandWrittedRemarksSection &&
-                                  !(isDeo &&
-                                      details?.isLatestMovementSignedAndForwarded ==
-                                          true)) ...[
-                                RemarksSignPanel(
-                                  key: _remarksPanelKey,
-                                  controller: _remarksPanelCtrl,
-                                  scrollController: _mainScrollController,
-                                  bottomContent: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      _forwardingFields(),
-                                      const SizedBox(height: 16),
-                                      _actionButton(
-                                        SummaryAction.signForward,
-                                        expand: false,
-                                        width: double.infinity,
-                                        onTapOverride: _submitFromRemarksPanel,
-                                      ),
-                                    ],
+                          thickness: 10,
+                          trackVisibility: true,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _mainScrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _documentCard(),
+                                if (!isDeo &&
+                                    actionsAvailable &&
+                                    showHandWrittedRemarksSection &&
+                                    !(isDeo &&
+                                        details?.isLatestMovementSignedAndForwarded ==
+                                            true)) ...[
+                                  RemarksSignPanel(
+                                    key: _remarksPanelKey,
+                                    controller: _remarksPanelCtrl,
+                                    scrollController: _mainScrollController,
+                                    bottomContent: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        _forwardingFields(),
+                                        const SizedBox(height: 16),
+                                        _actionButton(
+                                          SummaryAction.signForward,
+                                          expand: false,
+                                          width: double.infinity,
+                                          onTapOverride:
+                                              _submitFromRemarksPanel,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                ],
+                                const SizedBox(height: 16),
+                                _sidebar(),
                               ],
-                              const SizedBox(height: 16),
-                              _sidebar(),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -396,6 +415,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       ).then((_) => _loadDetails());
       return;
     }
+
+    // if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+    //   _submitPsToSectForward();
+    //   return;
+    // }
 
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
       _remarksPanelCtrl.expand();
@@ -655,11 +679,19 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   Widget _actionButtonRow() {
     final details = ref.read(summariesController).details;
 
+    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
+
     List<SummaryAction> allowedActions;
     if (isDeo) {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.draftRemarks,
+      ];
+    } else if (isPsToCm &&
+        details?.isLatestMovementCmSignedAndReturned == true) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
       ];
     } else if (details?.isLatestMovementSignedAndForwarded == true) {
       allowedActions = [
@@ -1340,19 +1372,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   }
 
   Widget _signForwardBody(SummaryAction action) {
+    final hideSignPad = isPsToCmCmReturned;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (!hideSignPad) ...[
+            _stepCard(
+              stepLabel: 'STEP 1',
+              title: 'Signature',
+              child: SignaturePad(controller: _signaturePadController),
+            ),
+            const SizedBox(height: 12),
+          ],
           _stepCard(
-            stepLabel: 'STEP 1',
-            title: 'Signature',
-            child: SignaturePad(controller: _signaturePadController),
-          ),
-          const SizedBox(height: 12),
-          _stepCard(
-            stepLabel: 'STEP 2',
+            stepLabel: hideSignPad ? 'STEP 1' : 'STEP 2',
             title: 'Forwarding',
             child: _forwardingStep(action),
           ),
@@ -1497,7 +1532,23 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     }
   }
 
+  Future<void> _submitPsToSectForward() async {
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final success = await ref
+        .read(summariesController.notifier)
+        .psToSectForward(summaryId: summaryId);
+    if (!mounted) return;
+    if (success) setState(() => _selectedAction = null);
+  }
+
   Future<void> _submitSignForward() async {
+    if (isPsToCmCmReturned) {
+      await _submitPsToSectForward();
+      return;
+    }
+
     Uint8List? signatureBytes = _cardSignatureBytes;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       signatureBytes = await _signaturePadController.toPngBytes();
@@ -1798,7 +1849,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       onAcceptRemarks: _onAcceptDraftedRemarks,
       showSignPad:
           !showHandWrittedRemarksSection &&
-          userDesg?.roleEnum != ActiveUserDesgRole.deo,
+          userDesg?.roleEnum != ActiveUserDesgRole.deo &&
+          !isPsToCmCmReturned,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 
 class UserSchema {
   static const String id = 'id';
@@ -35,6 +36,7 @@ class UserModel {
   DateTime? updatedAt;
   List<DesignationModel> designations;
   DesignationModel? currentDesignation;
+  ActiveUserDesgRole? userDesgRole;
 
   UserModel({
     this.id,
@@ -51,6 +53,7 @@ class UserModel {
     this.section,
     this.designations = const [],
     this.currentDesignation,
+    this.userDesgRole,
   });
 
   String get signature {
@@ -81,6 +84,7 @@ class UserModel {
               ?.map((e) => DesignationModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      userDesgRole: ActiveUserDesgRole.fromValue(json[UserSchema.roleId]),
     );
   }
 
@@ -114,6 +118,7 @@ class UserModel {
     String? section,
     List<DesignationModel>? designations,
     DesignationModel? currentDesignation,
+    ActiveUserDesgRole? userDesgRole,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -130,6 +135,7 @@ class UserModel {
       section: section ?? this.section,
       designations: designations ?? this.designations,
       currentDesignation: currentDesignation ?? this.currentDesignation,
+      userDesgRole: userDesgRole ?? this.userDesgRole,
     );
   }
 
@@ -149,6 +155,7 @@ class UserModel {
       section: (user ?? this).section,
       designations: (user ?? this).designations,
       currentDesignation: user?.currentDesignation ?? currentDesignation,
+      userDesgRole: user?.userDesgRole ?? userDesgRole,
     );
   }
 }

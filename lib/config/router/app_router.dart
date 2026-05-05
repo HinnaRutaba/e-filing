@@ -27,7 +27,6 @@ import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_draft_remarks_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
-import 'package:efiling_balochistan/views/screens/summaries/secretary_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_details_screen.dart';
 import 'package:flutter/material.dart';
@@ -49,8 +48,7 @@ class AppRouter {
       path: Routes.login,
       pageBuilder: GoTransitions.fade.build(
         settings: GoTransitionSettings(duration: 200.ms),
-        builder: (context, state) =>
-            LoginScreen(static: state.extra != false),
+        builder: (context, state) => LoginScreen(static: state.extra != false),
       ),
     ),
     GoRoute(
@@ -104,13 +102,6 @@ class AppRouter {
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) =>
             CreateDraftRemarksScreen(summary: state.extra as SummaryModel),
-      ),
-    ),
-    GoRoute(
-      path: Routes.secretarySummary,
-      pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const SecretarySummaryScreen(),
       ),
     ),
     GoRoute(
