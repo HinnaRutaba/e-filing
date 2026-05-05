@@ -3,10 +3,13 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_summaries_list_screen.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -32,6 +35,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     const headerHeight = 164.0;
     const cardsOverlap = 80.0;
     final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
+    final CMNavTab activeTab = ref.watch(cmNavController);
     final bool isMobile = context.isMobile;
     final statsCardTop = isMobile ? 104.0 : 132.0;
 
@@ -45,23 +49,37 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Column(
+        floatingActionButton: activeTab == CMNavTab.dashboard
+            ? const CMPendingApprovalsFAB()
+            : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        extendBody: true,
+        bottomNavigationBar: const CMBottomNavBar(),
+        body: IndexedStack(
+          index: activeTab.index,
           children: [
-            SizedBox(
-              height: headerHeight + cardsOverlap,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  headerBackground,
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    top: statsCardTop,
-                    child: _buildStatsCard(context, dashboardState),
+            // Tab 0: Dashboard
+            Column(
+              children: [
+                SizedBox(
+                  height: headerHeight + cardsOverlap,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      headerBackground,
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        top: statsCardTop,
+                        child: _buildStatsCard(context, dashboardState),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            // Tab 1: Summaries
+            const CMSummariesListScreen(),
           ],
         ),
       ),
