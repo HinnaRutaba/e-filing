@@ -1,17 +1,34 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SummaryCard extends StatelessWidget {
+class SummaryCard extends ConsumerWidget {
   final SummaryModel item;
   const SummaryCard({super.key, required this.item});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myDept = ref.watch(authController).currentDesignation?.department;
+    final ActiveUserDesg? myDesg = ref
+        .watch(summariesController)
+        .meta
+        ?.activeUserDesg;
+
+    final bool needsFeedback =
+        item.summaryStatus == SummaryStatus.sharedInternallyForFeedback &&
+        myDesg?.roleEnum == ActiveUserDesgRole.deo &&
+        myDept != null &&
+        item.currentDepartment?.toLowerCase() == myDept.toLowerCase();
+
     final theme = Theme.of(context);
     final appColors = context.appColors;
     final bool isDark = theme.brightness == Brightness.dark;
@@ -219,6 +236,13 @@ class SummaryCard extends StatelessWidget {
                             label: 'Target',
                             value: item.draftTargetDepartment!,
                             color: const Color(0xFF0891B2),
+                          ),
+                        if (needsFeedback)
+                          _InfoChip(
+                            icon: Icons.feedback_outlined,
+                            label: 'Action',
+                            value: 'Pending your feedback',
+                            color: Colors.orange[700]!,
                           ),
                       ],
                     ),

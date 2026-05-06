@@ -528,12 +528,8 @@ class ChatService {
 
               // Sort by last message time, fallback to created_at if no last message
               validChats.sort((a, b) {
-                final aTime =
-                    a.lastMessage?.sentAt ??
-                    a.createdAt;
-                final bTime =
-                    b.lastMessage?.sentAt ??
-                    b.createdAt;
+                final aTime = a.lastMessage?.sentAt ?? a.createdAt;
+                final bTime = b.lastMessage?.sentAt ?? b.createdAt;
                 return bTime.compareTo(aTime); // newest first
               });
 

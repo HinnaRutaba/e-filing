@@ -35,6 +35,7 @@ import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ enum SummaryAction {
   forwardToCM(
     label: 'Forward to Chief Minister',
     icon: Icons.account_balance_rounded,
-    color: Color(0xFF1565C0),
+    color: AppColors.primaryDark,
     filled: true,
   );
 
@@ -123,7 +124,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   final TextEditingController _shareSearchController = TextEditingController();
   final HtmlEditorController _editDraftController = HtmlEditorController();
   late String _currentHtml;
-  final List<InternalUserModel> _shareTargets = [];
+  InternalUserModel? _shareTarget;
   final List<FlagAndAttachmentModel> _pendingAttachments = [];
 
   final SignaturePadController _signaturePadController =
@@ -293,11 +294,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
-    final initialTarget = widget.summary?.draftTargetDepartment;
-    if (initialTarget != null && initialTarget.isNotEmpty) {
-      _destDeptController.text = initialTarget;
-      _selectedDestDept = _matchDepartment(initialTarget);
-    }
+    // Destination department is only pre-filled after _loadDetails,
+    // where hasForwardedBefore can be checked (requires movement data).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
       _fetchOfficersForCurrentDept();
@@ -315,7 +313,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       setState(() => _currentHtml = body);
     }
     final target = details?.summary?.draftTargetDepartment;
-    if (target != null && target.isNotEmpty) {
+    if (details?.hasForwardedBefore != true &&
+        target != null &&
+        target.isNotEmpty) {
       setState(() {
         _destDeptController.text = target;
         _selectedDestDept = _matchDepartment(target);
@@ -365,6 +365,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     final ctrlState = ref.watch(summariesController);
     final details = ctrlState.details;
     final isLoading = ctrlState.isLoadingDetails && details == null;
+    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -419,7 +420,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
 
                                     controller: _remarksPanelCtrl,
                                     scrollController: _mainScrollController,
-                                    initialMode: isCM
+                                    initialMode: isCM || !context.isMobile
                                         ? RemarksPanelMode.write
                                         : RemarksPanelMode.type,
                                     bottomContent: isCMCurrentHolder
@@ -455,6 +456,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                       tags: [
                         _buildAttachmentsTag(details),
                         _buildBriefsTag(details),
+                        if (isPsToCm || isCM) _buildVoiceNotesTag(),
                       ],
                     ),
                   ),
@@ -592,12 +594,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         _loadingAction = true;
       });
     } else if (action == SummaryAction.shareInternally) {
-      final recipientIds = _shareTargets
-          .map((u) => u.userDesgId)
-          .whereType<int>()
-          .toList();
-      if (recipientIds.isEmpty) {
-        Toast.error(message: 'Please select at least one department member');
+      final target = _shareTarget;
+      if (target == null) {
+        Toast.error(message: 'Please select a department member');
+        return;
+      }
+      final targetDesgId = target.userDesgId;
+      if (targetDesgId == null) {
+        Toast.error(message: 'Please select a department member');
         return;
       }
       setState(() {
@@ -614,7 +618,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         }
         success = await notifier.forwardInternally(
           summaryId: summaryId,
-          targetDesgId: recipientIds.first,
+          targetDesgId: targetDesgId,
           instruction: _remarksController.text.trim(),
           internalFwd: internalFwd,
         );
@@ -622,7 +626,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         success = await notifier.shareInternally(
           summaryId: summaryId,
           instruction: _remarksController.text.trim(),
-          recipientDesIds: recipientIds,
+          recipientDesIds: [targetDesgId],
         );
       }
 
@@ -642,7 +646,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           _shareVoiceNotePath = null;
           _shareVoiceNoteDurationSec = 0;
         }
-        _shareTargets.clear();
+        _shareTarget = null;
         _shareSearchController.clear();
       }
       setState(() {
@@ -701,12 +705,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       decoration: BoxDecoration(
         color: Theme.of(context).bottomSheetTheme.backgroundColor,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
         border: Border(
           top: BorderSide(
-            color: AppColors.secondaryLight.withValues(alpha: 0.2),
+            color: AppColors.secondaryLight.withValues(alpha: 0.6),
+            width: 1.5,
           ),
         ),
         boxShadow: [
@@ -721,7 +726,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         top: false,
         child: SingleChildScrollView(
           controller: _actionBarScrollController,
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          padding: context.isMobile
+              ? const EdgeInsets.all(12)
+              : const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1053,6 +1060,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   Widget _returnToSectionBody(SummaryAction action) {
+    SummaryDetailsModel? details = ref.read(summariesController).details;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -1080,19 +1088,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
+                  text: TextSpan(
+                    style: const TextStyle(
                       color: Color(0xFF7A5A10),
                       fontSize: 12.5,
                       height: 1.4,
                     ),
                     children: [
-                      TextSpan(text: 'This will return the draft to '),
+                      const TextSpan(text: 'This will return the draft to '),
                       TextSpan(
-                        text: 'Mr. Section officer',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        text: details?.internalForwards.isNotEmpty == true
+                            ? details?.internalForwards.last.forwardedBy
+                            : details?.summary?.originatingUser ??
+                                  'the originating department',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text:
                             ' for amendments. Provide clear instructions on what needs to be changed.',
                       ),
@@ -1184,7 +1195,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                 child: AppText.bodySmall(
                   _isDeoForwardInternally
                       ? 'Select one department member to forward this summary to internally.'
-                      : 'Share this summary with a department member for review. They will receive a read-only copy along with your optional instructions.',
+                      : 'Select a department member to share this summary with for review. They will receive a read-only copy along with your optional instructions.',
                   color: AppColors.secondaryLight,
                   fontSize: 12.5,
                 ),
@@ -1193,80 +1204,59 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           ),
         ),
         const SizedBox(height: 12),
-        if (!_isDeoForwardInternally || _shareTargets.isEmpty)
-          SearchDropDownField<InternalUserModel>(
-            controller: _shareSearchController,
-            labelText: _isDeoForwardInternally
-                ? 'Select Department Member'
-                : 'Select Department Members',
-            hintText: 'Search users…',
 
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: AppColors.secondaryLight.withValues(alpha: 0.5),
-              ),
+        SearchDropDownField<InternalUserModel>(
+          controller: _shareSearchController,
+          labelText: 'Select Department Member',
+          hintText: 'Search users…',
+
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: AppColors.secondaryLight.withValues(alpha: 0.5),
             ),
-            suggestionsCallback: (pattern) {
-              final q = pattern.toLowerCase();
-              final users =
-                  ref.read(summariesController).meta?.internalUsers ??
-                  const <InternalUserModel>[];
-              final selectedIds = _shareTargets
-                  .map((u) => u.userDesgId)
-                  .whereType<int>()
-                  .toSet();
-              return users.where((u) {
-                if (u.userDesgId != null &&
-                    selectedIds.contains(u.userDesgId)) {
-                  return false;
-                }
-                return (u.name ?? '').toLowerCase().contains(q) ||
-                    (u.designation ?? '').toLowerCase().contains(q);
-              }).toList();
-            },
-            itemBuilder: (context, item) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText.bodyMedium(
-                      item.name ?? '',
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    const SizedBox(height: 2),
-                    AppText.bodySmall(
-                      item.designation ?? '',
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ],
-                ),
-              );
-            },
-            onSelected: (item) {
-              setState(() {
-                final alreadyPicked =
-                    item.userDesgId != null &&
-                    _shareTargets.any((u) => u.userDesgId == item.userDesgId);
-                if (!alreadyPicked) {
-                  _shareTargets.add(item);
-                }
-                _shareSearchController.clear();
-              });
-            },
           ),
-        if (_shareTargets.isNotEmpty) ...[
+          suggestionsCallback: (pattern) {
+            final q = pattern.toLowerCase();
+            final users =
+                ref.read(summariesController).meta?.internalUsers ??
+                const <InternalUserModel>[];
+            return users.where((u) {
+              return (u.name ?? '').toLowerCase().contains(q) ||
+                  (u.designation ?? '').toLowerCase().contains(q);
+            }).toList();
+          },
+          itemBuilder: (context, item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    item.name ?? '',
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText.bodySmall(
+                    item.designation ?? '',
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ],
+              ),
+            );
+          },
+          onSelected: (item) {
+            setState(() {
+              _shareTarget = item;
+              _shareSearchController.clear();
+            });
+          },
+        ),
+        if (_shareTarget != null) ...[
           const SizedBox(height: 8),
-          for (int i = 0; i < _shareTargets.length; i++) ...[
-            if (i > 0) const SizedBox(height: 6),
-            _shareTargetCard(_shareTargets[i]),
-          ],
+          _shareTargetCard(_shareTarget!),
         ],
         const SizedBox(height: 12),
         AppTextField(
@@ -1335,9 +1325,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           InkWell(
             onTap: () {
               setState(() {
-                _shareTargets.removeWhere(
-                  (u) => u.userDesgId == user.userDesgId,
-                );
+                _shareTarget = null;
               });
             },
             child: const Icon(
@@ -2200,9 +2188,31 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     );
   }
 
+  StickyTag _buildVoiceNotesTag() {
+    return StickyTag(
+      text: 'Voice Notes',
+      backgroundColor: const Color(0xFF6A1B9A),
+      panelContent: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: VoiceNotesSection(
+            summaryId: widget.summary?.id,
+            visibility: isCM
+                ? VoiceNoteVisibility.cm
+                : VoiceNoteVisibility.internal,
+            canDelete: !isCM,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _sidebar() {
     final movement = MovementTimelineSection(
-      movements: ref.read(summariesController).details?.movements ?? const [],
+      movements:
+          ref.read(summariesController).details?.departmentalMoevements ??
+          const [],
       currentHolderName: ref
           .read(summariesController)
           .details
@@ -2218,8 +2228,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       links: ref.read(summariesController).details?.localLinks ?? const [],
     );
 
-    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
-
     if (context.isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2229,36 +2237,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           movement,
           const SizedBox(height: 16),
           internal,
-          if (isPsToCm || isCM) ...[
-            // const SizedBox(height: 16),
-            VoiceNotesSection(
-              summaryId: widget.summary?.id,
-              visibility: isCM
-                  ? VoiceNoteVisibility.cm
-                  : VoiceNoteVisibility.internal,
-              canDelete: !isCM,
-            ),
-          ],
         ],
       );
     }
-
-    final voiceNotes = (isPsToCm || isCM)
-        ? VoiceNotesSection(
-            summaryId: widget.summary?.id,
-            visibility: isCM
-                ? VoiceNoteVisibility.cm
-                : VoiceNoteVisibility.internal,
-            canDelete: !isCM,
-          )
-        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sidebarRow(files, movement),
         const SizedBox(height: 16),
-        _sidebarRow(internal, voiceNotes ?? const SizedBox.shrink()),
+        internal,
       ],
     );
   }

@@ -565,7 +565,7 @@ class _RuledLinesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = _lineColor
-      ..strokeWidth = 0.8;
+      ..strokeWidth = 1.5;
     for (double y = _spacing; y < size.height; y += _spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }

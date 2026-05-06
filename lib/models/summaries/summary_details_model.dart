@@ -83,6 +83,14 @@ class SummaryDetailsModel {
       .whereType<String>()
       .toList();
 
+  List<SummaryMovementModel> get departmentalMoevements => movements
+      .where(
+        (m) =>
+            m.actionType == 'signed_and_forwarded' ||
+            m.actionType == 'cm_signed_and_returned',
+      )
+      .toList();
+
   Map<String, dynamic> toJson() {
     return {
       SummaryDetailsSchema.summary: summary?.toJson(),

@@ -46,7 +46,7 @@ class RemarksSignPanelController extends ChangeNotifier {
   double get canvasWidth => _canvasWidth;
   double get canvasHeight => _writtenCtrl.canvasHeight;
 
-  bool _expanded = true;
+  bool _expanded = false;
   bool get isExpanded => _expanded;
 
   void expand() {
@@ -97,7 +97,7 @@ class RemarksSignPanel extends StatefulWidget {
     required this.controller,
     this.bottomContent,
     this.scrollController,
-    this.initiallyExpanded = true,
+    this.initiallyExpanded = false,
     this.initialMode = RemarksPanelMode.type,
   });
 

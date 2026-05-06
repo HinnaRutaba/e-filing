@@ -894,7 +894,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
         targetDesgId: targetDesgId,
         instruction: instruction,
         internalForwardId: internalFwd.id,
-        forwardingRemark: internalFwd.instruction,
+        forwardingRemark: instruction,
       );
       Toast.success(message: 'Summary forwarded internally');
       await loadData(isInitialLoad: false);
