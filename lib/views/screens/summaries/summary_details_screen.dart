@@ -193,7 +193,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     return ref.read(summariesController).meta?.activeUserDesg;
   }
 
+  int? get currentDesignationId =>
+      ref.read(authController).currentDesignation?.userDesgId;
+
   bool get isDeo => userDesg?.roleEnum == ActiveUserDesgRole.deo;
+
+  bool get isDeoInCmSecretariat =>
+      isDeo &&
+      (userDesg?.department ?? '').toLowerCase().contains(
+        'chief minister secretariat',
+      );
 
   bool get isCM => userDesg?.roleEnum == ActiveUserDesgRole.cm;
 
@@ -214,13 +223,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   /// True when: DEO role + status is sharedInternallyForFeedback + internalForwards not empty.
-  /// In this case Share Internally acts as Forward Internally (single recipient).
+  /// In this case Share Internally acts as Forward Internally.
   bool get _isDeoForwardInternally {
     final details = ref.read(summariesController).details;
     return isDeo &&
         details?.summary?.summaryStatus ==
             SummaryStatus.sharedInternallyForFeedback &&
-        (details?.internalForwards.isNotEmpty ?? false);
+        (details?.internalForwards.isNotEmpty == true);
   }
 
   bool get actionsAvailable {
@@ -238,6 +247,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     }
 
     if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
+      return false;
+    }
+
+    if (_isDeoForwardInternally &&
+        details?.internalForwards.first.forwardedToUserDesgId !=
+            currentDesignationId) {
       return false;
     }
 
@@ -456,7 +471,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                       tags: [
                         _buildAttachmentsTag(details),
                         _buildBriefsTag(details),
-                        if (isPsToCm || isCM) _buildVoiceNotesTag(),
+                        if (isPsToCm || isCM || isDeoInCmSecretariat)
+                          _buildVoiceNotesTag(),
                       ],
                     ),
                   ),
@@ -594,12 +610,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         _loadingAction = true;
       });
     } else if (action == SummaryAction.shareInternally) {
-      final target = _shareTarget;
-      if (target == null) {
-        Toast.error(message: 'Please select a department member');
-        return;
-      }
-      final targetDesgId = target.userDesgId;
+      final targetDesgId = _shareTarget?.userDesgId;
       if (targetDesgId == null) {
         Toast.error(message: 'Please select a department member');
         return;
@@ -1098,7 +1109,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                       const TextSpan(text: 'This will return the draft to '),
                       TextSpan(
                         text: details?.internalForwards.isNotEmpty == true
-                            ? details?.internalForwards.last.forwardedBy
+                            ? details?.internalForwards.first.forwardedBy
                             : details?.summary?.originatingUser ??
                                   'the originating department',
                         style: const TextStyle(fontWeight: FontWeight.w800),
@@ -2201,7 +2212,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
             visibility: isCM
                 ? VoiceNoteVisibility.cm
                 : VoiceNoteVisibility.internal,
-            canDelete: !isCM,
+            canDelete: !isCM && !isDeoInCmSecretariat,
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
@@ -53,6 +54,18 @@ class _CreateDraftRemarksScreenState
   int? _internalForwardId;
 
   final Set<int> _openSections = {0, 1, 2, 3};
+
+  ActiveUserDesg? get userDesg {
+    return ref.read(summariesController).meta?.activeUserDesg;
+  }
+
+  bool get isDeo => userDesg?.roleEnum == ActiveUserDesgRole.deo;
+
+  bool get isDeoInCmSecretariat =>
+      isDeo &&
+      (userDesg?.department ?? '').toLowerCase().contains(
+        'chief minister secretariat',
+      );
 
   @override
   void initState() {
@@ -1055,6 +1068,9 @@ class _CreateDraftRemarksScreenState
     required HtmlEditorController controller,
     required String hint,
   }) {
+    if (isDeoInCmSecretariat) {
+      return const SizedBox.shrink();
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Container(

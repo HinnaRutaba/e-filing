@@ -1,6 +1,8 @@
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:flutter/material.dart';
 
+
+
 class SummaryRemarkTrackModel {
   final int? movementId;
   final String? actionType;
@@ -139,8 +141,9 @@ class SummaryRemarkTrackModel {
       SummaryRemarkTrackSchema.handwrittenStrokes: handwrittenStrokes?.toJson(),
       SummaryRemarkTrackSchema.handwrittenWidth: handwrittenWidth,
       SummaryRemarkTrackSchema.handwrittenHeight: handwrittenHeight,
-      SummaryRemarkTrackSchema.handwrittenPenColor:
-          _colorToHex(handwrittenPenColor),
+      SummaryRemarkTrackSchema.handwrittenPenColor: _colorToHex(
+        handwrittenPenColor,
+      ),
       SummaryRemarkTrackSchema.actedAt: actedAt?.toIso8601String(),
       SummaryRemarkTrackSchema.actedAtDisplay: actedAtDisplay,
     };
@@ -167,20 +170,19 @@ class SummaryRemarkTrackModel {
           map[SummaryRemarkTrackSchema.handwrittenStrokesUrl],
       handwrittenStrokes:
           map[SummaryRemarkTrackSchema.handwrittenStrokes] != null
-              ? HandwrittenStrokes.fromJson(
-                  Map<String, dynamic>.from(
-                    map[SummaryRemarkTrackSchema.handwrittenStrokes],
-                  ),
-                )
-              : null,
-      handwrittenWidth: (map[SummaryRemarkTrackSchema.handwrittenWidth]
-              as num?)
+          ? HandwrittenStrokes.fromJson(
+              Map<String, dynamic>.from(
+                map[SummaryRemarkTrackSchema.handwrittenStrokes],
+              ),
+            )
+          : null,
+      handwrittenWidth: (map[SummaryRemarkTrackSchema.handwrittenWidth] as num?)
           ?.toDouble(),
-      handwrittenHeight: (map[SummaryRemarkTrackSchema.handwrittenHeight]
-              as num?)
-          ?.toDouble(),
-      handwrittenPenColor:
-          _parseHexColor(map[SummaryRemarkTrackSchema.handwrittenPenColor]),
+      handwrittenHeight:
+          (map[SummaryRemarkTrackSchema.handwrittenHeight] as num?)?.toDouble(),
+      handwrittenPenColor: _parseHexColor(
+        map[SummaryRemarkTrackSchema.handwrittenPenColor],
+      ),
       actedAt: map[SummaryRemarkTrackSchema.actedAt] != null
           ? DateTime.tryParse(map[SummaryRemarkTrackSchema.actedAt])
           : null,
