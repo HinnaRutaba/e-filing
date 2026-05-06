@@ -13,21 +13,30 @@ class CMShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeTab = ref.watch(cmNavController);
+    final isOnDashboard = activeTab == CMNavTab.dashboard;
 
-    return GradientScaffold(
-      child: SafeArea(
-        bottom: false,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBody: true,
-          bottomNavigationBar: const CMBottomNavBar(),
-          body: IndexedStack(
-            index: activeTab.index,
-            children: const [
-              CMDashboardScreen(),
-              CMSummariesListScreen(),
-              CMApprovalDesk(),
-            ],
+    return PopScope(
+      canPop: isOnDashboard,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(cmNavController.notifier).select(CMNavTab.dashboard);
+        }
+      },
+      child: GradientScaffold(
+        child: SafeArea(
+          bottom: false,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            extendBody: true,
+            bottomNavigationBar: const CMBottomNavBar(),
+            body: IndexedStack(
+              index: activeTab.index,
+              children: const [
+                CMDashboardScreen(),
+                CMSummariesListScreen(),
+                CMApprovalDesk(),
+              ],
+            ),
           ),
         ),
       ),
