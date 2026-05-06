@@ -24,20 +24,22 @@ class SummariesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      bgColor: Colors.transparent,
-      isdash: false,
-      title: 'Summaries',
-      actions: [
-        AppOutlineButton(
-          onPressed: () {
-            RouteHelper.push(Routes.createSummary);
-          },
-          text: "Draft Summary",
-          icon: Icons.edit_outlined,
-        ),
-      ],
-      body: const SummariesListScreen(),
+    return GradientScaffold(
+      child: BaseScreen(
+        bgColor: Colors.transparent,
+        isdash: false,
+        title: 'Summaries',
+        actions: [
+          AppOutlineButton(
+            onPressed: () {
+              RouteHelper.push(Routes.createSummary);
+            },
+            text: "Draft Summary",
+            icon: Icons.edit_outlined,
+          ),
+        ],
+        body: const SummariesListScreen(),
+      ),
     );
   }
 }
@@ -159,103 +161,93 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     final visibleItems = ctrlState.filteredSummaries;
     final bannerText = _helperBannerText(subTab);
 
-    return GradientScaffold(
-      child: Column(
-        children: [
-          _mainTabBar(mainTab),
-          const SizedBox(height: 2),
-          // Sub-tabs
-          if (currentSubTabs.isNotEmpty) _subTabBar(mainTab, subTab),
-          // Search bar
-          _searchBar(),
-          // Helper banner
-          if (bannerText != null) _helperBanner(bannerText),
-          // List
-          Expanded(
-            child: ctrlState.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: () => ref
-                        .read(summariesController.notifier)
-                        .loadData(isInitialLoad: true),
-                    child: visibleItems.isEmpty
-                        ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              const SizedBox(height: 120),
-                              Icon(
-                                Icons.inbox_outlined,
-                                size: 56,
-                                color: context.appColors.textSecondary,
-                              ),
-                              const SizedBox(height: 12),
-                              const Center(child: Text('No summaries yet')),
-                            ],
-                          )
-                        : Builder(
-                            builder: (context) {
-                              final perRow = context.isMobile ? 1 : 2;
-                              final rowCount = (visibleItems.length / perRow)
-                                  .ceil();
-                              return ListView.builder(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.fromLTRB(
-                                  12,
-                                  8,
-                                  12,
-                                  24,
-                                ),
-                                itemCount: rowCount,
-                                itemBuilder: (ctx, rowIndex) {
-                                  final children = <Widget>[];
-                                  for (var c = 0; c < perRow; c++) {
-                                    final i = rowIndex * perRow + c;
-                                    if (i >= visibleItems.length) {
-                                      children.add(
-                                        const Expanded(
-                                          child: SizedBox.shrink(),
-                                        ),
-                                      );
-                                      continue;
-                                    }
-                                    final card =
-                                        SummaryCard(item: visibleItems[i])
-                                            .animate()
-                                            .fadeIn(
-                                              delay: (80 * i).ms,
-                                              duration: 300.ms,
-                                              curve: Curves.easeOut,
-                                            )
-                                            .slideX(
-                                              begin: -0.15,
-                                              end: 0,
-                                              delay: (80 * i).ms,
-                                              duration: 350.ms,
-                                              curve: Curves.easeOutCubic,
-                                            );
-                                    if (c > 0) {
-                                      children.add(const SizedBox(width: 12));
-                                    }
-                                    children.add(Expanded(child: card));
+    return Column(
+      children: [
+        _mainTabBar(mainTab),
+        const SizedBox(height: 2),
+        // Sub-tabs
+        if (currentSubTabs.isNotEmpty) _subTabBar(mainTab, subTab),
+        // Search bar
+        _searchBar(),
+        // Helper banner
+        if (bannerText != null) _helperBanner(bannerText),
+        // List
+        Expanded(
+          child: ctrlState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () => ref
+                      .read(summariesController.notifier)
+                      .loadData(isInitialLoad: true),
+                  child: visibleItems.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 120),
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 56,
+                              color: context.appColors.textSecondary,
+                            ),
+                            const SizedBox(height: 12),
+                            const Center(child: Text('No summaries yet')),
+                          ],
+                        )
+                      : Builder(
+                          builder: (context) {
+                            final perRow = context.isMobile ? 1 : 2;
+                            final rowCount = (visibleItems.length / perRow)
+                                .ceil();
+                            return ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                              itemCount: rowCount,
+                              itemBuilder: (ctx, rowIndex) {
+                                final children = <Widget>[];
+                                for (var c = 0; c < perRow; c++) {
+                                  final i = rowIndex * perRow + c;
+                                  if (i >= visibleItems.length) {
+                                    children.add(
+                                      const Expanded(child: SizedBox.shrink()),
+                                    );
+                                    continue;
                                   }
-                                  if (perRow == 1) {
-                                    return children.first is Expanded
-                                        ? (children.first as Expanded).child
-                                        : children.first;
+                                  final card =
+                                      SummaryCard(item: visibleItems[i])
+                                          .animate()
+                                          .fadeIn(
+                                            delay: (80 * i).ms,
+                                            duration: 300.ms,
+                                            curve: Curves.easeOut,
+                                          )
+                                          .slideX(
+                                            begin: -0.15,
+                                            end: 0,
+                                            delay: (80 * i).ms,
+                                            duration: 350.ms,
+                                            curve: Curves.easeOutCubic,
+                                          );
+                                  if (c > 0) {
+                                    children.add(const SizedBox(width: 12));
                                   }
-                                  return Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: children,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                  ),
-          ),
-        ],
-      ),
+                                  children.add(Expanded(child: card));
+                                }
+                                if (perRow == 1) {
+                                  return children.first is Expanded
+                                      ? (children.first as Expanded).child
+                                      : children.first;
+                                }
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: children,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+        ),
+      ],
     );
   }
 
