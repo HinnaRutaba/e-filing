@@ -15,6 +15,7 @@ import 'package:efiling_balochistan/models/summaries/sign_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_internal_forward_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
@@ -873,6 +874,37 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       log('deleteVoiceNote error: $e\n$s');
+      return false;
+    }
+  }
+
+  Future<bool> forwardInternally({
+    required int? summaryId,
+    required int targetDesgId,
+    String? instruction,
+    required SummaryInternalForwardModel internalFwd,
+  }) async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return false;
+      EasyLoading.show();
+      await repo.forwardInternally(
+        summaryId: summaryId,
+        desId: desId,
+        targetDesgId: targetDesgId,
+        instruction: instruction,
+        internalForwardId: internalFwd.id,
+        forwardingRemark: internalFwd.instruction,
+      );
+      Toast.success(message: 'Summary forwarded internally');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('forwardInternally error: $e\n$s');
+      Toast.error(message: handleException(e));
       return false;
     }
   }

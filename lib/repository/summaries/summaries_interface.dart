@@ -80,6 +80,9 @@ abstract class SummariesInterface extends NetworkBase {
   String submitRemarksUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/submit-internal-action';
 
+  String forwardInternallyUrl(int summaryId) =>
+      '${baseUrl}summaries/$summaryId/forward-internally';
+
   String disposeOffSummaryUrl(int summaryId) =>
       '${baseUrl}summaries/$summaryId/dispose-off';
 
@@ -234,5 +237,14 @@ abstract class SummariesInterface extends NetworkBase {
     required int summaryId,
     required int voiceNoteId,
     required int desgId,
-  }); 
+  });
+
+  Future<void> forwardInternally({
+    required int summaryId,
+    required int desId,
+    required int targetDesgId,
+    required String instruction,
+    required int internalForwardId,
+    required String forwardingRemark,
+  });
 }

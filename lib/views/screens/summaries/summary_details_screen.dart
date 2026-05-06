@@ -70,7 +70,7 @@ enum SummaryAction {
     filled: true,
   ),
   draftRemarks(
-    label: 'Draft Remarks',
+    label: 'Draft Remarks & Return',
     icon: Icons.edit_note_rounded,
     color: AppColors.primary,
     filled: true,
@@ -208,6 +208,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         details?.summary?.currentHolderUserDesgId != null &&
         details?.summary?.currentHolderUserDesgId == userDesg?.id &&
         details?.hasForwardedBefore == true;
+  }
+
+  /// True when: DEO role + status is sharedInternallyForFeedback + internalForwards not empty.
+  /// In this case Share Internally acts as Forward Internally (single recipient).
+  bool get _isDeoForwardInternally {
+    final details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.summary?.summaryStatus ==
+            SummaryStatus.sharedInternallyForFeedback &&
+        (details?.internalForwards.isNotEmpty ?? false);
   }
 
   bool get actionsAvailable {
@@ -564,11 +574,29 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       setState(() {
         _loadingAction = true;
       });
-      success = await notifier.shareInternally(
-        summaryId: summaryId,
-        instruction: _remarksController.text.trim(),
-        recipientDesIds: recipientIds,
-      );
+
+      if (_isDeoForwardInternally) {
+        final details = ref.read(summariesController).details;
+        final internalFwd = details?.internalForwards.first;
+        if (internalFwd == null) {
+          Toast.error(message: 'Internal forward record not found');
+          setState(() => _loadingAction = false);
+          return;
+        }
+        success = await notifier.forwardInternally(
+          summaryId: summaryId,
+          targetDesgId: recipientIds.first,
+          instruction: _remarksController.text.trim(),
+          internalFwd: internalFwd,
+        );
+      } else {
+        success = await notifier.shareInternally(
+          summaryId: summaryId,
+          instruction: _remarksController.text.trim(),
+          recipientDesIds: recipientIds,
+        );
+      }
+
       if (!mounted) return;
 
       if (success) {
@@ -668,6 +696,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _expandedHeader(),
+                      )
+                    : const SizedBox(width: double.infinity),
+              ),
+              if (_isDeoForwardInternally) ...[
+                _internalForwardBanner(),
+                const SizedBox(height: 10),
+              ],
               // _sectionDraftBanner(),
               // const SizedBox(height: 12),
               AnimatedSwitcher(
@@ -677,7 +720,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                 transitionBuilder: (child, animation) =>
                     FadeTransition(opacity: animation, child: child),
                 child: expanded
-                    ? _expandedHeader(key: const ValueKey('header'))
+                    ? const SizedBox(
+                        key: ValueKey('empty'),
+                        width: double.infinity,
+                      )
                     : KeyedSubtree(
                         key: const ValueKey('buttons'),
                         child: _actionButtonRow(),
@@ -861,10 +907,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
-  Widget _expandedHeader({Key? key}) {
+  Widget _expandedHeader() {
     final action = _selectedAction!;
     return SizedBox(
-      key: key,
       height: 44,
       child: Row(
         children: [
@@ -906,6 +951,18 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               ),
             ),
           ),
+          if (!context.isMobile) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedAction = null;
+                  _remarksController.clear();
+                });
+              },
+              child: const Icon(Icons.clear),
+            ),
+          ],
         ],
       ),
     );
@@ -1028,6 +1085,45 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     );
   }
 
+  Widget _internalForwardBanner() {
+    final fwd = ref.read(summariesController).details?.internalForwards.first;
+    if (fwd == null) return const SizedBox.shrink();
+    final instruction = (fwd.instruction ?? '').trim();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.feedback_outlined,
+                size: 15,
+                color: Colors.orange,
+              ),
+              const SizedBox(width: 6),
+              AppText.titleMedium(
+                'Instructions from ${fwd.forwardedBy ?? 'Unknown'}',
+                color: Colors.orange[700],
+                fontWeight: FontWeight.w700,
+              ),
+            ],
+          ),
+          if (instruction.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            AppText.bodyMedium(instruction),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _shareInternallyBody(SummaryAction action) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1056,7 +1152,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: AppText.bodySmall(
-                  'Share this summary with a department member for review. They will receive a read-only copy along with your optional instructions.',
+                  _isDeoForwardInternally
+                      ? 'Select one department member to forward this summary to internally.'
+                      : 'Share this summary with a department member for review. They will receive a read-only copy along with your optional instructions.',
                   color: AppColors.secondaryLight,
                   fontSize: 12.5,
                 ),
@@ -1065,67 +1163,74 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SearchDropDownField<InternalUserModel>(
-          controller: _shareSearchController,
-          labelText: 'Select Department Members',
-          hintText: 'Search users…',
+        if (!_isDeoForwardInternally || _shareTargets.isEmpty)
+          SearchDropDownField<InternalUserModel>(
+            controller: _shareSearchController,
+            labelText: _isDeoForwardInternally
+                ? 'Select Department Member'
+                : 'Select Department Members',
+            hintText: 'Search users…',
 
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: AppColors.secondaryLight.withValues(alpha: 0.5),
-            ),
-          ),
-          suggestionsCallback: (pattern) {
-            final q = pattern.toLowerCase();
-            final users =
-                ref.read(summariesController).meta?.internalUsers ??
-                const <InternalUserModel>[];
-            final selectedIds = _shareTargets
-                .map((u) => u.userDesgId)
-                .whereType<int>()
-                .toSet();
-            return users.where((u) {
-              if (u.userDesgId != null && selectedIds.contains(u.userDesgId)) {
-                return false;
-              }
-              return (u.name ?? '').toLowerCase().contains(q) ||
-                  (u.designation ?? '').toLowerCase().contains(q);
-            }).toList();
-          },
-          itemBuilder: (context, item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText.bodyMedium(
-                    item.name ?? '',
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                  const SizedBox(height: 2),
-                  AppText.bodySmall(
-                    item.designation ?? '',
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: AppColors.secondaryLight.withValues(alpha: 0.5),
               ),
-            );
-          },
-          onSelected: (item) {
-            setState(() {
-              final alreadyPicked =
-                  item.userDesgId != null &&
-                  _shareTargets.any((u) => u.userDesgId == item.userDesgId);
-              if (!alreadyPicked) {
-                _shareTargets.add(item);
-              }
-              _shareSearchController.clear();
-            });
-          },
-        ),
+            ),
+            suggestionsCallback: (pattern) {
+              final q = pattern.toLowerCase();
+              final users =
+                  ref.read(summariesController).meta?.internalUsers ??
+                  const <InternalUserModel>[];
+              final selectedIds = _shareTargets
+                  .map((u) => u.userDesgId)
+                  .whereType<int>()
+                  .toSet();
+              return users.where((u) {
+                if (u.userDesgId != null &&
+                    selectedIds.contains(u.userDesgId)) {
+                  return false;
+                }
+                return (u.name ?? '').toLowerCase().contains(q) ||
+                    (u.designation ?? '').toLowerCase().contains(q);
+              }).toList();
+            },
+            itemBuilder: (context, item) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.bodyMedium(
+                      item.name ?? '',
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(height: 2),
+                    AppText.bodySmall(
+                      item.designation ?? '',
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ],
+                ),
+              );
+            },
+            onSelected: (item) {
+              setState(() {
+                final alreadyPicked =
+                    item.userDesgId != null &&
+                    _shareTargets.any((u) => u.userDesgId == item.userDesgId);
+                if (!alreadyPicked) {
+                  _shareTargets.add(item);
+                }
+                _shareSearchController.clear();
+              });
+            },
+          ),
         if (_shareTargets.isNotEmpty) ...[
           const SizedBox(height: 8),
           for (int i = 0; i < _shareTargets.length; i++) ...[

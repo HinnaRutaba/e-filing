@@ -603,6 +603,47 @@ class SummariesRepo extends SummariesInterface {
       rethrow;
     }
   }
+
+  @override
+  Future<void> forwardInternally({
+    required int? summaryId,
+    required int? desId,
+    required int? targetDesgId,
+    required String? instruction,
+    required int? internalForwardId,
+    required String? forwardingRemark,
+  }) async {
+    if (summaryId == null) {
+      throw Exception('Summary ID is required to forward internally');
+    }
+    if (desId == null) {
+      throw Exception('Designation ID is required to forward internally');
+    }
+    if (targetDesgId == null) {
+      throw Exception(
+        'Target Designation ID is required to forward internally',
+      );
+    }
+    if (internalForwardId == null) {
+      throw Exception('Internal Forward ID is required to forward internally');
+    }
+
+    try {
+      await dioClient.post(
+        url: forwardInternallyUrl(summaryId),
+        options: await options(authRequired: true),
+        data: {
+          'userDesgID': desId,
+          'target_user_desg_id': targetDesgId,
+          'instruction': instruction,
+          'internal_forward_id': internalForwardId,
+          'forwarding_remark': forwardingRemark,
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 DioMediaType _audioMediaType(String filename) {
