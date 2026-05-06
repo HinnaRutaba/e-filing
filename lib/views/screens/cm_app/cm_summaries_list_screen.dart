@@ -14,9 +14,6 @@ class CMSummariesListScreen extends StatelessWidget {
         child: Scaffold(
           backgroundColor: Colors.transparent,
 
-          floatingActionButton: CMPendingApprovalsFAB(),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
           extendBody: true,
           bottomNavigationBar: CMBottomNavBar(),
           body: Padding(

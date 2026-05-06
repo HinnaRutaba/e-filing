@@ -56,10 +56,6 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        floatingActionButton: activeTab == CMNavTab.dashboard
-            ? const CMPendingApprovalsFAB()
-            : null,
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         extendBody: true,
         bottomNavigationBar: const CMBottomNavBar(),
         body: IndexedStack(

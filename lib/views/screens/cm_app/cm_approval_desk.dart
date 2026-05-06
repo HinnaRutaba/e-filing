@@ -232,9 +232,6 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
         bottom: false,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          floatingActionButton: const CMPendingApprovalsFAB(),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
           extendBody: true,
           bottomNavigationBar: const CMBottomNavBar(),
           body: body,

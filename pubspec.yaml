@@ -94,7 +94,7 @@ dependencies:
   timeago: ^3.7.1
   html_editor_enhanced: ^2.7.1
   lottie: ^3.3.3
-  animated_bottom_navigation_bar: ^1.4.0
+  curved_navigation_bar_pro: ^1.0.16
 
 dev_dependencies:
   flutter_test:
