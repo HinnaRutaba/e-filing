@@ -713,6 +713,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         SummaryAction.shareInternally,
         SummaryAction.draftRemarks,
       ];
+    } else if (userDesg?.roleEnum == ActiveUserDesgRole.secretary &&
+        details?.isLatestMovementBriefAdded == true) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
     } else if (isPsToCm &&
         details?.isLatestMovementCmSignedAndReturned == true) {
       allowedActions = [
