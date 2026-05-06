@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum CMNavTab { dashboard, summaries }
+enum CMNavTab { dashboard, summaries, approvals }
 
 class CMNavController extends StateNotifier<CMNavTab> {
   CMNavController() : super(CMNavTab.dashboard);

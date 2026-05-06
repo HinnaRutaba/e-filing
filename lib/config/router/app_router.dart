@@ -7,9 +7,7 @@ import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_approval_desk.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_dashboard_screen.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_summaries_list_screen.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_shell.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/archived_files_screen.dart';
@@ -73,21 +71,7 @@ class AppRouter {
       path: Routes.cmDashboard,
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const CMDashboardScreen(),
-      ),
-    ),
-    GoRoute(
-      path: Routes.cmApprovalDesk,
-      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const CMApprovalDesk(),
-      ),
-    ),
-    GoRoute(
-      path: Routes.cmSummaries,
-      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const CMSummariesListScreen(),
+        builder: (context, state) => const CMShell(),
       ),
     ),
     GoRoute(

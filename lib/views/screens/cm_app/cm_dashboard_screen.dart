@@ -1,5 +1,3 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
@@ -7,15 +5,12 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
-import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_summaries_list_screen.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_awaiting_approval_section.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_department_distribution_section.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_recently_approved_section.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_top_departments_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_awaiting_approval_section.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -42,7 +37,6 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     final double headerHeight = isMobile ? 180.0 : 164.0;
     final double cardsOverlap = isMobile ? 130.0 : 60.0;
     final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
-    final CMNavTab activeTab = ref.watch(cmNavController);
 
     final statsCardTop = isMobile ? 154.0 : 132.0;
 
@@ -53,48 +47,29 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       child: _buildHeader(context, headerHeight),
     );
 
-    return GradientScaffold(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBody: true,
-        bottomNavigationBar: const CMBottomNavBar(),
-        body: IndexedStack(
-          index: activeTab.index,
-          children: [
-            // Tab 0: Dashboard
-            CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: headerHeight + cardsOverlap,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        headerBackground,
-                        Positioned(
-                          left: 16,
-                          right: 16,
-                          top: statsCardTop,
-                          child: _buildStatsCard(context, dashboardState),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildDashboardSections(
-                    context,
-                    dashboardState,
-                    isMobile,
-                  ),
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: headerHeight + cardsOverlap,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                headerBackground,
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: statsCardTop,
+                  child: _buildStatsCard(context, dashboardState),
                 ),
               ],
             ),
-            // Tab 1: Summaries
-            const CMSummariesListScreen(),
-          ],
+          ),
         ),
-      ),
+        SliverToBoxAdapter(
+          child: _buildDashboardSections(context, dashboardState, isMobile),
+        ),
+      ],
     );
   }
 
@@ -248,7 +223,9 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                           ],
                           InkWell(
                                 onTap: () {
-                                  RouteHelper.push(Routes.cmSummaries);
+                                  ref
+                                      .read(cmNavController.notifier)
+                                      .select(CMNavTab.approvals);
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(

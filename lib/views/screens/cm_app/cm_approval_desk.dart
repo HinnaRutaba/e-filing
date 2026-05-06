@@ -1,14 +1,11 @@
 import 'dart:convert';
 
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
-import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/cm_bottom_nav_bar.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_desk_pager.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -192,7 +189,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
             const SizedBox(height: 16),
             AppOutlineButton(
               onPressed: () {
-                RouteHelper.push(Routes.cmDashboard);
+                ref.read(cmNavController.notifier).select(CMNavTab.dashboard);
               },
               text: "Open Dashboard",
             ),
@@ -227,17 +224,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
       );
     }
 
-    return GradientScaffold(
-      child: SafeArea(
-        bottom: false,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBody: true,
-          bottomNavigationBar: const CMBottomNavBar(),
-          body: body,
-        ),
-      ),
-    );
+    return body;
   }
 
   Widget _buildPager({

@@ -1,6 +1,4 @@
 import 'package:curved_navigation_bar_pro/curved_navigation_bar_pro.dart';
-import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:flutter/material.dart';
@@ -59,14 +57,8 @@ class CMBottomNavBar extends ConsumerWidget {
         ),
       ],
       onTap: (index) {
-        if (index == 2) {
-          RouteHelper.push(Routes.cmApprovalDesk);
-          return;
-        }
         final tab = CMNavTab.values[index];
         ref.read(cmNavController.notifier).select(tab);
-        if (index == 0) RouteHelper.push(Routes.cmDashboard);
-        if (index == 1) RouteHelper.push(Routes.cmSummaries);
       },
     );
   }
