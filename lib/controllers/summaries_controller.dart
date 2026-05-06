@@ -65,7 +65,7 @@ extension SummarySubTabX on SummarySubTab {
         return SummaryTabConfig(
           label: role == ActiveUserDesgRole.cm ? 'Pending Approval' : 'Inbox',
           parent: SummaryMainTab.actionRequired,
-          filterName: role == ActiveUserDesgRole.pstocm ? 'ps_inbox' : 'inbox',
+          filterName: 'inbox',
         );
       case SummarySubTab.sharedToMe:
         return const SummaryTabConfig(

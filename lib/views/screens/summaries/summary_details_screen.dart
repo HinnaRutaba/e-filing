@@ -224,11 +224,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return false;
     }
 
-    if (activeUser?.roleEnum == ActiveUserDesgRole.pstocm &&
-        details?.isLatestMovementSignedAndForwarded == true) {
-      return false;
-    }
-
     if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
       return false;
     }
@@ -372,13 +367,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _documentCard(),
-                                if (isCMCurrentHolder ||
-                                    (!isDeo &&
-                                        actionsAvailable &&
-                                        showHandWrittedRemarksSection &&
-                                        !(isDeo &&
-                                            details?.isLatestMovementSignedAndForwarded ==
-                                                true))) ...[
+                                if ((isCMCurrentHolder ||
+                                        (!isDeo &&
+                                            actionsAvailable &&
+                                            showHandWrittedRemarksSection &&
+                                            !(isDeo &&
+                                                details?.isLatestMovementSignedAndForwarded ==
+                                                    true))) &&
+                                    !isPsToCmCmReturned) ...[
                                   RemarksSignPanel(
                                     key: _remarksPanelKey,
 
@@ -442,10 +438,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return;
     }
 
-    // if (action == SummaryAction.signForward && isPsToCmCmReturned) {
-    //   _submitPsToSectForward();
-    //   return;
-    // }
+    if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+      _submitPsToSectForward();
+      return;
+    }
 
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
       _remarksPanelCtrl.expand();
