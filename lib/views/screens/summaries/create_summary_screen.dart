@@ -694,6 +694,7 @@ class _CreateSummaryScreenState extends ConsumerState<CreateSummaryScreen> {
         summaryDate: _model.summaryDate,
         subject: subjectController.text.trim(),
         mainPdf: _model.mainPdf,
+        existingMainPdf: _existingMainPdf,
         attachments: _model.attachments,
         linkedDaak: _model.linkedDaak,
         linkedFiles: _model.linkedFiles,

@@ -40,7 +40,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
   Widget build(BuildContext context) {
     final bool isMobile = context.isMobile;
     final double headerHeight = isMobile ? 180.0 : 164.0;
-    final double cardsOverlap = isMobile ? 160.0 : 80.0;
+    final double cardsOverlap = isMobile ? 130.0 : 60.0;
     final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
     final CMNavTab activeTab = ref.watch(cmNavController);
 

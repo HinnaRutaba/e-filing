@@ -730,6 +730,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     } else {
       allowedActions = SummaryAction.values
           .where((a) => a != SummaryAction.draftRemarks)
+          .where((a) => a != SummaryAction.forwardToCM)
           .where((a) => a != SummaryAction.disposedOff || showDisposedOff)
           .toList();
     }

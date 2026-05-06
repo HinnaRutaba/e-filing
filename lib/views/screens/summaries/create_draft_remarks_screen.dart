@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/draft_remarks_model.dart';
@@ -46,6 +47,7 @@ class _CreateDraftRemarksScreenState
   List<FlagAndAttachmentModel> _attachments = [FlagAndAttachmentModel()];
   List<SummaryDaakModel> _linkedDaak = [];
   List<SummaryFileModel> _linkedFiles = [];
+  AttachmentModel? _existingMainPdf;
   final Set<int?> _preloadedDaakIds = {};
   final Set<int?> _preloadedFileIds = {};
   int? _internalForwardId;
@@ -72,6 +74,9 @@ class _CreateDraftRemarksScreenState
 
     setState(() {
       _internalForwardId = details.actions?.myInternalForwardId;
+      _existingMainPdf = details.attachments
+          .where((a) => a.isMainAttachment)
+          .firstOrNull;
       _populateFlags(details);
       _populateLocalLinks(details);
     });
@@ -156,9 +161,10 @@ class _CreateDraftRemarksScreenState
         summaryDate: _s.summaryDate ?? DateTime.now(),
         subject: _s.subject ?? '',
         mainPdf: null,
-        attachments: const [],
-        linkedDaak: const [],
-        linkedFiles: const [],
+        existingMainPdf: _existingMainPdf,
+        attachments: _attachments,
+        linkedDaak: _linkedDaak,
+        linkedFiles: _linkedFiles,
         onSubmit: null,
       ),
     );

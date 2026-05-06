@@ -1,3 +1,5 @@
+import 'package:efiling_balochistan/config/network/network_base.dart';
+
 class AttachmentModel {
   final int? id;
   final String? attachmentType;
@@ -30,6 +32,9 @@ class AttachmentModel {
           : null,
     );
   }
+
+  String? get fullFileUrl =>
+      fileUrl == null ? null : '${NetworkBase.base}/$fileUrl';
 
   bool get isSupporting =>
       originalName != null && originalName!.trimLeft().startsWith('[Flag:');

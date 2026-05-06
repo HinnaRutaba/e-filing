@@ -3,10 +3,12 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
+import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
@@ -22,6 +24,7 @@ class SummaryPreviewSheet extends StatelessWidget {
   final DateTime summaryDate;
   final String subject;
   final XFile? mainPdf;
+  final AttachmentModel? existingMainPdf;
   final List<FlagAndAttachmentModel> attachments;
   final List<SummaryDaakModel> linkedDaak;
   final List<SummaryFileModel> linkedFiles;
@@ -34,11 +37,12 @@ class SummaryPreviewSheet extends StatelessWidget {
     required this.summaryDate,
     required this.subject,
     required this.mainPdf,
+    this.existingMainPdf,
     required this.attachments,
     required this.linkedDaak,
     required this.linkedFiles,
     required this.onSubmit,
-  });    
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -305,9 +309,7 @@ class SummaryPreviewSheet extends StatelessWidget {
   Widget _attachmentsCard(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = context.appColors;
-    final flagAttachments = attachments
-        .where((a) => a.attachment != null)
-        .toList();
+    final flagAttachments = attachments.where((a) => a.hasAttachment).toList();
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -338,8 +340,9 @@ class SummaryPreviewSheet extends StatelessWidget {
           _attachmentRow(
             context: context,
             label: 'Main PDF',
-            name: mainPdf?.name,
+            name: mainPdf?.name ?? existingMainPdf?.originalName,
             isMain: true,
+            filePath: mainPdf?.path ?? existingMainPdf?.fullFileUrl ?? '',
           ),
           for (final a in flagAttachments)
             Padding(
@@ -347,8 +350,12 @@ class SummaryPreviewSheet extends StatelessWidget {
               child: _attachmentRow(
                 context: context,
                 label: a.flagType?.title ?? '?',
-                name: a.attachment?.name,
+                name: a.attachmentDisplayName,
                 isMain: false,
+                filePath:
+                    a.attachment?.path ??
+                    a.existingAttachment?.fullFileUrl ??
+                    '',
               ),
             ),
         ],
@@ -361,64 +368,81 @@ class SummaryPreviewSheet extends StatelessWidget {
     required String label,
     required String? name,
     required bool isMain,
+    required String filePath,
   }) {
     final theme = Theme.of(context);
     final appColors = context.appColors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: appColors.cardColorLight,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: appColors.secondaryLight.withValues(alpha: 0.3),
+    return InkWell(
+      onTap: filePath.isEmpty
+          ? null
+          : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PdfViewer(url: filePath, title: name),
+                ),
+              );
+            },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: appColors.cardColorLight,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: appColors.secondaryLight.withValues(alpha: 0.3),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          if (isMain)
-            Icon(Icons.picture_as_pdf, size: 18, color: theme.colorScheme.error)
-          else
-            Container(
-              width: 28,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+        child: Row(
+          children: [
+            if (isMain)
+              Icon(
+                Icons.picture_as_pdf,
+                size: 18,
+                color: theme.colorScheme.error,
+              )
+            else
+              Container(
+                width: 28,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: AppText.bodySmall(
+                  label,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: appColors.secondaryLight,
                 ),
               ),
-              child: AppText.bodySmall(
-                label,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: appColors.secondaryLight,
+            const SizedBox(width: 10),
+            if (isMain)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: AppText.bodySmall(
+                  'Main PDF',
+                  color: appColors.secondaryLight,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
               ),
-            ),
-          const SizedBox(width: 10),
-          if (isMain)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
+            Expanded(
               child: AppText.bodySmall(
-                'Main PDF',
-                color: appColors.secondaryLight,
-                fontWeight: FontWeight.w700,
+                name ?? 'Not attached',
+                color: name == null
+                    ? appColors.textSecondary
+                    : appColors.textPrimary,
                 fontSize: 12,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-          Expanded(
-            child: AppText.bodySmall(
-              name ?? 'Not attached',
-              color: name == null
-                  ? appColors.textSecondary
-                  : appColors.textPrimary,
-              fontSize: 12,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

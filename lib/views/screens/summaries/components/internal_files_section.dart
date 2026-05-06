@@ -147,7 +147,7 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
     final daak = link.attachment is SummaryLocalLinkDaakAttachment
         ? (link.attachment as SummaryLocalLinkDaakAttachment).daak
         : null;
-    final title = daak?.diaryNo ?? '—';
+    final title = daak?.diaryNo ?? daak?.letterNo ?? '—';
     final subject = daak?.subject ?? '';
     return _linkedTile(
       context: context,
@@ -164,7 +164,7 @@ class _InternalFilesSectionState extends State<InternalFilesSection> {
     final file = link.attachment is SummaryLocalLinkFileAttachment
         ? (link.attachment as SummaryLocalLinkFileAttachment).file
         : null;
-    final title = file?.referenceNo ?? '—';
+    final title = file?.referenceNo ?? file?.barcode ?? '—';
     final subject = file?.subject ?? '';
     return _linkedTile(
       context: context,
