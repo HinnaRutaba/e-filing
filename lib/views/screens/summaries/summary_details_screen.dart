@@ -115,7 +115,8 @@ const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
 
-class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
+class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
+    with WidgetsBindingObserver {
   SummaryAction? _selectedAction;
   bool _loadingAction = false;
   final TextEditingController _remarksController = TextEditingController();
@@ -131,6 +132,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   final RemarksSignPanelController _remarksPanelCtrl =
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
+  final ScrollController _actionBarScrollController = ScrollController();
   final GlobalKey _remarksPanelKey = GlobalKey();
 
   final TextEditingController _destDeptController = TextEditingController();
@@ -289,6 +291,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
     final initialTarget = widget.summary?.draftTargetDepartment;
     if (initialTarget != null && initialTarget.isNotEmpty) {
@@ -323,12 +326,38 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _remarksController.dispose();
     _shareSearchController.dispose();
     _destDeptController.dispose();
     _destOfficerController.dispose();
     _mainScrollController.dispose();
+    _actionBarScrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (_selectedAction == null) return;
+    final bottomInset = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .views
+        .first
+        .viewInsets
+        .bottom;
+    if (bottomInset > 0 && _actionBarScrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_actionBarScrollController.hasClients) {
+          _actionBarScrollController.animateTo(
+            _actionBarScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -691,6 +720,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
+          controller: _actionBarScrollController,
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
