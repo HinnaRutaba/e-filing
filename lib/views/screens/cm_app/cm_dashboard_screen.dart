@@ -141,7 +141,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                             },
                             icon: Icon(
                               Icons.power_settings_new,
-                              color: Colors.orange[300],
+                              color: Colors.amber[400],
                             ),
                           ),
                         ],
