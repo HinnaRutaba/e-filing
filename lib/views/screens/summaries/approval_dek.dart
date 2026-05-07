@@ -5,6 +5,9 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:efiling_balochistan/models/department/department_model.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_desk_pager.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -12,12 +15,14 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApprovalDesk extends ConsumerStatefulWidget {
-  const ApprovalDesk({super.key});
+  final ActiveUserDesgRole role;
+  const ApprovalDesk({super.key, required this.role});
 
   @override
   ConsumerState<ApprovalDesk> createState() => _ApprovalDeskState();
@@ -30,17 +35,53 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
 
-  /// Local copy of the summaries list — managed independently so we can
-  /// remove items on success without waiting for a full controller re-fetch.
   List<SummaryModel> _localSummaries = [];
   bool _initialized = false;
   bool _allCaughtUp = false;
+
+  // Secretary forwarding fields
+  final TextEditingController _destDeptController = TextEditingController();
+  final TextEditingController _destOfficerController = TextEditingController();
+  DepartmentModel? _selectedDestDept;
+  DepartmentSecretariesModel? _selectedDestOfficer;
+  int? _officerCacheDeptId;
+  List<DepartmentSecretariesModel> _officerCache = const [];
+
+  bool get isCm => widget.role == ActiveUserDesgRole.cm;
+
+  bool get isSecretary => widget.role == ActiveUserDesgRole.secretary;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(summariesController.notifier).setSubTab(SummarySubTab.inbox);
+    });
+  }
+
+  Future<void> _fetchOfficersForCurrentDept() async {
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      if (mounted) {
+        setState(() {
+          _officerCache = const [];
+          _officerCacheDeptId = null;
+        });
+      }
+      return;
+    }
+    if (_officerCacheDeptId == deptId) return;
+    final list = await ref
+        .read(summariesController.notifier)
+        .fetchDepartmentSecretaries(deptId: deptId);
+    if (!mounted) return;
+    setState(() {
+      _officerCache = list;
+      _officerCacheDeptId = deptId;
+      if (list.length == 1) {
+        _selectedDestOfficer = list.first;
+        _destOfficerController.text = list.first.name ?? '';
+      }
     });
   }
 
@@ -73,46 +114,92 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     final summaryId = _localSummaries[_currentPage].id;
     final notifier = ref.read(summariesController.notifier);
 
-    bool success;
-    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
-      final strokesJson = _remarksPanelCtrl.getStrokesJson();
-      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+    if (isSecretary) {
+      // 3 – Validate forwarding destination
+      final deptId = _selectedDestDept?.id;
+      if (deptId == null) {
+        Toast.error(message: 'Please select a destination department');
+        return;
+      }
+      final hasOfficers =
+          _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
+      if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
+        Toast.error(message: 'Please select a destination officer');
+        return;
+      }
+
+      bool success;
+      if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+        final strokesJson = _remarksPanelCtrl.getStrokesJson();
+        final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+        if (!mounted) return;
+        final handwrittenBase64 = handwrittenPng != null
+            ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+            : '';
+        success = await notifier.signAndForward(
+          summaryId: summaryId,
+          signatureBytes: signatureBytes,
+          targetDepartmentId: deptId,
+          targetUserDesgId: _selectedDestOfficer?.userDesgId,
+          handwrittenStrokesJson: strokesJson,
+          handwrittenPngBase64: handwrittenBase64,
+          handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+          handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+          handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+        );
+      } else {
+        success = await notifier.signAndForward(
+          summaryId: summaryId,
+          signatureBytes: signatureBytes,
+          targetDepartmentId: deptId,
+          targetUserDesgId: _selectedDestOfficer?.userDesgId,
+          remarks: typedRemarks,
+        );
+      }
+
       if (!mounted) return;
-      final handwrittenBase64 = handwrittenPng != null
-          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
-          : '';
-      success = await notifier.signAndReturnCMDesk(
-        summaryId: summaryId,
-        signatureBytes: signatureBytes,
-        handwrittenStrokesJson: strokesJson,
-        handwrittenPngBase64: handwrittenBase64,
-        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
-        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
-        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
-      );
+      if (!success) return;
     } else {
-      success = await notifier.signAndReturnCMDesk(
-        summaryId: summaryId,
-        signatureBytes: signatureBytes,
-        body: typedRemarks,
-      );
+      // CM path
+      bool success;
+      if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+        final strokesJson = _remarksPanelCtrl.getStrokesJson();
+        final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+        if (!mounted) return;
+        final handwrittenBase64 = handwrittenPng != null
+            ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+            : '';
+        success = await notifier.signAndReturnCMDesk(
+          summaryId: summaryId,
+          signatureBytes: signatureBytes,
+          handwrittenStrokesJson: strokesJson,
+          handwrittenPngBase64: handwrittenBase64,
+          handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+          handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+          handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+        );
+      } else {
+        success = await notifier.signAndReturnCMDesk(
+          summaryId: summaryId,
+          signatureBytes: signatureBytes,
+          body: typedRemarks,
+        );
+      }
+
+      if (!mounted) return;
+      if (!success) return;
+
+      Toast.success(message: 'Summary signed and returned successfully');
     }
-
-    if (!mounted) return;
-    if (!success) return;
-
-    Toast.success(message: 'Summary signed and returned successfully');
 
     setState(() {
       _localSummaries.removeAt(_currentPage);
       if (_localSummaries.isEmpty) {
         _allCaughtUp = true;
       } else if (_currentPage >= _localSummaries.length) {
-        // Was on the last page — stay on the new last
         _currentPage = _localSummaries.length - 1;
         _pageController.jumpToPage(_currentPage);
       }
-      // Otherwise the PageView naturally shows the next summary at the same index
     });
   }
 
@@ -150,6 +237,8 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     _pageController.dispose();
     _mainScrollController.dispose();
     _remarksPanelCtrl.dispose();
+    _destDeptController.dispose();
+    _destOfficerController.dispose();
     super.dispose();
   }
 
@@ -290,11 +379,154 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   }
 
   Widget _submitButton() {
+    if (isSecretary) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _forwardingLabel('FORWARD DEPARTMENT'),
+          const SizedBox(height: 6),
+          _departmentDropdown(),
+          const SizedBox(height: 12),
+          _forwardingLabel('DEPUTY / OFFICER'),
+          const SizedBox(height: 6),
+          _officerDropdown(),
+          if (_selectedDestDept?.id != null &&
+              _officerCacheDeptId == _selectedDestDept?.id &&
+              _officerCache.isEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'No user found for selected department.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.red[700],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          AppSolidButton(
+            onPressed: _submitFromRemarksPanel,
+            text: 'Sign and Forward',
+            icon: Icons.check_rounded,
+            width: double.infinity,
+          ),
+        ],
+      );
+    }
     return AppSolidButton(
       onPressed: _submitFromRemarksPanel,
       text: 'Sign and Return',
       icon: Icons.check_rounded,
       width: double.infinity,
+    );
+  }
+
+  Widget _forwardingLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.6,
+      ),
+    );
+  }
+
+  Widget _departmentDropdown() {
+    final departments =
+        ref.watch(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    return SearchDropDownField<DepartmentModel>(
+      controller: _destDeptController,
+      labelText: 'Destination Department',
+      hintText: 'Select department',
+      showLabel: false,
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return departments
+            .where((d) => (d.title ?? '').toLowerCase().contains(q))
+            .toList(growable: false);
+      },
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: AppText.bodyMedium(
+            item.title ?? '',
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        );
+      },
+      onSelected: (item) {
+        setState(() {
+          _selectedDestDept = item;
+          _destDeptController.text = item.title ?? '';
+          _selectedDestOfficer = null;
+          _destOfficerController.clear();
+          _officerCacheDeptId = null;
+          _officerCache = const [];
+        });
+        _fetchOfficersForCurrentDept();
+      },
+    );
+  }
+
+  Widget _officerDropdown() {
+    final dept = _selectedDestDept;
+    return SearchDropDownField<DepartmentSecretariesModel>(
+      controller: _destOfficerController,
+      labelText: 'Destination Officer',
+      hintText: 'Select officer',
+      showLabel: false,
+      enabled: dept?.id != null,
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return _officerCache
+            .where((o) {
+              return (o.name ?? '').toLowerCase().contains(q) ||
+                  (o.designation ?? '').toLowerCase().contains(q);
+            })
+            .toList(growable: false);
+      },
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyMedium(
+                item.name ?? '',
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              if ((item.designation ?? '').isNotEmpty)
+                AppText.bodySmall(
+                  item.designation!,
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+            ],
+          ),
+        );
+      },
+      onSelected: (item) {
+        setState(() {
+          _selectedDestOfficer = item;
+          _destOfficerController.text = item.name ?? '';
+        });
+      },
+    );
+  }
+
+  OutlineInputBorder _forwardingBorder() {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(
+        color: AppColors.secondaryLight.withValues(alpha: 0.5),
+      ),
     );
   }
 }
