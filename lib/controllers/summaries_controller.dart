@@ -301,7 +301,11 @@ class SummariesController extends BaseControllerState<SummariesState> {
     bool showLoading = true,
   }) async {
     try {
-      state = state.copyWith(isLoadingDetails: showLoading, details: null);
+      if (showLoading) {
+        state = state.copyWith(isLoadingDetails: true, details: null);
+      } else {
+        state = state.copyWith(isLoadingDetails: false);
+      }
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       SummaryDetailsModel details = await repo.fetchSummaryDetails(
         summaryId: summaryId,
