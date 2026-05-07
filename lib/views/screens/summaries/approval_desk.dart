@@ -32,7 +32,6 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   int _currentPage = 0;
   final RemarksSignPanelController _remarksPanelCtrl =
       RemarksSignPanelController();
-  final ScrollController _mainScrollController = ScrollController();
 
   List<SummaryDetailsModel> _localDetails = [];
   bool _initialized = false;
@@ -277,7 +276,6 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   @override
   void dispose() {
     _pageController.dispose();
-    _mainScrollController.dispose();
     _remarksPanelCtrl.dispose();
     _destDeptController.dispose();
     _destOfficerController.dispose();
@@ -337,7 +335,6 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                 pageController: _pageController,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 remarksPanelController: _remarksPanelCtrl,
-                mainScrollController: _mainScrollController,
                 bottomContent: _submitButton(),
                 initialRemarksMode: RemarksPanelMode.write,
                 initialPenColor: SignatureColor.darkGreen,

@@ -18,14 +18,13 @@ import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 
-class SummaryDeskPager extends StatelessWidget {
+class SummaryDeskPager extends StatefulWidget {
   const SummaryDeskPager({
     super.key,
     required this.summaries,
     required this.pageController,
     required this.onPageChanged,
     required this.remarksPanelController,
-    required this.mainScrollController,
     required this.bottomContent,
     this.panelWidthFactor = 0.8,
     this.tagsAlignment = const Alignment(0.0, -0.5),
@@ -37,12 +36,47 @@ class SummaryDeskPager extends StatelessWidget {
   final PageController pageController;
   final ValueChanged<int> onPageChanged;
   final RemarksSignPanelController remarksPanelController;
-  final ScrollController mainScrollController;
   final Widget bottomContent;
   final double panelWidthFactor;
   final Alignment tagsAlignment;
   final RemarksPanelMode initialRemarksMode;
   final SignatureColor initialPenColor;
+
+  @override
+  State<SummaryDeskPager> createState() => _SummaryDeskPagerState();
+}
+
+class _SummaryDeskPagerState extends State<SummaryDeskPager> {
+  final List<ScrollController> _scrollControllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncControllers(widget.summaries.length);
+  }
+
+  @override
+  void didUpdateWidget(SummaryDeskPager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncControllers(widget.summaries.length);
+  }
+
+  void _syncControllers(int count) {
+    while (_scrollControllers.length < count) {
+      _scrollControllers.add(ScrollController());
+    }
+    while (_scrollControllers.length > count) {
+      _scrollControllers.removeLast().dispose();
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _scrollControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   void _viewAttachment(BuildContext context, AttachmentModel attachment) {
     if (attachment.fileUrl == null) {
@@ -82,25 +116,26 @@ class SummaryDeskPager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PageView.builder(
-      controller: pageController,
-      itemCount: summaries.length,
+      controller: widget.pageController,
+      itemCount: widget.summaries.length,
       physics: const NeverScrollableScrollPhysics(),
-      onPageChanged: onPageChanged,
+      onPageChanged: widget.onPageChanged,
       itemBuilder: (_, i) {
-        final details = summaries[i];
+        final details = widget.summaries[i];
         final summary = details.summary;
         final pageKey = PageStorageKey<int>(i);
+        final scrollCtrl = _scrollControllers[i];
 
         return StickyTagDrawer(
-          panelWidth: MediaQuery.sizeOf(context).width * panelWidthFactor,
-          tagsAlignment: tagsAlignment,
+          panelWidth: MediaQuery.sizeOf(context).width * widget.panelWidthFactor,
+          tagsAlignment: widget.tagsAlignment,
           mainContent: Scrollbar(
-            controller: mainScrollController,
+            controller: scrollCtrl,
             thickness: 10,
             trackVisibility: true,
             thumbVisibility: true,
             child: SingleChildScrollView(
-              controller: mainScrollController,
+              controller: scrollCtrl,
               padding: const EdgeInsets.fromLTRB(16, 16, 24, 16),
               child: Column(
                 children: [
@@ -112,13 +147,13 @@ class SummaryDeskPager extends StatelessWidget {
                     ),
                   RemarksSignPanel(
                     key: pageKey,
-                    controller: remarksPanelController,
-                    scrollController: mainScrollController,
-                    initialMode: initialRemarksMode,
-                    bottomContent: bottomContent,
+                    controller: widget.remarksPanelController,
+                    scrollController: scrollCtrl,
+                    initialMode: widget.initialRemarksMode,
+                    bottomContent: widget.bottomContent,
                     initiallyExpanded: true,
                     showHeading: false,
-                    initialPenColor: initialPenColor,
+                    initialPenColor: widget.initialPenColor,
                     signPadWidth: 450,
                   ),
                 ],
