@@ -227,8 +227,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   bool get _isDeoForwardInternally {
     final details = ref.read(summariesController).details;
     return isDeo &&
-        details?.summary?.summaryStatus ==
-            SummaryStatus.sharedInternallyForFeedback &&
+        (details?.summary?.summaryStatus ==
+                SummaryStatus.sharedInternallyForFeedback ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.collectingInternalRemarks) &&
         (details?.internalForwards.isNotEmpty == true);
   }
 
@@ -903,6 +905,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     );
   }
 
+  String _labelFor(SummaryAction action) {
+    if (action == SummaryAction.shareInternally && _isDeoForwardInternally) {
+      return 'Forward to another user';
+    }
+    return action.label;
+  }
+
   Widget _actionButton(
     SummaryAction action, {
     required bool expand,
@@ -959,7 +968,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    action.label,
+                    _labelFor(action),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
@@ -1011,7 +1020,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              action.label,
+              _labelFor(action),
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 15,

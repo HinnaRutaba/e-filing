@@ -22,7 +22,8 @@ class SummaryCard extends ConsumerWidget {
         ?.activeUserDesg;
 
     final bool needsFeedback =
-        item.summaryStatus == SummaryStatus.sharedInternallyForFeedback &&
+        (item.summaryStatus == SummaryStatus.sharedInternallyForFeedback ||
+            item.summaryStatus == SummaryStatus.collectingInternalRemarks) &&
         myDesg?.roleEnum == ActiveUserDesgRole.deo &&
         myDept != null &&
         item.currentDepartment?.toLowerCase() == myDept.toLowerCase();
@@ -239,7 +240,7 @@ class SummaryCard extends ConsumerWidget {
                           _InfoChip(
                             icon: Icons.feedback_outlined,
                             label: 'Action',
-                            value: 'Pending your feedback',
+                            value: 'Pending your action',
                             color: Colors.orange[700]!,
                           ),
                       ],

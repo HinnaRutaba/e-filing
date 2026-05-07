@@ -1,18 +1,23 @@
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:flutter/material.dart';
 
-
-
 class SummaryRemarkTrackModel {
   final int? movementId;
   final String? actionType;
   final String? actionLabel;
+  final int? actorUserDesgId;
   final String? actorName;
   final String? actorDesignation;
+  final int? fromDepartmentId;
   final String? fromDepartment;
+  final int? toDepartmentId;
   final String? toDepartment;
+  final int? toUserDesgId;
   final String? toUserName;
   final String? toUserDesignation;
+  final String? effectiveToUser;
+  final String? effectiveToDesignation;
+  final String? effectiveToDepartment;
   final String? remarks;
   final String? briefNote;
   final String? signatureUrl;
@@ -48,12 +53,19 @@ class SummaryRemarkTrackModel {
     this.movementId,
     this.actionType,
     this.actionLabel,
+    this.actorUserDesgId,
     this.actorName,
     this.actorDesignation,
+    this.fromDepartmentId,
     this.fromDepartment,
+    this.toDepartmentId,
     this.toDepartment,
+    this.toUserDesgId,
     this.toUserName,
     this.toUserDesignation,
+    this.effectiveToUser,
+    this.effectiveToDesignation,
+    this.effectiveToDepartment,
     this.remarks,
     this.briefNote,
     this.signatureUrl,
@@ -73,12 +85,19 @@ class SummaryRemarkTrackModel {
     int? movementId,
     String? actionType,
     String? actionLabel,
+    int? actorUserDesgId,
     String? actorName,
     String? actorDesignation,
+    int? fromDepartmentId,
     String? fromDepartment,
+    int? toDepartmentId,
     String? toDepartment,
+    int? toUserDesgId,
     String? toUserName,
     String? toUserDesignation,
+    String? effectiveToUser,
+    String? effectiveToDesignation,
+    String? effectiveToDepartment,
     String? remarks,
     String? briefNote,
     String? signatureUrl,
@@ -97,12 +116,21 @@ class SummaryRemarkTrackModel {
       movementId: movementId ?? this.movementId,
       actionType: actionType ?? this.actionType,
       actionLabel: actionLabel ?? this.actionLabel,
+      actorUserDesgId: actorUserDesgId ?? this.actorUserDesgId,
       actorName: actorName ?? this.actorName,
       actorDesignation: actorDesignation ?? this.actorDesignation,
+      fromDepartmentId: fromDepartmentId ?? this.fromDepartmentId,
       fromDepartment: fromDepartment ?? this.fromDepartment,
+      toDepartmentId: toDepartmentId ?? this.toDepartmentId,
       toDepartment: toDepartment ?? this.toDepartment,
+      toUserDesgId: toUserDesgId ?? this.toUserDesgId,
       toUserName: toUserName ?? this.toUserName,
       toUserDesignation: toUserDesignation ?? this.toUserDesignation,
+      effectiveToUser: effectiveToUser ?? this.effectiveToUser,
+      effectiveToDesignation:
+          effectiveToDesignation ?? this.effectiveToDesignation,
+      effectiveToDepartment:
+          effectiveToDepartment ?? this.effectiveToDepartment,
       remarks: remarks ?? this.remarks,
       briefNote: briefNote ?? this.briefNote,
       signatureUrl: signatureUrl ?? this.signatureUrl,
@@ -125,12 +153,19 @@ class SummaryRemarkTrackModel {
       SummaryRemarkTrackSchema.movementId: movementId,
       SummaryRemarkTrackSchema.actionType: actionType,
       SummaryRemarkTrackSchema.actionLabel: actionLabel,
+      SummaryRemarkTrackSchema.actorUserDesgId: actorUserDesgId,
       SummaryRemarkTrackSchema.actorName: actorName,
       SummaryRemarkTrackSchema.actorDesignation: actorDesignation,
+      SummaryRemarkTrackSchema.fromDepartmentId: fromDepartmentId,
       SummaryRemarkTrackSchema.fromDepartment: fromDepartment,
+      SummaryRemarkTrackSchema.toDepartmentId: toDepartmentId,
       SummaryRemarkTrackSchema.toDepartment: toDepartment,
+      SummaryRemarkTrackSchema.toUserDesgId: toUserDesgId,
       SummaryRemarkTrackSchema.toUserName: toUserName,
       SummaryRemarkTrackSchema.toUserDesignation: toUserDesignation,
+      SummaryRemarkTrackSchema.effectiveToUser: effectiveToUser,
+      SummaryRemarkTrackSchema.effectiveToDesignation: effectiveToDesignation,
+      SummaryRemarkTrackSchema.effectiveToDepartment: effectiveToDepartment,
       SummaryRemarkTrackSchema.remarks: remarks,
       SummaryRemarkTrackSchema.briefNote: briefNote,
       SummaryRemarkTrackSchema.signatureUrl: signatureUrl,
@@ -154,12 +189,21 @@ class SummaryRemarkTrackModel {
       movementId: map[SummaryRemarkTrackSchema.movementId]?.toInt(),
       actionType: map[SummaryRemarkTrackSchema.actionType],
       actionLabel: map[SummaryRemarkTrackSchema.actionLabel],
+      actorUserDesgId: map[SummaryRemarkTrackSchema.actorUserDesgId]?.toInt(),
       actorName: map[SummaryRemarkTrackSchema.actorName],
       actorDesignation: map[SummaryRemarkTrackSchema.actorDesignation],
+      fromDepartmentId: map[SummaryRemarkTrackSchema.fromDepartmentId]?.toInt(),
       fromDepartment: map[SummaryRemarkTrackSchema.fromDepartment],
+      toDepartmentId: map[SummaryRemarkTrackSchema.toDepartmentId]?.toInt(),
       toDepartment: map[SummaryRemarkTrackSchema.toDepartment],
+      toUserDesgId: map[SummaryRemarkTrackSchema.toUserDesgId]?.toInt(),
       toUserName: map[SummaryRemarkTrackSchema.toUserName],
       toUserDesignation: map[SummaryRemarkTrackSchema.toUserDesignation],
+      effectiveToUser: map[SummaryRemarkTrackSchema.effectiveToUser],
+      effectiveToDesignation:
+          map[SummaryRemarkTrackSchema.effectiveToDesignation],
+      effectiveToDepartment:
+          map[SummaryRemarkTrackSchema.effectiveToDepartment],
       remarks: map[SummaryRemarkTrackSchema.remarks],
       briefNote: map[SummaryRemarkTrackSchema.briefNote],
       signatureUrl: map[SummaryRemarkTrackSchema.signatureUrl],
@@ -198,12 +242,19 @@ class SummaryRemarkTrackModel {
         other.movementId == movementId &&
         other.actionType == actionType &&
         other.actionLabel == actionLabel &&
+        other.actorUserDesgId == actorUserDesgId &&
         other.actorName == actorName &&
         other.actorDesignation == actorDesignation &&
+        other.fromDepartmentId == fromDepartmentId &&
         other.fromDepartment == fromDepartment &&
+        other.toDepartmentId == toDepartmentId &&
         other.toDepartment == toDepartment &&
+        other.toUserDesgId == toUserDesgId &&
         other.toUserName == toUserName &&
         other.toUserDesignation == toUserDesignation &&
+        other.effectiveToUser == effectiveToUser &&
+        other.effectiveToDesignation == effectiveToDesignation &&
+        other.effectiveToDepartment == effectiveToDepartment &&
         other.remarks == remarks &&
         other.briefNote == briefNote &&
         other.signatureUrl == signatureUrl &&
@@ -224,12 +275,19 @@ class SummaryRemarkTrackModel {
     return movementId.hashCode ^
         actionType.hashCode ^
         actionLabel.hashCode ^
+        actorUserDesgId.hashCode ^
         actorName.hashCode ^
         actorDesignation.hashCode ^
+        fromDepartmentId.hashCode ^
         fromDepartment.hashCode ^
+        toDepartmentId.hashCode ^
         toDepartment.hashCode ^
+        toUserDesgId.hashCode ^
         toUserName.hashCode ^
         toUserDesignation.hashCode ^
+        effectiveToUser.hashCode ^
+        effectiveToDesignation.hashCode ^
+        effectiveToDepartment.hashCode ^
         remarks.hashCode ^
         briefNote.hashCode ^
         signatureUrl.hashCode ^
@@ -250,12 +308,19 @@ class SummaryRemarkTrackSchema {
   static const String movementId = 'movement_id';
   static const String actionType = 'action_type';
   static const String actionLabel = 'action_label';
+  static const String actorUserDesgId = 'actor_user_desg_id';
   static const String actorName = 'actor_name';
   static const String actorDesignation = 'actor_designation';
+  static const String fromDepartmentId = 'from_department_id';
   static const String fromDepartment = 'from_department';
+  static const String toDepartmentId = 'to_department_id';
   static const String toDepartment = 'to_department';
+  static const String toUserDesgId = 'to_user_desg_id';
   static const String toUserName = 'to_user_name';
   static const String toUserDesignation = 'to_user_designation';
+  static const String effectiveToUser = 'effective_to_user';
+  static const String effectiveToDesignation = 'effective_to_designation';
+  static const String effectiveToDepartment = 'effective_to_department';
   static const String remarks = 'remarks';
   static const String briefNote = 'brief_note';
   static const String signatureUrl = 'signature_url';

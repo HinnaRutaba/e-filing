@@ -246,6 +246,10 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
 
                   Builder(
                     builder: (_) {
+                      final currentDesignation = ref
+                          .read(authController)
+                          .currentDesignation
+                          ?.userDesgId;
                       final userRole = ref
                           .read(summariesController)
                           .meta
@@ -255,9 +259,12 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                           widget.remarkTrack.isNotEmpty &&
                           widget.remarkTrack.last.actionType == 'remarks_added';
                       if (isLastRemarksAdded &&
-                          userRole == ActiveUserDesgRole.secretary) {
+                          (userRole == ActiveUserDesgRole.secretary ||
+                              widget.remarkTrack.last.actorUserDesgId ==
+                                  currentDesignation)) {
                         return _remarksAddedPendingSection(
                           widget.remarkTrack.last,
+                          userRole,
                         );
                       }
                       return const SizedBox.shrink();
@@ -337,7 +344,10 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
     );
   }
 
-  Widget _remarksAddedPendingSection(SummaryRemarkTrackModel track) {
+  Widget _remarksAddedPendingSection(
+    SummaryRemarkTrackModel track,
+    ActiveUserDesgRole? role,
+  ) {
     const draftBadgeBg = Color(0xFFFFF3CD);
     const draftBadgeFg = Color(0xFF8A6D1A);
     const accentOrange = Color(0xFFE08A2B);
@@ -385,7 +395,8 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (widget.onEditRemarks != null) ...[
+                if (role != ActiveUserDesgRole.deo &&
+                    widget.onEditRemarks != null) ...[
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -425,7 +436,8 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   ),
                   const SizedBox(width: 8),
                 ],
-                if (widget.onAcceptRemarks != null)
+                if (role != ActiveUserDesgRole.deo &&
+                    widget.onAcceptRemarks != null)
                   Material(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(6),
