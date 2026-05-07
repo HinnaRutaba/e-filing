@@ -181,7 +181,11 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   Builder(
                     builder: (_) {
                       final signedTracks = widget.remarkTrack
-                          .where((t) => t.actionType == 'signed_and_forwarded')
+                          .where(
+                            (t) =>
+                                t.actionType == 'signed_and_forwarded' ||
+                                t.actionType == 'cm_signed_and_returned',
+                          )
                           .toList();
                       if (signedTracks.isEmpty) {
                         return Column(

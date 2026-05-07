@@ -388,19 +388,40 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           backgroundColor: Colors.transparent,
           title: AppText.headlineSmall("Summary Details"),
           actions: [
-            AppOutlineButton(
-              onPressed: _onPrint,
-              text: 'Print Summary',
-              icon: Icons.print_outlined,
-              color: AppColors.primaryDark,
-              width: 160,
-            ),
-            const SizedBox(width: 12),
+            if (details != null) ...[
+              AppOutlineButton(
+                onPressed: _onPrint,
+                text: 'Print Summary',
+                icon: Icons.print_outlined,
+                color: AppColors.primaryDark,
+                width: 160,
+              ),
+              const SizedBox(width: 12),
+            ],
           ],
         ),
 
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
+            : (!ctrlState.isLoadingDetails && details == null)
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 72,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    AppText.headlineSmall("Access Restricted"),
+                    const SizedBox(height: 8),
+                    AppText.bodyMedium(
+                      'You do not have access to this summary',
+                    ),
+                  ],
+                ),
+              )
             : Column(
                 children: [
                   Expanded(
