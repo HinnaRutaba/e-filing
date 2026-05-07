@@ -661,6 +661,28 @@ class SummariesRepo extends SummariesInterface {
   }
 
   @override
+  Future<String?> getSummaryPrintPdf({
+    required int? summaryId,
+    required int? userDesgId,
+  }) async {
+    try {
+      if (summaryId == null) {
+        throw Exception("Summary id is required ");
+      }
+      if (userDesgId == null) {
+        throw Exception("user designation id is required ");
+      }
+      final data = await dioClient.get(
+        url: summariesPrintUrl(summaryId, userDesgId),
+        options: await options(authRequired: true),
+      );
+      return data['data']['pdf_url'] as String;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<SummaryDetailsModel>> getSummariesDesk({
     required int desgId,
   }) async {

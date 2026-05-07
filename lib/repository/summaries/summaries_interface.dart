@@ -122,6 +122,9 @@ abstract class SummariesInterface extends NetworkBase {
   String summariesDeskUrl(int desgId) =>
       '${baseUrl}summaries/desk?userDesgID=$desgId';
 
+  String summariesPrintUrl(int summaryId, int desgId) =>
+      '${baseUrl}summaries/$summaryId/print?userDesgID=$desgId';
+
   //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
@@ -258,4 +261,9 @@ abstract class SummariesInterface extends NetworkBase {
   });
 
   Future<List<SummaryDetailsModel>> getSummariesDesk({required int desgId});
+
+  Future<String?> getSummaryPrintPdf({
+    required int summaryId,
+    required int userDesgId,
+  });
 }

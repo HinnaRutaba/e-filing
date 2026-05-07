@@ -395,12 +395,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           title: AppText.headlineSmall("Summary Details"),
           actions: [
             if (details != null) ...[
-              AppOutlineButton(
-                onPressed: _onPrint,
-                text: 'Print Summary',
-                icon: Icons.print_outlined,
-                color: AppColors.primaryDark,
-                width: 160,
+              Consumer(
+                builder: (context, ref, _) {
+                  final loading = ref.watch(
+                    summariesController.select((s) => s.gettingPrintUrl),
+                  );
+                  return loading
+                      ? const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : AppOutlineButton(
+                          onPressed: _onPrint,
+                          text: 'Print Summary',
+                          icon: Icons.print_outlined,
+                          color: AppColors.primaryDark,
+                          width: 160,
+                        );
+                },
               ),
               const SizedBox(width: 12),
             ],
@@ -2095,7 +2111,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     );
   }
 
-  void _onPrint() {}
+  void _onPrint() async {
+    final summaryId = widget.summary?.id;
+    if (summaryId == null) return;
+    final url = await ref
+        .read(summariesController.notifier)
+        .getSummaryPrintPdf(summaryId: summaryId);
+
+    if (!mounted || url == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewer(url: url, title: widget.summary?.summaryNo),
+      ),
+    );
+  }
 
   Widget _documentCard() {
     final details = ref.read(summariesController).details;

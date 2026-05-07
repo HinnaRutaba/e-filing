@@ -4,11 +4,10 @@ import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/department/department_model.dart';
 import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
-import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/views/screens/summaries/components/summary_desk_pager.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
@@ -35,8 +34,9 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
 
-  List<SummaryModel> _localSummaries = [];
+  List<SummaryDetailsModel> _localDetails = [];
   bool _initialized = false;
+  bool _isLoading = false;
   bool _allCaughtUp = false;
 
   // Secretary forwarding fields
@@ -54,8 +54,20 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(summariesController.notifier).setSubTab(SummarySubTab.inbox);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDesk());
+  }
+
+  Future<void> _loadDesk() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    final details = await ref
+        .read(summariesController.notifier)
+        .getSummariesDesk();
+    if (!mounted) return;
+    setState(() {
+      _localDetails = details;
+      _initialized = true;
+      _isLoading = false;
     });
   }
 
@@ -111,7 +123,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       return;
     }
 
-    final summaryId = _localSummaries[_currentPage].id;
+    final summaryId = _localDetails[_currentPage].summary?.id;
     final notifier = ref.read(summariesController.notifier);
 
     if (isSecretary) {
@@ -193,18 +205,18 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     }
 
     setState(() {
-      _localSummaries.removeAt(_currentPage);
-      if (_localSummaries.isEmpty) {
+      _localDetails.removeAt(_currentPage);
+      if (_localDetails.isEmpty) {
         _allCaughtUp = true;
-      } else if (_currentPage >= _localSummaries.length) {
-        _currentPage = _localSummaries.length - 1;
+      } else if (_currentPage >= _localDetails.length) {
+        _currentPage = _localDetails.length - 1;
         _pageController.jumpToPage(_currentPage);
       }
     });
   }
 
   void _goNext() {
-    final total = _localSummaries.length;
+    final total = _localDetails.length;
     if (total == 1) {
       Toast.show(message: "You only have one summary pending approval");
       return;
@@ -244,26 +256,13 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
 
   @override
   Widget build(BuildContext context) {
-    final ctrlState = ref.watch(summariesController);
-    final isLoading = ctrlState.isLoading;
-
-    // Populate local list once the first fetch completes
-    ref.listen<SummariesState>(summariesController, (prev, next) {
-      if (!_initialized && !next.isLoading) {
-        setState(() {
-          _localSummaries = List.of(next.allSummaries);
-          _initialized = true;
-        });
-      }
-    });
-
     final bool canBack = _currentPage > 0;
     const bool canNext = true;
 
     Widget body;
-    if (isLoading && !_initialized) {
+    if (_isLoading && !_initialized) {
       body = const Center(child: CircularProgressIndicator());
-    } else if (_allCaughtUp || _localSummaries.isEmpty) {
+    } else if (_allCaughtUp || _localDetails.isEmpty) {
       body = Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -300,11 +299,11 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
             _buildPager(
               canBack: canBack,
               canNext: canNext,
-              total: _localSummaries.length,
+              total: _localDetails.length,
             ),
             Expanded(
               child: SummaryDeskPager(
-                summaries: _localSummaries,
+                summaries: _localDetails,
                 pageController: _pageController,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 remarksPanelController: _remarksPanelCtrl,

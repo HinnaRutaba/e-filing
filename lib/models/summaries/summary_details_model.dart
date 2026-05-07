@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/models/summaries/summary_local_link_model.da
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_movement_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_remark_track_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 
 class SummaryDetailsModel {
   final SummaryModel? summary;
@@ -14,7 +15,7 @@ class SummaryDetailsModel {
   final List<SummaryInternalForwardModel> internalForwards;
   final List<SummaryLocalLinkModel> localLinks;
   final List<SummaryBriefModel> briefs;
-  final List<dynamic> voiceNotes;
+  final List<SummaryVoiceNoteModel> voiceNotes;
   final List<SummaryRemarkTrackModel> remarkTrack;
   final SummaryActionsModel? actions;
 
@@ -37,7 +38,7 @@ class SummaryDetailsModel {
     List<SummaryInternalForwardModel>? internalForwards,
     List<SummaryLocalLinkModel>? localLinks,
     List<SummaryBriefModel>? briefs,
-    List<dynamic>? voiceNotes,
+    List<SummaryVoiceNoteModel>? voiceNotes,
     List<SummaryRemarkTrackModel>? remarkTrack,
     SummaryActionsModel? actions,
   }) {
@@ -163,7 +164,9 @@ class SummaryDetailsModel {
                 .toList()
           : const [],
       voiceNotes: map[SummaryDetailsSchema.voiceNotes] != null
-          ? List<dynamic>.from(map[SummaryDetailsSchema.voiceNotes] as List)
+          ? (map[SummaryDetailsSchema.voiceNotes] as List)
+                .map((e) => SummaryVoiceNoteModel.fromJson(e))
+                .toList()
           : const [],
       remarkTrack: map[SummaryDetailsSchema.remarkTrack] != null
           ? (map[SummaryDetailsSchema.remarkTrack] as List)

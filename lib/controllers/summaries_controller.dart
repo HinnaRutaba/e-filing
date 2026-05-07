@@ -161,6 +161,7 @@ class SummariesState {
   final SummaryDetailsModel? details;
   final bool isLoadingDetails;
   final SummariesStatsModel? stats;
+  final bool gettingPrintUrl;
 
   SummariesState({
     required this.allSummaries,
@@ -173,6 +174,7 @@ class SummariesState {
     this.details,
     this.isLoadingDetails = false,
     this.stats,
+    this.gettingPrintUrl = false,
   }) : filteredSummaries = filteredSummaries ?? allSummaries;
 
   static const _unset = Object();
@@ -188,6 +190,7 @@ class SummariesState {
     Object? details = _unset,
     bool? isLoadingDetails,
     Object? stats = _unset,
+    bool? gettingPrintUrl,
   }) {
     return SummariesState(
       allSummaries: allSummaries ?? this.allSummaries,
@@ -202,6 +205,7 @@ class SummariesState {
           : details as SummaryDetailsModel?,
       isLoadingDetails: isLoadingDetails ?? this.isLoadingDetails,
       stats: stats == _unset ? this.stats : stats as SummariesStatsModel?,
+      gettingPrintUrl: gettingPrintUrl ?? this.gettingPrintUrl,
     );
   }
 
@@ -216,6 +220,7 @@ class SummariesState {
       details: null,
       isLoadingDetails: false,
       stats: null,
+      gettingPrintUrl: false,
     );
   }
 }
@@ -230,8 +235,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
     bool autoSelectBestTab = false,
   }) async {
     if (isInitialLoad) state = state.copyWith(isLoading: true);
-    final int? desId =
-        ref.read(authController).currentDesignation?.userDesgId;
+    final int? desId = ref.read(authController).currentDesignation?.userDesgId;
 
     if (autoSelectBestTab) {
       await fetchSummariesStats(desId: desId);
@@ -957,6 +961,25 @@ class SummariesController extends BaseControllerState<SummariesState> {
       log('forwardInternally error: $e\n$s');
       Toast.error(message: handleException(e));
       return false;
+    }
+  }
+
+  Future<String?> getSummaryPrintPdf({required int? summaryId}) async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+    
+      state = state.copyWith(gettingPrintUrl: true);
+      String? url = await repo.getSummaryPrintPdf(
+        summaryId: summaryId,
+        userDesgId: desId,
+      );
+      state = state.copyWith(gettingPrintUrl: false);
+      return url;
+    } catch (e, s) {
+      state = state.copyWith(gettingPrintUrl: false);
+      log('getSummaryPrintPdf error: $e\n$s');
+      Toast.error(message: handleException(e));
+      return null;
     }
   }
 
