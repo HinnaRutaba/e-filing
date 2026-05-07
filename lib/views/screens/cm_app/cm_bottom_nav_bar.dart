@@ -54,12 +54,12 @@ class CMBottomNavBar extends ConsumerWidget {
             CurvedNavigationItemPro(
               inactiveIcon: Icons.summarize_outlined,
               activeIcon: Icons.summarize_rounded,
-              label: 'Summaries',
+              label: 'Summaries List',
             ),
             CurvedNavigationItemPro(
               inactiveIcon: Icons.pending_actions_outlined,
               activeIcon: Icons.pending_actions,
-              label: 'Approvals',
+              label: 'Approval Desk',
             ),
           ],
           onTap: (index) {

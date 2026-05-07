@@ -1,13 +1,13 @@
-import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// Shows the top originating departments ranked by summary volume.
 class CMTopDepartmentsSection extends StatelessWidget {
-  const CMTopDepartmentsSection({super.key, required this.state});
+  const CMTopDepartmentsSection({super.key, required this.items});
 
-  final CMDashboardModel state;
+  final List<CMOriginatingDeptModel> items;
 
   static const _rankColors = [
     Color(0xFFFF8F00), // gold
@@ -17,8 +17,6 @@ class CMTopDepartmentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = state.topDepartments;
-
     return DashboardSectionCard(
       icon: Icons.emoji_events_rounded,
       iconBgColor: const Color(0xFFFF8F00),
@@ -42,7 +40,7 @@ class CMTopDepartmentsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildLeaderboard(List<CMTopDepartmentItem> items) {
+  Widget _buildLeaderboard(List<CMOriginatingDeptModel> items) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
@@ -50,6 +48,7 @@ class CMTopDepartmentsSection extends StatelessWidget {
           for (var i = 0; i < items.length; i++) ...[
             _LeaderboardRow(
                   item: items[i],
+                  rank: i + 1,
                   rankColor: i < _rankColors.length
                       ? _rankColors[i]
                       : const Color(0xFF9E9E9E),
@@ -71,9 +70,14 @@ class CMTopDepartmentsSection extends StatelessWidget {
 }
 
 class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow({required this.item, required this.rankColor});
+  const _LeaderboardRow({
+    required this.item,
+    required this.rank,
+    required this.rankColor,
+  });
 
-  final CMTopDepartmentItem item;
+  final CMOriginatingDeptModel item;
+  final int rank;
   final Color rankColor;
 
   @override
@@ -89,7 +93,7 @@ class _LeaderboardRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '${item.rank}',
+            '$rank',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -104,7 +108,7 @@ class _LeaderboardRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            item.name,
+            item.title ?? '',
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -119,7 +123,7 @@ class _LeaderboardRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(100),
           ),
           child: Text(
-            '${item.count}',
+            '${item.total ?? 0}',
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,

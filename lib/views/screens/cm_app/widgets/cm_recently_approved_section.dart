@@ -1,18 +1,16 @@
-import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// Shows summaries recently approved by the CM.
 class CMRecentlyApprovedSection extends StatelessWidget {
-  const CMRecentlyApprovedSection({super.key, required this.state});
+  const CMRecentlyApprovedSection({super.key, required this.items});
 
-  final CMDashboardModel state;
+  final List<CMRecentlyApprovedModel> items;
 
   @override
   Widget build(BuildContext context) {
-    final items = state.recentApprovals;
-
     return DashboardSectionCard(
       icon: Icons.verified_rounded,
       iconBgColor: const Color(0xFF2E9E6B),
@@ -36,7 +34,7 @@ class CMRecentlyApprovedSection extends StatelessWidget {
     );
   }
 
-  Widget _buildList(List<CMRecentApprovalItem> items) {
+  Widget _buildList(List<CMRecentlyApprovedModel> items) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -78,7 +76,7 @@ class CMRecentlyApprovedSection extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            item.summaryId,
+                            item.summaryNo ?? '',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -88,7 +86,7 @@ class CMRecentlyApprovedSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          item.title,
+                          item.subject ?? '',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -107,7 +105,7 @@ class CMRecentlyApprovedSection extends StatelessWidget {
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
-                                item.department,
+                                item.originDept ?? '',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFF9E9E9E),

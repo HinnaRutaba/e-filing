@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/views/screens/summaries/components/summary_b
 import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:flutter/material.dart';
 
 class SummaryDeskPager extends StatelessWidget {
@@ -19,6 +20,7 @@ class SummaryDeskPager extends StatelessWidget {
     this.panelWidthFactor = 0.8,
     this.tagsAlignment = const Alignment(0.0, -0.5),
     this.initialRemarksMode = RemarksPanelMode.type,
+    this.initialPenColor = SignatureColor.darkBlue,
   });
 
   final List<SummaryModel> summaries;
@@ -30,6 +32,7 @@ class SummaryDeskPager extends StatelessWidget {
   final double panelWidthFactor;
   final Alignment tagsAlignment;
   final RemarksPanelMode initialRemarksMode;
+  final SignatureColor initialPenColor;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,10 @@ class SummaryDeskPager extends StatelessWidget {
                     scrollController: mainScrollController,
                     initialMode: initialRemarksMode,
                     bottomContent: bottomContent,
+                    initiallyExpanded: true,
+                    showHeading: false,
+                    initialPenColor: initialPenColor,
+                    signPadWidth: 450,
                   ),
                 ],
               ),

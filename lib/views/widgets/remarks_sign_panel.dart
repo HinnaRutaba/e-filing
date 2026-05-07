@@ -95,6 +95,12 @@ class RemarksSignPanel extends StatefulWidget {
   /// Pre-selects a pen colour in the handwriting canvas.
   final SignatureColor initialPenColor;
 
+  final bool showHeading;
+
+  /// Constrains the signature pad to this width and right-aligns it.
+  /// When null (default) the pad stretches to full width.
+  final double? signPadWidth;
+
   const RemarksSignPanel({
     super.key,
     required this.controller,
@@ -103,6 +109,8 @@ class RemarksSignPanel extends StatefulWidget {
     this.initiallyExpanded = false,
     this.initialMode = RemarksPanelMode.type,
     this.initialPenColor = SignatureColor.darkBlue,
+    this.showHeading = true,
+    this.signPadWidth,
   });
 
   @override
@@ -161,28 +169,30 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   }
 
   Widget _header() {
-    return InkWell(
-      onTap: () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
-      borderRadius: _expanded
-          ? const BorderRadius.vertical(top: Radius.circular(4))
-          : BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-        child: Row(
-          children: [
-            Expanded(child: AppText.titleLarge('Add your remarks')),
-            AnimatedRotation(
-              turns: _expanded ? 0 : -0.5,
-              duration: const Duration(milliseconds: 250),
-              child: const Icon(
-                Icons.expand_more_rounded,
-                color: AppColors.textSecondary,
+    return !widget.showHeading
+        ? const SizedBox(height: 24)
+        : InkWell(
+            onTap: () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
+            borderRadius: _expanded
+                ? const BorderRadius.vertical(top: Radius.circular(4))
+                : BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              child: Row(
+                children: [
+                  Expanded(child: AppText.titleLarge('Add your remarks')),
+                  AnimatedRotation(
+                    turns: _expanded ? 0 : -0.5,
+                    duration: const Duration(milliseconds: 250),
+                    child: const Icon(
+                      Icons.expand_more_rounded,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
   }
 
   Widget _body() {
@@ -226,7 +236,18 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           const Divider(height: 24),
           AppText.titleLarge('Sign here'),
           const SizedBox(height: 16),
-          SignaturePad(controller: _ctrl._signCtrl, showPenSelector: false),
+          Align(
+            alignment: widget.signPadWidth != null
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: SizedBox(
+              width: widget.signPadWidth,
+              child: SignaturePad(
+                controller: _ctrl._signCtrl,
+                showPenSelector: false,
+              ),
+            ),
+          ),
           if (widget.bottomContent != null) ...[
             const SizedBox(height: 16),
             widget.bottomContent!,

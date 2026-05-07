@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,22 +6,20 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// Shows pending summaries awaiting the CM's approval.
 /// Displays an empty state when there are none.
 class CMAwaitingApprovalSection extends StatelessWidget {
-  const CMAwaitingApprovalSection({super.key, required this.state});
+  const CMAwaitingApprovalSection({super.key, required this.items});
 
-  final CMDashboardModel state;
+  final List<CMPendingForCmModel> items;
 
   @override
   Widget build(BuildContext context) {
-    final pendingCount = state.pendingApprovals.length;
-
     return DashboardSectionCard(
       icon: Icons.hourglass_top_rounded,
       iconBgColor: const Color(0xFF7C5CBF),
       title: 'Awaiting Your Approval',
-      badgeLabel: '$pendingCount pending',
+      badgeLabel: '${items.length} pending',
       badgeColor: const Color(0xFFFFF0E0),
       badgeTextColor: const Color(0xFFE07B20),
-      body: pendingCount == 0 ? _buildEmptyState() : _buildPendingList(context),
+      body: items.isEmpty ? _buildEmptyState() : _buildPendingList(context),
     );
   }
 
@@ -34,8 +32,8 @@ class CMAwaitingApprovalSection extends StatelessWidget {
           children: [
             Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF0F0F0),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -72,10 +70,10 @@ class CMAwaitingApprovalSection extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: state.pendingApprovals.length,
+      itemCount: items.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final item = state.pendingApprovals[index];
+        final item = items[index];
         return Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
@@ -99,7 +97,7 @@ class CMAwaitingApprovalSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.summaryId,
+                          item.summaryNo ?? '',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -107,7 +105,7 @@ class CMAwaitingApprovalSection extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          item.title,
+                          item.subject ?? '',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -117,7 +115,7 @@ class CMAwaitingApprovalSection extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          item.department,
+                          item.originDept ?? '',
                           style: const TextStyle(
                             fontSize: 11,
                             color: Color(0xFF757575),

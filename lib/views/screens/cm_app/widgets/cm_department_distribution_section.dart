@@ -1,18 +1,16 @@
-import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
+import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// Shows how summaries are distributed across departments.
 class CMDepartmentDistributionSection extends StatelessWidget {
-  const CMDepartmentDistributionSection({super.key, required this.state});
+  const CMDepartmentDistributionSection({super.key, required this.depts});
 
-  final CMDashboardModel state;
+  final List<CMDepartmentStatModel> depts;
 
   @override
   Widget build(BuildContext context) {
-    final depts = state.departmentStats;
-
     return DashboardSectionCard(
       icon: Icons.insert_drive_file_outlined,
       iconBgColor: const Color(0xFF5C6BC0),
@@ -36,8 +34,8 @@ class CMDepartmentDistributionSection extends StatelessWidget {
     );
   }
 
-  Widget _buildList(List<CMDepartmentStat> depts) {
-    final maxTotal = depts.fold<int>(0, (m, d) => d.total > m ? d.total : m);
+  Widget _buildList(List<CMDepartmentStatModel> depts) {
+    final maxTotal = depts.fold<int>(0, (m, d) => (d.total ?? 0) > m ? (d.total ?? 0) : m);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -64,12 +62,13 @@ class CMDepartmentDistributionSection extends StatelessWidget {
 class _DepartmentRow extends StatelessWidget {
   const _DepartmentRow({required this.stat, required this.maxTotal});
 
-  final CMDepartmentStat stat;
+  final CMDepartmentStatModel stat;
   final int maxTotal;
 
   @override
   Widget build(BuildContext context) {
-    final fillFraction = maxTotal > 0 ? stat.total / maxTotal : 0.0;
+    final total = stat.total ?? 0;
+    final fillFraction = maxTotal > 0 ? total / maxTotal : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +78,7 @@ class _DepartmentRow extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                stat.name,
+                stat.title ?? '',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -88,7 +87,7 @@ class _DepartmentRow extends StatelessWidget {
               ),
             ),
             Text(
-              '${stat.total}',
+              '$total',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -101,20 +100,20 @@ class _DepartmentRow extends StatelessWidget {
         Row(
           children: [
             _StatChip(
-              label: 'Total: ${stat.total}',
+              label: 'Total: $total',
               color: const Color(0xFFFFF3E0),
               textColor: const Color(0xFFE07B20),
             ),
             const SizedBox(width: 6),
             _StatChip(
-              label: 'Active: ${stat.active}',
+              label: 'Active: ${stat.inProgress ?? 0}',
               color: const Color(0xFFFFF3E0),
               textColor: const Color(0xFFE07B20),
               icon: Icons.autorenew,
             ),
             const SizedBox(width: 6),
             _StatChip(
-              label: 'Closed: ${stat.closed}',
+              label: 'Closed: ${stat.closed ?? 0}',
               color: const Color(0xFFE8F5E9),
               textColor: const Color(0xFF2E7D32),
               icon: Icons.check,

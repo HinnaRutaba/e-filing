@@ -36,7 +36,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     final bool isMobile = context.isMobile;
     final double headerHeight = isMobile ? 180.0 : 164.0;
     final double cardsOverlap = isMobile ? 130.0 : 60.0;
-    final CMDashboardModel dashboardState = ref.watch(cmDashboardController);
+    final CMDashboardState dashboardState = ref.watch(cmDashboardController);
 
     final statsCardTop = isMobile ? 154.0 : 132.0;
 
@@ -146,113 +146,178 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          if (!context.isMobile) ...[
-                            Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    borderRadius: BorderRadius.circular(100),
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.summarize,
-                                        color: AppColors.secondaryDark,
-                                        size: 22,
-                                      ),
-                                      ClipRect(
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8,
-                                          ),
-                                          child: RichText(
-                                            text: const TextSpan(
-                                              style: TextStyle(
-                                                color: AppColors.secondaryDark,
-                                                fontSize: 14,
-                                              ),
-                                              children: [
-                                                TextSpan(text: 'You have '),
-                                                TextSpan(
-                                                  text: '3 ',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w800,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: "summaries to review",
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                                .animate(delay: 300.ms)
-                                .scale(
-                                  alignment: Alignment.centerLeft,
-                                  begin: const Offset(0, 1),
-                                  end: const Offset(1, 1),
-                                  duration: 450.ms,
-                                  curve: Curves.easeOutCubic,
-                                )
-                                .fadeIn(duration: 250.ms),
-                            ClipPath(
-                                  clipper: _ConcaveConnectorClipper(),
-                                  child: Container(
-                                    width: 20,
-                                    height: 24,
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                  ),
-                                )
-                                .animate(delay: 300.ms)
-                                .scale(
-                                  delay: 450.ms,
-                                  alignment: Alignment.centerLeft,
-                                  begin: const Offset(0, 1),
-                                  end: const Offset(1, 1),
-                                  duration: 250.ms,
-                                  curve: Curves.easeOutCubic,
-                                )
-                                .fadeIn(delay: 450.ms, duration: 150.ms),
-                          ],
-                          InkWell(
-                                onTap: () {
-                                  ref
-                                      .read(cmNavController.notifier)
-                                      .select(CMNavTab.approvals);
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    borderRadius: BorderRadius.circular(100),
-                                  ),
-                                  padding: const EdgeInsets.all(8),
-                                  child: AppText.titleSmall(
-                                    "Open Pending Approvals",
-                                    color: AppColors.secondaryDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                            onTap: () => ref
+                                .read(cmNavController.notifier)
+                                .select(CMNavTab.approvals),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  width: 1.2,
                                 ),
-                              )
-                              .animate(delay: 300.ms)
-                              .scale(
-                                delay: 700.ms,
-                                alignment: Alignment.centerLeft,
-                                begin: const Offset(0, 0),
-                                end: const Offset(1, 1),
-                                duration: 550.ms,
-                                curve: Curves.easeInOutBack,
-                              )
-                              .fadeIn(delay: 700.ms, duration: 200.ms),
-                        ],
-                      ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.approval_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Open Approval Desk',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .animate(delay: 200.ms)
+                          .fadeIn(duration: 300.ms)
+                          .slideY(
+                            begin: 0.2,
+                            end: 0,
+                            duration: 350.ms,
+                            curve: Curves.easeOutCubic,
+                          ),
+                      // Row(
+                      //   children: [
+                      //     if (!context.isMobile) ...[
+                      //       Container(
+                      //             decoration: BoxDecoration(
+                      //               color: Colors.white.withValues(alpha: 0.7),
+                      //               borderRadius: BorderRadius.circular(100),
+                      //             ),
+                      //             padding: const EdgeInsets.all(10),
+                      //             child: Row(
+                      //               mainAxisSize: MainAxisSize.min,
+                      //               children: [
+                      //                 const Icon(
+                      //                   Icons.summarize,
+                      //                   color: AppColors.secondaryDark,
+                      //                   size: 22,
+                      //                 ),
+                      //                 ClipRect(
+                      //                   child: Padding(
+                      //                     padding: const EdgeInsets.only(
+                      //                       left: 8,
+                      //                     ),
+                      //                     child: RichText(
+                      //                       text: const TextSpan(
+                      //                         style: TextStyle(
+                      //                           color: AppColors.secondaryDark,
+                      //                           fontSize: 14,
+                      //                         ),
+                      //                         children: [
+                      //                           TextSpan(text: 'You have '),
+                      //                           TextSpan(
+                      //                             text:
+                      //                                 '${dashboardState.data?.kpis?.pendingMyApproval ?? 0} ',
+                      //                             style: TextStyle(
+                      //                               fontWeight: FontWeight.w800,
+                      //                             ),
+                      //                           ),
+                      //                           TextSpan(
+                      //                             text: "summaries to review",
+                      //                           ),
+                      //                         ],
+                      //                       ),
+                      //                     ),
+                      //                   ),
+                      //                 ),
+                      //               ],
+                      //             ),
+                      //           )
+                      //           .animate(delay: 300.ms)
+                      //           .scale(
+                      //             alignment: Alignment.centerLeft,
+                      //             begin: const Offset(0, 1),
+                      //             end: const Offset(1, 1),
+                      //             duration: 450.ms,
+                      //             curve: Curves.easeOutCubic,
+                      //           )
+                      //           .fadeIn(duration: 250.ms),
+                      //       ClipPath(
+                      //             clipper: _ConcaveConnectorClipper(),
+                      //             child: Container(
+                      //               width: 20,
+                      //               height: 24,
+                      //               color: Colors.white.withValues(alpha: 0.7),
+                      //             ),
+                      //           )
+                      //           .animate(delay: 300.ms)
+                      //           .scale(
+                      //             delay: 450.ms,
+                      //             alignment: Alignment.centerLeft,
+                      //             begin: const Offset(0, 1),
+                      //             end: const Offset(1, 1),
+                      //             duration: 250.ms,
+                      //             curve: Curves.easeOutCubic,
+                      //           )
+                      //           .fadeIn(delay: 450.ms, duration: 150.ms),
+                      //     ],
+                      //     InkWell(
+                      //           onTap: () {
+                      //             ref
+                      //                 .read(cmNavController.notifier)
+                      //                 .select(CMNavTab.approvals);
+                      //           },
+                      //           child: Container(
+                      //             decoration: BoxDecoration(
+                      //               color: Colors.white.withValues(alpha: 0.7),
+                      //               borderRadius: BorderRadius.circular(100),
+                      //             ),
+                      //             padding: const EdgeInsets.all(8),
+                      //             child: AppText.titleSmall(
+                      //               "Open Pending Approvals",
+                      //               color: AppColors.secondaryDark,
+                      //               fontSize: 14,
+                      //               fontWeight: FontWeight.w600,
+                      //             ),
+                      //           ),
+                      //         )
+                      //         .animate(delay: 300.ms)
+                      //         .scale(
+                      //           delay: 700.ms,
+                      //           alignment: Alignment.centerLeft,
+                      //           begin: const Offset(0, 0),
+                      //           end: const Offset(1, 1),
+                      //           duration: 550.ms,
+                      //           curve: Curves.easeInOutBack,
+                      //         )
+                      //         .fadeIn(delay: 700.ms, duration: 200.ms),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
@@ -266,7 +331,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   Widget _buildStatsCard(
     BuildContext context,
-    CMDashboardModel dashboardState,
+    CMDashboardState dashboardState,
   ) {
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
@@ -282,11 +347,13 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
           .fadeIn(delay: delay, duration: 300.ms);
     }
 
+    final kpis = dashboardState.data?.kpis;
+
     final awaitingCard = DashboardCard(
       cardColor: context.appColors.warning,
       iconColor: Colors.yellowAccent,
       title: "Awaiting Approval",
-      value: "${dashboardState.awaitingApprovalCount}",
+      value: "${kpis?.pendingMyApproval ?? 0}",
       onTap: null,
       loading: dashboardState.loading,
       icon: Icons.pending_actions,
@@ -297,7 +364,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       cardColor: Theme.of(context).colorScheme.error,
       iconColor: Colors.red[900]!,
       title: "Active In Progress",
-      value: "${dashboardState.activeInProgressCount}",
+      value: "${kpis?.inProgress ?? 0}",
       onTap: null,
       loading: dashboardState.loading,
       icon: Icons.autorenew,
@@ -308,7 +375,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       cardColor: context.appColors.secondaryLight,
       iconColor: context.appColors.secondaryDark,
       title: "Total Summaries",
-      value: "${dashboardState.totalSummariesCount}",
+      value: "${kpis?.totalSummaries ?? 0}",
       onTap: null,
       loading: dashboardState.loading,
       icon: Icons.summarize,
@@ -319,7 +386,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       cardColor: Colors.green[200]!,
       iconColor: Colors.green[800]!,
       title: "Closed / Disposed",
-      value: "${dashboardState.closedDisposedCount}",
+      value: "${kpis?.closedDisposed ?? 0}",
       onTap: null,
       loading: dashboardState.loading,
       icon: Icons.check_circle_outline,
@@ -362,13 +429,22 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
   Widget _buildDashboardSections(
     BuildContext context,
-    CMDashboardModel state,
+    CMDashboardState state,
     bool isMobile,
   ) {
-    final awaitingSection = CMAwaitingApprovalSection(state: state);
-    final deptSection = CMDepartmentDistributionSection(state: state);
-    final recentSection = CMRecentlyApprovedSection(state: state);
-    final topDeptsSection = CMTopDepartmentsSection(state: state);
+    final data = state.data;
+    final awaitingSection = CMAwaitingApprovalSection(
+      items: data?.pendingForCm ?? [],
+    );
+    final deptSection = CMDepartmentDistributionSection(
+      depts: data?.departmentStats ?? [],
+    );
+    final recentSection = CMRecentlyApprovedSection(
+      items: data?.recentlyApproved ?? [],
+    );
+    final topDeptsSection = CMTopDepartmentsSection(
+      items: data?.topOriginating ?? [],
+    );
 
     // Bottom padding accounts for the floating bottom nav bar
     const bottomPadding = SizedBox(height: 100);

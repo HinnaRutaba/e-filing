@@ -11,6 +11,7 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -203,6 +204,11 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
         padding: const EdgeInsets.only(bottom: 52.0),
         child: Column(
           children: [
+            _buildPager(
+              canBack: canBack,
+              canNext: canNext,
+              total: _localSummaries.length,
+            ),
             Expanded(
               child: SummaryDeskPager(
                 summaries: _localSummaries,
@@ -212,12 +218,8 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
                 mainScrollController: _mainScrollController,
                 bottomContent: _submitButton(),
                 initialRemarksMode: RemarksPanelMode.write,
+                initialPenColor: SignatureColor.darkGreen,
               ),
-            ),
-            _buildPager(
-              canBack: canBack,
-              canNext: canNext,
-              total: _localSummaries.length,
             ),
           ],
         ),
@@ -233,7 +235,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
     required int total,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
+      padding: const EdgeInsets.fromLTRB(16, 40, 16, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -241,7 +243,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
             onPressed: canBack ? _goBack : null,
             text: 'Back',
             icon: Icons.arrow_back_rounded,
-            color: AppColors.secondaryDark,
+            color: canBack ? AppColors.secondaryDark : AppColors.textSecondary,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
           AppText.labelLarge(
@@ -251,7 +253,7 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
           ),
           AppSolidButton(
             onPressed: canNext ? _goNext : null,
-            text: 'Next',
+            text: 'Skip',
             icon: Icons.arrow_forward_rounded,
             backgroundColor: AppColors.secondaryDark,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

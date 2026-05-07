@@ -29,13 +29,16 @@ class CMShell extends ConsumerWidget {
             backgroundColor: Colors.transparent,
             extendBody: true,
             bottomNavigationBar: const CMBottomNavBar(),
-            body: IndexedStack(
-              index: activeTab.index,
-              children: const [
-                CMDashboardScreen(),
-                CMSummariesListScreen(),
-                CMApprovalDesk(),
-              ],
+            body: Padding(
+              padding: const EdgeInsets.only(bottom: 100.0),
+              child: IndexedStack(
+                index: activeTab.index,
+                children: const [
+                  CMDashboardScreen(),
+                  CMSummariesListScreen(),
+                  CMApprovalDesk(),
+                ],
+              ),
             ),
           ),
         ),

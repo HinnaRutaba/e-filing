@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/files_controller.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/controllers/theme_controller.dart';
+import 'package:efiling_balochistan/repository/dashboard/dashboard_repo.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -22,6 +23,7 @@ final filesRepo = Provider((ref) => FileRepo());
 final chatRepo = Provider((ref) => ChatRepo());
 final daakRepo = Provider((ref) => DaakRepo());
 final summariesRepo = Provider((ref) => SummariesRepo());
+final dashboardRepo = Provider((ref) => DashboardRepo());
 
 final connectivityController =
     StateNotifierProvider<ConnectivityController, ConnectivityViewModel>(

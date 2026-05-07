@@ -118,7 +118,8 @@ abstract class SummariesInterface extends NetworkBase {
 
 
     String summariesStatsUrl(int desgId) =>
-      '${baseUrl}summaries/stats?userDesgID=$desgId';    
+      '${baseUrl}summaries/stats?userDesgID=$desgId';  
+    
 
   //========================Functions=============================
 
