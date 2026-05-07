@@ -8,6 +8,7 @@ class Routes {
   static const String dashboard = '/dashboard';
   static const String cmDashboard = '/cmDashboard';
   static const String cmApprovalDesk = '/cmApprovalDesk';
+  static const String secretaryApprovalDesk = '/secretaryApprovalDesk';
   static const String cmSummaries = '/cmSummaries';
   static const String createFile = '/createFile';
   static String fileDetails([fileId]) =>

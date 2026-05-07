@@ -29,16 +29,60 @@ class SummariesScreen extends StatelessWidget {
         bgColor: Colors.transparent,
         isdash: false,
         title: 'Summaries',
-        actions: [
-          AppOutlineButton(
-            onPressed: () {
-              RouteHelper.push(Routes.createSummary);
-            },
-            text: "Draft Summary",
-            icon: Icons.edit_outlined,
-          ),
-        ],
-        body: const SummariesListScreen(),
+        actions: context.isMobile
+            ? [
+                TextButton.icon(
+                  onPressed: () {
+                    RouteHelper.push(Routes.secretaryApprovalDesk);
+                  },
+                  icon: Icon(
+                    Icons.desk,
+                    size: 16,
+                    color: context.appColors.secondaryDark,
+                  ),
+                  label: Text(
+                    "Desk",
+                    style: TextStyle(color: context.appColors.secondaryDark),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    size: 16,
+                    color: context.appColors.primaryDark,
+                  ),
+                  label: Text(
+                    "Draft",
+                    style: TextStyle(color: context.appColors.primaryDark),
+                  ),
+                ),
+              ]
+            : [
+                AppOutlineButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.secretaryApprovalDesk);
+                  },
+                  text: "Approval Desk",
+                  icon: Icons.desk,
+                  color: context.appColors.secondaryDark,
+                ),
+                const SizedBox(width: 12),
+                AppOutlineButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  text: "Draft Summary",
+                  icon: Icons.edit_outlined,
+                  color: context.appColors.primaryDark,
+                ),
+              ],
+        body: const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: SummariesListScreen(),
+        ),
       ),
     );
   }
