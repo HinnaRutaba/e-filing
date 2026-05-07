@@ -184,7 +184,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                           .where(
                             (t) =>
                                 t.actionType == 'signed_and_forwarded' ||
-                                t.actionType == 'cm_signed_and_returned',
+                                t.actionType == 'remarks_added',
                           )
                           .toList();
                       if (signedTracks.isEmpty) {

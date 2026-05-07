@@ -76,7 +76,9 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(summariesController.notifier).loadData(isInitialLoad: true);
+      ref
+          .read(summariesController.notifier)
+          .loadData(isInitialLoad: true, autoSelectBestTab: true);
       final s = ref.read(summariesController);
       _scrollMainTabIntoView(s.selectedMainTab);
       _scrollSubTabIntoView(s.selectedSubTab);
@@ -157,6 +159,16 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     final ctrlState = ref.watch(summariesController);
     final mainTab = ctrlState.selectedMainTab;
     final subTab = ctrlState.selectedSubTab;
+
+    ref.listen(summariesController.select((s) => s.stats), (prev, next) {
+      if (next != null && prev == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _scrollMainTabIntoView(ref.read(summariesController).selectedMainTab);
+          _scrollSubTabIntoView(ref.read(summariesController).selectedSubTab);
+        });
+      }
+    });
     final currentSubTabs = _subTabsFor(mainTab);
     final visibleItems = ctrlState.filteredSummaries;
     final bannerText = _helperBannerText(subTab);
@@ -297,11 +309,17 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
               .meta
               ?.activeUserDesg
               ?.roleEnum;
+          final count = ref
+              .watch(summariesController)
+              .stats
+              ?.tabCounts
+              ?.countForSubTab(sub, role: role);
           return KeyedSubtree(
             key: _subTabKeys[sub],
             child: _SubTabChip(
               label: sub.configFor(role).label,
               selected: subTab == sub,
+              count: count,
               onTap: () {
                 ref.read(summariesController.notifier).setSubTab(sub);
                 WidgetsBinding.instance.addPostFrameCallback(
@@ -379,12 +397,14 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
 class _SubTabChip extends StatelessWidget {
   final String label;
   final bool selected;
+  final int? count;
   final VoidCallback onTap;
 
   const _SubTabChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    this.count,
   });
 
   @override
@@ -405,13 +425,40 @@ class _SubTabChip extends StatelessWidget {
                 : appColors.secondaryLight.withValues(alpha: 0.35),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : appColors.textPrimary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : appColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (count != null && count! > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white
+                      : context.appColors.primaryDark,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: selected
+                        ? context.appColors.primaryDark
+                        : Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

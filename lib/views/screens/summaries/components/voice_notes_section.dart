@@ -28,7 +28,7 @@ class VoiceNotesSection extends ConsumerStatefulWidget {
 }
 
 class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
-  bool _expanded = false;
+  bool _expanded = true;
   bool _loading = false;
   List<SummaryVoiceNoteModel> _voiceNotes = const [];
 

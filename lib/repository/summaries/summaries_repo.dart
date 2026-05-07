@@ -9,6 +9,7 @@ import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dar
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_stats_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_interface.dart';
 import 'package:tuple/tuple.dart';
@@ -643,6 +644,20 @@ class SummariesRepo extends SummariesInterface {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<SummariesStatsModel> fetchSummariesStats({required int? desId}) async {
+    if (desId == null) {
+      throw Exception('Designation ID is required');
+    }
+    final data = await dioClient.get(
+      url: summariesStatsUrl(desId),
+      options: await options(authRequired: true),
+    );
+    return SummariesStatsModel.fromJson(
+      Map<String, dynamic>.from(data['data']),
+    );
   }
 }
 

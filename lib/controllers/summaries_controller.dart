@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -16,6 +17,7 @@ import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_internal_forward_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_stats_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.dart';
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
@@ -158,6 +160,7 @@ class SummariesState {
   final SummariesMetaModel? meta;
   final SummaryDetailsModel? details;
   final bool isLoadingDetails;
+  final SummariesStatsModel? stats;
 
   SummariesState({
     required this.allSummaries,
@@ -169,6 +172,7 @@ class SummariesState {
     this.meta,
     this.details,
     this.isLoadingDetails = false,
+    this.stats,
   }) : filteredSummaries = filteredSummaries ?? allSummaries;
 
   static const _unset = Object();
@@ -183,6 +187,7 @@ class SummariesState {
     SummariesMetaModel? meta,
     Object? details = _unset,
     bool? isLoadingDetails,
+    Object? stats = _unset,
   }) {
     return SummariesState(
       allSummaries: allSummaries ?? this.allSummaries,
@@ -196,6 +201,7 @@ class SummariesState {
           ? this.details
           : details as SummaryDetailsModel?,
       isLoadingDetails: isLoadingDetails ?? this.isLoadingDetails,
+      stats: stats == _unset ? this.stats : stats as SummariesStatsModel?,
     );
   }
 
@@ -209,6 +215,7 @@ class SummariesState {
       isLoading: false,
       details: null,
       isLoadingDetails: false,
+      stats: null,
     );
   }
 }
@@ -218,11 +225,51 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
   SummariesRepo get repo => ref.read(summariesRepo);
 
-  Future<void> loadData({bool isInitialLoad = false}) async {
+  Future<void> loadData({
+    bool isInitialLoad = false,
+    bool autoSelectBestTab = false,
+  }) async {
     if (isInitialLoad) state = state.copyWith(isLoading: true);
-    int? desId = ref.read(authController).currentDesignation?.userDesgId;
+    final int? desId =
+        ref.read(authController).currentDesignation?.userDesgId;
+
+    if (autoSelectBestTab) {
+      await fetchSummariesStats(desId: desId);
+      _autoSelectTabFromStats();
+    } else {
+      unawaited(fetchSummariesStats(desId: desId));
+    }
+
     await fetchSummariesList(desId: desId);
     if (isInitialLoad) state = state.copyWith(isLoading: false);
+  }
+
+  void _autoSelectTabFromStats() {
+    final role = state.meta?.activeUserDesg?.roleEnum;
+    final counts = state.stats?.tabCounts;
+    if (counts == null) return;
+
+    final tabs = subTabsForRole(role);
+    final best = tabs.firstWhere(
+      (t) => (counts.countForSubTab(t, role: role) ?? 0) > 0,
+      orElse: () => tabs.first,
+    );
+
+    final bestConfig = best.configFor(role);
+    state = state.copyWith(
+      selectedSubTab: best,
+      selectedMainTab: bestConfig.parent,
+    );
+  }
+
+  Future<void> fetchSummariesStats({required int? desId}) async {
+    if (desId == null) return;
+    try {
+      final stats = await repo.fetchSummariesStats(desId: desId);
+      state = state.copyWith(stats: stats);
+    } catch (e) {
+      log('fetchSummariesStats error: $e');
+    }
   }
 
   SummariesMetaModel? get meta => state.meta;

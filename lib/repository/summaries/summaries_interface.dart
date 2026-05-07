@@ -9,6 +9,7 @@ import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dar
 import 'package:efiling_balochistan/models/summaries/summary_daak_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_file_model.dart';
+import 'package:efiling_balochistan/models/summaries/summaries_stats_model.dart';
 import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 
 abstract class SummariesInterface extends NetworkBase {
@@ -115,9 +116,15 @@ abstract class SummariesInterface extends NetworkBase {
   }) =>
       '${baseUrl}summaries/$summaryId/voice-notes/$voiceNoteId?userDesgID=$desgId';
 
+
+    String summariesStatsUrl(int desgId) =>
+      '${baseUrl}summaries/stats?userDesgID=$desgId';    
+
   //========================Functions=============================
 
   Future<SummariesMetaModel> fetchSummariesMeta({required int desId});
+
+  Future<SummariesStatsModel> fetchSummariesStats({required int desId});
 
   Future<List<SummaryModel>> fetchSummariesList({
     required int desId,
