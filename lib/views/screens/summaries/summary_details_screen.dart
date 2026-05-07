@@ -863,7 +863,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         SummaryAction.shareInternally,
         SummaryAction.signForward,
       ];
-    } else if (isPsToCm && details?.isLatestMovementBriefAdded == true) {
+    } else if (isPsToCm) {
       allowedActions = [
         SummaryAction.shareInternally,
         SummaryAction.signForward,
