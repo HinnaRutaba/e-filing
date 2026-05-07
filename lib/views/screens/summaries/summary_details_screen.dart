@@ -465,6 +465,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                                     initialMode: isCM || !context.isMobile
                                         ? RemarksPanelMode.write
                                         : RemarksPanelMode.type,
+                                    initiallyExpanded: isCM,
                                     bottomContent: isCMCurrentHolder
                                         ? AppSolidButton(
                                             onPressed: _submitSignAndReturnCM,

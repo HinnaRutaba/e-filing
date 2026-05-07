@@ -1,4 +1,7 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -43,89 +46,95 @@ class CMRecentlyApprovedSection extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = items[index];
-        return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2E9E6B),
-                      shape: BoxShape.circle,
+        return InkWell(
+              onTap: () => RouteHelper.push(
+                Routes.summaryDetails,
+                extra: SummaryModel(id: item.id),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2E9E6B),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 18,
+                        color: Colors.white,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.check,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2E9E6B),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            item.summaryNo ?? '',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.subject ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF2D2D2D),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.business,
-                              size: 12,
-                              color: Color(0xFF9E9E9E),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2E9E6B),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            const SizedBox(width: 3),
-                            Expanded(
-                              child: Text(
-                                item.originDept ?? '',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF9E9E9E),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              item.summaryNo ?? '',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item.subject ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF2D2D2D),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.business,
+                                size: 12,
+                                color: Color(0xFF9E9E9E),
+                              ),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  item.originDept ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF9E9E9E),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.remove_red_eye_outlined,
-                    size: 18,
-                    color: Colors.indigo[300],
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.remove_red_eye_outlined,
+                      size: 18,
+                      color: Colors.indigo[300],
+                    ),
+                  ],
+                ),
               ),
             )
             .animate(delay: (index * 80).ms)

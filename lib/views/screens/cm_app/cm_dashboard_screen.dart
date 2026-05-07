@@ -9,7 +9,6 @@ import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_department_d
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_recently_approved_section.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_top_departments_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
-import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/cm_awaiting_approval_section.dart';
 
 import 'package:flutter/material.dart';

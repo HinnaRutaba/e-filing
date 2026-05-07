@@ -118,6 +118,10 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
 
   void _goNext() {
     final total = _localSummaries.length;
+    if (total == 1) {
+      Toast.show(message: "You only have one summary pending approval");
+      return;
+    }
     if (_currentPage < total - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
@@ -239,17 +243,38 @@ class _CMApprovalDeskState extends ConsumerState<CMApprovalDesk> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          AppOutlineButton(
-            onPressed: canBack ? _goBack : null,
-            text: 'Back',
-            icon: Icons.arrow_back_rounded,
-            color: canBack ? AppColors.secondaryDark : AppColors.textSecondary,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-          AppText.labelLarge(
-            '${_currentPage + 1} / $total',
-            color: context.appColors.textPrimary,
-            fontWeight: FontWeight.w600,
+          canBack
+              ? AppOutlineButton(
+                  onPressed: canBack ? _goBack : null,
+                  text: 'Back',
+                  icon: Icons.arrow_back_rounded,
+                  color: canBack
+                      ? AppColors.secondaryDark
+                      : AppColors.textSecondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                )
+              : const SizedBox.shrink(),
+          Card(
+            elevation: 6,
+
+            color: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadiusGeometry.circular(50),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8,
+              ),
+              child: AppText.labelLarge(
+                '${_currentPage + 1} / $total',
+                color: context.appColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           AppSolidButton(
             onPressed: canNext ? _goNext : null,

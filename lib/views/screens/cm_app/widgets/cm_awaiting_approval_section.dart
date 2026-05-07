@@ -1,4 +1,7 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -74,62 +77,68 @@ class CMAwaitingApprovalSection extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = items[index];
-        return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
-                      borderRadius: BorderRadius.circular(8),
+        return InkWell(
+              onTap: () => RouteHelper.push(
+                Routes.summaryDetails,
+                extra: SummaryModel(id: item.id),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.pending_actions,
+                        size: 20,
+                        color: Color(0xFFE07B20),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.pending_actions,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.summaryNo ?? '',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF254A73),
+                            ),
+                          ),
+                          Text(
+                            item.subject ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF2D2D2D),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            item.originDept ?? '',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF757575),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
                       size: 20,
-                      color: Color(0xFFE07B20),
+                      color: Color(0xFFBDBDBD),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.summaryNo ?? '',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF254A73),
-                          ),
-                        ),
-                        Text(
-                          item.subject ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF2D2D2D),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          item.originDept ?? '',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF757575),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 20,
-                    color: Color(0xFFBDBDBD),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )
             .animate(delay: (index * 80).ms)

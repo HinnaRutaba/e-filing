@@ -10,7 +10,7 @@ class Toast {
     Widget? detail,
   }) {
     toastification.show(
-      title: AppText.titleLarge(message, color: AppColors.white),
+      title: AppText.titleLarge(message, color: AppColors.white, maxLines: 3),
       description: detail,
       direction: TextDirection.ltr,
       alignment: Alignment.topCenter,
