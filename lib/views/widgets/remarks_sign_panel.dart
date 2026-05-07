@@ -59,6 +59,12 @@ class RemarksSignPanelController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reset() {
+    _signCtrl.clear();
+    _writtenCtrl.clear();
+    notifyListeners();
+  }
+
   // Called by the widget to track canvas width for stroke encoding.
   void _updateCanvasWidth(double w) => _canvasWidth = w;
 }
@@ -125,12 +131,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   @override
   void initState() {
     super.initState();
-    _ctrl.mode = widget.initialMode;
-    if (widget.initiallyExpanded) {
-      _ctrl.expand();
-    } else {
-      _ctrl.collapse();
-    }
+    // Set directly to avoid notifyListeners() during mount, which would call
+    // setState on any sibling page's state that already has a listener on this
+    // shared controller — causing setState-during-build errors in the pager.
+    _ctrl._mode = widget.initialMode;
+    _ctrl._expanded = widget.initiallyExpanded;
     _ctrl.addListener(_onControllerChanged);
   }
 
@@ -244,6 +249,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
               width: widget.signPadWidth,
               child: SignaturePad(
                 controller: _ctrl._signCtrl,
+                initialPenColor: widget.initialPenColor,
                 showPenSelector: false,
               ),
             ),

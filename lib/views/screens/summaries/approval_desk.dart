@@ -204,14 +204,44 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       Toast.success(message: 'Summary signed and returned successfully');
     }
 
-    setState(() {
-      _localDetails.removeAt(_currentPage);
-      if (_localDetails.isEmpty) {
+    final removedIdx = _currentPage;
+    final totalAfter = _localDetails.length - 1;
+
+    if (totalAfter == 0) {
+      setState(() {
+        _localDetails.removeAt(removedIdx);
         _allCaughtUp = true;
-      } else if (_currentPage >= _localDetails.length) {
-        _currentPage = _localDetails.length - 1;
-        _pageController.jumpToPage(_currentPage);
-      }
+      });
+      return;
+    }
+
+    // Animate to the next summary before removing the completed one
+    final animateToIdx = removedIdx < _localDetails.length - 1
+        ? removedIdx + 1
+        : removedIdx - 1;
+
+    await _pageController.animateToPage(
+      animateToIdx,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+
+    if (!mounted) return;
+
+    _remarksPanelCtrl.reset();
+    _destDeptController.clear();
+    _destOfficerController.clear();
+    setState(() {
+      _localDetails.removeAt(removedIdx);
+      // After removing removedIdx, animateToIdx shifts left by 1 if it was ahead
+      _currentPage = animateToIdx > removedIdx
+          ? animateToIdx - 1
+          : animateToIdx;
+      _pageController.jumpToPage(_currentPage);
+      _selectedDestDept = null;
+      _selectedDestOfficer = null;
+      _officerCacheDeptId = null;
+      _officerCache = const [];
     });
   }
 

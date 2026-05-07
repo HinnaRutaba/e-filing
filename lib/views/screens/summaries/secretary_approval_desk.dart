@@ -1,6 +1,6 @@
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/summaries/approval_dek.dart';
+import 'package:efiling_balochistan/views/screens/summaries/approval_desk.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
