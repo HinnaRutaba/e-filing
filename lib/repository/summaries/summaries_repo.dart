@@ -659,6 +659,24 @@ class SummariesRepo extends SummariesInterface {
       Map<String, dynamic>.from(data['data']),
     );
   }
+
+  @override
+  Future<List<SummaryDetailsModel>> getSummariesDesk({
+    required int desgId,
+  }) async {
+    try {
+      final data = await dioClient.get(
+        url: summariesDeskUrl(desgId),
+        options: await options(authRequired: true),
+      );
+      if (data['data'] == null || data['data']['items'] == null) return [];
+      return (data['data']['items'] as List)
+          .map((e) => SummaryDetailsModel.fromJson(e))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 DioMediaType _audioMediaType(String filename) {

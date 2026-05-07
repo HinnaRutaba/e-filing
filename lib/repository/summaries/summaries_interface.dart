@@ -116,10 +116,11 @@ abstract class SummariesInterface extends NetworkBase {
   }) =>
       '${baseUrl}summaries/$summaryId/voice-notes/$voiceNoteId?userDesgID=$desgId';
 
+  String summariesStatsUrl(int desgId) =>
+      '${baseUrl}summaries/stats?userDesgID=$desgId';
 
-    String summariesStatsUrl(int desgId) =>
-      '${baseUrl}summaries/stats?userDesgID=$desgId';  
-    
+  String summariesDeskUrl(int desgId) =>
+      '${baseUrl}summaries/desk?userDesgID=$desgId';
 
   //========================Functions=============================
 
@@ -255,4 +256,6 @@ abstract class SummariesInterface extends NetworkBase {
     required int internalForwardId,
     required String forwardingRemark,
   });
+
+  Future<List<SummaryDetailsModel>> getSummariesDesk({required int desgId});
 }

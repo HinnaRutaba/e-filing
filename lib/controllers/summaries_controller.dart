@@ -959,4 +959,16 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return false;
     }
   }
+
+  Future<List<SummaryDetailsModel>> getSummariesDesk() async {
+    try {
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return [];
+      return await repo.getSummariesDesk(desgId: desId);
+    } catch (e, s) {
+      log('getSummariesDesk error: $e\n$s');
+      Toast.error(message: handleException(e));
+      return [];
+    }
+  }
 }
