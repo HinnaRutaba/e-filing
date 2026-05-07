@@ -263,7 +263,7 @@ class _CreateDraftRemarksScreenState
     final desId = ref.read(summariesController).meta?.activeUserDesg?.id;
     if (desId == null) return;
 
-    final body = await _remarksController.getText();
+    final body = isDeoInCmSecretariat ? '' : await _remarksController.getText();
     final briefNote = _briefsController.text.trim();
 
     final newFlags = _attachments
