@@ -123,7 +123,7 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
       itemBuilder: (_, i) {
         final details = widget.summaries[i];
         final summary = details.summary;
-        final pageKey = PageStorageKey<int>(i);
+        final pageKey = ValueKey(summary?.id ?? i);
         final scrollCtrl = _scrollControllers[i];
 
         return StickyTagDrawer(
