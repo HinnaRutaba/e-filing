@@ -529,28 +529,28 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 AppText.bodyMedium(
-                  track.toUserName ?? '',
+                  (track.effectiveToUser ?? track.toUserName) ?? '',
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                   fontFamily: fileFont,
                 ),
-                if ((track.toUserDesignation ?? '').isNotEmpty)
-                  Text(
-                    '(${track.toUserDesignation})',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontFamily: fileFont,
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                if ((track.toDepartment ?? '').isNotEmpty)
-                  AppText.bodySmall(
-                    track.toDepartment!,
-                    color: Colors.grey[900],
-                    fontSize: 12,
+
+                Text(
+                  '(${track.effectiveToDesignation ?? track.toUserDesignation})',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
                     fontFamily: fileFont,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
                   ),
+                ),
+
+                AppText.bodySmall(
+                  track.effectiveToDepartment ?? track.toDepartment!,
+                  color: Colors.grey[900],
+                  fontSize: 12,
+                  fontFamily: fileFont,
+                ),
                 if (track.actedAtDisplay != null)
                   AppText.labelSmall(track.actedAtDisplay!),
               ],
@@ -641,14 +641,16 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppText.bodyMedium(
-                      track.toUserDesignation ?? '',
+                      track.effectiveToDesignation ??
+                          track.toUserDesignation ??
+                          '',
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       fontFamily: fileFont,
                     ),
 
                     AppText.bodySmall(
-                      '${track.toDepartment}',
+                      '${track.effectiveToDepartment ?? track.toDepartment}',
                       color: Colors.grey[900],
                       fontSize: 12,
                       fontFamily: fileFont,
