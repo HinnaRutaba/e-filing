@@ -147,9 +147,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
 
   String? _shareVoiceNotePath;
   int _shareVoiceNoteDurationSec = 0;
+  final VoiceNoteRecorderController _shareVoiceRecorderCtrl =
+      VoiceNoteRecorderController();
 
   String? _cmVoiceNotePath;
   int _cmVoiceNoteDurationSec = 0;
+  final VoiceNoteRecorderController _cmVoiceRecorderCtrl =
+      VoiceNoteRecorderController();
 
   Future<void> _fetchOfficersForCurrentDept() async {
     final deptId = _selectedDestDept?.id;
@@ -638,6 +642,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         Toast.error(message: 'Please select a department member');
         return;
       }
+      await _shareVoiceRecorderCtrl.stopIfRecording();
+      if (!mounted) return;
       setState(() {
         _loadingAction = true;
       });
@@ -698,6 +704,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       if (!mounted) return;
       setState(() => _loadingAction = false);
     } else if (action == SummaryAction.forwardToCM) {
+      await _cmVoiceRecorderCtrl.stopIfRecording();
+      if (!mounted) return;
       setState(() => _loadingAction = true);
       success = await notifier.forwardToCM(summaryId: summaryId);
       if (!mounted) return;
@@ -1309,6 +1317,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm) ...[
           const SizedBox(height: 12),
           VoiceNoteRecorder(
+            controller: _shareVoiceRecorderCtrl,
             onVoiceNoteReady: (path, dur) {
               _shareVoiceNotePath = path;
               _shareVoiceNoteDurationSec = dur;
@@ -1544,6 +1553,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
               ),
               const SizedBox(height: 12),
               VoiceNoteRecorder(
+                controller: _cmVoiceRecorderCtrl,
                 onVoiceNoteReady: (path, dur) {
                   setState(() {
                     _cmVoiceNotePath = path;

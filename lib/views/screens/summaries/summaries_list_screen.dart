@@ -134,7 +134,7 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
             ? 'Summaries pending your approval.'
             : 'Summaries received by you and awaiting your action.';
       case SummarySubTab.sharedToMe:
-        return 'Summaries shared with you by colleagues.';
+        return ' Summaries shared with you internally that require your action — submit remarks or forward to another user.';
       case SummarySubTab.drafts:
         return 'Section drafts and internal remarks pending your review, signature, and forwarding.';
       case SummarySubTab.disposal:
@@ -367,12 +367,14 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
 
   Widget _helperBanner(String text) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF3B2A0E) : const Color(0xFFFFF7EC);
+    final bgColor = isDark
+        ? const Color(0xFF3B2A0E)
+        : const Color.fromARGB(255, 253, 235, 179);
     final borderColor = isDark
         ? const Color(0xFF8A5A1A)
-        : const Color(0xFFF1C99A);
+        : const Color.fromARGB(255, 236, 159, 71);
     final textColor = isDark
-        ? const Color(0xFFE8C07A)
+        ? const Color.fromARGB(255, 169, 138, 84)
         : const Color(0xFF8A4B08);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),

@@ -11,14 +11,32 @@ import 'package:record/record.dart';
 
 enum _RecorderState { idle, recording, recorded }
 
+class VoiceNoteRecorderController {
+  _VoiceNoteRecorderState? _state;
+
+  void _attach(_VoiceNoteRecorderState s) => _state = s;
+  void _detach(_VoiceNoteRecorderState s) {
+    if (_state == s) _state = null;
+  }
+
+  /// Stops an active recording and fires [onVoiceNoteReady]. No-op otherwise.
+  Future<void> stopIfRecording() async {
+    if (_state?._state == _RecorderState.recording) {
+      await _state?._stopRecording();
+    }
+  }
+}
+
 class VoiceNoteRecorder extends StatefulWidget {
   final void Function(String filePath, int durationSec) onVoiceNoteReady;
   final VoidCallback onVoiceNoteCleared;
+  final VoiceNoteRecorderController? controller;
 
   const VoiceNoteRecorder({
     super.key,
     required this.onVoiceNoteReady,
     required this.onVoiceNoteCleared,
+    this.controller,
   });
 
   @override
@@ -43,6 +61,7 @@ class _VoiceNoteRecorderState extends State<VoiceNoteRecorder> {
   @override
   void initState() {
     super.initState();
+    widget.controller?._attach(this);
     _player.onPlayerStateChanged.listen((state) {
       if (!mounted) return;
       setState(() => _isPlaying = state == ap.PlayerState.playing);
@@ -62,6 +81,7 @@ class _VoiceNoteRecorderState extends State<VoiceNoteRecorder> {
 
   @override
   void dispose() {
+    widget.controller?._detach(this);
     _timer?.cancel();
     _recorderController.dispose();
     _recordService.dispose();

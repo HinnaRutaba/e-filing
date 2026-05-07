@@ -318,7 +318,10 @@ class _CreateDraftRemarksScreenState
                   children: [
                     _summaryInfoCard(),
                     const SizedBox(height: 4),
-                    _remarksSection(),
+                    if (isDeoInCmSecretariat)
+                      _cmSecretariatRemarksAlert()
+                    else
+                      _remarksSection(),
                     _briefsSection(),
                     _flagsSection(),
                     _filesSection(),
@@ -337,6 +340,10 @@ class _CreateDraftRemarksScreenState
   // ---------------------------------------------------------------------------
   // Sections
   // ---------------------------------------------------------------------------
+
+  Widget _cmSecretariatRemarksAlert() {
+    return const _CmSecretariatRemarksAlert();
+  }
 
   Widget _summaryInfoCard() {
     final dateStr = _s.summaryDate != null
@@ -1068,9 +1075,6 @@ class _CreateDraftRemarksScreenState
     required HtmlEditorController controller,
     required String hint,
   }) {
-    if (isDeoInCmSecretariat) {
-      return const SizedBox.shrink();
-    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Container(
@@ -1281,6 +1285,66 @@ class _SearchPickerSheetState<T> extends State<_SearchPickerSheet<T>> {
                   height: 48,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CmSecretariatRemarksAlert extends StatelessWidget {
+  const _CmSecretariatRemarksAlert();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.block_rounded, size: 18, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Remarks Not Allowed',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          Text(
+            'This summary is currently with the Chief Minister Secretariat. '
+            'Drafted remarks cannot be added at this stage because the Principal Secretary to CM does not sign the summary — only the Chief Minister does.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: Color(0xFF7F1D1D),
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Please use the Brief / Sticky Note below to share context with the Principal Secretary and the Chief Minister.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: Color(0xFF7F1D1D),
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
