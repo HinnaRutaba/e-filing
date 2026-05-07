@@ -61,6 +61,15 @@ const List<Color> kDefaultSignatureColors = [
   Color(0xFF7A1F1F),
 ];
 
+enum SignatureColor {
+  darkBlue,
+  black,
+  darkGreen,
+  darkRed;
+
+  Color get color => kDefaultSignatureColors[index];
+}
+
 class SignaturePadController {
   _SignaturePadState? _state;
 
@@ -151,7 +160,7 @@ class SignaturePad extends StatefulWidget {
   final SignaturePadController? controller;
   final List<SignaturePenPreset> pens;
   final List<Color> colors;
-  final Color initialPenColor;
+  final SignatureColor initialPenColor;
   final int initialPenIndex;
   final double? canvasHeight;
   final Color canvasColor;
@@ -161,6 +170,7 @@ class SignaturePad extends StatefulWidget {
   final bool showClearButton;
   final bool showUndoButton;
   final bool showDescription;
+  final bool showPenSelector;
   final bool showRuledLines;
   final bool autoExpand;
   final double autoExpandStep;
@@ -173,7 +183,7 @@ class SignaturePad extends StatefulWidget {
     this.controller,
     this.pens = kDefaultSignaturePens,
     this.colors = kDefaultSignatureColors,
-    this.initialPenColor = const Color(0xFF0D2C6B),
+    this.initialPenColor = SignatureColor.darkBlue,
     this.initialPenIndex = 2,
     this.canvasHeight,
     this.canvasColor = AppColors.cardColorLight,
@@ -183,6 +193,7 @@ class SignaturePad extends StatefulWidget {
     this.showClearButton = true,
     this.showUndoButton = true,
     this.showDescription = true,
+    this.showPenSelector = true,
     this.showRuledLines = false,
     this.autoExpand = false,
     this.autoExpandStep = 120,
@@ -208,7 +219,7 @@ class _SignaturePadState extends State<SignaturePad> {
   void initState() {
     super.initState();
     _penIndex = widget.initialPenIndex.clamp(0, widget.pens.length - 1);
-    _penColor = widget.initialPenColor;
+    _penColor = widget.initialPenColor.color;
     _canvasHeight = widget.canvasHeight ?? 280;
     _signatureController = _buildController();
     widget.controller?._attach(this);
@@ -311,7 +322,11 @@ class _SignaturePadState extends State<SignaturePad> {
           spacing: 10,
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [_penTypeSelector(), _penCurrentChip(pen), _penColorRow()],
+          children: [
+            if (widget.showPenSelector) _penTypeSelector(),
+            if (widget.showPenSelector) _penCurrentChip(pen),
+            _penColorRow(),
+          ],
         ),
         if (widget.showDescription) ...[
           const SizedBox(height: 8),
@@ -556,7 +571,7 @@ class _SignaturePadState extends State<SignaturePad> {
 }
 
 class _RuledLinesPainter extends CustomPainter {
-  static const double _spacing = 32;
+  static const double _spacing = 48;
   static const Color _lineColor = Color(0xFFDDE3F0);
 
   const _RuledLinesPainter();
@@ -565,7 +580,7 @@ class _RuledLinesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = _lineColor
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 0.8;
     for (double y = _spacing; y < size.height; y += _spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }

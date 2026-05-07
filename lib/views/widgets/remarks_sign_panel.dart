@@ -92,6 +92,9 @@ class RemarksSignPanel extends StatefulWidget {
 
   final bool initiallyExpanded;
 
+  /// Pre-selects a pen colour in the handwriting canvas.
+  final SignatureColor initialPenColor;
+
   const RemarksSignPanel({
     super.key,
     required this.controller,
@@ -99,6 +102,7 @@ class RemarksSignPanel extends StatefulWidget {
     this.scrollController,
     this.initiallyExpanded = false,
     this.initialMode = RemarksPanelMode.type,
+    this.initialPenColor = SignatureColor.darkBlue,
   });
 
   @override
@@ -222,7 +226,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           const Divider(height: 24),
           AppText.titleLarge('Sign here'),
           const SizedBox(height: 16),
-          SignaturePad(controller: _ctrl._signCtrl),
+          SignaturePad(controller: _ctrl._signCtrl, showPenSelector: false),
           if (widget.bottomContent != null) ...[
             const SizedBox(height: 16),
             widget.bottomContent!,
@@ -330,6 +334,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           key: const ValueKey('remarks_written'),
           controller: _ctrl._writtenCtrl,
           showRuledLines: true,
+          initialPenColor: widget.initialPenColor,
           autoExpand: true,
           autoExpandStep: 120,
           showStrokeInfo: true,
