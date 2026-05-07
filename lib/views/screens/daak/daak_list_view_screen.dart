@@ -65,50 +65,52 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: GradientTabChip(
-                      label: 'Inbox',
-                      icon: Icons.inbox_rounded,
-                      selected:
-                          controller.selectedFilter == DaakViewFilter.inbox,
-                      onTap: () {
-                        ref
-                            .read(daakController.notifier)
-                            .setViewFilter(DaakViewFilter.inbox);
-                      },
-                    ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: context.isMobile ? double.infinity : 540,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GradientTabChip(
-                      label: 'My NFA',
-                      icon: Icons.folder_open_rounded,
-                      selected: controller.selectedFilter == DaakViewFilter.nfa,
-                      onTap: () {
-                        ref
+                  child: Row(
+                    mainAxisAlignment: context.isMobile
+                        ? MainAxisAlignment.spaceBetween
+                        : MainAxisAlignment.center,
+                    children: [
+                      _tabChip(
+                        context,
+                        label: 'Inbox',
+                        icon: Icons.inbox_rounded,
+                        selected:
+                            controller.selectedFilter == DaakViewFilter.inbox,
+                        onTap: () => ref
                             .read(daakController.notifier)
-                            .setViewFilter(DaakViewFilter.nfa);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GradientTabChip(
-                      label: 'Forwarded',
-                      icon: Icons.forward_to_inbox_rounded,
-                      selected:
-                          controller.selectedFilter == DaakViewFilter.forwarded,
-                      onTap: () {
-                        ref
+                            .setViewFilter(DaakViewFilter.inbox),
+                      ),
+                      const SizedBox(width: 12),
+                      _tabChip(
+                        context,
+                        label: 'My NFA',
+                        icon: Icons.folder_open_rounded,
+                        selected:
+                            controller.selectedFilter == DaakViewFilter.nfa,
+                        onTap: () => ref
                             .read(daakController.notifier)
-                            .setViewFilter(DaakViewFilter.forwarded);
-                      },
-                    ),
+                            .setViewFilter(DaakViewFilter.nfa),
+                      ),
+                      const SizedBox(width: 12),
+                      _tabChip(
+                        context,
+                        label: 'Forwarded',
+                        icon: Icons.forward_to_inbox_rounded,
+                        selected:
+                            controller.selectedFilter ==
+                            DaakViewFilter.forwarded,
+                        onTap: () => ref
+                            .read(daakController.notifier)
+                            .setViewFilter(DaakViewFilter.forwarded),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
             Padding(
@@ -316,5 +318,21 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
       ),
     );
   }
-}
 
+  Widget _tabChip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final chip = GradientTabChip(
+      label: label,
+      icon: icon,
+      selected: selected,
+      onTap: onTap,
+      expand: context.isMobile,
+    );
+    return context.isMobile ? Expanded(child: chip) : chip;
+  }
+}

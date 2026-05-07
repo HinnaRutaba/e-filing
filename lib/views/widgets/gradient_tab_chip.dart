@@ -3,17 +3,14 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-/// A tab/filter chip with a gradient sweep reveal animation.
-///
-/// Supports an optional [count] badge. When [count] is null the badge is hidden,
-/// making it usable both as a simple filter tile (daak) and a counted tab chip
-/// (summaries).
 class GradientTabChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final int? count;
   final bool selected;
   final VoidCallback onTap;
+
+  final bool expand;
 
   const GradientTabChip({
     super.key,
@@ -22,6 +19,7 @@ class GradientTabChip extends StatelessWidget {
     this.count,
     required this.selected,
     required this.onTap,
+    this.expand = false,
   });
 
   @override
@@ -75,7 +73,8 @@ class GradientTabChip extends StatelessWidget {
   }
 
   Widget _buildContent({required bool filled}) {
-    return Container(
+    final container = Container(
+      width: expand ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: filled ? null : AppColors.cardColorLight,
@@ -96,7 +95,8 @@ class GradientTabChip extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment: expand ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           Icon(icon, color: filled ? Colors.white : Colors.black54, size: 18),
           const SizedBox(width: 8),
@@ -119,9 +119,7 @@ class GradientTabChip extends StatelessWidget {
               child: Text(
                 '$count',
                 style: TextStyle(
-                  color: count == 0 && !filled
-                      ? Colors.black54
-                      : Colors.white,
+                  color: count == 0 && !filled ? Colors.black54 : Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -131,5 +129,6 @@ class GradientTabChip extends StatelessWidget {
         ],
       ),
     );
+    return container;
   }
 }

@@ -13,51 +13,58 @@ import 'package:efiling_balochistan/views/screens/summaries/components/summary_c
 import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SummariesScreen extends StatelessWidget {
+class SummariesScreen extends ConsumerWidget {
   const SummariesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(summariesController).meta?.activeUserDesg?.roleEnum;
+    final isSecretary = role == ActiveUserDesgRole.secretary;
     return GradientScaffold(
       child: BaseScreen(
         bgColor: Colors.transparent,
         isdash: false,
         title: 'Summaries',
-        actions: context.isMobile
+        actions: !isSecretary
             ? [
-                TextButton.icon(
-                  onPressed: () {
-                    RouteHelper.push(Routes.secretaryApprovalDesk);
-                  },
-                  icon: Icon(
-                    Icons.desk,
-                    size: 16,
-                    color: context.appColors.secondaryDark,
-                  ),
-                  label: Text(
-                    "Desk",
-                    style: TextStyle(color: context.appColors.secondaryDark),
-                  ),
-                ),
-                TextButton.icon(
+                AppOutlineButton(
                   onPressed: () {
                     RouteHelper.push(Routes.createSummary);
                   },
-                  icon: Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: context.appColors.primaryDark,
-                  ),
-                  label: Text(
-                    "Draft",
-                    style: TextStyle(color: context.appColors.primaryDark),
-                  ),
+                  text: "Draft Summary",
+                  icon: Icons.edit_outlined,
+                  color: context.appColors.primaryDark,
+                ),
+              ]
+            : context.isMobile
+            ? [
+                AppTextLinkButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.secretaryApprovalDesk);
+                  },
+                  text: "Approval Desk",
+                ),
+
+                Container(
+                  color: AppColors.disabled,
+                  height: 24,
+                  width: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                AppTextLinkButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  text: "Draft Summary",
+                  color: context.appColors.primaryDark,
                 ),
               ]
             : [
@@ -70,6 +77,7 @@ class SummariesScreen extends StatelessWidget {
                   color: context.appColors.secondaryDark,
                 ),
                 const SizedBox(width: 12),
+
                 AppOutlineButton(
                   onPressed: () {
                     RouteHelper.push(Routes.createSummary);
