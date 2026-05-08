@@ -13,7 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class VoiceNotesSection extends ConsumerStatefulWidget {
   final int? summaryId;
-  final VoiceNoteVisibility visibility;
+  final VoiceNoteVisibility? visibility;
   final bool canDelete;
 
   const VoiceNotesSection({

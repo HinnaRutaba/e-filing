@@ -928,7 +928,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
   Future<List<SummaryVoiceNoteModel>> listVoiceNotes({
     required int? summaryId,
-    required VoiceNoteVisibility visibility,
+    required VoiceNoteVisibility? visibility,
   }) async {
     try {
       List<SummaryVoiceNoteModel> voiceNotes = [];
@@ -939,6 +939,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
         summaryId: summaryId,
         desgId: desId,
       );
+      if (visibility == null) return voiceNotes;
       return voiceNotes.where((note) => note.visibility == visibility).toList();
     } catch (e, s) {
       log('listVoiceNotes error: $e\n$s');

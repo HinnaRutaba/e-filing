@@ -36,7 +36,6 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -209,6 +208,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       );
 
   bool get isCM => userDesg?.roleEnum == ActiveUserDesgRole.cm;
+
+  bool get isPsToCm => userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
 
   bool get isCMCurrentHolder {
     final details = ref.read(summariesController).details;
@@ -386,7 +387,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     final ctrlState = ref.watch(summariesController);
     final details = ctrlState.details;
     final isLoading = ctrlState.isLoadingDetails && details == null;
-    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
+
     return GradientScaffold(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -842,8 +843,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
 
   Widget _actionButtonRow() {
     final details = ref.read(summariesController).details;
-
-    final isPsToCm = userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
 
     List<SummaryAction> allowedActions;
     if (isDeo) {
@@ -2276,8 +2275,18 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   StickyTag _buildVoiceNotesTag() {
+    final allNotes =
+        ref.read(summariesController).details?.voiceNotes ?? const [];
+    final visibility = isCM
+        ? VoiceNoteVisibility.cm
+        : isPsToCm
+        ? null
+        : VoiceNoteVisibility.internal;
+    final count = visibility == null
+        ? allNotes.length
+        : allNotes.where((n) => n.visibility == visibility).length;
     return StickyTag(
-      text: 'Voice Notes',
+      text: 'Voice Notes ($count)',
       backgroundColor: const Color(0xFF6A1B9A),
       panelContent: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -2285,9 +2294,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: VoiceNotesSection(
             summaryId: widget.summary?.id,
-            visibility: isCM
-                ? VoiceNoteVisibility.cm
-                : VoiceNoteVisibility.internal,
+            visibility: visibility,
             canDelete: !isCM && !isDeoInCmSecretariat,
           ),
         ),
