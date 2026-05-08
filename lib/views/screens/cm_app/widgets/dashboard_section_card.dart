@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-/// A reusable card shell used by all CM dashboard stat sections.
-/// Provides a consistent header (icon + title + badge) and white card body.
 class DashboardSectionCard extends StatelessWidget {
   const DashboardSectionCard({
     super.key,

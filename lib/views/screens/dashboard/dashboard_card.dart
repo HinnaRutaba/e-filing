@@ -114,7 +114,7 @@ class DashboardCard extends StatelessWidget {
     final double glossTop = isDark ? 0.18 : 0.32;
 
     final double faceHigh = isDark ? 0.85 : 0.75;
-    final double faceMid = isDark ? 0.2 : 0.08;
+    final double faceMid = isDark ? 0.2 : 0.3;
     final double faceOuter = isDark ? 0.4 : 0.3;
     return DecoratedBox(
       decoration: BoxDecoration(

@@ -101,6 +101,7 @@ class DashboardController extends BaseControllerState<DashboardModel> {
 
     try {
       fetchStats();
+      fetchDaakLetters();
       final filesCtrl = ref.read(filesController.notifier);
 
       final ar = await filesCtrl.getFilesForDashboard(FileType.actionRequired);

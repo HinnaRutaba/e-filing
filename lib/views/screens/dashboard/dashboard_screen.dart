@@ -1,25 +1,23 @@
-import 'dart:ui';
-
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
-import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/notification_service.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
-import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
-import 'package:efiling_balochistan/views/screens/files/file_card.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_dept_totals_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_efile_kpis_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_daak_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_files_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_my_files_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_summaries_section.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
-import 'package:efiling_balochistan/views/widgets/not_found.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -41,30 +39,18 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with TickerProviderStateMixin {
   final RefreshController _refreshController = RefreshController();
-  late TabController _tabController;
   final ChatService chatService = ChatService();
   final ValueNotifier<bool> _compactNotifier = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 3,
-      vsync: this,
-      animationDuration: 400.ms,
-    );
     NotificationService().initNotification();
     _loadInitialData();
-
-    _tabController.addListener(() {
-      if (!mounted) return;
-      _loadDataForCurrentTab();
-    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _refreshController.dispose();
     _compactNotifier.dispose();
     super.dispose();
@@ -72,9 +58,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Future<void> _loadInitialData() async {
     try {
-       ref.read(summariesController.notifier).fetchSummariesStats();
+      ref.read(summariesController.notifier).fetchSummariesStats();
       await ref.read(dashboardController.notifier).initData();
-    
       await _showDaakAchievementDialogIfNeeded();
     } catch (error) {}
   }
@@ -104,20 +89,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
-  Future<void> _loadDataForCurrentTab() async {
-    switch (_tabController.index) {
-      case 0:
-        await ref.read(dashboardController.notifier).fetchPendingFiles();
-        break;
-      case 1:
-        await ref.read(dashboardController.notifier).fetchDaakLetters();
-        break;
-      case 2:
-        await ref.read(dashboardController.notifier).fetchForwardedFiles();
-        break;
-    }
-  }
-
   bool _handleScrollNotification(ScrollNotification notification) {
     if (!mounted || !context.isMobile) return false;
     if (notification.metrics.axis != Axis.vertical) return false;
@@ -138,9 +109,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _onRefresh() async {
     try {
       await ref.read(dashboardController.notifier).initData();
-
-      await _loadDataForCurrentTab();
-
       _refreshController.refreshCompleted();
     } catch (error) {
       _refreshController.refreshFailed();
@@ -251,164 +219,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         body: SmartRefresher(
           controller: _refreshController,
           onRefresh: _onRefresh,
-          child: Column(
-            children: [
-              AnimatedBuilder(
-                animation: _compactNotifier,
-                builder: (context, _) {
-                  final bool mobileCompact = isMobile && _compactNotifier.value;
-                  final double cardsOverlap = mobileCompact
-                      ? 42.0
-                      : isMobile
-                      ? 110.0
-                      : 16;
-                  final double statsCardTop = isMobile
-                      ? (mobileCompact ? 172.0 : 160.0)
-                      : 124.0;
-                  const Duration animDuration = Duration(milliseconds: 320);
-                  const Curve animCurve = Curves.easeOutCubic;
-                  return AnimatedContainer(
-                    duration: animDuration,
-                    curve: animCurve,
-                    height: headerHeight + cardsOverlap,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        headerBackground,
-                        userHeaderPositioned,
-                        AnimatedPositioned(
-                          duration: animDuration,
-                          curve: animCurve,
-                          left: 16,
-                          right: 16,
-                          top: statsCardTop,
-
-                          child: AnimatedSize(
-                            duration: animDuration,
-                            curve: animCurve,
-                            clipBehavior: Clip.none,
-                            alignment: Alignment.topCenter,
-                            child: _buildStatsCard(
-                              context,
-                              dashboardState,
-                              mobileCompact,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _handleScrollNotification,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  AnimatedBuilder(
+                    animation: _compactNotifier,
+                    builder: (context, _) {
+                      final bool mobileCompact =
+                          isMobile && _compactNotifier.value;
+                      final double cardsOverlap = mobileCompact
+                          ? 42.0
+                          : isMobile
+                          ? 110.0
+                          : 16;
+                      final double statsCardTop = isMobile
+                          ? (mobileCompact ? 172.0 : 160.0)
+                          : 124.0;
+                      const Duration animDuration = Duration(milliseconds: 320);
+                      const Curve animCurve = Curves.easeOutCubic;
+                      return AnimatedContainer(
+                        duration: animDuration,
+                        curve: animCurve,
+                        height: headerHeight + cardsOverlap,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            headerBackground,
+                            userHeaderPositioned,
+                            AnimatedPositioned(
+                              duration: animDuration,
+                              curve: animCurve,
+                              left: 16,
+                              right: 16,
+                              top: statsCardTop,
+                              child: AnimatedSize(
+                                duration: animDuration,
+                                curve: animCurve,
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.topCenter,
+                                child: _buildStatsCard(
+                                  context,
+                                  dashboardState,
+                                  mobileCompact,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                  _buildSections(context, dashboardState, isMobile),
+                ],
               ),
-              Container(
-                padding: const EdgeInsets.all(3),
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: context.appColors.secondaryLight.withValues(
-                      alpha: 0.3,
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.appColors.secondaryDark.withValues(
-                        alpha: 0.06,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        context.appColors.secondaryDark,
-                        context.appColors.secondaryLight,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.appColors.secondaryDark.withValues(
-                          alpha: 0.3,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicatorPadding: EdgeInsets.zero,
-                  dividerColor: Colors.transparent,
-                  labelColor: context.appColors.accent,
-                  unselectedLabelColor: context.appColors.textSecondary,
-                  labelPadding: const EdgeInsets.symmetric(
-                    vertical: 2,
-                    horizontal: 4,
-                  ),
-                  labelStyle: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  splashBorderRadius: BorderRadius.circular(999),
-                  overlayColor: WidgetStateProperty.all(Colors.transparent),
-                  tabs: const [
-                    Tab(text: 'Pending Files', height: 30),
-                    Tab(text: 'Daak Letters', height: 30),
-                    Tab(text: 'Processed Files', height: 30),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: _handleScrollNotification,
-                  child: TabBarView(
-                    controller: _tabController,
-
-                    children: [
-                      _buildFileList(
-                        files: dashboardState.pendingFiles,
-                        fileType: FileType.pending,
-                        loading:
-                            dashboardState.loadingPendingFiles &&
-                            dashboardState.pendingFiles.isEmpty,
-                        onRefresh: () => ref
-                            .read(dashboardController.notifier)
-                            .fetchPendingFiles(),
-                      ),
-                      _buildDaakList(
-                        daakLetters: dashboardState.daakLetters,
-                        loading:
-                            dashboardState.loadingDaakLetters &&
-                            dashboardState.daakLetters.isEmpty,
-                        onRefresh: () => ref
-                            .read(dashboardController.notifier)
-                            .fetchDaakLetters(),
-                      ),
-                      _buildFileList(
-                        files: dashboardState.forwardedFiles,
-                        fileType: FileType.forwarded,
-                        loading:
-                            dashboardState.loadingForwardedFiles &&
-                            dashboardState.forwardedFiles.isEmpty,
-                        onRefresh: () => ref
-                            .read(dashboardController.notifier)
-                            .fetchForwardedFiles(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -438,14 +304,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             children: [
               AppText.headlineSmall(
                 currentUser.userTitle ?? '---',
-
                 fontWeight: FontWeight.w600,
                 color: context.appColors.accent,
               ),
               const SizedBox(height: 0.5),
               AppText.bodySmall(
                 currentUser.currentDesignation?.designation ?? '',
-
                 color: context.appColors.accent.withValues(alpha: 0.9),
               ),
             ],
@@ -505,6 +369,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   ) {
     final bool isMobile = context.isMobile;
     final bool smallCard = isMobile && compact;
+    final kpis = dashboardState.stats?.efileKpis;
+    final tabCounts = dashboardState.stats?.summaryStats?.tabCounts;
+
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
       return child
@@ -519,15 +386,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           .fadeIn(delay: delay, duration: 300.ms);
     }
 
+    final summariesCard = DashboardCard(
+      cardColor: context.appColors.secondaryLight,
+      iconColor: context.appColors.secondaryDark,
+      title: "Summaries",
+      value: "${tabCounts?.inbox ?? 0}",
+      onTap: () => RouteHelper.push(Routes.summaries),
+      loading: dashboardState.loadingStats,
+      icon: Icons.summarize_rounded,
+      showSmallCard: smallCard,
+    );
+
+    final daakCard = DashboardCard(
+      cardColor: Colors.green[200]!,
+      iconColor: Colors.green[800]!,
+      title: "Daak Letters",
+      value: "${dashboardState.daakLetters.length}",
+      onTap: () => RouteHelper.push(Routes.daak),
+      loading: dashboardState.loadingDaakLetters,
+      icon: Icons.mark_email_unread_rounded,
+      showSmallCard: smallCard,
+    );
+
     final pendingCard = DashboardCard(
       cardColor: context.appColors.warning,
       iconColor: Colors.yellowAccent,
       title: "Pending Files",
-      value: "${dashboardState.pendingFilesCount}",
-      onTap: () {
-        RouteHelper.push(Routes.pendingFiles);
-      },
-      loading: dashboardState.loading,
+      value: "${kpis?.pending ?? 0}",
+      onTap: () => RouteHelper.push(Routes.pendingFiles),
+      loading: dashboardState.loadingStats,
       icon: Icons.timelapse,
       showSmallCard: smallCard,
     );
@@ -536,53 +423,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       cardColor: Theme.of(context).colorScheme.error,
       iconColor: Colors.red[900]!,
       title: "Action Required",
-      value: "${dashboardState.actionRequiredCount}",
-      onTap: () {
-        RouteHelper.push(Routes.actionRequiredFiles);
-      },
-      loading: dashboardState.loading,
+      value: "${kpis?.filesActionRequired ?? 0}",
+      onTap: () => RouteHelper.push(Routes.actionRequiredFiles),
+      loading: dashboardState.loadingStats,
       icon: Icons.info_outline,
       showSmallCard: smallCard,
     );
 
-    final myFilesCard = DashboardCard(
-      cardColor: context.appColors.secondaryLight,
-      iconColor: context.appColors.secondaryDark,
-      title: "My Files",
-      value: "${dashboardState.myFilesCount}",
-      onTap: () {
-        RouteHelper.push(Routes.myFiles);
-      },
-      loading: dashboardState.loading,
-      icon: Icons.file_copy,
-      showSmallCard: smallCard,
-    );
-
-    final daakCard = Badge(
-      label: AppText.labelSmall(
-        "New",
-        color: context.appColors.accent,
-        fontWeight: FontWeight.bold,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      backgroundColor: context.appColors.success,
-      alignment: Alignment.topLeft,
-      offset: const Offset(-2, -6),
-      child: DashboardCard(
-        cardColor: Colors.green[200]!,
-        iconColor: Colors.green[800]!,
-        title: "Daak Letters",
-        value: null,
-        onTap: () {
-          _tabController.animateTo(1);
-        },
-        loading: false,
-        icon: Icons.mark_email_unread,
-        showSmallCard: smallCard,
-      ),
-    );
-
-    final cards = [pendingCard, actionRequiredCard, myFilesCard, daakCard];
+    final cards = [summariesCard, daakCard, pendingCard, actionRequiredCard];
 
     if (!isMobile || compact) {
       return Row(
@@ -617,82 +465,86 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildFileList({
-    required List<FileModel> files,
-    required FileType fileType,
-    required bool loading,
-    required Future<void> Function() onRefresh,
-  }) {
-    if (loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  Widget _buildSections(
+    BuildContext context,
+    DashboardModel dashboardState,
+    bool isMobile,
+  ) {
+    final stats = dashboardState.stats;
 
-    if (files.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const NotFound(),
-            const SizedBox(height: 16),
-            AppText.bodyMedium('No files found'),
-            const SizedBox(height: 16),
-            AppSolidButton(onPressed: onRefresh, text: "Reload", width: 120),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: files.length,
-      itemBuilder: (ctx, i) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: FileCard(fileType: fileType, data: files[i])
-            .animate()
-            .fadeIn(delay: (60 * i).ms, duration: 300.ms, curve: Curves.easeOut)
-            .slideX(
-              begin: -0.12,
-              end: 0,
-              delay: (60 * i).ms,
-              duration: 350.ms,
-              curve: Curves.easeOutCubic,
-            ),
-      ),
+    final recentSummariesSection = DashboardRecentSummariesSection(
+      items: stats?.recentSummaries ?? [],
     );
-  }
+    final recentPendingFilesSection = DashboardRecentFilesSection(
+      items: stats?.recentPendingFiles ?? [],
+    );
+    final recentMyFilesSection = DashboardRecentMyFilesSection(
+      items: stats?.recentMyFiles ?? [],
+    );
+    final recentDaakSection = DashboardRecentDaakSection(
+      items: dashboardState.daakLetters,
+      loading: dashboardState.loadingDaakLetters,
+    );
+    final efileKpisSection = DashboardEfileKpisSection(kpis: stats?.efileKpis);
+    final deptTotalsSection = DashboardDeptTotalsSection(
+      totals: stats?.summaryStats?.departmentTotals,
+    );
 
-  Widget _buildDaakList({
-    required List<DaakModel> daakLetters,
-    required bool loading,
-    required Future<void> Function() onRefresh,
-  }) {
-    if (loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    const bottomPadding = SizedBox(height: 100);
 
-    if (daakLetters.isEmpty) {
-      return Center(
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const NotFound(),
+            recentSummariesSection,
             const SizedBox(height: 16),
-            AppText.bodyMedium('No Daak letters found'),
+            recentPendingFilesSection,
             const SizedBox(height: 16),
-            AppSolidButton(onPressed: onRefresh, text: "Reload", width: 120),
+            recentMyFilesSection,
+            const SizedBox(height: 16),
+            recentDaakSection,
+            const SizedBox(height: 16),
+            efileKpisSection,
+            const SizedBox(height: 16),
+            deptTotalsSection,
+            bottomPadding,
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      itemCount: daakLetters.length,
-      itemBuilder: (ctx, i) => DaakCard(
-        daak: daakLetters[i],
-        onStatusChange: (filter) async {
-          await ref.read(dashboardController.notifier).fetchDaakLetters();
-        },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              children: [
+                recentSummariesSection,
+                const SizedBox(height: 16),
+                recentMyFilesSection,
+                const SizedBox(height: 16),
+                efileKpisSection,
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                recentPendingFilesSection,
+                const SizedBox(height: 16),
+                recentDaakSection,
+                const SizedBox(height: 16),
+                deptTotalsSection,
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
