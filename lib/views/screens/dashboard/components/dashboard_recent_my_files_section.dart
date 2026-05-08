@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
@@ -18,19 +19,19 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
       iconBgColor: const Color(0xFF5C6BC0),
       title: 'Recent Filed',
       badgeLabel: '${items.length} files',
-      badgeColor: const Color(0xFFEDE7F6),
-      badgeTextColor: const Color(0xFF5C35B0),
-      body: items.isEmpty ? _buildEmptyState() : _buildList(context),
+      badgeColor: const Color(0xFF5C6BC0).withValues(alpha: 0.15),
+      badgeTextColor: const Color(0xFF5C6BC0),
+      body: items.isEmpty ? _buildEmptyState(context) : _buildList(context),
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+  Widget _buildEmptyState(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Center(
         child: Text(
           'No recent filed files.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
+          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
         ),
       ),
     );
@@ -58,7 +59,7 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDE7F6),
+                        color: const Color(0xFF5C6BC0).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -74,18 +75,18 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
                         children: [
                           Text(
                             item.referenceNo ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF254A73),
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                           ),
                           Text(
                             item.subject ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF2D2D2D),
+                              color: context.appColors.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -93,18 +94,18 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
                           if (item.receiver != null)
                             Text(
                               'To: ${item.receiver}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF757575),
+                                color: context.appColors.textSecondary,
                               ),
                             ),
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       size: 20,
-                      color: Color(0xFFBDBDBD),
+                      color: context.appColors.disabled,
                     ),
                   ],
                 ),

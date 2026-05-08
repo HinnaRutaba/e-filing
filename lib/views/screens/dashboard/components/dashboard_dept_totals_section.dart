@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:flutter/material.dart';
@@ -48,8 +49,8 @@ class DashboardDeptTotalsSection extends StatelessWidget {
       iconBgColor: const Color(0xFF5C6BC0),
       title: 'Summaries in Departments',
       badgeLabel: 'Overview',
-      badgeColor: const Color(0xFFEDE7F6),
-      badgeTextColor: const Color(0xFF5C35B0),
+      badgeColor: const Color(0xFF5C6BC0).withValues(alpha: 0.15),
+      badgeTextColor: const Color(0xFF5C6BC0),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
@@ -108,7 +109,7 @@ class _StatTile extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF5D5D5D)),
+              style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
             ),
           ),
           Container(

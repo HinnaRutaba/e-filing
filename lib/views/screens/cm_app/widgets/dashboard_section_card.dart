@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -25,7 +26,7 @@ class DashboardSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appColors.cardColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -55,10 +56,10 @@ class DashboardSectionCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF2D2D2D),
+                          color: context.appColors.textPrimary,
                         ),
                       ),
                     ),

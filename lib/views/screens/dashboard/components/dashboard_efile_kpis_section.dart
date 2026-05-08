@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -16,9 +17,9 @@ class DashboardEfileKpisSection extends StatelessWidget {
       iconBgColor: const Color(0xFF2E9E6B),
       title: 'Files Overview',
       badgeLabel: 'eFile KPIs',
-      badgeColor: const Color(0xFFDFF5EC),
-      badgeTextColor: const Color(0xFF1E7A50),
-      body: _buildBody(),
+      badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
+      badgeTextColor: const Color(0xFF2E9E6B),
+      body: _buildBody(context),
     );
   }
 
@@ -40,17 +41,17 @@ class DashboardEfileKpisSection extends StatelessWidget {
         (kpis?.archive ?? 0).toDouble(),
       ];
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     final values = _values;
     final total = values.fold(0.0, (s, v) => s + v);
 
     if (total == 0) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         child: Center(
           child: Text(
             'No file data available.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
+            style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
           ),
         ),
       );
@@ -133,7 +134,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF5D5D5D)),
+          style: TextStyle(fontSize: 11, color: context.appColors.textSecondary),
         ),
       ],
     );

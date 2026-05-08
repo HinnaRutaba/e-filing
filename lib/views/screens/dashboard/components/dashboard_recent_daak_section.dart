@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
@@ -25,26 +26,26 @@ class DashboardRecentDaakSection extends StatelessWidget {
       iconBgColor: const Color(0xFF2E9E6B),
       title: 'Recent Daak',
       badgeLabel: loading ? '...' : '${items.length} letters',
-      badgeColor: const Color(0xFFDFF5EC),
-      badgeTextColor: const Color(0xFF1E7A50),
+      badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
+      badgeTextColor: const Color(0xFF2E9E6B),
       body: loading
           ? const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             )
           : items.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(context)
           : _buildList(context),
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+  Widget _buildEmptyState(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Center(
         child: Text(
           'No recent daak letters.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
+          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
         ),
       ),
     );
@@ -80,7 +81,7 @@ class DashboardRecentDaakSection extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDFF5EC),
+                        color: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -99,36 +100,36 @@ class DashboardRecentDaakSection extends StatelessWidget {
                               if (item.diaryNo != null)
                                 Text(
                                   item.diaryNo!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF254A73),
+                                    color: Theme.of(context).colorScheme.secondary,
                                   ),
                                 ),
                               if (item.diaryNo != null && dateStr != null)
-                                const Text(
+                                Text(
                                   ' · ',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Color(0xFFBDBDBD),
+                                    color: context.appColors.disabled,
                                   ),
                                 ),
                               if (dateStr != null)
                                 Text(
                                   dateStr,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
-                                    color: Color(0xFF9E9E9E),
+                                    color: context.appColors.textSecondary,
                                   ),
                                 ),
                             ],
                           ),
                           Text(
                             item.subject ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF2D2D2D),
+                              color: context.appColors.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -136,19 +137,19 @@ class DashboardRecentDaakSection extends StatelessWidget {
                           if (item.sourceDepartment != null)
                             Text(
                               item.sourceDepartment!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF757575),
+                                color: context.appColors.textSecondary,
                               ),
                             ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       size: 20,
-                      color: Color(0xFFBDBDBD),
+                      color: context.appColors.disabled,
                     ),
                   ],
                 ),
