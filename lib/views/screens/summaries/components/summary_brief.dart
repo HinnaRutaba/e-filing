@@ -156,7 +156,7 @@ class SummaryBrief extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           AppText.labelSmall(
-            DateTimeHelper.fullDayMonthNameWithTime(DateTime.now()),
+            DateTimeHelper.fullDayMonthNameWithTime(timestamp),
             color: AppColors.textSecondary,
           ),
         ],

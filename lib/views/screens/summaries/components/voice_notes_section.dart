@@ -211,7 +211,9 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                           ),
                           const SizedBox(width: 4),
                           AppText.labelSmall(
-                            DateTimeHelper.datFormatSlash(note.uploadedAt!),
+                            DateTimeHelper.dateFormatddMMYYWithTime(
+                              note.uploadedAt!,
+                            ),
                             color: appColors.textSecondary,
                             fontSize: 11,
                           ),
