@@ -223,8 +223,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               AnimatedBuilder(
                 animation: _compactNotifier,
                 builder: (context, _) {
-                  final bool mobileCompact =
-                      isMobile && _compactNotifier.value;
+                  final bool mobileCompact = isMobile && _compactNotifier.value;
                   final double cardsOverlap = mobileCompact
                       ? 42.0
                       : isMobile
