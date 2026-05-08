@@ -537,21 +537,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
     if (action == SummaryAction.signForward && isPsToCmCmReturned) {
       setState(() => _selectedAction = action);
+      _scrollActionBarToTop();
       return;
     }
 
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
       _remarksPanelCtrl.expand();
+      _scrollActionBarToTop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ctx = _remarksPanelKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(
-            ctx,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutCubic,
-            alignment: 0.05,
-          );
-        }
         _submitFromRemarksPanel();
       });
       return;
@@ -578,6 +571,32 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       } else {
         _selectedAction = action;
       }
+    });
+    if (action == SummaryAction.signForward) _scrollActionBarToTop();
+  }
+
+  void _scrollActionBarToTop() {
+    _remarksPanelCtrl.expand();
+    // Grab the ScrollableState synchronously, then after the RemarksSignPanel
+    // AnimatedSize (260ms) finishes use the RenderObject — no BuildContext
+    // crosses the async gap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _remarksPanelKey.currentContext;
+      if (ctx == null) return;
+      final scrollable = Scrollable.maybeOf(ctx);
+      if (scrollable == null) return;
+      Future.delayed(const Duration(milliseconds: 280), () {
+        if (!mounted) return;
+        final renderObj = _remarksPanelKey.currentContext?.findRenderObject();
+        if (renderObj == null || !renderObj.attached) return;
+        scrollable.position.ensureVisible(
+          renderObj,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: 0.0,
+        );
+      });
     });
   }
 
