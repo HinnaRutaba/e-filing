@@ -26,7 +26,9 @@ class SummariesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(summariesController).meta?.activeUserDesg?.roleEnum;
-    final isSecretary = role == ActiveUserDesgRole.secretary;
+    final isSecretary =
+        role == ActiveUserDesgRole.secretary ||
+        role == ActiveUserDesgRole.pstocm;
     return GradientScaffold(
       child: BaseScreen(
         bgColor: Colors.transparent,
@@ -315,6 +317,20 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     );
   }
 
+  int? _mainTabCount(SummaryMainTab tab) {
+    final ctrlState = ref.read(summariesController);
+    final role = ctrlState.meta?.activeUserDesg?.roleEnum;
+    final counts = ctrlState.stats?.tabCounts;
+    if (counts == null) return null;
+    final subTabs = subTabsForRole(role)
+        .where((s) => s.configFor(role).parent == tab);
+    int total = 0;
+    for (final s in subTabs) {
+      total += counts.countForSubTab(s, role: role) ?? 0;
+    }
+    return total;
+  }
+
   // ---------- Main tab bar ----------
 
   Widget _mainTabBar(SummaryMainTab mainTab) {
@@ -333,6 +349,7 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
             child: GradientTabChip(
               label: tab.label,
               icon: tab.icon,
+              count: _mainTabCount(tab),
               selected: mainTab == tab,
               onTap: () => _onMainTabChanged(tab),
             ),

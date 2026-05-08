@@ -35,7 +35,7 @@ class SummariesStatsModel {
               Map<String, dynamic>.from(map[SummariesStatsSchema.tabCounts]),
             )
           : null,
-      departmentTotals: map[SummariesStatsSchema.departmentTotals] != null
+      departmentTotals: map[SummariesStatsSchema.departmentTotals] is Map
           ? SummariesDepartmentTotalsModel.fromJson(
               Map<String, dynamic>.from(
                 map[SummariesStatsSchema.departmentTotals],

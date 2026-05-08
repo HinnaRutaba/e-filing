@@ -571,7 +571,7 @@ class _SignaturePadState extends State<SignaturePad> {
 }
 
 class _RuledLinesPainter extends CustomPainter {
-  static const double _spacing = 48;
+  static const double _spacing = 54;
   static const Color _lineColor = Color(0xFFDDE3F0);
 
   const _RuledLinesPainter();
