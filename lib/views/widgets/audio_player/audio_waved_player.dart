@@ -173,6 +173,9 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
   bool isPausing = true;
   bool hasCompleted = false;
   Uint8List? _audioBytes;
+  double _playbackSpeed = 1.0;
+
+  static const List<double> _speeds = [1.0, 1.5, 2.0, 0.75];
 
   @override
   void initState() {
@@ -396,6 +399,20 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
     _controller.onPlayerStopped(this);
   }
 
+  void _cycleSpeed() {
+    final nextIndex =
+        (_speeds.indexOf(_playbackSpeed) + 1) % _speeds.length;
+    setState(() => _playbackSpeed = _speeds[nextIndex]);
+    _audioPlayer.setPlaybackRate(_playbackSpeed);
+  }
+
+  String get _speedLabel {
+    if (_playbackSpeed == _playbackSpeed.truncateToDouble()) {
+      return '${_playbackSpeed.toInt()}x';
+    }
+    return '${_playbackSpeed}x';
+  }
+
   @override
   Widget build(BuildContext context) {
     return (waveformData.isNotEmpty)
@@ -444,6 +461,31 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
                     style: widget.timingStyle,
                   ),
                 ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _cycleSpeed,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: widget.iconBackgoundColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: widget.playedColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    _speedLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: widget.playedColor,
+                    ),
+                  ),
+                ),
+              ),
             ],
           )
         : SizedBox(
