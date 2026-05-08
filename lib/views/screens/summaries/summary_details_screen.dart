@@ -36,7 +36,7 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:keyboard_detection/keyboard_detection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,8 +115,26 @@ const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
 
-class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
-    with WidgetsBindingObserver {
+class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
+  late final KeyboardDetectionController _keyboardCtrl =
+      KeyboardDetectionController(
+        onChanged: (state) {
+          if (state == KeyboardState.visibling ||
+              state == KeyboardState.visible) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              if (_actionBarScrollController.hasClients) {
+                _actionBarScrollController.animateTo(
+                  _actionBarScrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+          }
+          if (mounted) setState(() {});
+        },
+      );
   SummaryAction? _selectedAction;
   bool _loadingAction = false;
   final TextEditingController _remarksController = TextEditingController();
@@ -314,7 +332,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
     // Destination department is only pre-filled after _loadDetails,
     // where hasForwardedBefore can be checked (requires movement data).
@@ -348,7 +365,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _remarksController.dispose();
     _shareSearchController.dispose();
     _destDeptController.dispose();
@@ -359,171 +375,150 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   @override
-  void didChangeMetrics() {
-    if (_selectedAction == null) return;
-    final bottomInset = WidgetsBinding
-        .instance
-        .platformDispatcher
-        .views
-        .first
-        .viewInsets
-        .bottom;
-    if (bottomInset > 0 && _actionBarScrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (_actionBarScrollController.hasClients) {
-          _actionBarScrollController.animateTo(
-            _actionBarScrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final ctrlState = ref.watch(summariesController);
     final details = ctrlState.details;
     final isLoading = ctrlState.isLoadingDetails && details == null;
 
-    return GradientScaffold(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
+    return KeyboardDetection(
+      controller: _keyboardCtrl,
+      child: GradientScaffold(
+        child: Scaffold(
           backgroundColor: Colors.transparent,
-          title: AppText.headlineSmall("Summary Details"),
-          actions: [
-            if (details != null) ...[
-              Consumer(
-                builder: (context, ref, _) {
-                  final loading = ref.watch(
-                    summariesController.select((s) => s.gettingPrintUrl),
-                  );
-                  return loading
-                      ? const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : AppOutlineButton(
-                          onPressed: _onPrint,
-                          text: 'Print Summary',
-                          icon: Icons.print_outlined,
-                          color: AppColors.primaryDark,
-                          width: 160,
-                        );
-                },
-              ),
-              const SizedBox(width: 12),
-            ],
-          ],
-        ),
-
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : (!ctrlState.isLoadingDetails && details == null)
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.lock_outline_rounded,
-                      size: 72,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    AppText.headlineSmall("Access Restricted"),
-                    const SizedBox(height: 8),
-                    AppText.bodyMedium(
-                      'You do not have access to this summary',
-                    ),
-                  ],
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            title: AppText.headlineSmall("Summary Details"),
+            actions: [
+              if (details != null) ...[
+                Consumer(
+                  builder: (context, ref, _) {
+                    final loading = ref.watch(
+                      summariesController.select((s) => s.gettingPrintUrl),
+                    );
+                    return loading
+                        ? const SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : AppOutlineButton(
+                            onPressed: _onPrint,
+                            text: 'Print Summary',
+                            icon: Icons.print_outlined,
+                            color: AppColors.primaryDark,
+                            width: 160,
+                          );
+                  },
                 ),
-              )
-            : Column(
-                children: [
-                  Expanded(
-                    child: StickyTagDrawer(
-                      panelWidth: MediaQuery.sizeOf(context).width * 0.85,
-                      tagsAlignment: const Alignment(0.0, -0.5),
-                      mainContent: RefreshIndicator(
-                        onRefresh: _loadDetails,
-                        child: Scrollbar(
-                          controller: _mainScrollController,
-                          thickness: 10,
-                          trackVisibility: true,
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            controller: _mainScrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _documentCard(),
-                                if ((isCMCurrentHolder ||
-                                        (!isDeo &&
-                                            actionsAvailable &&
-                                            showHandWrittedRemarksSection &&
-                                            !(isDeo &&
-                                                details?.isLatestMovementSignedAndForwarded ==
-                                                    true))) &&
-                                    !isPsToCmCmReturned) ...[
-                                  RemarksSignPanel(
-                                    key: _remarksPanelKey,
+                const SizedBox(width: 12),
+              ],
+            ],
+          ),
 
-                                    controller: _remarksPanelCtrl,
-                                    scrollController: _mainScrollController,
-                                    initialMode: isCM || !context.isMobile
-                                        ? RemarksPanelMode.write
-                                        : RemarksPanelMode.type,
-                                    initiallyExpanded: isCM,
-                                    bottomContent: isCMCurrentHolder
-                                        ? AppSolidButton(
-                                            onPressed: _submitSignAndReturnCM,
-                                            text: 'Sign and Return',
-                                            width: double.infinity,
-                                          )
-                                        : Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.stretch,
-                                            children: [
-                                              _forwardingFields(),
-                                              const SizedBox(height: 16),
-                                              _actionButton(
-                                                SummaryAction.signForward,
-                                                expand: false,
-                                                width: double.infinity,
-                                                onTapOverride:
-                                                    _submitFromRemarksPanel,
-                                              ),
-                                            ],
-                                          ),
-                                  ),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : (!ctrlState.isLoadingDetails && details == null)
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.lock_outline_rounded,
+                        size: 72,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
+                      AppText.headlineSmall("Access Restricted"),
+                      const SizedBox(height: 8),
+                      AppText.bodyMedium(
+                        'You do not have access to this summary',
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    Expanded(
+                      child: StickyTagDrawer(
+                        panelWidth: MediaQuery.sizeOf(context).width * 0.85,
+                        tagsAlignment: const Alignment(0.0, -0.5),
+                        mainContent: RefreshIndicator(
+                          onRefresh: _loadDetails,
+                          child: Scrollbar(
+                            controller: _mainScrollController,
+                            thickness: 10,
+                            trackVisibility: true,
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              controller: _mainScrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _documentCard(),
+                                  if ((isCMCurrentHolder ||
+                                          (!isDeo &&
+                                              actionsAvailable &&
+                                              showHandWrittedRemarksSection &&
+                                              !(isDeo &&
+                                                  details?.isLatestMovementSignedAndForwarded ==
+                                                      true))) &&
+                                      !isPsToCmCmReturned) ...[
+                                    RemarksSignPanel(
+                                      key: _remarksPanelKey,
+
+                                      controller: _remarksPanelCtrl,
+                                      scrollController: _mainScrollController,
+                                      initialMode: isCM || !context.isMobile
+                                          ? RemarksPanelMode.write
+                                          : RemarksPanelMode.type,
+                                      initiallyExpanded: isCM,
+                                      bottomContent: isCMCurrentHolder
+                                          ? AppSolidButton(
+                                              onPressed: _submitSignAndReturnCM,
+                                              text: 'Sign and Return',
+                                              width: double.infinity,
+                                            )
+                                          : Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                _forwardingFields(),
+                                                const SizedBox(height: 16),
+                                                _actionButton(
+                                                  SummaryAction.signForward,
+                                                  expand: false,
+                                                  width: double.infinity,
+                                                  onTapOverride:
+                                                      _submitFromRemarksPanel,
+                                                ),
+                                              ],
+                                            ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  _sidebar(),
                                 ],
-                                const SizedBox(height: 16),
-                                _sidebar(),
-                              ],
+                              ),
                             ),
                           ),
                         ),
+                        tags: [
+                          _buildAttachmentsTag(details),
+                          _buildBriefsTag(details),
+                          if (isPsToCm || isCM || isDeoInCmSecretariat)
+                            _buildVoiceNotesTag(),
+                        ],
                       ),
-                      tags: [
-                        _buildAttachmentsTag(details),
-                        _buildBriefsTag(details),
-                        if (isPsToCm || isCM || isDeoInCmSecretariat)
-                          _buildVoiceNotesTag(),
-                      ],
                     ),
-                  ),
-                  _actionBar(),
-                ],
-              ),
+                    _actionBar(),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -2039,9 +2034,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
 
   Widget _draftEditor(SummaryAction action) {
     final mq = MediaQuery.of(context);
-    final keyboardInset = mq.viewInsets.bottom;
-    final available = mq.size.height - keyboardInset;
-    final editorHeight = keyboardInset > 0
+    final isKeyboardOpen = _keyboardCtrl.stateAsBool(true) == true;
+    final keyboardHeight = _keyboardCtrl.size;
+    final available = mq.size.height - keyboardHeight;
+    final editorHeight = isKeyboardOpen
         ? (available * 0.30).clamp(140.0, 260.0)
         : (mq.size.height * 0.32).clamp(200.0, 360.0);
     final details = ref.read(summariesController).details;
