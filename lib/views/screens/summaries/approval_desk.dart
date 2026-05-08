@@ -386,7 +386,9 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                 remarksPanelController: _remarksPanelCtrl,
                 bottomContent: _submitButton(),
                 initialRemarksMode: RemarksPanelMode.write,
-                initialPenColor: SignatureColor.darkGreen,
+                initialPenColor: isCm
+                    ? SignatureColor.darkGreen
+                    : SignatureColor.darkBlue,
               ),
             ),
           ],
