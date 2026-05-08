@@ -688,6 +688,39 @@ class SummariesController extends BaseControllerState<SummariesState> {
     }
   }
 
+  Future<bool> psToSectForwardPostCM({
+    required int? summaryId,
+    required int targetDepartmentId,
+    int? targetUserDesgId,
+  }) async {
+    try {
+      EasyLoading.show();
+      final desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null || summaryId == null) return false;
+      final payload = TypedSignForwardModel(
+        targetDepartmentId: targetDepartmentId,
+        targetUserDesgId: targetUserDesgId,
+        secretarySignaturePath: null,
+        remarks: '',
+      );
+      await repo.signAndForward(
+        summaryId: summaryId,
+        desId: desId,
+        payload: payload,
+      );
+      Toast.success(message: 'Summary forwarded to section');
+      await loadData(isInitialLoad: false);
+      EasyLoading.dismiss();
+      RouteHelper.pop();
+      return true;
+    } catch (e, s) {
+      EasyLoading.dismiss();
+      log('psToSectForwardPostCM error: $e\n$s');
+      Toast.error(message: handleException(e));
+      return false;
+    }
+  }
+
   Future<bool> psToSectForward({required int? summaryId}) async {
     try {
       EasyLoading.show();

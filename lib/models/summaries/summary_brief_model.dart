@@ -4,12 +4,7 @@ class SummaryBriefModel {
   final String? actor;
   final DateTime? actedAt;
 
-  SummaryBriefModel({
-    this.id,
-    this.briefNote,
-    this.actor,
-    this.actedAt,
-  });
+  SummaryBriefModel({this.id, this.briefNote, this.actor, this.actedAt});
 
   SummaryBriefModel copyWith({
     int? id,
@@ -58,10 +53,7 @@ class SummaryBriefModel {
 
   @override
   int get hashCode {
-    return id.hashCode ^
-        briefNote.hashCode ^
-        actor.hashCode ^
-        actedAt.hashCode;
+    return id.hashCode ^ briefNote.hashCode ^ actor.hashCode ^ actedAt.hashCode;
   }
 }
 

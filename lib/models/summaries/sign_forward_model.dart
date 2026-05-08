@@ -1,12 +1,12 @@
 sealed class SignForwardModel {
   final int targetDepartmentId;
   final int? targetUserDesgId;
-  final String secretarySignaturePath;
+  final String? secretarySignaturePath;
 
   const SignForwardModel({
     required this.targetDepartmentId,
     this.targetUserDesgId,
-    required this.secretarySignaturePath,
+    this.secretarySignaturePath,
   });
 
   Map<String, dynamic> toJson(int userDesgId);
@@ -18,7 +18,7 @@ final class TypedSignForwardModel extends SignForwardModel {
   const TypedSignForwardModel({
     required super.targetDepartmentId,
     super.targetUserDesgId,
-    required super.secretarySignaturePath,
+    super.secretarySignaturePath,
     required this.remarks,
   });
 
@@ -46,7 +46,7 @@ final class HandwrittenSignForwardModel extends SignForwardModel {
   const HandwrittenSignForwardModel({
     required super.targetDepartmentId,
     super.targetUserDesgId,
-    required super.secretarySignaturePath,
+    super.secretarySignaturePath,
     required this.handwrittenStrokesJson,
     required this.handwrittenPngBase64,
     required this.handwrittenWidth,

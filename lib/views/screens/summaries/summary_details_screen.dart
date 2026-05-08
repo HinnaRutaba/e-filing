@@ -540,7 +540,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     }
 
     if (action == SummaryAction.signForward && isPsToCmCmReturned) {
-      _submitPsToSectForward();
+      setState(() => _selectedAction = action);
       return;
     }
 
@@ -939,6 +939,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   String _labelFor(SummaryAction action) {
     if (action == SummaryAction.shareInternally && _isDeoForwardInternally) {
       return 'Forward to another user';
+    }
+    if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+      return 'Add remarks & forward to department';
     }
     return action.label;
   }
@@ -1814,32 +1817,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     }
   }
 
-  Future<void> _submitPsToSectForward() async {
-    final summaryId =
-        ref.read(summariesController).details?.summary?.id ??
-        widget.summary?.id;
-    final success = await ref
-        .read(summariesController.notifier)
-        .psToSectForward(summaryId: summaryId);
-    if (!mounted) return;
-    if (success) setState(() => _selectedAction = null);
-  }
-
   Future<void> _submitSignForward() async {
-    if (isPsToCmCmReturned) {
-      await _submitPsToSectForward();
-      return;
-    }
-
-    Uint8List? signatureBytes = _cardSignatureBytes;
-    if (signatureBytes == null || signatureBytes.isEmpty) {
-      signatureBytes = await _signaturePadController.toPngBytes();
-      if (!mounted) return;
-    }
-    if (signatureBytes == null || signatureBytes.isEmpty) {
-      Toast.error(message: 'Please sign before forwarding');
-      return;
-    }
     final deptId = _selectedDestDept?.id;
     if (deptId == null) {
       Toast.error(message: 'Please select a destination department');
@@ -1856,6 +1834,27 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         ref.read(summariesController).details?.summary?.id ??
         widget.summary?.id;
     final notifier = ref.read(summariesController.notifier);
+
+    if (isPsToCmCmReturned) {
+      final success = await notifier.psToSectForwardPostCM(
+        summaryId: summaryId,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+      );
+      if (!mounted) return;
+      if (success) setState(() => _selectedAction = null);
+      return;
+    }
+
+    Uint8List? signatureBytes = _cardSignatureBytes;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      signatureBytes = await _signaturePadController.toPngBytes();
+      if (!mounted) return;
+    }
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign before forwarding');
+      return;
+    }
 
     String remarks = '';
     if (_selectedAction == SummaryAction.signForward) {
