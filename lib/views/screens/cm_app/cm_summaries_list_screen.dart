@@ -8,7 +8,7 @@ class CMSummariesListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.only(top: 24.0),
-      child: SummariesListScreen(),
+      child: SummariesListScreen(skipInitialLoad: true),
     );
   }
 }

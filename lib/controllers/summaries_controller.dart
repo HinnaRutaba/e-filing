@@ -238,10 +238,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
     final int? desId = ref.read(authController).currentDesignation?.userDesgId;
 
     if (autoSelectBestTab) {
-      await fetchSummariesStats(desId: desId);
+      await fetchSummariesStats();
       _autoSelectTabFromStats();
     } else {
-      unawaited(fetchSummariesStats(desId: desId));
+      unawaited(fetchSummariesStats());
     }
 
     await fetchSummariesList(desId: desId);
@@ -266,9 +266,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
     );
   }
 
-  Future<void> fetchSummariesStats({required int? desId}) async {
-    if (desId == null) return;
+  Future<void> fetchSummariesStats() async {
+    
     try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
       final stats = await repo.fetchSummariesStats(desId: desId);
       state = state.copyWith(stats: stats);
     } catch (e) {

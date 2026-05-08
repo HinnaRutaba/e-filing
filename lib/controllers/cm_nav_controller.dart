@@ -11,3 +11,6 @@ class CMNavController extends StateNotifier<CMNavTab> {
 final cmNavController = StateNotifierProvider<CMNavController, CMNavTab>(
   (ref) => CMNavController(),
 );
+
+/// Incrementing this triggers a reload of the CM Approval Desk.
+final cmApprovalDeskRefreshProvider = StateProvider<int>((ref) => 0);

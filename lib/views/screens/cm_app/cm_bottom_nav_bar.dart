@@ -1,6 +1,8 @@
 import 'package:curved_navigation_bar_pro/curved_navigation_bar_pro.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/cm_dashboard_controller.dart';
 import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,6 +67,18 @@ class CMBottomNavBar extends ConsumerWidget {
           onTap: (index) {
             final tab = CMNavTab.values[index];
             ref.read(cmNavController.notifier).select(tab);
+            switch (tab) {
+              case CMNavTab.dashboard:
+                ref.read(cmDashboardController.notifier).initData();
+              case CMNavTab.summaries:
+                ref
+                    .read(summariesController.notifier)
+                    .loadData(isInitialLoad: true, autoSelectBestTab: true);
+              case CMNavTab.approvals:
+                ref
+                    .read(cmApprovalDeskRefreshProvider.notifier)
+                    .update((v) => v + 1);
+            }
           },
         ),
       ),

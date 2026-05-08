@@ -99,7 +99,10 @@ class SummariesScreen extends ConsumerWidget {
 }
 
 class SummariesListScreen extends ConsumerStatefulWidget {
-  const SummariesListScreen({super.key});
+  /// When true, skips the automatic [loadData] call on [initState].
+  final bool skipInitialLoad;
+
+  const SummariesListScreen({super.key, this.skipInitialLoad = false});
 
   @override
   ConsumerState<SummariesListScreen> createState() =>
@@ -130,9 +133,11 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(summariesController.notifier)
-          .loadData(isInitialLoad: true, autoSelectBestTab: true);
+      if (!widget.skipInitialLoad) {
+        ref
+            .read(summariesController.notifier)
+            .loadData(isInitialLoad: true, autoSelectBestTab: true);
+      }
       final s = ref.read(summariesController);
       _scrollMainTabIntoView(s.selectedMainTab);
       _scrollSubTabIntoView(s.selectedSubTab);
@@ -322,8 +327,9 @@ class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
     final role = ctrlState.meta?.activeUserDesg?.roleEnum;
     final counts = ctrlState.stats?.tabCounts;
     if (counts == null) return null;
-    final subTabs = subTabsForRole(role)
-        .where((s) => s.configFor(role).parent == tab);
+    final subTabs = subTabsForRole(
+      role,
+    ).where((s) => s.configFor(role).parent == tab);
     int total = 0;
     for (final s in subTabs) {
       total += counts.countForSubTab(s, role: role) ?? 0;

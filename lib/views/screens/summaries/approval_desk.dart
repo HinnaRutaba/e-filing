@@ -21,7 +21,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApprovalDesk extends ConsumerStatefulWidget {
   final ActiveUserDesgRole role;
-  const ApprovalDesk({super.key, required this.role});
+
+  /// When true, skips the automatic load on [initState]. The parent is
+  /// responsible for triggering loads (e.g. via [cmApprovalDeskRefreshProvider]).
+  final bool skipInitialLoad;
+
+  const ApprovalDesk({
+    super.key,
+    required this.role,
+    this.skipInitialLoad = false,
+  });
 
   @override
   ConsumerState<ApprovalDesk> createState() => _ApprovalDeskState();
@@ -53,7 +62,9 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDesk());
+    if (!widget.skipInitialLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadDesk());
+    }
   }
 
   Future<void> _loadDesk() async {
@@ -284,6 +295,10 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.skipInitialLoad) {
+      ref.listen(cmApprovalDeskRefreshProvider, (_, __) => _loadDesk());
+    }
+
     final bool canBack = _currentPage > 0;
     const bool canNext = true;
 
