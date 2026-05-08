@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
+import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
 import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 
@@ -24,6 +25,9 @@ class DashboardModel {
 
   final bool animated;
 
+  final DashboardStatsModel? stats;
+  final bool loadingStats;
+
   DashboardModel({
     this.actionRequiredCount = 0,
     this.myFilesCount = 0,
@@ -39,6 +43,8 @@ class DashboardModel {
     this.daakLetters = const [],
     this.loadingDaakLetters = false,
     this.animated = false,
+    this.stats,
+    this.loadingStats = false,
   });
 
   DashboardModel copyWith({
@@ -56,6 +62,8 @@ class DashboardModel {
     bool? loadingForwardedFiles,
     bool? loadingDaakLetters,
     bool? backdropAnimated,
+    DashboardStatsModel? stats,
+    bool? loadingStats,
   }) {
     return DashboardModel(
       actionRequiredCount: actionRequiredCount ?? this.actionRequiredCount,
@@ -73,6 +81,8 @@ class DashboardModel {
       daakLetters: daakLetters ?? this.daakLetters,
       loadingDaakLetters: loadingDaakLetters ?? this.loadingDaakLetters,
       animated: backdropAnimated ?? animated,
+      stats: stats ?? this.stats,
+      loadingStats: loadingStats ?? this.loadingStats,
     );
   }
 }
@@ -90,6 +100,7 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     state = state.copyWith(loading: true, loadingPendingFiles: true);
 
     try {
+      fetchStats();
       final filesCtrl = ref.read(filesController.notifier);
 
       final ar = await filesCtrl.getFilesForDashboard(FileType.actionRequired);
@@ -157,6 +168,22 @@ class DashboardController extends BaseControllerState<DashboardModel> {
       );
     } catch (e) {
       state = state.copyWith(loadingForwardedFiles: false);
+    }
+  }
+
+  Future<void> fetchStats() async {
+    state = state.copyWith(loadingStats: true);
+    try {
+      final userDesgId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
+      final result = await ref
+          .read(dashboardRepo)
+          .getDashboardStats(userDesgId: userDesgId);
+      state = state.copyWith(stats: result, loadingStats: false);
+    } catch (e) {
+      state = state.copyWith(loadingStats: false);
     }
   }
 
