@@ -253,10 +253,11 @@ class SummariesController extends BaseControllerState<SummariesState> {
     final counts = state.stats?.tabCounts;
     if (counts == null) return;
 
-    final tabs = subTabsForRole(role);
-    final best = tabs.firstWhere(
+    final displayTabs = subTabsForRole(role);
+    final priorityTabs = _autoSelectPriorityOrder(role, displayTabs);
+    final best = priorityTabs.firstWhere(
       (t) => (counts.countForSubTab(t, role: role) ?? 0) > 0,
-      orElse: () => tabs.first,
+      orElse: () => displayTabs.first,
     );
 
     final bestConfig = best.configFor(role);
@@ -266,8 +267,23 @@ class SummariesController extends BaseControllerState<SummariesState> {
     );
   }
 
+  /// Returns tabs in the order they should be checked for auto-selection.
+  /// Differs from display order when certain tabs have higher action priority.
+  List<SummarySubTab> _autoSelectPriorityOrder(
+    ActiveUserDesgRole? role,
+    List<SummarySubTab> displayTabs,
+  ) {
+    if (role == ActiveUserDesgRole.pstocm) {
+      // CM returned items require immediate forwarding — check before inbox.
+      return [
+        SummarySubTab.cmReturned,
+        ...displayTabs.where((t) => t != SummarySubTab.cmReturned),
+      ];
+    }
+    return displayTabs;
+  }
+
   Future<void> fetchSummariesStats() async {
-    
     try {
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       final stats = await repo.fetchSummariesStats(desId: desId);
@@ -810,7 +826,8 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
   /// Same as [signAndReturnCM] but does not pop the route.
   /// Used by [CMApprovalDesk] which manages its own navigation after signing.
-  Future<bool> signAndReturnCMDesk({
+  /// Returns the refreshed desk list on success, or null on failure.
+  Future<List<SummaryDetailsModel>?> signAndReturnCMDesk({
     required int? summaryId,
     required Uint8List signatureBytes,
     String? body,
@@ -833,7 +850,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       );
       if (signaturePath == null) {
         EasyLoading.dismiss();
-        return false;
+        return null;
       }
 
       final SignForwardModel payload;
@@ -861,13 +878,14 @@ class SummariesController extends BaseControllerState<SummariesState> {
         payload: payload,
       );
 
+      final freshDesk = await getSummariesDesk();
       EasyLoading.dismiss();
-      return true;
+      return freshDesk;
     } catch (e, s) {
       EasyLoading.dismiss();
       log('ERRR________${e}______$s');
       Toast.error(message: handleException(e));
-      return false;
+      return null;
     }
   }
 
@@ -1002,7 +1020,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
   Future<String?> getSummaryPrintPdf({required int? summaryId}) async {
     try {
       final desId = ref.read(authController).currentDesignation?.userDesgId;
-    
+
       state = state.copyWith(gettingPrintUrl: true);
       String? url = await repo.getSummaryPrintPdf(
         summaryId: summaryId,
@@ -1038,6 +1056,9 @@ class SummariesController extends BaseControllerState<SummariesState> {
     if (counts == null) return null;
     return subTabsForRole(role)
         .where((s) => s.configFor(role).parent == tab)
-        .fold<int>(0, (sum, s) => sum + (counts.countForSubTab(s, role: role) ?? 0));
+        .fold<int>(
+          0,
+          (sum, s) => sum + (counts.countForSubTab(s, role: role) ?? 0),
+        );
   }
 }

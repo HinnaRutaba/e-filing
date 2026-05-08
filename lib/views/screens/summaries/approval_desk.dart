@@ -183,7 +183,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       if (!success) return;
     } else {
       // CM path
-      bool success;
+      List<SummaryDetailsModel>? freshDesk;
       if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
         final strokesJson = _remarksPanelCtrl.getStrokesJson();
         final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
@@ -191,7 +191,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
         final handwrittenBase64 = handwrittenPng != null
             ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
             : '';
-        success = await notifier.signAndReturnCMDesk(
+        freshDesk = await notifier.signAndReturnCMDesk(
           summaryId: summaryId,
           signatureBytes: signatureBytes,
           handwrittenStrokesJson: strokesJson,
@@ -201,7 +201,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
           handwrittenPenColor: _remarksPanelCtrl.penColorHex,
         );
       } else {
-        success = await notifier.signAndReturnCMDesk(
+        freshDesk = await notifier.signAndReturnCMDesk(
           summaryId: summaryId,
           signatureBytes: signatureBytes,
           body: typedRemarks,
@@ -209,9 +209,43 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       }
 
       if (!mounted) return;
-      if (!success) return;
+      if (freshDesk == null) return;
 
       Toast.success(message: 'Summary signed and returned successfully');
+
+      if (freshDesk.isEmpty) {
+        setState(() {
+          _localDetails = freshDesk!;
+          _allCaughtUp = true;
+        });
+        return;
+      }
+
+      // Animate away from the current page before applying the fresh list
+      final removedIdx = _currentPage;
+      final animateToIdx = removedIdx < freshDesk.length
+          ? removedIdx
+          : freshDesk.length - 1;
+
+      await _pageController.animateToPage(
+        animateToIdx,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+
+      if (!mounted) return;
+
+      _remarksPanelCtrl.reset();
+      _destDeptController.clear();
+      _destOfficerController.clear();
+      setState(() {
+        _localDetails = freshDesk!;
+        _currentPage = animateToIdx;
+        _pageController.jumpToPage(_currentPage);
+        _selectedDestDept = null;
+        _selectedDestOfficer = null;
+      });
+      return;
     }
 
     final removedIdx = _currentPage;

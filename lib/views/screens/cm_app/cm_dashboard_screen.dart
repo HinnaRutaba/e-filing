@@ -46,29 +46,32 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
       child: _buildHeader(context, headerHeight),
     );
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: headerHeight + cardsOverlap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                headerBackground,
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  top: statsCardTop,
-                  child: _buildStatsCard(context, dashboardState),
-                ),
-              ],
+    return RefreshIndicator(
+      onRefresh: () => ref.read(cmDashboardController.notifier).initData(),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: headerHeight + cardsOverlap,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  headerBackground,
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    top: statsCardTop,
+                    child: _buildStatsCard(context, dashboardState),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: _buildDashboardSections(context, dashboardState, isMobile),
-        ),
-      ],
+          SliverToBoxAdapter(
+            child: _buildDashboardSections(context, dashboardState, isMobile),
+          ),
+        ],
+      ),
     );
   }
 
