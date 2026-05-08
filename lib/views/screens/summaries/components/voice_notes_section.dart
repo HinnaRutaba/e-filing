@@ -105,34 +105,86 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                 ),
               ),
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_voiceNotes.isEmpty)
-                  AppText.bodySmall(
-                    'No voice notes recorded.',
-                    color: appColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                for (int i = 0; i < _voiceNotes.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 8),
-                  _voiceNoteTile(context, _voiceNotes[i])
-                      .animate()
-                      .fadeIn(
-                        delay: (80 * i).ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOut,
-                      )
-                      .slideX(
-                        begin: -0.15,
-                        end: 0,
-                        delay: (80 * i).ms,
-                        duration: 350.ms,
-                        curve: Curves.easeOutCubic,
-                      ),
-                ],
-              ],
-            ),
+          : widget.visibility == null
+              ? _buildGroupedNotes(context)
+              : _buildNotesList(context, _voiceNotes),
+    );
+  }
+
+  Widget _buildNotesList(
+    BuildContext context,
+    List<SummaryVoiceNoteModel> notes,
+  ) {
+    if (notes.isEmpty) {
+      return AppText.bodySmall(
+        'No voice notes recorded.',
+        color: context.appColors.textSecondary,
+        fontSize: 12,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (int i = 0; i < notes.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          _voiceNoteTile(context, notes[i])
+              .animate()
+              .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
+              .slideX(
+                begin: -0.15,
+                end: 0,
+                delay: (80 * i).ms,
+                duration: 350.ms,
+                curve: Curves.easeOutCubic,
+              ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGroupedNotes(BuildContext context) {
+    final appColors = context.appColors;
+    final cmNotes = _voiceNotes
+        .where((n) => n.visibility == VoiceNoteVisibility.cm)
+        .toList();
+    final internalNotes = _voiceNotes
+        .where((n) => n.visibility != VoiceNoteVisibility.cm)
+        .toList();
+
+    if (_voiceNotes.isEmpty) {
+      return AppText.bodySmall(
+        'No voice notes recorded.',
+        color: appColors.textSecondary,
+        fontSize: 12,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (cmNotes.isNotEmpty) ...[
+          _groupLabel(context, 'CM', appColors.primaryDark),
+          const SizedBox(height: 6),
+          _buildNotesList(context, cmNotes),
+        ],
+        if (cmNotes.isNotEmpty && internalNotes.isNotEmpty)
+          const SizedBox(height: 12),
+        if (internalNotes.isNotEmpty) ...[
+          _groupLabel(context, 'Internal', appColors.secondaryLight),
+          const SizedBox(height: 6),
+          _buildNotesList(context, internalNotes),
+        ],
+      ],
+    );
+  }
+
+  Widget _groupLabel(BuildContext context, String label, Color color) {
+    return Row(
+      children: [
+        Container(width: 3, height: 14, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 6),
+        AppText.labelSmall(label, color: color, fontWeight: FontWeight.w700, fontSize: 11),
+      ],
     );
   }
 

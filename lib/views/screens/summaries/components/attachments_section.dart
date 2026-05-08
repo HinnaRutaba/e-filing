@@ -229,7 +229,7 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
   Widget _buildAttachmentRow(AttachmentModel item, int index, bool hasMain) {
     final parsed = _parseFlagAndName(item);
     return _attachmentRow(
-          label: parsed.flag ?? '',
+          label: 'Flag ${parsed.flag}',
           fileName: parsed.fileName,
           showFlag: parsed.flag != null,
           onView: () => widget.onViewAttachment(item),
@@ -277,8 +277,7 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
             )
           else if (showFlag)
             Container(
-              width: 26,
-              height: 22,
+              padding: const EdgeInsets.all(8),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: Theme.of(
@@ -411,7 +410,7 @@ class _AttachmentsSectionState extends ConsumerState<AttachmentsSection> {
     }
 
     final model = FlagAndAttachmentModel(usedFlags: usedFlags);
-   
+
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) {
