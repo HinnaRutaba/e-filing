@@ -229,12 +229,16 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                           ],
                         );
                       }
+                      final visibleTracks = signedTracks
+                          .where((t) => !_isPsForwardToCmTrack(t))
+                          .toList();
+                      if (visibleTracks.isEmpty) return const SizedBox.shrink();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          for (int i = 0; i < signedTracks.length; i++) ...[
+                          for (int i = 0; i < visibleTracks.length; i++) ...[
                             _remarkTrackBlock(
-                              signedTracks[i],
+                              visibleTracks[i],
                               showRemarks: i != 0,
                             ),
                             const SizedBox(height: 18),
@@ -560,6 +564,14 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
       ),
     );
   }
+
+  bool _isPsForwardToCmTrack(SummaryRemarkTrackModel track) =>
+      track.actionType == 'signed_and_forwarded' &&
+      (track.remarks ?? '')
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .trim()
+          .toLowerCase()
+          .contains('forwarded by principal secretary to cm');
 
   Widget _remarkTrackBlock(
     SummaryRemarkTrackModel track, {
