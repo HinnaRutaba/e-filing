@@ -294,7 +294,25 @@ class _SignaturePadState extends State<SignaturePad> {
     });
   }
 
-  void _clear() {
+  Future<void> _clear() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear Signature'),
+        content: const Text('Are you sure you want to clear all strokes?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     setState(() {
       _signatureController.clear();
       _strokeCount = 0;

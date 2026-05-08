@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
@@ -245,6 +246,20 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     );
   }
 
+  int _summariesActionRequiredCount() {
+    final ctrlState = ref.watch(summariesController);
+    final stats = ctrlState.stats;
+    final role = ctrlState.meta?.activeUserDesg?.roleEnum;
+    final tabs = subTabsForRole(role);
+    return tabs
+        .where((t) => t.configFor(role).parent == SummaryMainTab.actionRequired)
+        .fold(
+          0,
+          (sum, t) =>
+              sum + (stats?.tabCounts?.countForSubTab(t, role: role) ?? 0),
+        );
+  }
+
   Widget _buildMenuItem(
     DrawerMenu menu,
     ChatService chatService,
@@ -261,6 +276,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       alpha: isDark ? 0.25 : 0.2,
     );
     final bool isChats = menu.routeName == Routes.chats;
+    final bool isSummaries = menu.routeName == Routes.summaries;
 
     void onTap() {
       if (menu.routeName != null) {
@@ -270,6 +286,46 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
 
     if (!_effectiveExpanded) {
       final iconWidget = Icon(menu.icon, color: fgColor, size: 22);
+      Widget badgedIcon = iconWidget;
+      if (isChats) {
+        badgedIcon = StreamBuilder<int>(
+          stream: chatService.getUnreadChatsCountStream(
+            userDesignationId: currentUser.currentDesignation?.userDesgId,
+            userId: currentUser.id!,
+          ),
+          builder: (context, ss) {
+            final unread = ss.hasData ? (ss.data ?? 0) : 0;
+            return Badge(
+              isLabelVisible: unread > 0,
+              label: Text(
+                unread > 99 ? '99+' : '$unread',
+                style: TextStyle(
+                  color: appColors.accent,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: theme.colorScheme.error,
+              child: iconWidget,
+            );
+          },
+        );
+      } else if (isSummaries) {
+        final count = _summariesActionRequiredCount();
+        badgedIcon = Badge(
+          isLabelVisible: count > 0,
+          label: Text(
+            count > 99 ? '99+' : '$count',
+            style: TextStyle(
+              color: appColors.accent,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: theme.colorScheme.error,
+          child: iconWidget,
+        );
+      }
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -283,37 +339,47 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: isChats
-                    ? StreamBuilder<int>(
-                        stream: chatService.getUnreadChatsCountStream(
-                          userDesignationId:
-                              currentUser.currentDesignation?.userDesgId,
-                          userId: currentUser.id!,
-                        ),
-                        builder: (context, ss) {
-                          final unread = ss.hasData ? (ss.data ?? 0) : 0;
-                          return Badge(
-                            isLabelVisible: unread > 0,
-                            label: Text(
-                              unread > 99 ? '99+' : '$unread',
-                              style: TextStyle(
-                                color: appColors.accent,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            backgroundColor: theme.colorScheme.error,
-                            child: iconWidget,
-                          );
-                        },
-                      )
-                    : iconWidget,
-              ),
+              child: Center(child: badgedIcon),
             ),
           ),
         ),
       );
+    }
+
+    Widget titleWidget;
+    if (isChats) {
+      titleWidget = StreamBuilder<int>(
+        stream: chatService.getUnreadChatsCountStream(
+          userDesignationId: currentUser.currentDesignation?.userDesgId,
+          userId: currentUser.id!,
+        ),
+        builder: (context, ss) {
+          final unread = ss.hasData ? (ss.data ?? 0) : 0;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.titleMedium("Chats", color: fgColor),
+              if (unread != 0)
+                AppText.labelMedium(
+                  "$unread unread chat${unread > 1 ? 's' : ''}",
+                  color: fgColor,
+                ),
+            ],
+          );
+        },
+      );
+    } else if (isSummaries) {
+      final count = _summariesActionRequiredCount();
+      titleWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText.titleMedium("Summaries", color: fgColor),
+          if (count > 0)
+            AppText.labelMedium("$count action required", color: fgColor),
+        ],
+      );
+    } else {
+      titleWidget = AppText.titleMedium(menu.title, color: fgColor);
     }
 
     return Container(
@@ -335,28 +401,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         ),
         leading: Icon(menu.icon, color: fgColor, size: 20),
         horizontalTitleGap: 12,
-        title: isChats
-            ? StreamBuilder<int>(
-                stream: chatService.getUnreadChatsCountStream(
-                  userDesignationId: currentUser.currentDesignation?.userDesgId,
-                  userId: currentUser.id!,
-                ),
-                builder: (context, ss) {
-                  final unread = ss.hasData ? (ss.data ?? 0) : 0;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText.titleMedium("Chats", color: fgColor),
-                      if (unread != 0)
-                        AppText.labelMedium(
-                          "$unread unread chat${unread > 1 ? 's' : ''}",
-                          color: fgColor,
-                        ),
-                    ],
-                  );
-                },
-              )
-            : AppText.titleMedium(menu.title, color: fgColor),
+        title: titleWidget,
         subtitle: menu.routeName == null
             ? AppText.bodyMedium(
                 "Coming Soon",
