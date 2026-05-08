@@ -1029,4 +1029,15 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return [];
     }
   }
+
+  /// Total count of summaries across all sub-tabs that belong to [tab] for the
+  /// current user's role. Returns null when stats haven't loaded yet.
+  int? mainTabCount(SummaryMainTab tab) {
+    final role = state.meta?.activeUserDesg?.roleEnum;
+    final counts = state.stats?.tabCounts;
+    if (counts == null) return null;
+    return subTabsForRole(role)
+        .where((s) => s.configFor(role).parent == tab)
+        .fold<int>(0, (sum, s) => sum + (counts.countForSubTab(s, role: role) ?? 0));
+  }
 }

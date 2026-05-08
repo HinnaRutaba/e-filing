@@ -246,19 +246,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     );
   }
 
-  int _summariesActionRequiredCount() {
-    final ctrlState = ref.watch(summariesController);
-    final stats = ctrlState.stats;
-    final role = ctrlState.meta?.activeUserDesg?.roleEnum;
-    final tabs = subTabsForRole(role);
-    return tabs
-        .where((t) => t.configFor(role).parent == SummaryMainTab.actionRequired)
-        .fold(
-          0,
-          (sum, t) =>
-              sum + (stats?.tabCounts?.countForSubTab(t, role: role) ?? 0),
-        );
-  }
+  int _summariesActionRequiredCount() =>
+      ref
+          .watch(summariesController.notifier)
+          .mainTabCount(SummaryMainTab.actionRequired) ??
+      0;
 
   Widget _buildMenuItem(
     DrawerMenu menu,
