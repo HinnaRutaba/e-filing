@@ -216,65 +216,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         showUserDetails: false,
         isdash: true,
         enableBackButton: false,
-        body: SmartRefresher(
-          controller: _refreshController,
-          onRefresh: _onRefresh,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: _handleScrollNotification,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  AnimatedBuilder(
-                    animation: _compactNotifier,
-                    builder: (context, _) {
-                      final bool mobileCompact =
-                          isMobile && _compactNotifier.value;
-                      final double cardsOverlap = mobileCompact
-                          ? 42.0
-                          : isMobile
-                          ? 110.0
-                          : 16;
-                      final double statsCardTop = isMobile
-                          ? (mobileCompact ? 172.0 : 160.0)
-                          : 124.0;
-                      const Duration animDuration = Duration(milliseconds: 320);
-                      const Curve animCurve = Curves.easeOutCubic;
-                      return AnimatedContainer(
-                        duration: animDuration,
-                        curve: animCurve,
-                        height: headerHeight + cardsOverlap,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            headerBackground,
-                            userHeaderPositioned,
-                            AnimatedPositioned(
-                              duration: animDuration,
-                              curve: animCurve,
-                              left: 16,
-                              right: 16,
-                              top: statsCardTop,
-                              child: AnimatedSize(
-                                duration: animDuration,
-                                curve: animCurve,
-                                clipBehavior: Clip.none,
-                                alignment: Alignment.topCenter,
-                                child: _buildStatsCard(
-                                  context,
-                                  dashboardState,
-                                  mobileCompact,
-                                ),
-                              ),
+        body: NotificationListener<ScrollNotification>(
+          onNotification: _handleScrollNotification,
+          child: Column(
+            children: [
+              AnimatedBuilder(
+                animation: _compactNotifier,
+                builder: (context, _) {
+                  final bool mobileCompact =
+                      isMobile && _compactNotifier.value;
+                  final double cardsOverlap = mobileCompact
+                      ? 42.0
+                      : isMobile
+                      ? 110.0
+                      : 16;
+                  final double statsCardTop = isMobile
+                      ? (mobileCompact ? 172.0 : 160.0)
+                      : 124.0;
+                  const Duration animDuration = Duration(milliseconds: 320);
+                  const Curve animCurve = Curves.easeOutCubic;
+                  return AnimatedContainer(
+                    duration: animDuration,
+                    curve: animCurve,
+                    height: headerHeight + cardsOverlap,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        headerBackground,
+                        userHeaderPositioned,
+                        AnimatedPositioned(
+                          duration: animDuration,
+                          curve: animCurve,
+                          left: 16,
+                          right: 16,
+                          top: statsCardTop,
+                          child: AnimatedSize(
+                            duration: animDuration,
+                            curve: animCurve,
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.topCenter,
+                            child: _buildStatsCard(
+                              context,
+                              dashboardState,
+                              mobileCompact,
                             ),
-                          ],
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  _buildSections(context, dashboardState, isMobile),
-                ],
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
+              Expanded(
+                child: SmartRefresher(
+                  controller: _refreshController,
+                  onRefresh: _onRefresh,
+                  child: SingleChildScrollView(
+                    child: _buildSections(context, dashboardState, isMobile),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
