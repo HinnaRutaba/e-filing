@@ -390,7 +390,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
 
     final summariesCard = DashboardCard(
-      cardColor: context.appColors.secondaryLight,
+      cardColor: Colors.blue[200]!,
       iconColor: context.appColors.secondaryDark,
       title: "Summaries",
       value: "${tabCounts?.inbox ?? 0}",
@@ -413,7 +413,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final pendingCard = DashboardCard(
       cardColor: context.appColors.warning,
-      iconColor: Colors.yellowAccent,
+      iconColor: Colors.yellow[900]!,
       title: "Pending Files",
       value: "${kpis?.pending ?? 0}",
       onTap: () => RouteHelper.push(Routes.pendingFiles),
