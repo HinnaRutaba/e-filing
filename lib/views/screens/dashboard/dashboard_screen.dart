@@ -45,7 +45,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    NotificationService().initNotification();
+    NotificationService().initNotification(
+      ref.read(authController).currentDesignation?.userDesgId,
+    );
     _loadInitialData();
   }
 
