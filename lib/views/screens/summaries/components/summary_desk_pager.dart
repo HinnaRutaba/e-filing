@@ -122,7 +122,14 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
       controller: widget.pageController,
       itemCount: widget.summaries.length,
       physics: const NeverScrollableScrollPhysics(),
-      onPageChanged: widget.onPageChanged,
+      onPageChanged: (i) {
+        widget.onPageChanged(i);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final sc = _scrollControllers[i];
+          if (sc.hasClients) sc.jumpTo(0);
+        });
+      },
       itemBuilder: (_, i) {
         final details = widget.summaries[i];
         final summary = details.summary;
