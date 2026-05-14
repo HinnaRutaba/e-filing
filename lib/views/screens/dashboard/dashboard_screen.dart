@@ -12,9 +12,11 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_dept_totals_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_efile_kpis_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_daak_overview_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_daak_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_files_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_my_files_section.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_pending_files_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_summaries_section.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -476,17 +478,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final stats = dashboardState.stats;
 
     final recentSummariesSection = DashboardRecentSummariesSection(
-      items: stats?.recentSummaries ?? [],
+      tabCounts: stats?.summaryStats?.tabCounts,
+      loading: dashboardState.loadingStats,
     );
     final recentPendingFilesSection = DashboardRecentFilesSection(
-      items: stats?.recentPendingFiles ?? [],
+      kpis: stats?.efileKpis,
+      loading: dashboardState.loadingStats,
     );
     final recentMyFilesSection = DashboardRecentMyFilesSection(
-      items: stats?.recentMyFiles ?? [],
+      kpis: stats?.efileKpis,
+      loading: dashboardState.loadingStats,
     );
     final recentDaakSection = DashboardRecentDaakSection(
       items: dashboardState.daakLetters,
       loading: dashboardState.loadingDaakLetters,
+    );
+    final daakOverviewSection = DashboardDaakOverviewSection(
+      items: dashboardState.daakLetters,
+      loading: dashboardState.loadingDaakLetters,
+    );
+    final recentPendingFilesListSection = DashboardRecentPendingFilesSection(
+      files: stats?.recentPendingFiles ?? [],
+      loading: dashboardState.loadingStats,
     );
     final efileKpisSection = DashboardEfileKpisSection(kpis: stats?.efileKpis);
     final deptTotalsSection = DashboardDeptTotalsSection(
@@ -500,17 +513,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(
           children: [
+            // Summaries
             recentSummariesSection,
+            const SizedBox(height: 16),
+            deptTotalsSection,
+            const SizedBox(height: 16),
+            // Daak
+            recentDaakSection,
+            const SizedBox(height: 16),
+            daakOverviewSection,
+            const SizedBox(height: 16),
+            // Files
+            recentPendingFilesListSection,
             const SizedBox(height: 16),
             recentPendingFilesSection,
             const SizedBox(height: 16),
             recentMyFilesSection,
             const SizedBox(height: 16),
-            recentDaakSection,
-            const SizedBox(height: 16),
             efileKpisSection,
-            const SizedBox(height: 16),
-            deptTotalsSection,
             bottomPadding,
           ],
         ),
@@ -526,9 +546,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             flex: 5,
             child: Column(
               children: [
+                // Summaries
                 recentSummariesSection,
                 const SizedBox(height: 16),
-                recentMyFilesSection,
+                deptTotalsSection,
+                const SizedBox(height: 16),
+                // Files
+                recentPendingFilesListSection,
                 const SizedBox(height: 16),
                 efileKpisSection,
               ],
@@ -539,11 +563,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             flex: 4,
             child: Column(
               children: [
-                recentPendingFilesSection,
-                const SizedBox(height: 16),
+                // Daak
                 recentDaakSection,
                 const SizedBox(height: 16),
-                deptTotalsSection,
+                daakOverviewSection,
+                const SizedBox(height: 16),
+                // Files cont.
+                recentPendingFilesSection,
+                const SizedBox(height: 16),
+                recentMyFilesSection,
               ],
             ),
           ),

@@ -28,6 +28,9 @@ class DashboardSectionCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.appColors.cardColor,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: context.appColors.secondaryLight.withValues(alpha: 0.2),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
