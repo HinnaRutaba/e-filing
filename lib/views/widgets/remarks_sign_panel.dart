@@ -60,8 +60,8 @@ class RemarksSignPanelController extends ChangeNotifier {
   }
 
   void reset() {
-    _signCtrl.clear();
-    _writtenCtrl.clear();
+    _signCtrl.clearSilently();
+    _writtenCtrl.clearSilently();
     notifyListeners();
   }
 
@@ -136,6 +136,9 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     // shared controller — causing setState-during-build errors in the pager.
     _ctrl._mode = widget.initialMode;
     _ctrl._expanded = widget.initiallyExpanded;
+    // Silently reset both pads so every new page starts with a clean slate.
+    _ctrl._signCtrl.clearSilently();
+    _ctrl._writtenCtrl.clearSilently();
     _ctrl.addListener(_onControllerChanged);
   }
 

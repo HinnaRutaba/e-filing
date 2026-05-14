@@ -27,7 +27,25 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(cmDashboardController.notifier).initData());
+    Future.microtask(_initAndMaybeNavigate);
+  }
+
+  Future<void> _initAndMaybeNavigate() async {
+    // Reset so every fresh mount (app start / login) is treated as an initial load.
+    ref.read(cmAutoNavConsumedProvider.notifier).state = false;
+    await ref.read(cmDashboardController.notifier).initData();
+    if (!mounted) return;
+    // If the user tapped the nav bar while data was loading, the flag is already
+    // true and we skip. Otherwise, auto-navigate if there are pending approvals.
+    if (!ref.read(cmAutoNavConsumedProvider)) {
+      ref.read(cmAutoNavConsumedProvider.notifier).state = true;
+      final pending =
+          ref.read(cmDashboardController).data?.kpis?.pendingMyApproval ?? 0;
+      if (pending > 0) {
+        ref.read(cmNavController.notifier).select(CMNavTab.approvals);
+        ref.read(cmApprovalDeskRefreshProvider.notifier).update((v) => v + 1);
+      }
+    }
   }
 
   @override

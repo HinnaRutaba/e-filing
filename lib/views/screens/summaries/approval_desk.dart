@@ -385,6 +385,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 remarksPanelController: _remarksPanelCtrl,
                 bottomContent: _submitButton(),
+                isCm: isCm,
                 initialRemarksMode: RemarksPanelMode.write,
                 initialPenColor: isCm
                     ? SignatureColor.darkGreen

@@ -14,3 +14,7 @@ final cmNavController = StateNotifierProvider<CMNavController, CMNavTab>(
 
 /// Incrementing this triggers a reload of the CM Approval Desk.
 final cmApprovalDeskRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// True once the launch-time auto-navigation to approvals has been handled
+/// (either executed or blocked by a manual nav-bar tap).
+final cmAutoNavConsumedProvider = StateProvider<bool>((ref) => false);

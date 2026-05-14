@@ -15,12 +15,14 @@ class VoiceNotesSection extends ConsumerStatefulWidget {
   final int? summaryId;
   final VoiceNoteVisibility? visibility;
   final bool canDelete;
+  final int crossAxisCount;
 
   const VoiceNotesSection({
     super.key,
     required this.summaryId,
     required this.visibility,
     this.canDelete = true,
+    this.crossAxisCount = 1,
   });
 
   @override
@@ -122,21 +124,47 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
         fontSize: 12,
       );
     }
+
+    Widget animatedTile(int i) =>
+        _voiceNoteTile(context, notes[i])
+            .animate()
+            .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
+            .slideX(
+              begin: -0.15,
+              end: 0,
+              delay: (80 * i).ms,
+              duration: 350.ms,
+              curve: Curves.easeOutCubic,
+            );
+
+    if (widget.crossAxisCount >= 2) {
+      final rows = <Widget>[];
+      for (int i = 0; i < notes.length; i += 2) {
+        if (rows.isNotEmpty) rows.add(const SizedBox(height: 8));
+        rows.add(Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: animatedTile(i)),
+            if (i + 1 < notes.length) ...[
+              const SizedBox(width: 8),
+              Expanded(child: animatedTile(i + 1)),
+            ] else
+              const Expanded(child: SizedBox()),
+          ],
+        ));
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: rows,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (int i = 0; i < notes.length; i++) ...[
           if (i > 0) const SizedBox(height: 8),
-          _voiceNoteTile(context, notes[i])
-              .animate()
-              .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
-              .slideX(
-                begin: -0.15,
-                end: 0,
-                delay: (80 * i).ms,
-                duration: 350.ms,
-                curve: Curves.easeOutCubic,
-              ),
+          animatedTile(i),
         ],
       ],
     );

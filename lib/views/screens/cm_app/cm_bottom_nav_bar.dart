@@ -66,6 +66,7 @@ class CMBottomNavBar extends ConsumerWidget {
           ],
           onTap: (index) {
             final tab = CMNavTab.values[index];
+            ref.read(cmAutoNavConsumedProvider.notifier).state = true;
             ref.read(cmNavController.notifier).select(tab);
             switch (tab) {
               case CMNavTab.dashboard:

@@ -138,7 +138,13 @@ class SignaturePadController {
     return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
   }
 
+  /// Clears with a confirmation dialog — only call this from a user-facing button.
   void clear() => _state?._clear();
+
+  /// Clears immediately without a confirmation dialog — safe to call
+  /// programmatically (e.g. on page change or after submission).
+  void clearSilently() => _state?._clearSilent();
+
   void undo() => _state?._undo();
 
   void setPenColor(Color color) => _state?._setPenColor(color);
@@ -309,6 +315,16 @@ class _SignaturePadState extends State<SignaturePad> {
 
   double _canvasWidth = 0;
 
+  void _clearSilent() {
+    setState(() {
+      _strokes.clear();
+      _currentStroke = null;
+      _strokeCount = 0;
+      if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
+    });
+    widget.onChanged?.call();
+  }
+
   Future<void> _clear() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -328,13 +344,7 @@ class _SignaturePadState extends State<SignaturePad> {
       ),
     );
     if (confirmed != true) return;
-    setState(() {
-      _strokes.clear();
-      _currentStroke = null;
-      _strokeCount = 0;
-      if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
-    });
-    widget.onChanged?.call();
+    _clearSilent();
   }
 
   void _undo() {
