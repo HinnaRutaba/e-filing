@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/gestures.dart';
@@ -87,8 +88,8 @@ class SignaturePadController {
     if (_state == state) _state = null;
   }
 
-  bool get isEmpty => (_state?._strokes.isEmpty ?? true) &&
-      (_state?._currentStroke == null);
+  bool get isEmpty =>
+      (_state?._strokes.isEmpty ?? true) && (_state?._currentStroke == null);
   bool get isNotEmpty => !isEmpty;
 
   Color get penColor => _state?._penColor ?? kDefaultSignatureColors.first;
@@ -117,12 +118,9 @@ class SignaturePadController {
       return {
         'color': _hexFromColor(stroke.color),
         'widthRange': [stroke.width],
-        'points': stroke.points.map((p) => {
-          'x': p.dx,
-          'y': p.dy,
-          'p': 0.5,
-          't': null,
-        }).toList(),
+        'points': stroke.points
+            .map((p) => {'x': p.dx, 'y': p.dy, 'p': 0.5, 't': null})
+            .toList(),
       };
     }).toList();
 
@@ -295,20 +293,43 @@ class _SignaturePadState extends State<SignaturePad> {
   // ── controller API ────────────────────────────────────────────────────────
 
   Future<Uint8List?> _renderToPng() async {
+    final allStrokes = [
+      ..._strokes,
+      if (_currentStroke != null) _currentStroke!,
+    ];
+    if (allStrokes.isEmpty) return null;
+
+    final allPoints = allStrokes.expand((s) => s.points);
+    final maxStrokeWidth = allStrokes.map((s) => s.width).reduce(math.max);
+    final padding = maxStrokeWidth / 2 + 2;
+
+    double minX = double.infinity, minY = double.infinity;
+    double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+    for (final p in allPoints) {
+      if (p.dx < minX) minX = p.dx;
+      if (p.dy < minY) minY = p.dy;
+      if (p.dx > maxX) maxX = p.dx;
+      if (p.dy > maxY) maxY = p.dy;
+    }
+
+    minX = (minX - padding).clamp(0, _canvasWidth);
+    minY = (minY - padding).clamp(0, _canvasHeight);
+    maxX = (maxX + padding).clamp(0, _canvasWidth);
+    maxY = (maxY + padding).clamp(0, _canvasHeight);
+
+    final cropWidth = maxX - minX;
+    final cropHeight = maxY - minY;
+    if (cropWidth <= 0 || cropHeight <= 0) return null;
+
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(
-      recorder,
-      Rect.fromLTWH(0, 0, _canvasWidth, _canvasHeight),
-    );
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, cropWidth, cropHeight));
+    canvas.translate(-minX, -minY);
     _SignaturePainter(
       strokes: _strokes,
       currentStroke: _currentStroke,
     ).paint(canvas, Size(_canvasWidth, _canvasHeight));
     final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      _canvasWidth.round(),
-      _canvasHeight.round(),
-    );
+    final image = await picture.toImage(cropWidth.round(), cropHeight.round());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     return bytes?.buffer.asUint8List();
   }
@@ -416,33 +437,67 @@ class _SignaturePadState extends State<SignaturePad> {
               // ImmediateMultiDragGestureRecognizer wins the arena instantly,
               // preventing the parent ScrollView from stealing the gesture.
               // Listener handles actual drawing with zero latency.
-              child: RawGestureDetector(
-                behavior: HitTestBehavior.opaque,
-                gestures: {
-                  ImmediateMultiDragGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                          ImmediateMultiDragGestureRecognizer>(
-                    () => ImmediateMultiDragGestureRecognizer(),
-                    (instance) {
-                      instance.onStart = (_) => _DrawDrag();
+              child: Stack(
+                children: [
+                  RawGestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    gestures: {
+                      ImmediateMultiDragGestureRecognizer:
+                          GestureRecognizerFactoryWithHandlers<
+                            ImmediateMultiDragGestureRecognizer
+                          >(() => ImmediateMultiDragGestureRecognizer(), (
+                            instance,
+                          ) {
+                            instance.onStart = (_) => _DrawDrag();
+                          }),
                     },
-                  ),
-                },
-                child: Listener(
-                  onPointerDown: _onPointerDown,
-                  onPointerMove: _onPointerMove,
-                  onPointerUp: _onPointerUp,
-                  onPointerCancel: _onPointerCancel,
-                  behavior: HitTestBehavior.opaque,
-                  child: CustomPaint(
-                    painter: _SignaturePainter(
-                      strokes: _strokes,
-                      currentStroke: _currentStroke,
-                      showRuledLines: widget.showRuledLines,
+                    child: Listener(
+                      onPointerDown: _onPointerDown,
+                      onPointerMove: _onPointerMove,
+                      onPointerUp: _onPointerUp,
+                      onPointerCancel: _onPointerCancel,
+                      behavior: HitTestBehavior.opaque,
+                      child: CustomPaint(
+                        painter: _SignaturePainter(
+                          strokes: _strokes,
+                          currentStroke: _currentStroke,
+                          showRuledLines: widget.showRuledLines,
+                        ),
+                        size: Size.infinite,
+                      ),
                     ),
-                    size: Size.infinite,
                   ),
-                ),
+                  if (!widget.showPenSelector)
+                    Positioned(
+                      right: 10,
+                      bottom: 24,
+                      child: IgnorePointer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 340,
+                              height: 1,
+                              color: AppColors.secondaryLight.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Sign above the line',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.secondaryLight.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             );
           },
