@@ -5,7 +5,7 @@ class SummaryVoiceNoteModel {
   final String streamUrl;
   final int durationSec;
   final VoiceNoteVisibility visibility;
-  final VoiceNoteContext context;
+  final VoiceNoteContext? context;
   final String uploadedBy;
   final DateTime? uploadedAt;
 
@@ -14,7 +14,7 @@ class SummaryVoiceNoteModel {
     required this.streamUrl,
     required this.durationSec,
     required this.visibility,
-    required this.context,
+    this.context,
     required this.uploadedBy,
     this.uploadedAt,
   });
@@ -29,14 +29,18 @@ class SummaryVoiceNoteModel {
     return SummaryVoiceNoteModel(
       id: json['id'],
       streamUrl: json['stream_url'],
-      durationSec: json['duration_sec'],
+      durationSec: json['duration_sec'] ?? 0,
       visibility: VoiceNoteVisibility.values.firstWhere(
         (e) => e.value == json['visibility'],
+        orElse: () => VoiceNoteVisibility.internal,
       ),
-      context: VoiceNoteContext.values.firstWhere(
-        (e) => e.value == json['context'],
-      ),
-      uploadedBy: json['uploaded_by'],
+      context: json['context'] != null
+          ? VoiceNoteContext.values.firstWhere(
+              (e) => e.value == json['context'],
+              orElse: () => VoiceNoteContext.shareInternal,
+            )
+          : null,
+      uploadedBy: json['uploaded_by'] ?? '',
       uploadedAt: json['uploaded_at'] != null
           ? DateTime.tryParse(json['uploaded_at'])
           : null,
