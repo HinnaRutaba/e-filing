@@ -357,13 +357,13 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
               return WavedAudioPlayer(
                 source: ap.UrlSource(note.streamUrl, mimeType: 'audio/x-wav'),
                 headers: _authHeaders,
-                iconColor: AppColors.white,
+                iconColor: AppColors.primaryDark,
                 iconBackgoundColor: appColors.primaryDark,
                 playedColor: appColors.primaryDark,
                 unplayedColor: appColors.primaryDark.withValues(alpha: 0.2),
                 waveWidth: double.infinity,
                 barWidth: 3,
-                buttonSize: 36,
+                buttonSize: 48,
                 showTiming: true,
                 timingStyle: TextStyle(
                   fontSize: 11,
