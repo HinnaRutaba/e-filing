@@ -283,9 +283,8 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                                               const AlwaysScrollableScrollPhysics(),
                                           itemCount: filteredDaak.length,
                                           gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount:
-                                                    context.isDesktop ? 3 : 2,
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
                                                 crossAxisSpacing: 8,
                                                 mainAxisSpacing: 0,
                                                 mainAxisExtent: 206,

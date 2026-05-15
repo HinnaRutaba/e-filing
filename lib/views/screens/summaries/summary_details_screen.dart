@@ -954,6 +954,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return 'Forward to another user';
     }
     if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+      return 'Forward to department';
+    }
+    if (action == SummaryAction.signForward && isPsToCm) {
       return 'Add remarks & forward to department';
     }
     return action.label;

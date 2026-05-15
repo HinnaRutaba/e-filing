@@ -104,8 +104,8 @@ class _MyFilesScreenState extends ConsumerState<MyFilesScreen> {
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: files.length,
                                 gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: context.isDesktop ? 3 : 2,
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
                                       crossAxisSpacing: 16,
                                       mainAxisSpacing: 16,
                                       mainAxisExtent: 160,

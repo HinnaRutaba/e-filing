@@ -371,7 +371,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
 
     final awaitingCard = DashboardCard(
       cardColor: context.appColors.warning,
-      iconColor: Colors.yellowAccent,
+      iconColor: Colors.yellow[900]!,
       title: "Awaiting Approval",
       value: "${kpis?.pendingMyApproval ?? 0}",
       onTap: null,
