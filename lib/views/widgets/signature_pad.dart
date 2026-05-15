@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
-import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/gestures.dart';
@@ -72,13 +71,61 @@ enum SignatureColor {
   Color get color => kDefaultSignatureColors[index];
 }
 
-// Internal stroke representation — one object per pen-down→pen-up gesture.
+// ── Stroke data ───────────────────────────────────────────────────────────────
+
 class _Stroke {
   final List<Offset> points;
   final Color color;
   final double width;
   _Stroke({required this.points, required this.color, required this.width});
 }
+
+// ── Stroke notifier ───────────────────────────────────────────────────────────
+// Holds all stroke data and extends ChangeNotifier so CustomPainter can use it
+// as a repaint listenable — only the canvas layer repaints on each pointer
+// event, the widget tree is never rebuilt during drawing.
+
+class _StrokeNotifier extends ChangeNotifier {
+  final List<_Stroke> strokes = [];
+  _Stroke? currentStroke;
+
+  bool get isEmpty => strokes.isEmpty && currentStroke == null;
+
+  void startStroke(_Stroke stroke) {
+    currentStroke = stroke;
+    notifyListeners();
+  }
+
+  void addPoint(Offset point) {
+    currentStroke?.points.add(point);
+    notifyListeners();
+  }
+
+  void commitStroke() {
+    final s = currentStroke;
+    currentStroke = null;
+    if (s != null && s.points.isNotEmpty) strokes.add(s);
+    notifyListeners();
+  }
+
+  void cancelStroke() {
+    currentStroke = null;
+    notifyListeners();
+  }
+
+  void removeLast() {
+    if (strokes.isNotEmpty) strokes.removeLast();
+    notifyListeners();
+  }
+
+  void clearAll() {
+    strokes.clear();
+    currentStroke = null;
+    notifyListeners();
+  }
+}
+
+// ── Public controller ─────────────────────────────────────────────────────────
 
 class SignaturePadController {
   _SignaturePadState? _state;
@@ -88,8 +135,7 @@ class SignaturePadController {
     if (_state == state) _state = null;
   }
 
-  bool get isEmpty =>
-      (_state?._strokes.isEmpty ?? true) && (_state?._currentStroke == null);
+  bool get isEmpty => _state?._notifier.isEmpty ?? true;
   bool get isNotEmpty => !isEmpty;
 
   Color get penColor => _state?._penColor ?? kDefaultSignatureColors.first;
@@ -104,24 +150,20 @@ class SignaturePadController {
 
   Future<Uint8List?> toPngBytes() async {
     final s = _state;
-    if (s == null || (s._strokes.isEmpty && s._currentStroke == null)) {
-      return null;
-    }
+    if (s == null || s._notifier.isEmpty) return null;
     return s._renderToPng();
   }
 
   String? toStrokesJson({required double canvasWidth}) {
     final s = _state;
-    if (s == null || s._strokes.isEmpty) return null;
+    if (s == null || s._notifier.strokes.isEmpty) return null;
 
-    final strokes = s._strokes.map((stroke) {
-      return {
-        'color': _hexFromColor(stroke.color),
-        'widthRange': [stroke.width],
-        'points': stroke.points
-            .map((p) => {'x': p.dx, 'y': p.dy, 'p': 0.5, 't': null})
-            .toList(),
-      };
+    final strokes = s._notifier.strokes.map((stroke) => {
+      'color': _hexFromColor(stroke.color),
+      'widthRange': [stroke.width],
+      'points': stroke.points
+          .map((p) => {'x': p.dx, 'y': p.dy, 'p': 0.5, 't': null})
+          .toList(),
     }).toList();
 
     return jsonEncode({
@@ -136,18 +178,14 @@ class SignaturePadController {
     return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
   }
 
-  /// Clears with a confirmation dialog — only call this from a user-facing button.
   void clear() => _state?._clear();
-
-  /// Clears immediately without a confirmation dialog — safe to call
-  /// programmatically (e.g. on page change or after submission).
   void clearSilently() => _state?._clearSilent();
-
   void undo() => _state?._undo();
-
   void setPenColor(Color color) => _state?._setPenColor(color);
   void setPenIndex(int index) => _state?._setPenIndex(index);
 }
+
+// ── Widget ────────────────────────────────────────────────────────────────────
 
 class SignaturePad extends StatefulWidget {
   final SignaturePadController? controller;
@@ -204,10 +242,9 @@ class _SignaturePadState extends State<SignaturePad> {
   late Color _penColor;
   late double _canvasHeight;
   int _strokeCount = 0;
+  double _canvasWidth = 0;
 
-  // Completed strokes + the stroke currently being drawn.
-  final List<_Stroke> _strokes = [];
-  _Stroke? _currentStroke;
+  final _StrokeNotifier _notifier = _StrokeNotifier();
 
   SignaturePenPreset get _currentPen => widget.pens[_penIndex];
 
@@ -232,59 +269,44 @@ class _SignaturePadState extends State<SignaturePad> {
   @override
   void dispose() {
     widget.controller?._detach(this);
+    _notifier.dispose();
     super.dispose();
   }
 
   // ── pointer handlers ──────────────────────────────────────────────────────
 
   void _onPointerDown(PointerDownEvent e) {
-    setState(() {
-      _currentStroke = _Stroke(
-        points: [e.localPosition],
-        color: _penColor,
-        width: _currentPen.width,
-      );
-    });
+    _notifier.startStroke(_Stroke(
+      points: [e.localPosition],
+      color: _penColor,
+      width: _currentPen.width,
+    ));
     widget.onDrawStart?.call();
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    if (_currentStroke == null) return;
-    // Mutate in place and trigger a repaint — avoids allocating a new list
-    // on every pointer event.
-    _currentStroke!.points.add(e.localPosition);
-    setState(() {});
+    // Directly notifies the painter — zero widget-tree rebuild overhead.
+    _notifier.addPoint(e.localPosition);
   }
 
-  void _onPointerUp(PointerUpEvent e) {
-    _finishStroke();
-  }
-
-  void _onPointerCancel(PointerCancelEvent e) {
-    _finishStroke();
-  }
+  void _onPointerUp(PointerUpEvent e) => _finishStroke();
+  void _onPointerCancel(PointerCancelEvent e) => _finishStroke();
 
   void _finishStroke() {
-    final stroke = _currentStroke;
-    if (stroke == null) return;
-    setState(() {
-      _currentStroke = null;
-      if (stroke.points.isNotEmpty) {
-        _strokes.add(stroke);
-        if (widget.showStrokeInfo) _strokeCount++;
-      }
-    });
+    if (_notifier.currentStroke == null) return;
+    _notifier.commitStroke();
     widget.onDrawEnd?.call();
     widget.onChanged?.call();
+    if (widget.showStrokeInfo) setState(() => _strokeCount++);
     if (widget.autoExpand) {
-      final allPoints = _strokes.expand((s) => s.points);
+      final allPoints = _notifier.strokes.expand((s) => s.points);
       if (allPoints.isNotEmpty) {
         final maxY = allPoints.map((p) => p.dy).reduce(math.max);
         if (maxY > _canvasHeight - 60) {
           setState(() => _canvasHeight += widget.autoExpandStep);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            widget.onExpand?.call();
-          });
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => widget.onExpand?.call(),
+          );
         }
       }
     }
@@ -294,8 +316,8 @@ class _SignaturePadState extends State<SignaturePad> {
 
   Future<Uint8List?> _renderToPng() async {
     final allStrokes = [
-      ..._strokes,
-      if (_currentStroke != null) _currentStroke!,
+      ..._notifier.strokes,
+      if (_notifier.currentStroke != null) _notifier.currentStroke!,
     ];
     if (allStrokes.isEmpty) return null;
 
@@ -317,32 +339,31 @@ class _SignaturePadState extends State<SignaturePad> {
     maxX = (maxX + padding).clamp(0, _canvasWidth);
     maxY = (maxY + padding).clamp(0, _canvasHeight);
 
-    final cropWidth = maxX - minX;
-    final cropHeight = maxY - minY;
-    if (cropWidth <= 0 || cropHeight <= 0) return null;
+    final cropW = maxX - minX;
+    final cropH = maxY - minY;
+    if (cropW <= 0 || cropH <= 0) return null;
 
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, cropWidth, cropHeight));
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, cropW, cropH));
     canvas.translate(-minX, -minY);
-    _SignaturePainter(
-      strokes: _strokes,
-      currentStroke: _currentStroke,
-    ).paint(canvas, Size(_canvasWidth, _canvasHeight));
+    _SignaturePainter(notifier: _notifier).paint(
+      canvas,
+      Size(_canvasWidth, _canvasHeight),
+    );
     final picture = recorder.endRecording();
-    final image = await picture.toImage(cropWidth.round(), cropHeight.round());
+    final image = await picture.toImage(cropW.round(), cropH.round());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     return bytes?.buffer.asUint8List();
   }
 
-  double _canvasWidth = 0;
-
   void _clearSilent() {
-    setState(() {
-      _strokes.clear();
-      _currentStroke = null;
-      _strokeCount = 0;
-      if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
-    });
+    _notifier.clearAll();
+    if (widget.showStrokeInfo || widget.autoExpand) {
+      setState(() {
+        _strokeCount = 0;
+        if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
+      });
+    }
     widget.onChanged?.call();
   }
 
@@ -369,11 +390,9 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 
   void _undo() {
-    if (_strokes.isEmpty) return;
-    setState(() {
-      _strokes.removeLast();
-      if (widget.showStrokeInfo && _strokeCount > 0) _strokeCount--;
-    });
+    if (_notifier.strokes.isEmpty) return;
+    _notifier.removeLast();
+    if (widget.showStrokeInfo) setState(() { if (_strokeCount > 0) _strokeCount--; });
     widget.onChanged?.call();
   }
 
@@ -434,22 +453,21 @@ class _SignaturePadState extends State<SignaturePad> {
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              // ImmediateMultiDragGestureRecognizer wins the arena instantly,
-              // preventing the parent ScrollView from stealing the gesture.
-              // Listener handles actual drawing with zero latency.
               child: Stack(
                 children: [
+                  // ImmediateMultiDragGestureRecognizer wins the arena instantly
+                  // so the parent ScrollView cannot scroll while drawing.
                   RawGestureDetector(
                     behavior: HitTestBehavior.opaque,
                     gestures: {
                       ImmediateMultiDragGestureRecognizer:
                           GestureRecognizerFactoryWithHandlers<
-                            ImmediateMultiDragGestureRecognizer
-                          >(() => ImmediateMultiDragGestureRecognizer(), (
-                            instance,
-                          ) {
-                            instance.onStart = (_) => _DrawDrag();
-                          }),
+                              ImmediateMultiDragGestureRecognizer>(
+                            () => ImmediateMultiDragGestureRecognizer(),
+                            (instance) {
+                              instance.onStart = (_) => _DrawDrag();
+                            },
+                          ),
                     },
                     child: Listener(
                       onPointerDown: _onPointerDown,
@@ -457,13 +475,16 @@ class _SignaturePadState extends State<SignaturePad> {
                       onPointerUp: _onPointerUp,
                       onPointerCancel: _onPointerCancel,
                       behavior: HitTestBehavior.opaque,
-                      child: CustomPaint(
-                        painter: _SignaturePainter(
-                          strokes: _strokes,
-                          currentStroke: _currentStroke,
-                          showRuledLines: widget.showRuledLines,
+                      // RepaintBoundary isolates canvas repaints from the
+                      // rest of the widget tree.
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: _SignaturePainter(
+                            notifier: _notifier,
+                            showRuledLines: widget.showRuledLines,
+                          ),
+                          size: Size.infinite,
                         ),
-                        size: Size.infinite,
                       ),
                     ),
                   ),
@@ -681,8 +702,8 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 }
 
-// Minimal Drag implementation — its only job is to win the gesture arena so the
-// parent ScrollView cannot scroll while the user draws on the canvas.
+// ── Drag stub ─────────────────────────────────────────────────────────────────
+
 class _DrawDrag extends Drag {
   @override
   void update(DragUpdateDetails details) {}
@@ -692,26 +713,22 @@ class _DrawDrag extends Drag {
   void cancel() {}
 }
 
-// ── Painter ──────────────────────────────────────────────────────────────────
+// ── Painter ───────────────────────────────────────────────────────────────────
 
 class _SignaturePainter extends CustomPainter {
-  final List<_Stroke> strokes;
-  final _Stroke? currentStroke;
+  final _StrokeNotifier notifier;
   final bool showRuledLines;
 
-  const _SignaturePainter({
-    required this.strokes,
-    required this.currentStroke,
-    this.showRuledLines = false,
-  });
+  _SignaturePainter({required this.notifier, this.showRuledLines = false})
+      : super(repaint: notifier);
 
   @override
   void paint(Canvas canvas, Size size) {
     if (showRuledLines) _paintRuledLines(canvas, size);
-    for (final stroke in strokes) {
+    for (final stroke in notifier.strokes) {
       _paintStroke(canvas, stroke);
     }
-    if (currentStroke != null) _paintStroke(canvas, currentStroke!);
+    if (notifier.currentStroke != null) _paintStroke(canvas, notifier.currentStroke!);
   }
 
   void _paintStroke(Canvas canvas, _Stroke stroke) {
@@ -724,7 +741,6 @@ class _SignaturePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     if (stroke.points.length == 1) {
-      // Single tap — draw a dot.
       canvas.drawCircle(
         stroke.points.first,
         stroke.width / 2,
@@ -733,7 +749,6 @@ class _SignaturePainter extends CustomPainter {
       return;
     }
 
-    // Smooth with quadratic bezier between midpoints for natural pen feel.
     final path = Path()..moveTo(stroke.points[0].dx, stroke.points[0].dy);
     for (int i = 1; i < stroke.points.length - 1; i++) {
       final mid = Offset(
@@ -766,7 +781,7 @@ class _SignaturePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SignaturePainter old) =>
-      !identical(old.strokes, strokes) || old.currentStroke != currentStroke;
+      old.notifier != notifier || old.showRuledLines != showRuledLines;
 }
 
 // ── Full colour picker dialog ─────────────────────────────────────────────────
@@ -783,60 +798,15 @@ class _FullColorPickerDialogState extends State<_FullColorPickerDialog> {
   late Color _selected;
 
   static const List<List<Color>> _palette = [
-    [
-      Color(0xFF7F1D1D),
-      Color(0xFFB91C1C),
-      Color(0xFFEF4444),
-      Color(0xFFFCA5A5),
-    ],
-    [
-      Color(0xFF7C2D12),
-      Color(0xFFEA580C),
-      Color(0xFFFB923C),
-      Color(0xFFFED7AA),
-    ],
-    [
-      Color(0xFF713F12),
-      Color(0xFFCA8A04),
-      Color(0xFFFACC15),
-      Color(0xFFFEF08A),
-    ],
-    [
-      Color(0xFF14532D),
-      Color(0xFF15803D),
-      Color(0xFF4ADE80),
-      Color(0xFFBBF7D0),
-    ],
-    [
-      Color(0xFF164E63),
-      Color(0xFF0E7490),
-      Color(0xFF22D3EE),
-      Color(0xFFA5F3FC),
-    ],
-    [
-      Color(0xFF1E3A5F),
-      Color(0xFF1D4ED8),
-      Color(0xFF60A5FA),
-      Color(0xFFBFDBFE),
-    ],
-    [
-      Color(0xFF4C1D95),
-      Color(0xFF7C3AED),
-      Color(0xFFA78BFA),
-      Color(0xFFEDE9FE),
-    ],
-    [
-      Color(0xFF831843),
-      Color(0xFFBE185D),
-      Color(0xFFF472B6),
-      Color(0xFFFCE7F3),
-    ],
-    [
-      Color(0xFF111827),
-      Color(0xFF374151),
-      Color(0xFF9CA3AF),
-      Color(0xFFE5E7EB),
-    ],
+    [Color(0xFF7F1D1D), Color(0xFFB91C1C), Color(0xFFEF4444), Color(0xFFFCA5A5)],
+    [Color(0xFF7C2D12), Color(0xFFEA580C), Color(0xFFFB923C), Color(0xFFFED7AA)],
+    [Color(0xFF713F12), Color(0xFFCA8A04), Color(0xFFFACC15), Color(0xFFFEF08A)],
+    [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF4ADE80), Color(0xFFBBF7D0)],
+    [Color(0xFF164E63), Color(0xFF0E7490), Color(0xFF22D3EE), Color(0xFFA5F3FC)],
+    [Color(0xFF1E3A5F), Color(0xFF1D4ED8), Color(0xFF60A5FA), Color(0xFFBFDBFE)],
+    [Color(0xFF4C1D95), Color(0xFF7C3AED), Color(0xFFA78BFA), Color(0xFFEDE9FE)],
+    [Color(0xFF831843), Color(0xFFBE185D), Color(0xFFF472B6), Color(0xFFFCE7F3)],
+    [Color(0xFF111827), Color(0xFF374151), Color(0xFF9CA3AF), Color(0xFFE5E7EB)],
   ];
 
   @override
@@ -873,13 +843,13 @@ class _FullColorPickerDialogState extends State<_FullColorPickerDialog> {
                               color: color,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: _selected.toARGB32() == color.toARGB32()
-                                    ? Colors.white
-                                    : Colors.transparent,
+                                color:
+                                    _selected.toARGB32() == color.toARGB32()
+                                        ? Colors.white
+                                        : Colors.transparent,
                                 width: 2.5,
                               ),
-                              boxShadow:
-                                  _selected.toARGB32() == color.toARGB32()
+                              boxShadow: _selected.toARGB32() == color.toARGB32()
                                   ? [
                                       BoxShadow(
                                         color: color.withValues(alpha: 0.5),
