@@ -618,8 +618,6 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                 Image.network(
                   track.signatureUrl!,
                   fit: BoxFit.contain,
-                  width: 80,
-                  height: 80,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.error_outline, color: Colors.redAccent),
                 ),
