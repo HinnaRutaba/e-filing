@@ -320,6 +320,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         details?.isLatestMovementCmSignedAndReturned == true;
   }
 
+  bool get isOnlySentToDeptCrossDept {
+    final movements =
+        ref.read(summariesController).details?.movements ?? const [];
+    final sentToDept = movements
+        .where((m) => m.actionType == 'sent_to_department')
+        .toList();
+    final m = sentToDept.last;
+    return m.fromDepartment != m.toDepartment;
+  }
+
   bool get showHandWrittedRemarksSection {
     SummaryDetailsModel? details = ref.read(summariesController).details;
     return (details?.hasForwardedBefore == true &&
@@ -889,6 +899,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm)
           SummaryAction.forwardToCM,
         if (showDisposedOff) SummaryAction.disposedOff,
+      ];
+    } else if (isOnlySentToDeptCrossDept) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
       ];
     } else {
       allowedActions = SummaryAction.values
