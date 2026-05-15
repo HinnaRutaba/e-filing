@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/views/widgets/audio_player/audio_waved_player.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -33,6 +36,7 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
   bool _expanded = true;
   bool _loading = false;
   List<SummaryVoiceNoteModel> _voiceNotes = const [];
+  Map<String, String> _authHeaders = const {};
 
   @override
   void initState() {
@@ -42,15 +46,21 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
 
   Future<void> _fetch() async {
     setState(() => _loading = true);
-    final notes = await ref
+    final tokenFuture = LocalStorageController().getToken();
+    final notesFuture = ref
         .read(summariesController.notifier)
         .listVoiceNotes(
           summaryId: widget.summaryId,
           visibility: widget.visibility,
         );
+    final token = await tokenFuture;
+    final notes = await notesFuture;
     if (mounted) {
       setState(() {
         _voiceNotes = notes;
+        if (token != null) {
+          _authHeaders = {'Authorization': 'Bearer ${token.token}'};
+        }
         _loading = false;
       });
     }
@@ -108,8 +118,8 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
               ),
             )
           : widget.visibility == null
-              ? _buildGroupedNotes(context)
-              : _buildNotesList(context, _voiceNotes),
+          ? _buildGroupedNotes(context)
+          : _buildNotesList(context, _voiceNotes),
     );
   }
 
@@ -125,33 +135,34 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
       );
     }
 
-    Widget animatedTile(int i) =>
-        _voiceNoteTile(context, notes[i])
-            .animate()
-            .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
-            .slideX(
-              begin: -0.15,
-              end: 0,
-              delay: (80 * i).ms,
-              duration: 350.ms,
-              curve: Curves.easeOutCubic,
-            );
+    Widget animatedTile(int i) => _voiceNoteTile(context, notes[i])
+        .animate()
+        .fadeIn(delay: (80 * i).ms, duration: 300.ms, curve: Curves.easeOut)
+        .slideX(
+          begin: -0.15,
+          end: 0,
+          delay: (80 * i).ms,
+          duration: 350.ms,
+          curve: Curves.easeOutCubic,
+        );
 
     if (widget.crossAxisCount >= 2) {
       final rows = <Widget>[];
       for (int i = 0; i < notes.length; i += 2) {
         if (rows.isNotEmpty) rows.add(const SizedBox(height: 8));
-        rows.add(Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: animatedTile(i)),
-            if (i + 1 < notes.length) ...[
-              const SizedBox(width: 8),
-              Expanded(child: animatedTile(i + 1)),
-            ] else
-              const Expanded(child: SizedBox()),
-          ],
-        ));
+        rows.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: animatedTile(i)),
+              if (i + 1 < notes.length) ...[
+                const SizedBox(width: 8),
+                Expanded(child: animatedTile(i + 1)),
+              ] else
+                const Expanded(child: SizedBox()),
+            ],
+          ),
+        );
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -209,9 +220,21 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
   Widget _groupLabel(BuildContext context, String label, Color color) {
     return Row(
       children: [
-        Container(width: 3, height: 14, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
         const SizedBox(width: 6),
-        AppText.labelSmall(label, color: color, fontWeight: FontWeight.w700, fontSize: 11),
+        AppText.labelSmall(
+          label,
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
+        ),
       ],
     );
   }
@@ -328,22 +351,30 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
             ],
           ),
           const SizedBox(height: 10),
-          WavedAudioPlayer(
-            source: ap.UrlSource(note.streamUrl, mimeType: 'audio/x-wav'),
-            iconColor: AppColors.white,
-            iconBackgoundColor: appColors.primaryDark,
-            playedColor: appColors.primaryDark,
-            unplayedColor: appColors.primaryDark.withValues(alpha: 0.2),
-            waveWidth: double.infinity,
-            barWidth: 3,
-            buttonSize: 36,
-            showTiming: true,
-            timingStyle: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: appColors.textSecondary,
-            ),
-            onError: (_) {},
+          Builder(
+            builder: (context) {
+              log("URL______${note.streamUrl}");
+              return WavedAudioPlayer(
+                source: ap.UrlSource(note.streamUrl, mimeType: 'audio/x-wav'),
+                headers: _authHeaders,
+                iconColor: AppColors.white,
+                iconBackgoundColor: appColors.primaryDark,
+                playedColor: appColors.primaryDark,
+                unplayedColor: appColors.primaryDark.withValues(alpha: 0.2),
+                waveWidth: double.infinity,
+                barWidth: 3,
+                buttonSize: 36,
+                showTiming: true,
+                timingStyle: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: appColors.textSecondary,
+                ),
+                onError: (e) {
+                  log("ERR VN_______${e}");
+                },
+              );
+            },
           ),
         ],
       ),
