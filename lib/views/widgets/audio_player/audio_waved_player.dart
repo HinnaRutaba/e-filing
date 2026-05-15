@@ -196,6 +196,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
   Uint8List? _audioBytes;
   String? _cachedFilePath;
   double _playbackSpeed = 1.0;
+  bool _disposed = false;
 
   Source get _playbackSource => _cachedFilePath != null
       ? DeviceFileSource(_cachedFilePath!, mimeType: widget.source.mimeType)
@@ -213,6 +214,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
 
   @override
   void dispose() {
+    _disposed = true;
     _controller.unregisterPlayer(this);
     _audioPlayer.dispose();
     super.dispose();
@@ -236,10 +238,12 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
         } else if (widget.source is BytesSource) {
           _audioBytes = (widget.source as BytesSource).bytes;
         }
+        if (_disposed) return;
         if (_audioBytes == null) return;
         waveformData = _extractWaveformData(_audioBytes!);
-        setState(() {});
+        if (!_disposed) setState(() {});
       }
+      if (_disposed) return;
       if (_cachedFilePath != null) {
         await _audioPlayer.setSource(DeviceFileSource(_cachedFilePath!,
             mimeType: widget.source.mimeType));
@@ -248,7 +252,7 @@ class _WavedAudioPlayerState extends State<WavedAudioPlayer> {
             BytesSource(_audioBytes!, mimeType: widget.source.mimeType));
       }
     } catch (e) {
-      _callOnError(WavedAudioPlayerError("Error loading audio: $e"));
+      if (!_disposed) _callOnError(WavedAudioPlayerError("Error loading audio: $e"));
     }
   }
 

@@ -461,16 +461,16 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
               ),
             ),
           ),
-          AnimatedCrossFade(
+          AnimatedSize(
             duration: const Duration(milliseconds: 200),
-            crossFadeState: _expanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Padding(
-              padding: const EdgeInsets.all(12),
-              child: child,
-            ),
-            secondChild: const SizedBox(width: double.infinity),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: child,
+                  )
+                : const SizedBox(width: double.infinity),
           ),
         ],
       ),
