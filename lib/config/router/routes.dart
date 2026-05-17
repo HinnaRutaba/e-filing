@@ -31,6 +31,7 @@ class Routes {
   static const String summaryDetails = '/summaryDetails';
   static const String summaryDraftRemarks = '/summaryDraftRemarks';
   static const String daak = '/daak';
+  static const String signPad = '/signPad';
   static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
 

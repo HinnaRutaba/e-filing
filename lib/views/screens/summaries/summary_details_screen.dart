@@ -292,9 +292,10 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
     if ((activeUser?.roleEnum == ActiveUserDesgRole.secretary ||
             activeUser?.roleEnum == ActiveUserDesgRole.pstocm) &&
-        details?.summary?.currentHolder != activeUser?.name) {
+        details?.summary?.currentHolder?.trim() != activeUser?.name?.trim()) {
       return false;
     }
+
     return true;
   }
 
@@ -326,6 +327,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final sentToDept = movements
         .where((m) => m.actionType == 'sent_to_department')
         .toList();
+    if (sentToDept.isEmpty) return false;
     final m = sentToDept.last;
     return m.fromDepartment != m.toDepartment;
   }

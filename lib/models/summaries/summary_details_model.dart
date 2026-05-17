@@ -92,6 +92,23 @@ class SummaryDetailsModel {
       )
       .toList();
 
+  List<SummaryMovementModel> get departmentalMovementsWithSentToDept {
+    final result = <SummaryMovementModel>[];
+    for (var i = 0; i < movements.length; i++) {
+      final m = movements[i];
+      if (m.actionType == 'signed_and_forwarded' ||
+          m.actionType == 'cm_signed_and_returned') {
+        result.add(m);
+      } else if (m.actionType == 'sent_to_department' &&
+          m.fromDepartment != m.toDepartment &&
+          i + 1 < movements.length &&
+          movements[i + 1].actionType == 'signed_and_forwarded') {
+        result.add(m);
+      }
+    }
+    return result;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       SummaryDetailsSchema.summary: summary?.toJson(),

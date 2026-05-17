@@ -116,7 +116,7 @@ class RemarksSignPanel extends StatefulWidget {
     this.initialMode = RemarksPanelMode.type,
     this.initialPenColor = SignatureColor.darkBlue,
     this.showHeading = true,
-    this.signPadWidth,
+    this.signPadWidth = 400,
   });
 
   @override

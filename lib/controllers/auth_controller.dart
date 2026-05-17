@@ -107,6 +107,7 @@ class AuthController extends BaseControllerState<UserModel> {
   Future<void> logout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: true,
       builder: (_) => Center(
         child: ConstrainedBox(

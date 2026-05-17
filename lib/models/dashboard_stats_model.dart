@@ -342,6 +342,18 @@ class DashboardTabCountsModel {
     this.heldByPs,
   });
 
+  int get total =>
+      (inbox ?? 0) +
+      (myDrafts ?? 0) +
+      (drafts ?? 0) +
+      (internal ?? 0) +
+      (pendingDisposal ?? 0) +
+      (disposed ?? 0) +
+      (psInbox ?? 0) +
+      (internalForwarded ?? 0) +
+      (sent ?? 0) +
+      (heldByPs ?? 0);
+
   DashboardTabCountsModel copyWith({
     int? inbox,
     int? myDrafts,

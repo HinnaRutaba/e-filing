@@ -158,8 +158,6 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
                     ),
                   if (widget.isCm) ...[
                     const SizedBox(height: 16),
-                    _buildBriefsSection(details, context.isMobile ? 1 : 2),
-                    const SizedBox(height: 16),
                     VoiceNotesSection(
                       key: ValueKey('vn_${summary?.id ?? i}'),
                       summaryId: summary?.id,
@@ -167,6 +165,9 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
                       canDelete: false,
                       crossAxisCount: context.isMobile ? 1 : 2,
                     ),
+
+                    const SizedBox(height: 16),
+                    _buildBriefsSection(details, context.isMobile ? 1 : 2),
                     const SizedBox(height: 16),
                   ],
                   RemarksSignPanel(

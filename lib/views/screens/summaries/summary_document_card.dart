@@ -180,13 +180,21 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
 
                   Builder(
                     builder: (_) {
-                      final signedTracks = widget.remarkTrack
-                          .where(
-                            (t) =>
-                                t.actionType == 'signed_and_forwarded' ||
-                                t.actionType == 'remarks_added',
-                          )
-                          .toList();
+                      final tracks = widget.remarkTrack;
+                      final signedTracks = <SummaryRemarkTrackModel>[];
+                      for (var i = 0; i < tracks.length; i++) {
+                        final t = tracks[i];
+                        if (t.actionType == 'signed_and_forwarded' ||
+                            t.actionType == 'remarks_added') {
+                          signedTracks.add(t);
+                        } else if (t.actionType == 'sent_to_department' &&
+                            t.fromDepartmentId != t.toDepartmentId &&
+                            i + 1 < tracks.length &&
+                            tracks[i + 1].actionType ==
+                                'signed_and_forwarded') {
+                          signedTracks.add(t);
+                        }
+                      }
                       if (signedTracks.isEmpty) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -239,7 +247,10 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                           for (int i = 0; i < visibleTracks.length; i++) ...[
                             _remarkTrackBlock(
                               visibleTracks[i],
-                              showRemarks: i != 0,
+                              showRemarks:
+                                  i != 0 ||
+                                  visibleTracks[i].actionType ==
+                                      'sent_to_department',
                             ),
                             const SizedBox(height: 18),
                           ],
@@ -618,6 +629,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                 Image.network(
                   track.signatureUrl!,
                   fit: BoxFit.contain,
+                  width: 260,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.error_outline, color: Colors.redAccent),
                 ),

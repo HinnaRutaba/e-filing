@@ -25,6 +25,7 @@ import 'package:efiling_balochistan/views/screens/settings/sections_screen.dart'
 import 'package:efiling_balochistan/views/screens/settings/settings_screen.dart';
 import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
+import 'package:efiling_balochistan/views/sign_pad_test.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_draft_remarks_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/secretary_approval_desk.dart';
@@ -257,6 +258,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const DaakListViewScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.signPad,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const SignPadTest(),
       ),
     ),
     GoRoute(

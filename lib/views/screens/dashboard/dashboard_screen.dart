@@ -395,7 +395,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       cardColor: Colors.blue[200]!,
       iconColor: context.appColors.secondaryDark,
       title: "Summaries",
-      value: "${tabCounts?.inbox ?? 0}",
+      value: '${tabCounts?.total ?? 0}',
       onTap: () => RouteHelper.push(Routes.summaries),
       loading: dashboardState.loadingStats,
       icon: Icons.summarize_rounded,

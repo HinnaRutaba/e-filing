@@ -120,6 +120,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       icon: Icons.lock_reset,
       routeName: Routes.changePassword,
     ),
+    DrawerMenu(
+      title: "Sign Pad",
+      icon: Icons.draw_outlined,
+      routeName: Routes.signPad,
+    ),
   ];
 
   @override
