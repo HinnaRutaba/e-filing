@@ -163,14 +163,38 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppColors.secondaryLight.withValues(alpha: 0.35),
-        ),
+    final decoration = BoxDecoration(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      borderRadius: BorderRadius.circular(4),
+      border: Border.all(
+        color: AppColors.secondaryLight.withValues(alpha: 0.35),
       ),
+    );
+
+    // Sticky (locked) layout: header is pinned, body scrolls internally.
+    // The parent container supplies a maxHeight constraint.
+    if (_ctrl.isLocked && _expanded) {
+      return Container(
+        decoration: decoration,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _header(),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: widget.scrollController,
+                child: _body(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Normal layout: collapses/expands with animation, sizes to content.
+    return Container(
+      decoration: decoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -180,7 +204,9 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
-            child: _expanded ? _body() : const SizedBox(width: double.infinity),
+            child: _expanded
+                ? _body()
+                : const SizedBox(width: double.infinity),
           ),
         ],
       ),

@@ -538,10 +538,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                 ),
                               ],
                             ),
-                            child: SingleChildScrollView(
-                              controller: _stickyPanelScrollController,
-                              child: _buildRemarksPanel(details),
-                            ),
+                            // Panel handles its own internal scroll when locked;
+                            // the header stays pinned via Column(mainAxisSize.max).
+                            child: _buildRemarksPanel(details),
                           ),
                         _actionBar(),
                       ],
