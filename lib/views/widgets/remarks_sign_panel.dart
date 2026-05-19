@@ -16,6 +16,12 @@ class RemarksSignPanelController extends ChangeNotifier {
   final SignaturePadController _signCtrl = SignaturePadController();
   final SignaturePadController _writtenCtrl = SignaturePadController();
 
+  // GlobalKeys keep the inner pads alive when the surrounding layout switches
+  // between AnimatedSize (unlocked) and ConstrainedBox+ScrollView (locked),
+  // preventing Flutter from tearing down and recreating the canvas state.
+  final GlobalKey signPadKey = GlobalKey();
+  final GlobalKey writtenPadKey = GlobalKey();
+
   RemarksPanelMode _mode = RemarksPanelMode.type;
   double _canvasWidth = 0;
 
@@ -303,6 +309,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             child: SizedBox(
               width: widget.signPadWidth,
               child: SignaturePad(
+                key: _ctrl.signPadKey,
                 controller: _ctrl._signCtrl,
                 initialPenColor: widget.initialPenColor,
                 showPenSelector: false,
@@ -413,7 +420,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           );
         }
         return SignaturePad(
-          key: const ValueKey('remarks_written'),
+          key: _ctrl.writtenPadKey,
           controller: _ctrl._writtenCtrl,
           showRuledLines: true,
           initialPenColor: widget.initialPenColor,

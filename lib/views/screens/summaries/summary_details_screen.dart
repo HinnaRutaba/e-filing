@@ -496,10 +496,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                         CrossAxisAlignment.stretch,
                                     children: [
                                       _documentCard(),
-                                      // When unlocked the panel lives in the scroll.
-                                      if (showPanel && !isLocked) ...[
+                                      if (showPanel && !isLocked)
                                         _buildRemarksPanel(details),
-                                      ],
                                       const SizedBox(height: 16),
                                       _sidebar(),
                                     ],
@@ -510,10 +508,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                             tags: tags,
                           ),
                         ),
-                        // Locked: full panel is sticky above the action bar.
-                        // Wrapped in a scrollable so remarks are visible by default
-                        // Locked: sticky panel slides up with a spring animation.
-                        // Panel controls its own height (shows remarks input, rest scrolls).
                         if (showPanel && isLocked)
                           Container(
                                 decoration: BoxDecoration(
@@ -622,31 +616,25 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     });
   }
 
-  /// Scrolls the sticky panel just enough to reveal the signature pad.
-  /// The offset matches the ConstrainedBox maxHeight, which is sized to show
-  /// only the remarks input — so the signature pad sits right at that boundary.
+  /// Scrolls the sticky panel to fully reveal the signature pad.
   void _scrollToSignatureSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_stickyPanelScrollController.hasClients) return;
-      final targetOffset = _remarksPanelCtrl.mode == RemarksPanelMode.write
-          ? 400.0
-          : 340.0;
-      _stickyPanelScrollController.animateTo(
-        targetOffset.clamp(
-          0.0,
-          _stickyPanelScrollController.position.maxScrollExtent,
-        ),
+      if (!mounted) return;
+      final ctx = _remarksPanelCtrl.signPadKey.currentContext;
+      if (ctx == null) return;
+      final renderObj = ctx.findRenderObject();
+      if (renderObj == null || !renderObj.attached) return;
+      Scrollable.maybeOf(ctx)?.position.ensureVisible(
+        renderObj,
         duration: const Duration(milliseconds: 380),
         curve: Curves.easeOutCubic,
+        alignment: 0.0,
       );
     });
   }
 
   void _scrollActionBarToTop() {
     _remarksPanelCtrl.expand();
-    // Grab the ScrollableState synchronously, then after the RemarksSignPanel
-    // AnimatedSize (260ms) finishes use the RenderObject — no BuildContext
-    // crosses the async gap.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final ctx = _remarksPanelKey.currentContext;
