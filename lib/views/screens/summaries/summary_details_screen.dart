@@ -611,6 +611,17 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       _scrollActionBarToTop();
   }
 
+  void _scrollStickyPanelToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_stickyPanelScrollController.hasClients) return;
+      _stickyPanelScrollController.animateTo(
+        _stickyPanelScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   /// Scrolls the sticky panel just enough to reveal the signature pad.
   /// The offset matches the ConstrainedBox maxHeight, which is sized to show
   /// only the remarks input — so the signature pad sits right at that boundary.
