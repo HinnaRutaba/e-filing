@@ -512,36 +512,40 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                         ),
                         // Locked: full panel is sticky above the action bar.
                         // Wrapped in a scrollable so remarks are visible by default
-                        // and user scrolls within the panel to reach the signature.
+                        // Locked: sticky panel slides up with a spring animation.
+                        // Panel controls its own height (shows remarks input, rest scrolls).
                         if (showPanel && isLocked)
                           Container(
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.sizeOf(context).height * 0.45,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              border: Border(
-                                top: BorderSide(
-                                  color: AppColors.secondaryLight.withValues(
-                                    alpha: 0.35,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).scaffoldBackgroundColor,
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: AppColors.secondaryLight
+                                          .withValues(alpha: 0.35),
+                                    ),
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.secondaryDark.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, -2),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.secondaryDark.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, -2),
-                                ),
-                              ],
-                            ),
-                            // Panel handles its own internal scroll when locked;
-                            // the header stays pinned via Column(mainAxisSize.max).
-                            child: _buildRemarksPanel(details),
-                          ),
+                                child: _buildRemarksPanel(details),
+                              )
+                              .animate()
+                              .slideY(
+                                begin: 1.0,
+                                end: 0.0,
+                                duration: 320.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .fadeIn(duration: 220.ms, curve: Curves.easeOut),
                         _actionBar(),
                       ],
                     );

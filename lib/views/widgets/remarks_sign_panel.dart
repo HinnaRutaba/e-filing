@@ -171,17 +171,23 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
       ),
     );
 
-    // Sticky (locked) layout: header is pinned, body scrolls internally.
-    // The parent container supplies a maxHeight constraint.
+    // Sticky (locked) layout: header is always visible, body scrolls internally.
+    // The scroll view height is capped to show just the remarks-input section;
+    // signature + forwarding fields are revealed by scrolling.
     if (_ctrl.isLocked && _expanded) {
+      // Type editor = 220 px, write canvas = 280 px.
+      // Add mode-toggle (~44), info row (~35), spacing (~26), padding (~14).
+      final scrollMaxHeight =
+          _ctrl.mode == RemarksPanelMode.write ? 400.0 : 340.0;
       return Container(
         decoration: decoration,
         child: Column(
-          mainAxisSize: MainAxisSize.max,
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _header(),
-            Expanded(
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: scrollMaxHeight),
               child: SingleChildScrollView(
                 controller: widget.scrollController,
                 child: _body(),
@@ -222,31 +228,17 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           ? const BorderRadius.vertical(top: Radius.circular(4))
           : BorderRadius.circular(4),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+        padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
         child: Row(
           children: [
             Expanded(child: AppText.titleLarge('Add your remarks')),
             if (_expanded && widget.onLockToggle != null) ...[
-              Tooltip(
-                message: isLocked ? 'Unlock panel (scroll together)' : 'Lock panel (scroll document independently)',
-                child: InkWell(
-                  onTap: widget.onLockToggle,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
-                        key: ValueKey(isLocked),
-                        size: 18,
-                        color: isLocked ? AppColors.primary : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
+              const SizedBox(width: 8),
+              _LockChip(
+                isLocked: isLocked,
+                onTap: widget.onLockToggle!,
               ),
-              const SizedBox(width: 2),
+              const SizedBox(width: 4),
             ],
             if (!isLocked)
               AnimatedRotation(
@@ -445,6 +437,150 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           },
         );
       },
+    );
+  }
+}
+
+/// Pill-shaped chip with an animated lock icon that snaps closed on lock.
+class _LockChip extends StatefulWidget {
+  final bool isLocked;
+  final VoidCallback onTap;
+
+  const _LockChip({required this.isLocked, required this.onTap});
+
+  @override
+  State<_LockChip> createState() => _LockChipState();
+}
+
+class _LockChipState extends State<_LockChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _slideY;
+  late final Animation<double> _fadeIn;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    // Scale: 0.4 → 1.0 with elastic bounce (shackle snapping shut)
+    _scale = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
+    );
+    // SlideY: icon enters from slightly above (simulates shackle moving down)
+    _slideY = Tween<double>(begin: -6.0, end: 0.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
+    );
+    _fadeIn = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+      ),
+    );
+    // Start at final position if already locked on mount.
+    if (widget.isLocked) _ctrl.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(_LockChip old) {
+    super.didUpdateWidget(old);
+    if (widget.isLocked == old.isLocked) return;
+    if (widget.isLocked) {
+      _ctrl.forward(from: 0.0);
+    } else {
+      _ctrl.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = widget.isLocked;
+    final chipColor = isLocked
+        ? AppColors.primary.withValues(alpha: 0.10)
+        : AppColors.secondaryLight.withValues(alpha: 0.10);
+    final borderColor = isLocked
+        ? AppColors.primary.withValues(alpha: 0.55)
+        : AppColors.secondaryLight.withValues(alpha: 0.45);
+    final contentColor =
+        isLocked ? AppColors.primary : AppColors.textSecondary;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: chipColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: 1.2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (_, __) {
+                  // Locked icon animates in (scale + slide); open icon is static.
+                  if (isLocked || _ctrl.value > 0.01) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Open lock fades out as locking begins
+                        FadeTransition(
+                          opacity: Tween<double>(begin: 1.0, end: 0.0).animate(
+                            CurvedAnimation(
+                              parent: _ctrl,
+                              curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+                            ),
+                          ),
+                          child: const Icon(Icons.lock_open_rounded,
+                              size: 14, color: AppColors.textSecondary),
+                        ),
+                        // Closed lock snaps in from above
+                        FadeTransition(
+                          opacity: _fadeIn,
+                          child: Transform.translate(
+                            offset: Offset(0, _slideY.value),
+                            child: Transform.scale(
+                              scale: _scale.value,
+                              child: const Icon(Icons.lock_rounded,
+                                  size: 14, color: AppColors.primary),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return const Icon(Icons.lock_open_rounded,
+                      size: 14, color: AppColors.textSecondary);
+                },
+              ),
+            ),
+            const SizedBox(width: 6),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 250),
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: contentColor,
+              ),
+              child: const Text('Always display remarks'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
