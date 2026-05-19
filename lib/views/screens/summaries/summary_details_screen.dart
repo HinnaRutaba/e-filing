@@ -607,18 +607,28 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _selectedAction = action;
       }
     });
-    if (action == SummaryAction.signForward) _scrollActionBarToTop();
+    if (action == SummaryAction.signForward && !_remarksPanelCtrl.isLocked)
+      _scrollActionBarToTop();
   }
 
-  /// Scrolls the sticky panel to its bottom so the signature pad is visible.
+  /// Scrolls the sticky panel just enough to reveal the signature pad.
+  /// The offset matches the ConstrainedBox maxHeight, which is sized to show
+  /// only the remarks input — so the signature pad sits right at that boundary.
   void _scrollToSignatureSection() {
-    if (!_stickyPanelScrollController.hasClients) return;
-    final pos = _stickyPanelScrollController.position;
-    _stickyPanelScrollController.animateTo(
-      pos.maxScrollExtent,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_stickyPanelScrollController.hasClients) return;
+      final targetOffset = _remarksPanelCtrl.mode == RemarksPanelMode.write
+          ? 400.0
+          : 340.0;
+      _stickyPanelScrollController.animateTo(
+        targetOffset.clamp(
+          0.0,
+          _stickyPanelScrollController.position.maxScrollExtent,
+        ),
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   void _scrollActionBarToTop() {
@@ -1776,12 +1786,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     final deptId = _selectedDestDept?.id;
     if (deptId == null) {
       Toast.error(message: 'Please select a destination department');
+      if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
       return;
     }
     final hasOfficers =
         _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
     if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
       Toast.error(message: 'Please select a destination officer');
+      if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
       return;
     }
 
