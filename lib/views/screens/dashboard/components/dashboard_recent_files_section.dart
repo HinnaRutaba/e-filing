@@ -15,13 +15,13 @@ class DashboardRecentFilesSection extends StatelessWidget {
   final DashboardEfileKpisModel? kpis;
   final bool loading;
 
-  static const _labels = ['Pending', 'Sent', 'Received', 'Action Req.'];
-
-  static const _colors = [
-    Color(0xFFFFB74D),
-    Color(0xFF5C6BC0),
-    Color(0xFF2E9E6B),
-    Color(0xFFE57373),
+  static const _entries = [
+    (label: 'Pending',        color: Color(0xFFFFB74D), icon: Icons.hourglass_top_rounded),
+    (label: 'Sent',           color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
+    (label: 'Received',       color: Color(0xFF2E9E6B), icon: Icons.move_to_inbox_rounded),
+    (label: 'Action Req.',    color: Color(0xFFE57373), icon: Icons.info_outline_rounded),
+    (label: 'My Files',       color: Color(0xFF7C5CBF), icon: Icons.folder_special_rounded),
+    (label: 'Archive',        color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
   ];
 
   List<int> _values(DashboardEfileKpisModel? k) => [
@@ -29,6 +29,8 @@ class DashboardRecentFilesSection extends StatelessWidget {
     k?.filesSent ?? 0,
     k?.filesReceived ?? 0,
     k?.filesActionRequired ?? 0,
+    k?.myFiles ?? 0,
+    k?.archive ?? 0,
   ];
 
   @override
@@ -37,7 +39,7 @@ class DashboardRecentFilesSection extends StatelessWidget {
     final total = values.fold(0, (a, b) => a + b);
 
     return DashboardSectionCard(
-      icon: Icons.folder_open_rounded,
+      icon: Icons.pie_chart_outline_rounded,
       iconBgColor: const Color(0xFFE07B20),
       title: 'File Activity',
       badgeLabel: 'Total: $total',
@@ -67,32 +69,27 @@ class DashboardRecentFilesSection extends StatelessWidget {
   }
 
   Widget _buildChart(BuildContext context, List<int> values, int total) {
-    final sections = <PieChartSectionData>[];
-    for (var i = 0; i < _labels.length; i++) {
-      if (values[i] == 0) continue;
-      final color = _colors[i];
-      sections.add(
-        PieChartSectionData(
-          value: values[i].toDouble(),
-          color: color,
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [color.withValues(alpha: 0.6), color],
+    final sections = [
+      for (var i = 0; i < _entries.length; i++)
+        if (values[i] > 0)
+          PieChartSectionData(
+            color: _entries[i].color,
+            value: values[i].toDouble(),
+            title: '${values[i]}',
+            titleStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
+            radius: 52,
+            gradient: LinearGradient(
+              colors: [_entries[i].color.withValues(alpha: 0.6), _entries[i].color],
+            ),
           ),
-          title: '${values[i]}',
-          titleStyle: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-          ),
-          radius: 52,
-        ),
-      );
-    }
+    ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         children: [
           SizedBox(
@@ -101,12 +98,12 @@ class DashboardRecentFilesSection extends StatelessWidget {
               children: [
                 PieChart(
                   PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 44,
                     sections: sections,
-                    sectionsSpace: 3,
-                    centerSpaceRadius: 42,
                   ),
                 ).animate().fadeIn(duration: 600.ms).scale(
-                  begin: const Offset(0.7, 0.7),
+                  begin: const Offset(0.6, 0.6),
                   end: const Offset(1, 1),
                   duration: 600.ms,
                   curve: Curves.easeOutBack,
@@ -138,33 +135,33 @@ class DashboardRecentFilesSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            alignment: WrapAlignment.center,
-            children: List.generate(_labels.length, (i) {
-              if (values[i] == 0) return const SizedBox.shrink();
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: _colors[i],
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < _entries.length; i++)
+                if (values[i] > 0)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: _entries[i].color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${_entries[i].label}: ${values[i]}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.appColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _labels[i],
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.appColors.textSecondary,
-                    ),
-                  ),
-                ],
-              );
-            }),
+            ],
           ),
         ],
       ),

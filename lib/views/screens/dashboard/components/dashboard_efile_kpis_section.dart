@@ -1,7 +1,6 @@
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -10,133 +9,117 @@ class DashboardEfileKpisSection extends StatelessWidget {
 
   final DashboardEfileKpisModel? kpis;
 
-  @override
-  Widget build(BuildContext context) {
-    return DashboardSectionCard(
-      icon: Icons.pie_chart_outline_rounded,
-      iconBgColor: const Color(0xFF2E9E6B),
-      title: 'Files Overview',
-      badgeLabel: 'eFile KPIs',
-      badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
-      badgeTextColor: const Color(0xFF2E9E6B),
-      body: _buildBody(context),
-    );
-  }
-
-  static const _entries = [
-    (label: 'Pending', color: Color(0xFFFFB74D)),
-    (label: 'Sent', color: Color(0xFF5C6BC0)),
-    (label: 'Received', color: Color(0xFF2E9E6B)),
-    (label: 'Action Req.', color: Color(0xFFE57373)),
-    (label: 'My Files', color: Color(0xFF7C5CBF)),
-    (label: 'Archive', color: Color(0xFF90A4AE)),
+  static const _rows = [
+    (label: 'Pending',        color: Color(0xFFFFB74D), icon: Icons.hourglass_top_rounded),
+    (label: 'Sent',           color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
+    (label: 'Received',       color: Color(0xFF2E9E6B), icon: Icons.move_to_inbox_rounded),
+    (label: 'Action Required',color: Color(0xFFE57373), icon: Icons.info_outline_rounded),
+    (label: 'My Files',       color: Color(0xFF7C5CBF), icon: Icons.folder_special_rounded),
+    (label: 'Archive',        color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
   ];
 
-  List<double> get _values => [
-        (kpis?.pending ?? 0).toDouble(),
-        (kpis?.filesSent ?? 0).toDouble(),
-        (kpis?.filesReceived ?? 0).toDouble(),
-        (kpis?.filesActionRequired ?? 0).toDouble(),
-        (kpis?.myFiles ?? 0).toDouble(),
-        (kpis?.archive ?? 0).toDouble(),
+  List<int> _values() => [
+        kpis?.pending ?? 0,
+        kpis?.filesSent ?? 0,
+        kpis?.filesReceived ?? 0,
+        kpis?.filesActionRequired ?? 0,
+        kpis?.myFiles ?? 0,
+        kpis?.archive ?? 0,
       ];
 
-  Widget _buildBody(BuildContext context) {
-    final values = _values;
-    final total = values.fold(0.0, (s, v) => s + v);
+  @override
+  Widget build(BuildContext context) {
+    final values = _values();
+    final total = values.fold(0, (a, b) => a + b);
 
-    if (total == 0) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        child: Center(
-          child: Text(
-            'No file data available.',
-            style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
-          ),
+    return DashboardSectionCard(
+      icon: Icons.folder_open_rounded,
+      iconBgColor: const Color(0xFF2E9E6B),
+      title: 'Files Overview',
+      badgeLabel: 'Total: $total',
+      badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
+      badgeTextColor: const Color(0xFF2E9E6B),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          children: [
+            for (var i = 0; i < _rows.length; i++)
+              _StatTile(
+                    label: _rows[i].label,
+                    value: values[i],
+                    color: _rows[i].color,
+                    icon: _rows[i].icon,
+                  )
+                  .animate(delay: (i * 80).ms)
+                  .fadeIn(duration: 300.ms)
+                  .slideX(
+                    begin: -0.06,
+                    end: 0,
+                    duration: 300.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
+          ],
         ),
-      );
-    }
-
-    final sections = [
-      for (var i = 0; i < _entries.length; i++)
-        if (values[i] > 0)
-          PieChartSectionData(
-            color: _entries[i].color,
-            value: values[i],
-            title: '${values[i].toInt()}',
-            titleStyle: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-            gradient: LinearGradient(
-              colors: [
-                _entries[i].color.withValues(alpha: 0.6),
-                _entries[i].color,
-              ],
-            ),
-          ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 180,
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 48,
-                sections: sections,
-              ),
-            ).animate().fadeIn(duration: 600.ms).scale(
-              begin: const Offset(0.6, 0.6),
-              end: const Offset(1, 1),
-              duration: 600.ms,
-              curve: Curves.easeOutBack,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              for (var i = 0; i < _entries.length; i++)
-                _LegendDot(
-                  label: '${_entries[i].label}: ${values[i].toInt()}',
-                  color: _entries[i].color,
-                ),
-            ],
-          ),
-        ],
       ),
     );
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.label, required this.color});
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
 
   final String label;
+  final int value;
   final Color color;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: context.appColors.textSecondary),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: context.appColors.textSecondary,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(100),
+            ),
+            child: Text(
+              '$value',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

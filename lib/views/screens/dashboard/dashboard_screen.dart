@@ -15,8 +15,6 @@ import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_daak_overview_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_daak_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_files_section.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_my_files_section.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_pending_files_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_summaries_section.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -470,6 +468,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  Widget _buildSectionHeading(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppText.titleMedium(
+        title,
+        fontWeight: FontWeight.w700,
+        color: context.appColors.textPrimary,
+      ),
+    );
+  }
+
   Widget _buildSections(
     BuildContext context,
     DashboardModel dashboardState,
@@ -485,10 +494,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       kpis: stats?.efileKpis,
       loading: dashboardState.loadingStats,
     );
-    final recentMyFilesSection = DashboardRecentMyFilesSection(
-      kpis: stats?.efileKpis,
-      loading: dashboardState.loadingStats,
-    );
     final recentDaakSection = DashboardRecentDaakSection(
       items: dashboardState.daakLetters,
       loading: dashboardState.loadingDaakLetters,
@@ -497,40 +502,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       items: dashboardState.daakLetters,
       loading: dashboardState.loadingDaakLetters,
     );
-    final recentPendingFilesListSection = DashboardRecentPendingFilesSection(
-      files: stats?.recentPendingFiles ?? [],
-      loading: dashboardState.loadingStats,
-    );
     final efileKpisSection = DashboardEfileKpisSection(kpis: stats?.efileKpis);
     final deptTotalsSection = DashboardDeptTotalsSection(
       totals: stats?.summaryStats?.departmentTotals,
     );
 
+    const gap = SizedBox(height: 16);
+    const hGap = SizedBox(width: 16);
+    const sectionGap = SizedBox(height: 28);
     const bottomPadding = SizedBox(height: 100);
 
     if (isMobile) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Summaries
-            recentSummariesSection,
-            const SizedBox(height: 16),
-            deptTotalsSection,
-            const SizedBox(height: 16),
-            // Daak
-            recentDaakSection,
-            const SizedBox(height: 16),
-            daakOverviewSection,
-            const SizedBox(height: 16),
-            // Files
-            recentPendingFilesListSection,
-            const SizedBox(height: 16),
+            _buildSectionHeading('Files'),
             recentPendingFilesSection,
-            const SizedBox(height: 16),
-            recentMyFilesSection,
-            const SizedBox(height: 16),
+            gap,
             efileKpisSection,
+            sectionGap,
+            _buildSectionHeading('Daak'),
+            daakOverviewSection,
+
+            gap,
+            recentDaakSection,
+            sectionGap,
+            _buildSectionHeading('Summaries'),
+            recentSummariesSection,
+            gap,
+            deptTotalsSection,
             bottomPadding,
           ],
         ),
@@ -538,42 +540,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 5,
-            child: Column(
-              children: [
-                // Summaries
-                recentSummariesSection,
-                const SizedBox(height: 16),
-                deptTotalsSection,
-                const SizedBox(height: 16),
-                // Files
-                recentPendingFilesListSection,
-                const SizedBox(height: 16),
-                efileKpisSection,
-              ],
-            ),
+          _buildSectionHeading('Files'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Column(children: [efileKpisSection])),
+              hGap,
+              Expanded(child: Column(children: [recentPendingFilesSection])),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 4,
-            child: Column(
-              children: [
-                // Daak
-                recentDaakSection,
-                const SizedBox(height: 16),
-                daakOverviewSection,
-                const SizedBox(height: 16),
-                // Files cont.
-                recentPendingFilesSection,
-                const SizedBox(height: 16),
-                recentMyFilesSection,
-              ],
-            ),
+          sectionGap,
+          _buildSectionHeading('Daak'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: daakOverviewSection),
+              hGap,
+              Expanded(child: recentDaakSection),
+            ],
+          ),
+          sectionGap,
+          _buildSectionHeading('Summaries'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: recentSummariesSection),
+              hGap,
+              Expanded(child: deptTotalsSection),
+            ],
           ),
         ],
       ),
