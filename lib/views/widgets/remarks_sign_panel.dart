@@ -59,6 +59,15 @@ class RemarksSignPanelController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _isLocked = false;
+  bool get isLocked => _isLocked;
+
+  void toggleLock() {
+    _isLocked = !_isLocked;
+    if (_isLocked) _expanded = true;
+    notifyListeners();
+  }
+
   void reset() {
     _signCtrl.clearSilently();
     _writtenCtrl.clearSilently();
@@ -107,6 +116,9 @@ class RemarksSignPanel extends StatefulWidget {
   /// When null (default) the pad stretches to full width.
   final double? signPadWidth;
 
+  /// Called when the user taps the lock/unlock button in the panel header.
+  final VoidCallback? onLockToggle;
+
   const RemarksSignPanel({
     super.key,
     required this.controller,
@@ -117,6 +129,7 @@ class RemarksSignPanel extends StatefulWidget {
     this.initialPenColor = SignatureColor.darkBlue,
     this.showHeading = true,
     this.signPadWidth = 400,
+    this.onLockToggle,
   });
 
   @override
@@ -135,7 +148,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     // setState on any sibling page's state that already has a listener on this
     // shared controller — causing setState-during-build errors in the pager.
     _ctrl._mode = widget.initialMode;
-    _ctrl._expanded = widget.initiallyExpanded;
+    // Don't reset _expanded when locked — toggleLock() already set it to true.
+    if (!_ctrl.isLocked) _ctrl._expanded = widget.initiallyExpanded;
     _ctrl.addListener(_onControllerChanged);
   }
 
@@ -174,30 +188,53 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   }
 
   Widget _header() {
-    return !widget.showHeading
-        ? const SizedBox(height: 24)
-        : InkWell(
-            onTap: () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
-            borderRadius: _expanded
-                ? const BorderRadius.vertical(top: Radius.circular(4))
-                : BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-              child: Row(
-                children: [
-                  Expanded(child: AppText.titleLarge('Add your remarks')),
-                  AnimatedRotation(
-                    turns: _expanded ? 0 : -0.5,
-                    duration: const Duration(milliseconds: 250),
-                    child: const Icon(
-                      Icons.expand_more_rounded,
-                      color: AppColors.textSecondary,
+    if (!widget.showHeading) return const SizedBox(height: 24);
+    final isLocked = _ctrl.isLocked;
+    return InkWell(
+      onTap: isLocked ? null : () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
+      borderRadius: _expanded
+          ? const BorderRadius.vertical(top: Radius.circular(4))
+          : BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+        child: Row(
+          children: [
+            Expanded(child: AppText.titleLarge('Add your remarks')),
+            if (_expanded && widget.onLockToggle != null) ...[
+              Tooltip(
+                message: isLocked ? 'Unlock panel (scroll together)' : 'Lock panel (scroll document independently)',
+                child: InkWell(
+                  onTap: widget.onLockToggle,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                        key: ValueKey(isLocked),
+                        size: 18,
+                        color: isLocked ? AppColors.primary : AppColors.textSecondary,
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          );
+              const SizedBox(width: 2),
+            ],
+            if (!isLocked)
+              AnimatedRotation(
+                turns: _expanded ? 0 : -0.5,
+                duration: const Duration(milliseconds: 250),
+                child: const Icon(
+                  Icons.expand_more_rounded,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _body() {

@@ -151,6 +151,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       RemarksSignPanelController();
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _actionBarScrollController = ScrollController();
+  final ScrollController _stickyPanelScrollController = ScrollController();
   final GlobalKey _remarksPanelKey = GlobalKey();
 
   final TextEditingController _destDeptController = TextEditingController();
@@ -341,6 +342,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                 details?.movements.last.toDepartment);
   }
 
+  bool _showRemarksPanel(SummaryDetailsModel? details) {
+    return (isCMCurrentHolder ||
+            (!isDeo &&
+                actionsAvailable &&
+                showHandWrittedRemarksSection &&
+                !(isDeo &&
+                    details?.isLatestMovementSignedAndForwarded == true))) &&
+        !isPsToCmCmReturned;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -383,6 +394,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     _destOfficerController.dispose();
     _mainScrollController.dispose();
     _actionBarScrollController.dispose();
+    _stickyPanelScrollController.dispose();
     super.dispose();
   }
 
@@ -451,84 +463,90 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     ],
                   ),
                 )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: StickyTagDrawer(
-                        panelWidth: MediaQuery.sizeOf(context).width * 0.85,
-                        tagsAlignment: const Alignment(0.0, -0.5),
-                        mainContent: RefreshIndicator(
-                          onRefresh: _loadDetails,
-                          child: Scrollbar(
-                            controller: _mainScrollController,
-                            thickness: 10,
-                            trackVisibility: true,
-                            thumbVisibility: true,
-                            child: SingleChildScrollView(
-                              controller: _mainScrollController,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _documentCard(),
-                                  if ((isCMCurrentHolder ||
-                                          (!isDeo &&
-                                              actionsAvailable &&
-                                              showHandWrittedRemarksSection &&
-                                              !(isDeo &&
-                                                  details?.isLatestMovementSignedAndForwarded ==
-                                                      true))) &&
-                                      !isPsToCmCmReturned) ...[
-                                    RemarksSignPanel(
-                                      key: _remarksPanelKey,
-
-                                      controller: _remarksPanelCtrl,
-                                      scrollController: _mainScrollController,
-                                      initialMode: isCM || !context.isMobile
-                                          ? RemarksPanelMode.write
-                                          : RemarksPanelMode.type,
-                                      initiallyExpanded: isCM,
-                                      bottomContent: isCMCurrentHolder
-                                          ? AppSolidButton(
-                                              onPressed: _submitSignAndReturnCM,
-                                              text: 'Sign and Return',
-                                              width: double.infinity,
-                                            )
-                                          : Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.stretch,
-                                              children: [
-                                                _forwardingFields(),
-                                                const SizedBox(height: 16),
-                                                _actionButton(
-                                                  SummaryAction.signForward,
-                                                  expand: false,
-                                                  width: double.infinity,
-                                                  onTapOverride:
-                                                      _submitFromRemarksPanel,
-                                                ),
-                                              ],
-                                            ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 16),
-                                  _sidebar(),
-                                ],
+              : Builder(
+                  builder: (context) {
+                    final showPanel = _showRemarksPanel(details);
+                    final isLocked = _remarksPanelCtrl.isLocked && showPanel;
+                    final tags = [
+                      _buildAttachmentsTag(details),
+                      _buildBriefsTag(details),
+                      if (isPsToCm || isCM || isDeoInCmSecretariat)
+                        _buildVoiceNotesTag(),
+                    ];
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: StickyTagDrawer(
+                            panelWidth: MediaQuery.sizeOf(context).width * 0.85,
+                            tagsAlignment: const Alignment(0.0, -0.5),
+                            mainContent: RefreshIndicator(
+                              onRefresh: _loadDetails,
+                              child: Scrollbar(
+                                controller: _mainScrollController,
+                                thickness: 10,
+                                trackVisibility: true,
+                                thumbVisibility: true,
+                                child: SingleChildScrollView(
+                                  controller: _mainScrollController,
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _documentCard(),
+                                      // When unlocked the panel lives in the scroll.
+                                      if (showPanel && !isLocked) ...[
+                                        _buildRemarksPanel(details),
+                                      ],
+                                      const SizedBox(height: 16),
+                                      _sidebar(),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
+                            tags: tags,
                           ),
                         ),
-                        tags: [
-                          _buildAttachmentsTag(details),
-                          _buildBriefsTag(details),
-                          if (isPsToCm || isCM || isDeoInCmSecretariat)
-                            _buildVoiceNotesTag(),
-                        ],
-                      ),
-                    ),
-                    _actionBar(),
-                  ],
+                        // Locked: full panel is sticky above the action bar.
+                        // Wrapped in a scrollable so remarks are visible by default
+                        // and user scrolls within the panel to reach the signature.
+                        if (showPanel && isLocked)
+                          Container(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  MediaQuery.sizeOf(context).height * 0.45,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppColors.secondaryLight.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                ),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.secondaryDark.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, -2),
+                                ),
+                              ],
+                            ),
+                            child: SingleChildScrollView(
+                              controller: _stickyPanelScrollController,
+                              child: _buildRemarksPanel(details),
+                            ),
+                          ),
+                        _actionBar(),
+                      ],
+                    );
+                  },
                 ),
         ),
       ),
@@ -555,7 +573,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
     if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
       _remarksPanelCtrl.expand();
-      _scrollActionBarToTop();
+      // When sticky the panel is already visible — skip the main-scroll jump so
+      // it doesn't race against the sig-error scroll inside _submitFromRemarksPanel.
+      if (!_remarksPanelCtrl.isLocked) _scrollActionBarToTop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _submitFromRemarksPanel();
       });
@@ -585,6 +605,17 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       }
     });
     if (action == SummaryAction.signForward) _scrollActionBarToTop();
+  }
+
+  /// Scrolls the sticky panel to its bottom so the signature pad is visible.
+  void _scrollToSignatureSection() {
+    if (!_stickyPanelScrollController.hasClients) return;
+    final pos = _stickyPanelScrollController.position;
+    _stickyPanelScrollController.animateTo(
+      pos.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _scrollActionBarToTop() {
@@ -1734,6 +1765,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       Toast.error(message: 'Please sign in the "Sign here" section');
+      if (_remarksPanelCtrl.isLocked) _scrollToSignatureSection();
       return;
     }
 
@@ -2181,6 +2213,40 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           !showHandWrittedRemarksSection &&
           userDesg?.roleEnum != ActiveUserDesgRole.deo &&
           !isPsToCmCmReturned,
+    );
+  }
+
+  Widget _buildRemarksPanel(SummaryDetailsModel? details) {
+    return RemarksSignPanel(
+      key: _remarksPanelKey,
+      controller: _remarksPanelCtrl,
+      scrollController: _remarksPanelCtrl.isLocked
+          ? _stickyPanelScrollController
+          : _mainScrollController,
+      initialMode: isCM || !context.isMobile
+          ? RemarksPanelMode.write
+          : RemarksPanelMode.type,
+      initiallyExpanded: isCM,
+      onLockToggle: () => setState(() => _remarksPanelCtrl.toggleLock()),
+      bottomContent: isCMCurrentHolder
+          ? AppSolidButton(
+              onPressed: _submitSignAndReturnCM,
+              text: 'Sign and Return',
+              width: double.infinity,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _forwardingFields(),
+                const SizedBox(height: 16),
+                _actionButton(
+                  SummaryAction.signForward,
+                  expand: false,
+                  width: double.infinity,
+                  onTapOverride: _submitFromRemarksPanel,
+                ),
+              ],
+            ),
     );
   }
 
