@@ -21,18 +21,24 @@ class RemarksSignPanelController extends ChangeNotifier {
   // prevents duplicate-GlobalKey crashes when multiple panel instances share
   // the same controller (e.g. during a PageView page-transition animation).
   GlobalKey? _activeSignPadKey;
+  GlobalKey? _activeRemarksPadKey;
 
-  // External callers (e.g. scroll-to-signature) read through this getter.
+  // External callers (e.g. scroll-to-signature/remarks) read through these.
   GlobalKey? get signPadKey => _activeSignPadKey;
+  GlobalKey? get remarksPadKey => _activeRemarksPadKey;
 
-  void _attachKeys(GlobalKey sign, GlobalKey written) {
+  void _attachKeys(GlobalKey sign, GlobalKey written, GlobalKey remarks) {
     _activeSignPadKey = sign;
+    _activeRemarksPadKey = remarks;
   }
 
   // Only clears if the detaching state's key is still the active one,
   // so a late-disposing old page doesn't wipe the key set by the new page.
   void _detachKeys(GlobalKey sign) {
-    if (_activeSignPadKey == sign) _activeSignPadKey = null;
+    if (_activeSignPadKey == sign) {
+      _activeSignPadKey = null;
+      _activeRemarksPadKey = null;
+    }
   }
 
   RemarksPanelMode _mode = RemarksPanelMode.type;
@@ -163,6 +169,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   // Local keys — unique per state instance, never shared across pages.
   final GlobalKey _signPadKey = GlobalKey();
   final GlobalKey _writtenPadKey = GlobalKey();
+  final GlobalKey _remarksPadKey = GlobalKey();
 
   @override
   void initState() {
@@ -173,7 +180,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     _ctrl._mode = widget.initialMode;
     // Don't reset _expanded when locked — toggleLock() already set it to true.
     if (!_ctrl.isLocked) _ctrl._expanded = widget.initiallyExpanded;
-    _ctrl._attachKeys(_signPadKey, _writtenPadKey);
+    _ctrl._attachKeys(_signPadKey, _writtenPadKey, _remarksPadKey);
     _ctrl.addListener(_onControllerChanged);
   }
 
@@ -331,11 +338,14 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             ],
           ),
           const SizedBox(height: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _ctrl.mode == RemarksPanelMode.type
-                ? _typedField()
-                : _writtenCanvas(),
+          SizedBox(
+            key: _remarksPadKey,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _ctrl.mode == RemarksPanelMode.type
+                  ? _typedField()
+                  : _writtenCanvas(),
+            ),
           ),
           const Divider(height: 24),
           AppText.titleLarge('Sign here'),

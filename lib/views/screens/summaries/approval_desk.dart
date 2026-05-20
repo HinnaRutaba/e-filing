@@ -117,6 +117,22 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     });
   }
 
+  void _scrollToRemarksSection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _remarksPanelCtrl.remarksPadKey?.currentContext;
+      if (ctx == null) return;
+      final renderObj = ctx.findRenderObject();
+      if (renderObj == null || !renderObj.attached) return;
+      Scrollable.maybeOf(ctx)?.position.ensureVisible(
+        renderObj,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+    });
+  }
+
   void _scrollToSignatureSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -156,12 +172,14 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       if (!mounted) return;
       if (typedRemarks.isEmpty) {
         Toast.error(message: 'Please type your remarks before approving');
+        _scrollToRemarksSection();
         return;
       }
     } else {
       typedRemarks = '';
       if (_remarksPanelCtrl.isWrittenEmpty) {
         Toast.error(message: 'Please write your remarks before approving');
+        _scrollToRemarksSection();
         return;
       }
     }
