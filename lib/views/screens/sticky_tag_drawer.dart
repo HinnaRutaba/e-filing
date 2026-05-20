@@ -127,6 +127,11 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
       child: Stack(
         children: [
           widget.mainContent,
+          if (isOpen)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _close,
+            ),
           AnimatedBuilder(
             animation: _widthAnimation,
             builder: (context, child) {
