@@ -160,120 +160,181 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
         final pageKey = ValueKey(summary?.id ?? i);
         final scrollCtrl = _scrollControllers[i];
 
-        return StickyTagDrawer(
-          panelWidth:
-              MediaQuery.sizeOf(context).width * widget.panelWidthFactor,
-          tagsAlignment: widget.tagsAlignment,
-          mainContent: Scrollbar(
-            controller: scrollCtrl,
-            thickness: 10,
-            trackVisibility: true,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: scrollCtrl,
-              padding: const EdgeInsets.fromLTRB(16, 16, 24, 16),
-              child: Column(
-                children: [
-                  if (summary != null)
-                    SummaryDocumentCard(
-                      summary: summary,
-                      remarkTrack: details.remarkTrack,
-                      actions: details.actions,
-                    ),
-                  if (widget.isCm) ...[
-                    const SizedBox(height: 16),
-                    VoiceNotesSection(
-                      key: ValueKey('vn_${summary?.id ?? i}'),
-                      summaryId: summary?.id,
-                      visibility: VoiceNoteVisibility.cm,
-                      canDelete: false,
-                      crossAxisCount: context.isMobile ? 1 : 2,
-                    ),
+        return Stack(
+          children: [
+            StickyTagDrawer(
+              panelWidth:
+                  MediaQuery.sizeOf(context).width * widget.panelWidthFactor,
+              tagsAlignment: widget.tagsAlignment,
+              mainContent: Scrollbar(
+                controller: scrollCtrl,
+                thickness: 10,
+                trackVisibility: true,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 24, 16),
+                  child: Column(
+                    children: [
+                      if (summary != null)
+                        SummaryDocumentCard(
+                          summary: summary,
+                          remarkTrack: details.remarkTrack,
+                          actions: details.actions,
+                        ),
+                      if (widget.isCm) ...[
+                        const SizedBox(height: 16),
+                        VoiceNotesSection(
+                          key: ValueKey('vn_${summary?.id ?? i}'),
+                          summaryId: summary?.id,
+                          visibility: VoiceNoteVisibility.cm,
+                          canDelete: false,
+                          crossAxisCount: context.isMobile ? 1 : 2,
+                        ),
 
-                    const SizedBox(height: 16),
-                    _buildBriefsSection(details, context.isMobile ? 1 : 2),
-                    const SizedBox(height: 16),
-                  ],
-                  if (!widget.isRemarksLocked)
-                    RemarksSignPanel(
-                      key: widget.remarksPanelKey ?? pageKey,
-                      controller: widget.remarksPanelController,
-                      scrollController: scrollCtrl,
-                      initialMode: widget.initialRemarksMode,
-                      bottomContent: widget.bottomContent,
-                      initiallyExpanded: true,
-                      showHeading: false,
-                      initialPenColor: widget.initialPenColor,
-                      signPadWidth: 450,
-                      onLockToggle: widget.onLockToggle,
+                        const SizedBox(height: 16),
+                        _buildBriefsSection(details, context.isMobile ? 1 : 2),
+                        const SizedBox(height: 16),
+                      ],
+                      if (!widget.isRemarksLocked)
+                        RemarksSignPanel(
+                          key: widget.remarksPanelKey ?? pageKey,
+                          controller: widget.remarksPanelController,
+                          scrollController: scrollCtrl,
+                          initialMode: widget.initialRemarksMode,
+                          bottomContent: widget.bottomContent,
+                          initiallyExpanded: true,
+                          showHeading: false,
+                          initialPenColor: widget.initialPenColor,
+                          signPadWidth: 450,
+                          onLockToggle: widget.onLockToggle,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              tags: [
+                StickyTag(
+                  text: 'Attachment (${details.attachments.length})',
+                  backgroundColor: AppColors.primary,
+                  panelContent: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: AttachmentsSection(
+                        mainPdf: null,
+                        attachments: details.attachments,
+                        canAddMore: false,
+                        canDelete: false,
+                        onViewAttachment: (a) => _viewAttachment(context, a),
+                        onDeleteAttachment: (_) {},
+                      ),
                     ),
+                  ),
+                ),
+                if (!widget.isCm) ...[
+                  StickyTag(
+                    text: 'Brief (${details.briefs.length})',
+                    backgroundColor: Colors.orange,
+                    panelContent: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      physics: const BouncingScrollPhysics(),
+                      child: details.briefs.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Center(
+                                child: AppText.bodyMedium(
+                                  'No briefs available',
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                for (
+                                  int j = 0;
+                                  j < details.briefs.length;
+                                  j++
+                                ) ...[
+                                  if (j > 0) const SizedBox(height: 12),
+                                  _buildBriefCard(details.briefs[j]),
+                                ],
+                              ],
+                            ),
+                    ),
+                  ),
+                  StickyTag(
+                    text:
+                        'Voice Notes (${details.voiceNotes.where((v) => v.visibility == VoiceNoteVisibility.cm).length})',
+                    backgroundColor: Colors.teal,
+                    panelContent: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                        child: VoiceNotesSection(
+                          summaryId: summary?.id,
+                          visibility: VoiceNoteVisibility.cm,
+                          canDelete: false,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            Positioned(
+              right: 8,
+              top: 72,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _scrollButton(
+                    icon: Icons.keyboard_arrow_up_rounded,
+                    onTap: () {
+                      if (scrollCtrl.hasClients) {
+                        scrollCtrl.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _scrollButton(
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    onTap: () {
+                      if (scrollCtrl.hasClients) {
+                        scrollCtrl.animateTo(
+                          scrollCtrl.position.maxScrollExtent,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
-          ),
-          tags: [
-            StickyTag(
-              text: 'Attachment (${details.attachments.length})',
-              backgroundColor: AppColors.primary,
-              panelContent: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: AttachmentsSection(
-                    mainPdf: null,
-                    attachments: details.attachments,
-                    canAddMore: false,
-                    canDelete: false,
-                    onViewAttachment: (a) => _viewAttachment(context, a),
-                    onDeleteAttachment: (_) {},
-                  ),
-                ),
-              ),
-            ),
-            if (!widget.isCm) ...[
-              StickyTag(
-                text: 'Brief (${details.briefs.length})',
-                backgroundColor: Colors.orange,
-                panelContent: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  physics: const BouncingScrollPhysics(),
-                  child: details.briefs.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: AppText.bodyMedium('No briefs available'),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            for (int j = 0; j < details.briefs.length; j++) ...[
-                              if (j > 0) const SizedBox(height: 12),
-                              _buildBriefCard(details.briefs[j]),
-                            ],
-                          ],
-                        ),
-                ),
-              ),
-              StickyTag(
-                text:
-                    'Voice Notes (${details.voiceNotes.where((v) => v.visibility == VoiceNoteVisibility.cm).length})',
-                backgroundColor: Colors.teal,
-                panelContent: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                    child: VoiceNotesSection(
-                      summaryId: summary?.id,
-                      visibility: VoiceNoteVisibility.cm,
-                      canDelete: false,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ],
         );
       },
+    );
+  }
+
+  Widget _scrollButton({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Theme.of(context).bottomSheetTheme.backgroundColor,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 3,
+      shadowColor: AppColors.secondaryDark,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 22, color: AppColors.secondaryLight),
+        ),
+      ),
     );
   }
 
