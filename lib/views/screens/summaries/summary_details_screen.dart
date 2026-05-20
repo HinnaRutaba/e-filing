@@ -146,6 +146,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   final SignaturePadController _signaturePadController =
       SignaturePadController();
+  final SignaturePadController _disposeOffSignaturePadController =
+      SignaturePadController();
 
   final RemarksSignPanelController _remarksPanelCtrl =
       RemarksSignPanelController();
@@ -600,7 +602,20 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                 curve: Curves.easeOutCubic,
                               )
                               .fadeIn(duration: 220.ms, curve: Curves.easeOut),
-                        _actionBar(),
+                        if (_selectedAction != null)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  (MediaQuery.of(context).size.height -
+                                      MediaQuery.of(
+                                        context,
+                                      ).viewInsets.bottom) *
+                                  0.60,
+                            ),
+                            child: _actionBar(),
+                          )
+                        else
+                          _actionBar(),
                       ],
                     );
                   },
@@ -842,13 +857,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       await _submitSignForward();
       return;
     } else if (action == SummaryAction.disposedOff) {
-      setState(() => _loadingAction = true);
-      success = await notifier.disposeOffSummary(
-        summaryId: summaryId,
-        remarks: _remarksController.text.trim(),
-      );
-      if (!mounted) return;
-      setState(() => _loadingAction = false);
+      await _submitDisposeOff();
+      return;
     } else if (action == SummaryAction.forwardToCM) {
       await _cmVoiceRecorderCtrl.stopIfRecording();
       if (!mounted) return;
@@ -909,6 +919,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       return const SizedBox.shrink();
     }
     final expanded = _selectedAction != null;
+    final hPad = context.isMobile ? 12.0 : 24.0;
+    final vPad = context.isMobile ? 12.0 : 32.0;
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).bottomSheetTheme.backgroundColor,
@@ -932,58 +945,71 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          controller: _actionBarScrollController,
-          padding: context.isMobile
-              ? const EdgeInsets.all(12)
-              : const EdgeInsets.fromLTRB(24, 32, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AnimatedSize(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                alignment: Alignment.topCenter,
-                child: expanded
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _expandedHeader(),
-                      )
-                    : const SizedBox(width: double.infinity),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Sticky: header title + action buttons
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                hPad,
+                vPad,
+                hPad,
+                expanded ? 0 : vPad,
               ),
-              if (_isDeoForwardInternally) ...[
-                _internalForwardBanner(),
-                const SizedBox(height: 10),
-              ],
-              // _sectionDraftBanner(),
-              // const SizedBox(height: 12),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: expanded
-                    ? const SizedBox(
-                        key: ValueKey('empty'),
-                        width: double.infinity,
-                      )
-                    : KeyedSubtree(
-                        key: const ValueKey('buttons'),
-                        child: _actionButtonRow(),
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: expanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _expandedHeader(),
+                          )
+                        : const SizedBox(width: double.infinity),
+                  ),
+                  if (_isDeoForwardInternally) ...[
+                    _internalForwardBanner(),
+                    const SizedBox(height: 10),
+                  ],
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: expanded
+                        ? const SizedBox(
+                            key: ValueKey('empty'),
+                            width: double.infinity,
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey('buttons'),
+                            child: _actionButtonRow(),
+                          ),
+                  ),
+                ],
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                alignment: Alignment.topCenter,
-                child: expanded
-                    ? _expandedRemarks()
-                    : const SizedBox(width: double.infinity),
+            ),
+            // Scrollable: form body + submit button
+            if (expanded)
+              Flexible(
+                child: SingleChildScrollView(
+                  controller: _actionBarScrollController,
+                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _expandedRemarks(),
+                  ),
+                ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -1605,11 +1631,21 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          controller: _remarksController,
-          labelText: 'Closing Remarks (Optional)',
-          hintText: 'Add any closing remarks…',
-          maxLines: 4,
+        _stepCard(
+          stepLabel: 'STEP 1',
+          title: 'Signature',
+          child: SignaturePad(controller: _disposeOffSignaturePadController),
+        ),
+        const SizedBox(height: 12),
+        _stepCard(
+          stepLabel: 'STEP 2',
+          title: 'Closing Remarks (Optional)',
+          child: AppTextField(
+            controller: _remarksController,
+            labelText: 'Closing Remarks (Optional)',
+            hintText: 'Add any closing remarks…',
+            maxLines: 4,
+          ),
         ),
       ],
     );
@@ -1972,6 +2008,33 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         signatureBytes: signatureBytes,
         body: typedRemarks,
       );
+    }
+  }
+
+  Future<void> _submitDisposeOff() async {
+    final signatureBytes = await _disposeOffSignaturePadController.toPngBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign before disposing off');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    final success = await notifier.disposeOffSummary(
+      summaryId: summaryId,
+      remarks: _remarksController.text.trim(),
+      signatureBytes: signatureBytes,
+    );
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+        _remarksController.clear();
+      });
     }
   }
 

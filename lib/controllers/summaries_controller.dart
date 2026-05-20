@@ -892,14 +892,30 @@ class SummariesController extends BaseControllerState<SummariesState> {
   Future<bool> disposeOffSummary({
     required int? summaryId,
     required String remarks,
+    required Uint8List signatureBytes,
   }) async {
     try {
       EasyLoading.show();
       final desId = ref.read(authController).currentDesignation?.userDesgId;
+
+      // Step 1 – upload signature, get back server path
+      final signatureBase64 =
+          'data:image/png;base64,${base64Encode(signatureBytes)}';
+      final signaturePath = await repo.saveSignForFwd(
+        summaryId: summaryId,
+        desId: desId,
+        signatureBase64: signatureBase64,
+      );
+      if (signaturePath == null) {
+        return false;
+      }
+
+      // Step 2 – dispose off with signature path
       await repo.disposeOffSummary(
         summaryId: summaryId,
         instruction: remarks,
         desId: desId,
+        signaturePath: signaturePath,
       );
       Toast.success(message: 'Summary disposed off');
       await loadData(isInitialLoad: false);

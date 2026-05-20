@@ -422,6 +422,7 @@ class SummariesRepo extends SummariesInterface {
     required int? summaryId,
     required String instruction,
     required int? desId,
+    required String signaturePath,
   }) async {
     try {
       if (summaryId == null) {
@@ -435,6 +436,7 @@ class SummariesRepo extends SummariesInterface {
         options: await options(authRequired: true),
         data: {
           'userDesgID': desId,
+          'secretarySignaturePath': signaturePath,
           if (instruction.isNotEmpty) 'remarks': instruction,
         },
       );

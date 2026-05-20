@@ -222,6 +222,7 @@ abstract class SummariesInterface extends NetworkBase {
     required int summaryId,
     required String instruction,
     required int desId,
+    required String signaturePath,
   });
 
   Future<void> psToSectForward({required int summaryId, required int desgId});
