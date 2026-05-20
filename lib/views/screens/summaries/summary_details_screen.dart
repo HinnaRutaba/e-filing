@@ -476,36 +476,47 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                     return Column(
                       children: [
                         Expanded(
-                          child: StickyTagDrawer(
-                            panelWidth: MediaQuery.sizeOf(context).width * 0.85,
-                            tagsAlignment: const Alignment(0.0, -0.5),
-                            mainContent: RefreshIndicator(
-                              onRefresh: _loadDetails,
-                              child: Scrollbar(
-                                controller: _mainScrollController,
-                                thickness: 10,
-                                trackVisibility: true,
-                                thumbVisibility: true,
-                                child: SingleChildScrollView(
-                                  controller: _mainScrollController,
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      _documentCard(),
-                                      if (showPanel && !isLocked)
-                                        _buildRemarksPanel(details),
-                                      const SizedBox(height: 16),
-                                      _sidebar(),
-                                    ],
+                          child: Stack(
+                            children: [
+                              StickyTagDrawer(
+                                panelWidth:
+                                    MediaQuery.sizeOf(context).width * 0.85,
+                                tagsAlignment: const Alignment(0.0, -0.5),
+                                mainContent: RefreshIndicator(
+                                  onRefresh: _loadDetails,
+                                  child: Scrollbar(
+                                    controller: _mainScrollController,
+                                    thickness: 10,
+                                    trackVisibility: true,
+                                    thumbVisibility: true,
+                                    child: SingleChildScrollView(
+                                      controller: _mainScrollController,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _documentCard(),
+                                          if (showPanel && !isLocked)
+                                            _buildRemarksPanel(details),
+                                          const SizedBox(height: 16),
+                                          _sidebar(),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
+                                tags: tags,
                               ),
-                            ),
-                            tags: tags,
+                              if (_selectedAction != null)
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () =>
+                                      setState(() => _selectedAction = null),
+                                ),
+                            ],
                           ),
                         ),
                         if (showPanel && isLocked)
@@ -596,7 +607,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
     setState(() {
       if (_selectedAction == action) {
         _selectedAction = null;
-        _remarksController.clear();
       } else {
         _selectedAction = action;
       }
@@ -1145,7 +1155,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
               onTap: () {
                 setState(() {
                   _selectedAction = null;
-                  _remarksController.clear();
                 });
               },
               child: const Icon(Icons.clear),
