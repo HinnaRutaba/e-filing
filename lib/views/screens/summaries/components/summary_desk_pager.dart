@@ -49,6 +49,7 @@ class SummaryDeskPager extends StatefulWidget {
   final SignatureColor initialPenColor;
   final VoidCallback? onLockToggle;
   final bool isRemarksLocked;
+
   /// When provided, used as the key for [RemarksSignPanel] so that a parent
   /// holding the same key instance can move the panel element between the
   /// inline and sticky positions without losing canvas state.

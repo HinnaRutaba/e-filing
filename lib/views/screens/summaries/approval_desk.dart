@@ -116,6 +116,33 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     });
   }
 
+  void _scrollToSignatureSection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _remarksPanelCtrl.signPadKey?.currentContext;
+      if (ctx == null) return;
+      final renderObj = ctx.findRenderObject();
+      if (renderObj == null || !renderObj.attached) return;
+      Scrollable.maybeOf(ctx)?.position.ensureVisible(
+        renderObj,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+    });
+  }
+
+  void _scrollStickyPanelToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_stickyPanelScrollController.hasClients) return;
+      _stickyPanelScrollController.animateTo(
+        _stickyPanelScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   Future<void> _submitFromRemarksPanel() async {
     // 1 – Validate remarks
     final String typedRemarks;
@@ -139,6 +166,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       Toast.error(message: 'Please sign before approving');
+      if (_remarksPanelCtrl.isLocked) _scrollToSignatureSection();
       return;
     }
 
@@ -150,12 +178,14 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       final deptId = _selectedDestDept?.id;
       if (deptId == null) {
         Toast.error(message: 'Please select a destination department');
+        if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
         return;
       }
       final hasOfficers =
           _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
       if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
         Toast.error(message: 'Please select a destination officer');
+        if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
         return;
       }
 
