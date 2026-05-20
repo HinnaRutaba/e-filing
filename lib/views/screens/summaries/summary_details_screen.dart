@@ -176,6 +176,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   final VoiceNoteRecorderController _cmVoiceRecorderCtrl =
       VoiceNoteRecorderController();
 
+  final FocusScopeNode _actionBarScopeNode = FocusScopeNode();
+  bool _actionBarHasFocus = false;
+
   Future<void> _fetchOfficersForCurrentDept() async {
     final deptId = _selectedDestDept?.id;
     if (deptId == null) {
@@ -374,6 +377,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _actionBarScopeNode.addListener(_onActionBarFocusChange);
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
@@ -384,21 +388,47 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    // Covers Apple Pencil and other input methods that keyboard_detection may miss.
+    // Ensure ConstrainedBox recalculates when keyboard appears via any input device.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      setState(() {});
-      if (_actionBarScrollController.hasClients) {
-        final maxExtent = _actionBarScrollController.position.maxScrollExtent;
-        if (maxExtent > 0) {
-          _actionBarScrollController.animateTo(
-            maxExtent,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
-        }
-      }
+      if (mounted) setState(() {});
     });
+  }
+
+  void _onActionBarFocusChange() {
+    if (!mounted) return;
+    final focused = _actionBarScopeNode.hasFocus;
+    if (focused != _actionBarHasFocus) {
+      setState(() => _actionBarHasFocus = focused);
+    }
+    if (focused) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _scrollToFocusedField(),
+      );
+    }
+  }
+
+  void _scrollToFocusedField() {
+    if (!mounted) return;
+    final focusedCtx = FocusManager.instance.primaryFocus?.context;
+    if (focusedCtx != null) {
+      final renderObj = focusedCtx.findRenderObject();
+      if (renderObj != null && renderObj.attached) {
+        Scrollable.maybeOf(focusedCtx)?.position.ensureVisible(
+          renderObj,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+        return;
+      }
+    }
+    if (_actionBarScrollController.hasClients) {
+      _actionBarScrollController.animateTo(
+        _actionBarScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _loadDetails() async {
@@ -426,6 +456,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _actionBarScopeNode.removeListener(_onActionBarFocusChange);
+    _actionBarScopeNode.dispose();
     _remarksController.dispose();
     _shareSearchController.dispose();
     _destDeptController.dispose();
@@ -1021,14 +1053,22 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
             // Scrollable: form body + submit button
             if (expanded)
               Flexible(
-                child: SingleChildScrollView(
-                  controller: _actionBarScrollController,
-                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topCenter,
-                    child: _expandedRemarks(),
+                child: FocusScope(
+                  node: _actionBarScopeNode,
+                  child: SingleChildScrollView(
+                    controller: _actionBarScrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      hPad,
+                      0,
+                      hPad,
+                      _actionBarHasFocus ? vPad + 80 : vPad,
+                    ),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: _expandedRemarks(),
+                    ),
                   ),
                 ),
               ),
