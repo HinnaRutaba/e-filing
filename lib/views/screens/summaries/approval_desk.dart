@@ -50,6 +50,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
 
   final ScrollController _stickyPanelScrollController = ScrollController();
   GlobalKey _remarksPanelKey = GlobalKey();
+  ScrollController? _currentPageScrollController;
 
   // Secretary forwarding fields
   final TextEditingController _destDeptController = TextEditingController();
@@ -132,11 +133,15 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     });
   }
 
-  void _scrollStickyPanelToBottom() {
+  void _scrollPanelToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_stickyPanelScrollController.hasClients) return;
-      _stickyPanelScrollController.animateTo(
-        _stickyPanelScrollController.position.maxScrollExtent,
+      if (!mounted) return;
+      final sc = _remarksPanelCtrl.isLocked
+          ? _stickyPanelScrollController
+          : _currentPageScrollController;
+      if (sc == null || !sc.hasClients) return;
+      sc.animateTo(
+        sc.position.maxScrollExtent,
         duration: const Duration(milliseconds: 380),
         curve: Curves.easeOutCubic,
       );
@@ -166,7 +171,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       Toast.error(message: 'Please sign before approving');
-      if (_remarksPanelCtrl.isLocked) _scrollToSignatureSection();
+      _scrollToSignatureSection();
       return;
     }
 
@@ -178,14 +183,14 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
       final deptId = _selectedDestDept?.id;
       if (deptId == null) {
         Toast.error(message: 'Please select a destination department');
-        if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
+        _scrollPanelToBottom();
         return;
       }
       final hasOfficers =
           _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
       if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
         Toast.error(message: 'Please select a destination officer');
-        if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
+        _scrollPanelToBottom();
         return;
       }
 
@@ -441,6 +446,9 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                       isRemarksLocked: isLocked,
                       onLockToggle: _remarksPanelCtrl.toggleLock,
                       remarksPanelKey: _remarksPanelKey,
+                      onScrollControllerChanged: (sc) {
+                        _currentPageScrollController = sc;
+                      },
                     ),
                   ),
                   if (isLocked)

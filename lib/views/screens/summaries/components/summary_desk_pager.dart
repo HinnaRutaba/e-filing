@@ -35,6 +35,7 @@ class SummaryDeskPager extends StatefulWidget {
     this.onLockToggle,
     this.isRemarksLocked = false,
     this.remarksPanelKey,
+    this.onScrollControllerChanged,
   });
 
   final List<SummaryDetailsModel> summaries;
@@ -54,6 +55,11 @@ class SummaryDeskPager extends StatefulWidget {
   /// holding the same key instance can move the panel element between the
   /// inline and sticky positions without losing canvas state.
   final Key? remarksPanelKey;
+
+  /// Called with the current page's [ScrollController] whenever the active
+  /// page changes (and once on first build). Lets the parent scroll the inline
+  /// content to the bottom when validation fails in non-sticky mode.
+  final ValueChanged<ScrollController>? onScrollControllerChanged;
 
   @override
   State<SummaryDeskPager> createState() => _SummaryDeskPagerState();
@@ -80,6 +86,13 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
     }
     while (_scrollControllers.length > count) {
       _scrollControllers.removeLast().dispose();
+    }
+    if (_scrollControllers.isNotEmpty) {
+      final pageIdx = widget.pageController.hasClients
+          ? (widget.pageController.page?.round() ?? 0)
+          : 0;
+      final safeIdx = pageIdx.clamp(0, _scrollControllers.length - 1);
+      widget.onScrollControllerChanged?.call(_scrollControllers[safeIdx]);
     }
   }
 
@@ -134,6 +147,7 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
       physics: const NeverScrollableScrollPhysics(),
       onPageChanged: (i) {
         widget.onPageChanged(i);
+        widget.onScrollControllerChanged?.call(_scrollControllers[i]);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final sc = _scrollControllers[i];
