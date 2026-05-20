@@ -356,8 +356,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   void initState() {
     super.initState();
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
-    // Destination department is only pre-filled after _loadDetails,
-    // where hasForwardedBefore can be checked (requires movement data).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
       _fetchOfficersForCurrentDept();
@@ -516,6 +514,40 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                   onTap: () =>
                                       setState(() => _selectedAction = null),
                                 ),
+                              Positioned(
+                                right: 8,
+                                top: 72,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _mainScrollButton(
+                                      icon: Icons.keyboard_arrow_up_rounded,
+                                      onTap: () =>
+                                          _mainScrollController.animateTo(
+                                            0,
+                                            duration: const Duration(
+                                              milliseconds: 350,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _mainScrollButton(
+                                      icon: Icons.keyboard_arrow_down_rounded,
+                                      onTap: () =>
+                                          _mainScrollController.animateTo(
+                                            _mainScrollController
+                                                .position
+                                                .maxScrollExtent,
+                                            duration: const Duration(
+                                              milliseconds: 350,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -833,6 +865,26 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         _remarksController.clear();
       });
     }
+  }
+
+  Widget _mainScrollButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Theme.of(context).bottomSheetTheme.backgroundColor,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 3,
+      shadowColor: AppColors.secondaryDark,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 22, color: AppColors.secondaryLight),
+        ),
+      ),
+    );
   }
 
   Widget _actionBar() {
