@@ -121,225 +121,222 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                 ),
               ),
             ),
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text.rich(
-                              const TextSpan(
-                                style: TextStyle(fontSize: 20),
-                                children: [
-                                  TextSpan(
-                                    text: 'Welcome, ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text.rich(
+                            const TextSpan(
+                              style: TextStyle(fontSize: 20),
+                              children: [
+                                TextSpan(
+                                  text: 'Welcome, ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
                                   ),
-                                  TextSpan(text: 'Mr, Chief Minister'),
-                                ],
-                              ),
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                          ),
-                          IconButton(
-                            padding: const EdgeInsets.all(8),
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () {
-                              ref.read(authController.notifier).logout(context);
-                            },
-                            icon: Icon(
-                              Icons.power_settings_new,
-                              color: Colors.amber[400],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                            onTap: () => ref
-                                .read(cmNavController.notifier)
-                                .select(CMNavTab.approvals),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  width: 1.2,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.approval_rounded,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    'Open Approval Desk',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.arrow_forward,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ],
+                                TextSpan(text: 'Mr, Chief Minister'),
+                              ],
+                            ),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(color: Colors.white),
+                          ),
+                        ),
+                        IconButton(
+                          padding: const EdgeInsets.all(8),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () {
+                            // Prevent the post-load auto-nav to approvals from
+                            // firing while the logout dialog is open, which was
+                            // causing the dialog to close unexpectedly.
+                            ref.read(cmAutoNavConsumedProvider.notifier).state =
+                                true;
+                            ref.read(authController.notifier).logout(context);
+                          },
+                          icon: Icon(
+                            Icons.power_settings_new,
+                            color: Colors.amber[400],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                          onTap: () => ref
+                              .read(cmNavController.notifier)
+                              .select(CMNavTab.approvals),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 1.2,
                               ),
                             ),
-                          )
-                          .animate(delay: 200.ms)
-                          .fadeIn(duration: 300.ms)
-                          .slideY(
-                            begin: 0.2,
-                            end: 0,
-                            duration: 350.ms,
-                            curve: Curves.easeOutCubic,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.approval_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Open Approval Desk',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                      // Row(
-                      //   children: [
-                      //     if (!context.isMobile) ...[
-                      //       Container(
-                      //             decoration: BoxDecoration(
-                      //               color: Colors.white.withValues(alpha: 0.7),
-                      //               borderRadius: BorderRadius.circular(100),
-                      //             ),
-                      //             padding: const EdgeInsets.all(10),
-                      //             child: Row(
-                      //               mainAxisSize: MainAxisSize.min,
-                      //               children: [
-                      //                 const Icon(
-                      //                   Icons.summarize,
-                      //                   color: AppColors.secondaryDark,
-                      //                   size: 22,
-                      //                 ),
-                      //                 ClipRect(
-                      //                   child: Padding(
-                      //                     padding: const EdgeInsets.only(
-                      //                       left: 8,
-                      //                     ),
-                      //                     child: RichText(
-                      //                       text: const TextSpan(
-                      //                         style: TextStyle(
-                      //                           color: AppColors.secondaryDark,
-                      //                           fontSize: 14,
-                      //                         ),
-                      //                         children: [
-                      //                           TextSpan(text: 'You have '),
-                      //                           TextSpan(
-                      //                             text:
-                      //                                 '${dashboardState.data?.kpis?.pendingMyApproval ?? 0} ',
-                      //                             style: TextStyle(
-                      //                               fontWeight: FontWeight.w800,
-                      //                             ),
-                      //                           ),
-                      //                           TextSpan(
-                      //                             text: "summaries to review",
-                      //                           ),
-                      //                         ],
-                      //                       ),
-                      //                     ),
-                      //                   ),
-                      //                 ),
-                      //               ],
-                      //             ),
-                      //           )
-                      //           .animate(delay: 300.ms)
-                      //           .scale(
-                      //             alignment: Alignment.centerLeft,
-                      //             begin: const Offset(0, 1),
-                      //             end: const Offset(1, 1),
-                      //             duration: 450.ms,
-                      //             curve: Curves.easeOutCubic,
-                      //           )
-                      //           .fadeIn(duration: 250.ms),
-                      //       ClipPath(
-                      //             clipper: _ConcaveConnectorClipper(),
-                      //             child: Container(
-                      //               width: 20,
-                      //               height: 24,
-                      //               color: Colors.white.withValues(alpha: 0.7),
-                      //             ),
-                      //           )
-                      //           .animate(delay: 300.ms)
-                      //           .scale(
-                      //             delay: 450.ms,
-                      //             alignment: Alignment.centerLeft,
-                      //             begin: const Offset(0, 1),
-                      //             end: const Offset(1, 1),
-                      //             duration: 250.ms,
-                      //             curve: Curves.easeOutCubic,
-                      //           )
-                      //           .fadeIn(delay: 450.ms, duration: 150.ms),
-                      //     ],
-                      //     InkWell(
-                      //           onTap: () {
-                      //             ref
-                      //                 .read(cmNavController.notifier)
-                      //                 .select(CMNavTab.approvals);
-                      //           },
-                      //           child: Container(
-                      //             decoration: BoxDecoration(
-                      //               color: Colors.white.withValues(alpha: 0.7),
-                      //               borderRadius: BorderRadius.circular(100),
-                      //             ),
-                      //             padding: const EdgeInsets.all(8),
-                      //             child: AppText.titleSmall(
-                      //               "Open Pending Approvals",
-                      //               color: AppColors.secondaryDark,
-                      //               fontSize: 14,
-                      //               fontWeight: FontWeight.w600,
-                      //             ),
-                      //           ),
-                      //         )
-                      //         .animate(delay: 300.ms)
-                      //         .scale(
-                      //           delay: 700.ms,
-                      //           alignment: Alignment.centerLeft,
-                      //           begin: const Offset(0, 0),
-                      //           end: const Offset(1, 1),
-                      //           duration: 550.ms,
-                      //           curve: Curves.easeInOutBack,
-                      //         )
-                      //         .fadeIn(delay: 700.ms, duration: 200.ms),
-                      //   ],
-                      // ),
-                    ],
-                  ),
+                        )
+                        .animate(delay: 200.ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          duration: 350.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+                    // Row(
+                    //   children: [
+                    //     if (!context.isMobile) ...[
+                    //       Container(
+                    //             decoration: BoxDecoration(
+                    //               color: Colors.white.withValues(alpha: 0.7),
+                    //               borderRadius: BorderRadius.circular(100),
+                    //             ),
+                    //             padding: const EdgeInsets.all(10),
+                    //             child: Row(
+                    //               mainAxisSize: MainAxisSize.min,
+                    //               children: [
+                    //                 const Icon(
+                    //                   Icons.summarize,
+                    //                   color: AppColors.secondaryDark,
+                    //                   size: 22,
+                    //                 ),
+                    //                 ClipRect(
+                    //                   child: Padding(
+                    //                     padding: const EdgeInsets.only(
+                    //                       left: 8,
+                    //                     ),
+                    //                     child: RichText(
+                    //                       text: const TextSpan(
+                    //                         style: TextStyle(
+                    //                           color: AppColors.secondaryDark,
+                    //                           fontSize: 14,
+                    //                         ),
+                    //                         children: [
+                    //                           TextSpan(text: 'You have '),
+                    //                           TextSpan(
+                    //                             text:
+                    //                                 '${dashboardState.data?.kpis?.pendingMyApproval ?? 0} ',
+                    //                             style: TextStyle(
+                    //                               fontWeight: FontWeight.w800,
+                    //                             ),
+                    //                           ),
+                    //                           TextSpan(
+                    //                             text: "summaries to review",
+                    //                           ),
+                    //                         ],
+                    //                       ),
+                    //                     ),
+                    //                   ),
+                    //                 ),
+                    //               ],
+                    //             ),
+                    //           )
+                    //           .animate(delay: 300.ms)
+                    //           .scale(
+                    //             alignment: Alignment.centerLeft,
+                    //             begin: const Offset(0, 1),
+                    //             end: const Offset(1, 1),
+                    //             duration: 450.ms,
+                    //             curve: Curves.easeOutCubic,
+                    //           )
+                    //           .fadeIn(duration: 250.ms),
+                    //       ClipPath(
+                    //             clipper: _ConcaveConnectorClipper(),
+                    //             child: Container(
+                    //               width: 20,
+                    //               height: 24,
+                    //               color: Colors.white.withValues(alpha: 0.7),
+                    //             ),
+                    //           )
+                    //           .animate(delay: 300.ms)
+                    //           .scale(
+                    //             delay: 450.ms,
+                    //             alignment: Alignment.centerLeft,
+                    //             begin: const Offset(0, 1),
+                    //             end: const Offset(1, 1),
+                    //             duration: 250.ms,
+                    //             curve: Curves.easeOutCubic,
+                    //           )
+                    //           .fadeIn(delay: 450.ms, duration: 150.ms),
+                    //     ],
+                    //     InkWell(
+                    //           onTap: () {
+                    //             ref
+                    //                 .read(cmNavController.notifier)
+                    //                 .select(CMNavTab.approvals);
+                    //           },
+                    //           child: Container(
+                    //             decoration: BoxDecoration(
+                    //               color: Colors.white.withValues(alpha: 0.7),
+                    //               borderRadius: BorderRadius.circular(100),
+                    //             ),
+                    //             padding: const EdgeInsets.all(8),
+                    //             child: AppText.titleSmall(
+                    //               "Open Pending Approvals",
+                    //               color: AppColors.secondaryDark,
+                    //               fontSize: 14,
+                    //               fontWeight: FontWeight.w600,
+                    //             ),
+                    //           ),
+                    //         )
+                    //         .animate(delay: 300.ms)
+                    //         .scale(
+                    //           delay: 700.ms,
+                    //           alignment: Alignment.centerLeft,
+                    //           begin: const Offset(0, 0),
+                    //           end: const Offset(1, 1),
+                    //           duration: 550.ms,
+                    //           curve: Curves.easeInOutBack,
+                    //         )
+                    //         .fadeIn(delay: 700.ms, duration: 200.ms),
+                    //   ],
+                    // ),
+                  ],
                 ),
               ),
             ),

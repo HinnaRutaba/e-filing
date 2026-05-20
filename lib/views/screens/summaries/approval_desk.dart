@@ -49,6 +49,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   bool _allCaughtUp = false;
 
   final ScrollController _stickyPanelScrollController = ScrollController();
+  GlobalKey _remarksPanelKey = GlobalKey();
 
   // Secretary forwarding fields
   final TextEditingController _destDeptController = TextEditingController();
@@ -396,9 +397,12 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                     child: SummaryDeskPager(
                       summaries: _localDetails,
                       pageController: _pageController,
-                      onPageChanged: (i) => setState(() => _currentPage = i),
+                      onPageChanged: (i) => setState(() {
+                        _currentPage = i;
+                        _remarksPanelKey = GlobalKey();
+                      }),
                       remarksPanelController: _remarksPanelCtrl,
-                      bottomContent: _submitButton(),
+                      bottomContent: _forwardingFields(),
                       isCm: isCm,
                       initialRemarksMode: RemarksPanelMode.write,
                       initialPenColor: isCm
@@ -406,6 +410,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                           : SignatureColor.darkBlue,
                       isRemarksLocked: isLocked,
                       onLockToggle: _remarksPanelCtrl.toggleLock,
+                      remarksPanelKey: _remarksPanelKey,
                     ),
                   ),
                   if (isLocked)
@@ -430,9 +435,10 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                             ],
                           ),
                           child: RemarksSignPanel(
+                            key: _remarksPanelKey,
                             controller: _remarksPanelCtrl,
                             scrollController: _stickyPanelScrollController,
-                            bottomContent: _submitButton(),
+                            bottomContent: _forwardingFields(),
                             initiallyExpanded: true,
                             showHeading: false,
                             initialMode: RemarksPanelMode.write,
@@ -453,6 +459,25 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                         .fadeIn(duration: 220.ms, curve: Curves.easeOut),
                 ],
               ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.secondaryLight.withValues(alpha: 0.35),
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.secondaryDark.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: _submitButton(),
             ),
           ],
         ),
@@ -518,45 +543,42 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     );
   }
 
-  Widget _submitButton() {
-    if (isSecretary) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _forwardingLabel('FORWARD DEPARTMENT'),
-          const SizedBox(height: 6),
-          _departmentDropdown(),
-          const SizedBox(height: 12),
-          _forwardingLabel('DEPUTY / OFFICER'),
-          const SizedBox(height: 6),
-          _officerDropdown(),
-          if (_selectedDestDept?.id != null &&
-              _officerCacheDeptId == _selectedDestDept?.id &&
-              _officerCache.isEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              'No user found for selected department.',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.red[700],
-                fontStyle: FontStyle.italic,
-              ),
+  /// Dropdowns for secretary forwarding — rendered inside the panel body.
+  Widget _forwardingFields() {
+    if (!isSecretary) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _forwardingLabel('FORWARD DEPARTMENT'),
+        const SizedBox(height: 6),
+        _departmentDropdown(),
+        const SizedBox(height: 12),
+        _forwardingLabel('DEPUTY / OFFICER'),
+        const SizedBox(height: 6),
+        _officerDropdown(),
+        if (_selectedDestDept?.id != null &&
+            _officerCacheDeptId == _selectedDestDept?.id &&
+            _officerCache.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'No user found for selected department.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.red[700],
+              fontStyle: FontStyle.italic,
             ),
-          ],
-          const SizedBox(height: 14),
-          AppSolidButton(
-            onPressed: _submitFromRemarksPanel,
-            text: 'Sign and Forward',
-            icon: Icons.check_rounded,
-            width: double.infinity,
           ),
         ],
-      );
-    }
+      ],
+    );
+  }
+
+  /// Just the submit button — rendered in the sticky bottom bar.
+  Widget _submitButton() {
     return AppSolidButton(
       onPressed: _submitFromRemarksPanel,
-      text: 'Sign and Return',
+      text: isSecretary ? 'Sign and Forward' : 'Sign and Return',
       icon: Icons.check_rounded,
       width: double.infinity,
     );

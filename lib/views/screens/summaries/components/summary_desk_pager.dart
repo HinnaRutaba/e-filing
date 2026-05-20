@@ -34,6 +34,7 @@ class SummaryDeskPager extends StatefulWidget {
     this.initialPenColor = SignatureColor.darkBlue,
     this.onLockToggle,
     this.isRemarksLocked = false,
+    this.remarksPanelKey,
   });
 
   final List<SummaryDetailsModel> summaries;
@@ -48,6 +49,10 @@ class SummaryDeskPager extends StatefulWidget {
   final SignatureColor initialPenColor;
   final VoidCallback? onLockToggle;
   final bool isRemarksLocked;
+  /// When provided, used as the key for [RemarksSignPanel] so that a parent
+  /// holding the same key instance can move the panel element between the
+  /// inline and sticky positions without losing canvas state.
+  final Key? remarksPanelKey;
 
   @override
   State<SummaryDeskPager> createState() => _SummaryDeskPagerState();
@@ -176,7 +181,7 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
                   ],
                   if (!widget.isRemarksLocked)
                     RemarksSignPanel(
-                      key: pageKey,
+                      key: widget.remarksPanelKey ?? pageKey,
                       controller: widget.remarksPanelController,
                       scrollController: scrollCtrl,
                       initialMode: widget.initialRemarksMode,
