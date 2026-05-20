@@ -63,9 +63,26 @@ class _CreateDraftRemarksScreenState
 
   bool get isDeoInCmSecretariat =>
       isDeo &&
-      (userDesg?.department ?? '').toLowerCase().contains(
+      ((userDesg?.department ?? '').toLowerCase().contains(
         'chief minister secretariat',
-      );
+      ));
+
+  bool get isInternalInDeptForFeedback {
+    final SummaryDetailsModel? details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.hasForwardedBefore != true &&
+        isDeoForwardInternally;
+  }
+
+  bool get isDeoForwardInternally {
+    final details = ref.read(summariesController).details;
+    return isDeo &&
+        (details?.summary?.summaryStatus ==
+                SummaryStatus.sharedInternallyForFeedback ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.collectingInternalRemarks) &&
+        (details?.internalForwards.isNotEmpty == true);
+  }
 
   @override
   void initState() {
@@ -263,7 +280,9 @@ class _CreateDraftRemarksScreenState
     final desId = ref.read(summariesController).meta?.activeUserDesg?.id;
     if (desId == null) return;
 
-    final body = isDeoInCmSecretariat ? '' : await _remarksController.getText();
+    final body = isDeoInCmSecretariat || isInternalInDeptForFeedback
+        ? ''
+        : await _remarksController.getText();
     final briefNote = _briefsController.text.trim();
 
     final newFlags = _attachments
@@ -320,6 +339,8 @@ class _CreateDraftRemarksScreenState
                     const SizedBox(height: 4),
                     if (isDeoInCmSecretariat)
                       _cmSecretariatRemarksAlert()
+                    else if (isInternalInDeptForFeedback)
+                      const SizedBox.shrink()
                     else
                       _remarksSection(),
                     _briefsSection(),

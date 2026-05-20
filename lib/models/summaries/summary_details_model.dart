@@ -84,6 +84,9 @@ class SummaryDetailsModel {
       .whereType<String>()
       .toList();
 
+  List<SummaryInternalForwardModel> get internalFwdWithoutRemarks =>
+      internalForwards.where((f) => f.remarks.isEmpty).toList();
+
   List<SummaryMovementModel> get departmentalMoevements => movements
       .where(
         (m) =>

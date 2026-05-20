@@ -258,6 +258,13 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
         (details?.internalForwards.isNotEmpty == true);
   }
 
+  bool get isInternalInDeptForFeedback {
+    final SummaryDetailsModel? details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.hasForwardedBefore != true &&
+        _isDeoForwardInternally;
+  }
+
   bool get actionsAvailable {
     final ActiveUserDesg? activeUser = userDesg;
     SummaryDetailsModel? details = ref.read(summariesController).details;
@@ -274,6 +281,14 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
     if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
       return false;
+    }
+
+    if (isInternalInDeptForFeedback &&
+        details?.internalFwdWithoutRemarks.any(
+              (r) => r.forwardedToUserDesgId == currentDesignationId,
+            ) ==
+            true) {
+      return true;
     }
 
     if (_isDeoForwardInternally &&
@@ -1021,6 +1036,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
           .where((a) => a != SummaryAction.disposedOff || showDisposedOff)
           .toList();
     }
+
     final isMobile = context.isMobile;
     final buttons = allowedActions
         .map((a) => _actionButton(a, expand: !isMobile))
