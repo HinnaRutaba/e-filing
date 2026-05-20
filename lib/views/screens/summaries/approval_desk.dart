@@ -17,6 +17,7 @@ import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApprovalDesk extends ConsumerStatefulWidget {
@@ -47,6 +48,8 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   bool _isLoading = false;
   bool _allCaughtUp = false;
 
+  final ScrollController _stickyPanelScrollController = ScrollController();
+
   // Secretary forwarding fields
   final TextEditingController _destDeptController = TextEditingController();
   final TextEditingController _destOfficerController = TextEditingController();
@@ -62,9 +65,14 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
   @override
   void initState() {
     super.initState();
+    _remarksPanelCtrl.addListener(_onPanelChanged);
     if (!widget.skipInitialLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadDesk());
     }
+  }
+
+  void _onPanelChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadDesk() async {
@@ -320,10 +328,12 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
 
   @override
   void dispose() {
+    _remarksPanelCtrl.removeListener(_onPanelChanged);
     _pageController.dispose();
     _remarksPanelCtrl.dispose();
     _destDeptController.dispose();
     _destOfficerController.dispose();
+    _stickyPanelScrollController.dispose();
     super.dispose();
   }
 
@@ -369,6 +379,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
     } else if (!_initialized) {
       body = const Center(child: CircularProgressIndicator());
     } else {
+      final isLocked = _remarksPanelCtrl.isLocked;
       body = Padding(
         padding: const EdgeInsets.only(bottom: 52.0),
         child: Column(
@@ -379,17 +390,68 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
               total: _localDetails.length,
             ),
             Expanded(
-              child: SummaryDeskPager(
-                summaries: _localDetails,
-                pageController: _pageController,
-                onPageChanged: (i) => setState(() => _currentPage = i),
-                remarksPanelController: _remarksPanelCtrl,
-                bottomContent: _submitButton(),
-                isCm: isCm,
-                initialRemarksMode: RemarksPanelMode.write,
-                initialPenColor: isCm
-                    ? SignatureColor.darkGreen
-                    : SignatureColor.darkBlue,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SummaryDeskPager(
+                      summaries: _localDetails,
+                      pageController: _pageController,
+                      onPageChanged: (i) => setState(() => _currentPage = i),
+                      remarksPanelController: _remarksPanelCtrl,
+                      bottomContent: _submitButton(),
+                      isCm: isCm,
+                      initialRemarksMode: RemarksPanelMode.write,
+                      initialPenColor: isCm
+                          ? SignatureColor.darkGreen
+                          : SignatureColor.darkBlue,
+                      isRemarksLocked: isLocked,
+                      onLockToggle: _remarksPanelCtrl.toggleLock,
+                    ),
+                  ),
+                  if (isLocked)
+                    Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            border: Border(
+                              top: BorderSide(
+                                color: AppColors.secondaryLight.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.secondaryDark.withValues(
+                                  alpha: 0.15,
+                                ),
+                                blurRadius: 8,
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
+                          ),
+                          child: RemarksSignPanel(
+                            controller: _remarksPanelCtrl,
+                            scrollController: _stickyPanelScrollController,
+                            bottomContent: _submitButton(),
+                            initiallyExpanded: true,
+                            showHeading: false,
+                            initialMode: RemarksPanelMode.write,
+                            initialPenColor: isCm
+                                ? SignatureColor.darkGreen
+                                : SignatureColor.darkBlue,
+                            signPadWidth: 450,
+                            onLockToggle: _remarksPanelCtrl.toggleLock,
+                          ),
+                        )
+                        .animate()
+                        .slideY(
+                          begin: 1.0,
+                          end: 0.0,
+                          duration: 320.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .fadeIn(duration: 220.ms, curve: Curves.easeOut),
+                ],
               ),
             ),
           ],

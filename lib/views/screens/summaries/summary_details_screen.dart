@@ -749,7 +749,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   void _scrollToSignatureSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final ctx = _remarksPanelCtrl.signPadKey.currentContext;
+      final ctx = _remarksPanelCtrl.signPadKey?.currentContext;
       if (ctx == null) return;
       final renderObj = ctx.findRenderObject();
       if (renderObj == null || !renderObj.attached) return;

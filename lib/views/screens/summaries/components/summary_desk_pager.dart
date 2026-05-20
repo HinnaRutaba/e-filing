@@ -32,6 +32,8 @@ class SummaryDeskPager extends StatefulWidget {
     this.tagsAlignment = const Alignment(0.0, -0.5),
     this.initialRemarksMode = RemarksPanelMode.type,
     this.initialPenColor = SignatureColor.darkBlue,
+    this.onLockToggle,
+    this.isRemarksLocked = false,
   });
 
   final List<SummaryDetailsModel> summaries;
@@ -44,6 +46,8 @@ class SummaryDeskPager extends StatefulWidget {
   final Alignment tagsAlignment;
   final RemarksPanelMode initialRemarksMode;
   final SignatureColor initialPenColor;
+  final VoidCallback? onLockToggle;
+  final bool isRemarksLocked;
 
   @override
   State<SummaryDeskPager> createState() => _SummaryDeskPagerState();
@@ -170,17 +174,19 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
                     _buildBriefsSection(details, context.isMobile ? 1 : 2),
                     const SizedBox(height: 16),
                   ],
-                  RemarksSignPanel(
-                    key: pageKey,
-                    controller: widget.remarksPanelController,
-                    scrollController: scrollCtrl,
-                    initialMode: widget.initialRemarksMode,
-                    bottomContent: widget.bottomContent,
-                    initiallyExpanded: true,
-                    showHeading: false,
-                    initialPenColor: widget.initialPenColor,
-                    signPadWidth: 450,
-                  ),
+                  if (!widget.isRemarksLocked)
+                    RemarksSignPanel(
+                      key: pageKey,
+                      controller: widget.remarksPanelController,
+                      scrollController: scrollCtrl,
+                      initialMode: widget.initialRemarksMode,
+                      bottomContent: widget.bottomContent,
+                      initiallyExpanded: true,
+                      showHeading: false,
+                      initialPenColor: widget.initialPenColor,
+                      signPadWidth: 450,
+                      onLockToggle: widget.onLockToggle,
+                    ),
                 ],
               ),
             ),

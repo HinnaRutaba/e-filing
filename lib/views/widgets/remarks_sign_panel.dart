@@ -16,11 +16,24 @@ class RemarksSignPanelController extends ChangeNotifier {
   final SignaturePadController _signCtrl = SignaturePadController();
   final SignaturePadController _writtenCtrl = SignaturePadController();
 
-  // GlobalKeys keep the inner pads alive when the surrounding layout switches
-  // between AnimatedSize (unlocked) and ConstrainedBox+ScrollView (locked),
-  // preventing Flutter from tearing down and recreating the canvas state.
-  final GlobalKey signPadKey = GlobalKey();
-  final GlobalKey writtenPadKey = GlobalKey();
+  // The active panel state registers its own local GlobalKeys here on mount
+  // and clears them on dispose. Keeping keys in the state (not the controller)
+  // prevents duplicate-GlobalKey crashes when multiple panel instances share
+  // the same controller (e.g. during a PageView page-transition animation).
+  GlobalKey? _activeSignPadKey;
+
+  // External callers (e.g. scroll-to-signature) read through this getter.
+  GlobalKey? get signPadKey => _activeSignPadKey;
+
+  void _attachKeys(GlobalKey sign, GlobalKey written) {
+    _activeSignPadKey = sign;
+  }
+
+  // Only clears if the detaching state's key is still the active one,
+  // so a late-disposing old page doesn't wipe the key set by the new page.
+  void _detachKeys(GlobalKey sign) {
+    if (_activeSignPadKey == sign) _activeSignPadKey = null;
+  }
 
   RemarksPanelMode _mode = RemarksPanelMode.type;
   double _canvasWidth = 0;
@@ -147,6 +160,10 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
 
   bool get _expanded => _ctrl.isExpanded;
 
+  // Local keys — unique per state instance, never shared across pages.
+  final GlobalKey _signPadKey = GlobalKey();
+  final GlobalKey _writtenPadKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -156,11 +173,13 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     _ctrl._mode = widget.initialMode;
     // Don't reset _expanded when locked — toggleLock() already set it to true.
     if (!_ctrl.isLocked) _ctrl._expanded = widget.initiallyExpanded;
+    _ctrl._attachKeys(_signPadKey, _writtenPadKey);
     _ctrl.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    _ctrl._detachKeys(_signPadKey);
     _ctrl.removeListener(_onControllerChanged);
     super.dispose();
   }
@@ -183,8 +202,9 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     if (_ctrl.isLocked && _expanded) {
       // Type editor = 220 px, write canvas = 280 px.
       // Add mode-toggle (~44), info row (~35), spacing (~26), padding (~14).
-      final scrollMaxHeight =
-          _ctrl.mode == RemarksPanelMode.write ? 400.0 : 340.0;
+      final scrollMaxHeight = _ctrl.mode == RemarksPanelMode.write
+          ? 400.0
+          : 340.0;
       return Container(
         decoration: decoration,
         child: Column(
@@ -194,9 +214,16 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             _header(),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: scrollMaxHeight),
-              child: SingleChildScrollView(
+              child: Scrollbar(
                 controller: widget.scrollController,
-                child: _body(),
+                thumbVisibility: true,
+                trackVisibility: true,
+                thickness: 12,
+                radius: const Radius.circular(8),
+                child: SingleChildScrollView(
+                  controller: widget.scrollController,
+                  child: _body(),
+                ),
               ),
             ),
           ],
@@ -216,9 +243,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
-            child: _expanded
-                ? _body()
-                : const SizedBox(width: double.infinity),
+            child: _expanded ? _body() : const SizedBox(width: double.infinity),
           ),
         ],
       ),
@@ -226,10 +251,26 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   }
 
   Widget _header() {
-    if (!widget.showHeading) return const SizedBox(height: 24);
+    if (!widget.showHeading) {
+      if (widget.onLockToggle != null) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: _LockChip(
+              isLocked: _ctrl.isLocked,
+              onTap: widget.onLockToggle!,
+            ),
+          ),
+        );
+      }
+      return const SizedBox(height: 24);
+    }
     final isLocked = _ctrl.isLocked;
     return InkWell(
-      onTap: isLocked ? null : () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
+      onTap: isLocked
+          ? null
+          : () => _expanded ? _ctrl.collapse() : _ctrl.expand(),
       borderRadius: _expanded
           ? const BorderRadius.vertical(top: Radius.circular(4))
           : BorderRadius.circular(4),
@@ -240,10 +281,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             Expanded(child: AppText.titleLarge('Add your remarks')),
             if (_expanded && widget.onLockToggle != null) ...[
               const SizedBox(width: 8),
-              _LockChip(
-                isLocked: isLocked,
-                onTap: widget.onLockToggle!,
-              ),
+              _LockChip(isLocked: isLocked, onTap: widget.onLockToggle!),
               const SizedBox(width: 4),
             ],
             if (!isLocked)
@@ -309,7 +347,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             child: SizedBox(
               width: widget.signPadWidth,
               child: SignaturePad(
-                key: _ctrl.signPadKey,
+                key: _signPadKey,
                 controller: _ctrl._signCtrl,
                 initialPenColor: widget.initialPenColor,
                 showPenSelector: false,
@@ -414,13 +452,12 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (_ctrl._canvasWidth != constraints.maxWidth) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) =>
-                setState(() => _ctrl._updateCanvasWidth(constraints.maxWidth)),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _ctrl._updateCanvasWidth(constraints.maxWidth));
+          });
         }
         return SignaturePad(
-          key: _ctrl.writtenPadKey,
+          key: _writtenPadKey,
           controller: _ctrl._writtenCtrl,
           showRuledLines: true,
           initialPenColor: widget.initialPenColor,
@@ -474,13 +511,15 @@ class _LockChipState extends State<_LockChip>
       duration: const Duration(milliseconds: 450),
     );
     // Scale: 0.4 → 1.0 with elastic bounce (shackle snapping shut)
-    _scale = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
-    );
+    _scale = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
     // SlideY: icon enters from slightly above (simulates shackle moving down)
-    _slideY = Tween<double>(begin: -6.0, end: 0.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
-    );
+    _slideY = Tween<double>(
+      begin: -6.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
     _fadeIn = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _ctrl,
@@ -517,8 +556,7 @@ class _LockChipState extends State<_LockChip>
     final borderColor = isLocked
         ? AppColors.primary.withValues(alpha: 0.55)
         : AppColors.secondaryLight.withValues(alpha: 0.45);
-    final contentColor =
-        isLocked ? AppColors.primary : AppColors.textSecondary;
+    final contentColor = isLocked ? AppColors.primary : AppColors.textSecondary;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -549,11 +587,18 @@ class _LockChipState extends State<_LockChip>
                           opacity: Tween<double>(begin: 1.0, end: 0.0).animate(
                             CurvedAnimation(
                               parent: _ctrl,
-                              curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+                              curve: const Interval(
+                                0.0,
+                                0.3,
+                                curve: Curves.easeOut,
+                              ),
                             ),
                           ),
-                          child: const Icon(Icons.lock_open_rounded,
-                              size: 14, color: AppColors.textSecondary),
+                          child: const Icon(
+                            Icons.lock_open_rounded,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                         // Closed lock snaps in from above
                         FadeTransition(
@@ -562,16 +607,22 @@ class _LockChipState extends State<_LockChip>
                             offset: Offset(0, _slideY.value),
                             child: Transform.scale(
                               scale: _scale.value,
-                              child: const Icon(Icons.lock_rounded,
-                                  size: 14, color: AppColors.primary),
+                              child: const Icon(
+                                Icons.lock_rounded,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         ),
                       ],
                     );
                   }
-                  return const Icon(Icons.lock_open_rounded,
-                      size: 14, color: AppColors.textSecondary);
+                  return const Icon(
+                    Icons.lock_open_rounded,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  );
                 },
               ),
             ),
