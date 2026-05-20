@@ -115,7 +115,8 @@ const String _kFallbackHtml = '''
 <p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
 ''';
 
-class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
+class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
+    with WidgetsBindingObserver {
   late final KeyboardDetectionController _keyboardCtrl =
       KeyboardDetectionController(
         onChanged: (state) {
@@ -372,10 +373,31 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentHtml = widget.summary?.body ?? _kFallbackHtml;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDetails();
       _fetchOfficersForCurrentDept();
+    });
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // Covers Apple Pencil and other input methods that keyboard_detection may miss.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {});
+      if (_actionBarScrollController.hasClients) {
+        final maxExtent = _actionBarScrollController.position.maxScrollExtent;
+        if (maxExtent > 0) {
+          _actionBarScrollController.animateTo(
+            maxExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      }
     });
   }
 
@@ -403,6 +425,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _remarksController.dispose();
     _shareSearchController.dispose();
     _destDeptController.dispose();
