@@ -629,7 +629,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                 Image.network(
                   track.signatureUrl!,
                   fit: BoxFit.contain,
-                  width: 260,
+                  width: 220,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.error_outline, color: Colors.redAccent),
                 ),
@@ -811,11 +811,17 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SignaturePad(
-            controller: _signaturePadController,
-            canvasHeight: 180,
-            canvasColor: Colors.white,
-            showDescription: false,
+          Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              width: 280,
+              child: SignaturePad(
+                controller: _signaturePadController,
+                canvasHeight: 180,
+                canvasColor: Colors.white,
+                showDescription: false,
+              ),
+            ),
           ),
           const SizedBox(height: 4),
           Row(
