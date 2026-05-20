@@ -484,9 +484,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen> {
                                   onRefresh: _loadDetails,
                                   child: Scrollbar(
                                     controller: _mainScrollController,
-                                    thickness: 10,
+                                    thickness: 16,
+                                    radius: const Radius.circular(8),
                                     trackVisibility: true,
                                     thumbVisibility: true,
+                                    interactive: true,
                                     child: SingleChildScrollView(
                                       controller: _mainScrollController,
                                       physics:
