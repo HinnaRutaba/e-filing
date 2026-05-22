@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
@@ -38,6 +39,11 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     // If the user tapped the nav bar while data was loading, the flag is already
     // true and we skip. Otherwise, auto-navigate if there are pending approvals.
     if (!ref.read(cmAutoNavConsumedProvider)) {
+      // Skip if any dialog/overlay is currently on top of the root navigator
+      // (e.g. a logout confirmation dialog). Navigating while a dialog is open
+      // would dismiss it unexpectedly.
+      if (AppRouter.navigatorKey.currentState?.canPop() == true) return;
+
       ref.read(cmAutoNavConsumedProvider.notifier).state = true;
       final pending =
           ref.read(cmDashboardController).data?.kpis?.pendingMyApproval ?? 0;

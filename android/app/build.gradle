@@ -81,11 +81,11 @@ android {
 }
 
 dependencies {
-    // ADD THIS LINE: Add desugaring dependency
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
-    
-    // Make sure you have multidex for Android 5.0+ 
-    implementation "androidx.multidex:multidex:2.0.1"
+   implementation 'com.google.errorprone:error_prone_annotations:2.26.0'
+    implementation "com.android.support:appcompat-v7:28.0.0" // or the latest version
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation 'com.google.android.material:material:1.12.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
 
 flutter {
