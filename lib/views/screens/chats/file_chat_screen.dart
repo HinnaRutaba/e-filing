@@ -528,8 +528,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
                                               ),
                                               isScrollControlled: true,
                                               enableDrag: false,
-                                              backgroundColor:
-                                                  AppColors.background,
+      
                                               shape:
                                                   const RoundedRectangleBorder(
                                                     borderRadius:

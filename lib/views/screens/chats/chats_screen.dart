@@ -25,7 +25,6 @@ class ChatsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const NewChatBottomSheet(),
     );
   }

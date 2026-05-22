@@ -1,6 +1,6 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/department/department_user_model.dart';
@@ -50,7 +50,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
           .read(chatRepo)
           .getUsersForChat(currentUser.currentDesignation!.userDesgId!);
 
-      // Filter out the current user from the list
       _allParticipants = participants
           .where((p) => p.userId != currentUser.id)
           .toList();
@@ -84,7 +83,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
             .toList();
       }
 
-      // Clear selection if filtered participant is no longer in results
       if (_selectedParticipant != null &&
           !_filteredParticipants.contains(_selectedParticipant)) {
         _selectedParticipant = null;
@@ -94,7 +92,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
   void _selectParticipant(DepartmentUserModel participant) {
     setState(() {
-      // Toggle selection - if same participant is selected, deselect them
       if (_selectedParticipant?.userId == participant.userId &&
           _selectedParticipant?.userDesignationId ==
               participant.userDesignationId) {
@@ -107,7 +104,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
   Future<void> _startChatWithSelectedUser() async {
     if (_selectedParticipant == null) return;
-
     await _createChatWithUser(_selectedParticipant!);
   }
 
@@ -117,7 +113,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
       final currentUser = ref.read(authController);
 
-      // First, check if a direct chat already exists between these two users
       final existingChatId = await _chatService.getDirectChatBetweenUsers(
         currentUser.id!,
         selectedUser.userId!,
@@ -155,7 +150,6 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
       setState(() => _isCreatingChat = false);
 
-      // Close the bottom sheet and navigate to the chat
       RouteHelper.pop();
       RouteHelper.push(Routes.fileChat(null, chatId));
     } catch (e) {
@@ -170,19 +164,15 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.90,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
       child: Column(
         children: [
           // Header with handle and title
-          Container(
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Column(
               children: [
@@ -191,7 +181,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: appColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -201,14 +191,14 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     Expanded(
                       child: AppText.titleLarge(
                         "Start New Chat",
-                        color: AppColors.textPrimary,
+                        color: appColors.textPrimary,
                       ),
                     ),
                     IconButton(
                       onPressed: () => RouteHelper.pop(),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
-                        color: AppColors.textSecondary,
+                        color: appColors.textSecondary,
                       ),
                     ),
                   ],
@@ -228,9 +218,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
               prefix: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.clear,
-                        color: AppColors.secondaryLight,
+                        color: appColors.secondaryLight,
                       ),
                       onPressed: () {
                         _searchController.clear();
@@ -256,14 +246,14 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                           Icon(
                             Icons.person_search,
                             size: 64,
-                            color: Colors.grey[400],
+                            color: appColors.textSecondary,
                           ),
                           const SizedBox(height: 16),
                           AppText.titleMedium(
                             _searchController.text.isEmpty
                                 ? 'No users available'
                                 : 'No users found',
-                            color: AppColors.textSecondary,
+                            color: appColors.textSecondary,
                           ),
                         ],
                       ),
@@ -283,18 +273,14 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 100),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 0,
-                        ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primaryDark.withAlpha(12)
+                              ? appColors.primaryDark.withAlpha(12)
                               : null,
                           borderRadius: BorderRadius.circular(12),
                           border: isSelected
                               ? Border.all(
-                                  color: AppColors.primaryDark,
+                                  color: appColors.primaryDark,
                                   width: 1.2,
                                 )
                               : null,
@@ -308,8 +294,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                             horizontalTitleGap: 8,
                             leading: CircleAvatar(
                               backgroundColor: isSelected
-                                  ? AppColors.primaryDark
-                                  : AppColors.secondary,
+                                  ? appColors.primaryDark
+                                  : colorScheme.secondary,
                               radius: 16,
                               child: AppText.titleLarge(
                                 HelperUtils.firstTwoLetters(
@@ -322,7 +308,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                             title: AppText.titleMedium(
                               participant.userTitle ?? 'Unknown User',
                               fontSize: 16,
-                              color: isSelected ? AppColors.primaryDark : null,
+                              color: isSelected ? appColors.primaryDark : null,
                             ),
                             subtitle: Container(
                               margin: const EdgeInsets.only(top: 4),
@@ -336,15 +322,14 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? AppColors.primaryDark.withOpacity(
-                                                0.1,
-                                              )
-                                            : AppColors.cardColor,
+                                            ? appColors.primaryDark
+                                                .withValues(alpha:0.1)
+                                            : appColors.cardColor,
                                         borderRadius: BorderRadius.circular(10),
                                         border: isSelected
                                             ? Border.all(
-                                                color: AppColors.primaryDark
-                                                    .withOpacity(0.3),
+                                                color: appColors.primaryDark
+                                                    .withValues(alpha:0.3),
                                               )
                                             : null,
                                       ),
@@ -352,8 +337,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                         participant.designation ?? '',
                                         fontSize: 12,
                                         color: isSelected
-                                            ? AppColors.primaryDark
-                                            : AppColors.textSecondary,
+                                            ? appColors.primaryDark
+                                            : appColors.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -361,13 +346,13 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                               ),
                             ),
                             trailing: isSelected
-                                ? const Icon(
+                                ? Icon(
                                     Icons.check_circle,
-                                    color: AppColors.primaryDark,
+                                    color: appColors.primaryDark,
                                   )
-                                : const Icon(
+                                : Icon(
                                     Icons.add_circle_outline,
-                                    color: AppColors.textSecondary,
+                                    color: appColors.textSecondary,
                                   ),
                             onTap: () {
                               HelperUtils.hideKeyboard(context);
@@ -377,8 +362,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                         ),
                       );
                     },
-                    separatorBuilder: (_, __) => const Divider(
-                      color: AppColors.cardColor,
+                    separatorBuilder: (_, __) => Divider(
+                      color: appColors.cardColor,
                       thickness: 1,
                       height: 1,
                     ),
@@ -389,8 +374,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey[200]!)),
+              border: Border(top: BorderSide(color: appColors.border)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -402,8 +386,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                       : null,
                   backgroundColor:
                       (_selectedParticipant != null && !_isCreatingChat)
-                      ? AppColors.primary
-                      : AppColors.disabled,
+                      ? colorScheme.primary
+                      : appColors.disabled,
                   text: _isCreatingChat
                       ? 'Creating Chat...'
                       : _selectedParticipant != null

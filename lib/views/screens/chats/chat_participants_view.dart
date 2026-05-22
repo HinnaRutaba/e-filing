@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 import 'package:efiling_balochistan/models/department/department_user_model.dart';
@@ -42,7 +42,6 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
     super.initState();
     _searchController = TextEditingController();
 
-    // Initialize stream in initState
     _chatSubscription = widget._chatService
         .readChatStream(widget.chatId)
         .listen(
@@ -70,6 +69,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
   @override
   Widget build(BuildContext context) {
     final uid = ref.watch(authController).id;
+    final appColors = context.appColors;
 
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -94,7 +94,6 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
           ),
         );
 
-    // Filter participants based on search
     final searchQuery = _searchController.text.toLowerCase();
     final filteredNotInChat = notInChatParticipants
         .where(
@@ -122,7 +121,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
               Expanded(
                 child: AppText.headlineSmall(
                   widget.addMembers ? "Add Participants" : "Participants",
-                  color: AppColors.textPrimary,
+                  color: appColors.textPrimary,
                 ),
               ),
               IconButton(
@@ -144,9 +143,9 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
             prefix: const Icon(Icons.search),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.refresh_outlined,
-                      color: AppColors.secondaryLight,
+                      color: appColors.secondaryLight,
                     ),
                     onPressed: () {
                       _searchController.clear();
@@ -161,7 +160,6 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
         ),
         Expanded(
           child: SingleChildScrollView(
-            // padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
               children: [
                 _AddedParticipantsWidget(
@@ -170,8 +168,8 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
                   chatId: widget.chatId,
                   uid: uid!,
                 ),
-                const Divider(
-                  color: AppColors.cardColor,
+                Divider(
+                  color: appColors.cardColor,
                   thickness: 1,
                   height: 0,
                 ),
@@ -208,13 +206,16 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return participants.isEmpty && showUnavailableMessage
         ? Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: AppText.titleMedium(
                 'No participants available to add',
-                color: AppColors.textSecondary,
+                color: appColors.textSecondary,
               ),
             ),
           )
@@ -234,7 +235,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                 ),
                 dense: true,
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: colorScheme.secondary,
                   radius: 16,
                   child: AppText.titleLarge(
                     HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
@@ -264,13 +265,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                         ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cardColor,
+                          color: appColors.cardColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: AppText.labelMedium(
                           participant.designation ?? '',
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: appColors.textSecondary,
                         ),
                       ),
                     ),
@@ -285,13 +286,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     );
                   },
                   text: "Add +",
-                  color: AppColors.primaryDark,
+                  color: appColors.primaryDark,
                   fontSize: 14,
                 ),
               );
             },
-            separatorBuilder: (_, __) => const Divider(
-              color: AppColors.cardColor,
+            separatorBuilder: (context, __) => Divider(
+              color: context.appColors.cardColor,
               endIndent: 16,
               indent: 16,
               thickness: 0.8,
@@ -316,13 +317,16 @@ class _AddedParticipantsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return participants.isEmpty
         ? Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: AppText.titleMedium(
                 'No active participants',
-                color: AppColors.textSecondary,
+                color: appColors.textSecondary,
               ),
             ),
           )
@@ -342,7 +346,7 @@ class _AddedParticipantsWidget extends StatelessWidget {
                 ),
                 dense: true,
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: colorScheme.secondary,
                   radius: 16,
                   child: AppText.titleLarge(
                     HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
@@ -372,13 +376,13 @@ class _AddedParticipantsWidget extends StatelessWidget {
                         ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cardColor,
+                          color: appColors.cardColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: AppText.labelMedium(
                           participant.designation ?? '',
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: appColors.textSecondary,
                         ),
                       ),
                     ),
@@ -391,7 +395,6 @@ class _AddedParticipantsWidget extends StatelessWidget {
                       userId: participant.userId!,
                       removedByUserId: uid,
                     );
-                    // Navigate to chats screen if current user leaves
                     if (isCurrentUser) {
                       RouteHelper.pop();
                       RouteHelper.pop();
@@ -402,13 +405,13 @@ class _AddedParticipantsWidget extends StatelessWidget {
                             ? ""
                             : "Leave"
                       : "Remove",
-                  color: AppColors.error,
+                  color: colorScheme.error,
                   fontSize: 14,
                 ),
               );
             },
-            separatorBuilder: (_, __) => const Divider(
-              color: AppColors.cardColor,
+            separatorBuilder: (context, __) => Divider(
+              color: context.appColors.cardColor,
               endIndent: 16,
               indent: 16,
               thickness: 0.8,
