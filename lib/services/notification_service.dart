@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'dart:developer';
 
-import 'package:efiling_balochistan/repository/notification/notification_repo.dart';
+import 'package:efiling_balochistan/repository/notifications/notification_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -73,7 +74,9 @@ class NotificationService {
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         _navigateToScreenFromData(message.data);
       });
-    } catch (e) {}
+    } catch (e, s) {
+      log("Failed Init Notifications________${e}_______$s");
+    }
   }
 
   Future<void> getToken() async {

@@ -1,4 +1,4 @@
-import 'package:efiling_balochistan/repository/notification/notification_interface.dart';
+import 'package:efiling_balochistan/repository/notifications/notification_interface.dart';
 
 class NotificationRepo extends NotificationInterface {
   @override
