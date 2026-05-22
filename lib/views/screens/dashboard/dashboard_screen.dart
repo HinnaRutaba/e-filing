@@ -42,7 +42,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    NotificationService().initNotification();
+    NotificationService().initNotification(
+      ref.read(authController).currentDesignation?.userDesgId,
+    );
     _loadInitialData();
 
     _tabController.addListener(() {

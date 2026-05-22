@@ -81,6 +81,7 @@ class NotificationService {
 
   Future<void> getToken() async {
     _fcmToken = await _firebaseMessaging.getToken();
+    log("FCM_________$_fcmToken");
   }
 
   void _showNotification(RemoteMessage message) async {

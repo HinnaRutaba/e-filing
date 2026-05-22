@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -24,6 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>E-Filing need your camera to upload photos.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>E-Filing needs face id to authenticate</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>E-Filing needs to record audio for voice messages</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>E-Filing needs your photo library to upload photos.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>E-Filing needs to use speech recognition for voice commands</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -41,19 +55,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>E-Filing need your camera to upload photos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>E-Filing needs your photo library to upload photos.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>E-Filing needs face id to authenticate</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>E-Filing needs to record audio for voice messages</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>E-Filing needs to use speech recognition for voice commands</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>We need notifications to keep you updated on your tasks.</string>
 </dict>
 </plist>
