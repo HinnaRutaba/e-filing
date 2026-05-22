@@ -72,7 +72,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isDaakShown = await localStorageCtrl.isDaakDialogShown();
 
     if (!isDaakShown && mounted) {
-       localStorageCtrl.daakDialogShown();
+      localStorageCtrl.daakDialogShown();
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -84,7 +84,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           iconColor: Colors.green,
         ),
       );
-      
     }
   }
 
@@ -217,7 +216,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
-                          top: 16, left: 16, right: 16, bottom: 6),
+                        top: 16,
+                        left: 16,
+                        right: 16,
+                        bottom: 6,
+                      ),
                       child: Column(
                         children: [
                           Row(
@@ -237,15 +240,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               const SizedBox(width: 16),
                               Expanded(
                                 child: DashboardCard(
-                                  cardColor:
-                                      const Color.fromARGB(255, 255, 39, 23),
+                                  cardColor: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    39,
+                                    23,
+                                  ),
                                   iconColor: Colors.red.withRed(600),
                                   title: "Action Required",
                                   value:
                                       "${dashboardState.actionRequiredCount}",
                                   onTap: () {
                                     RouteHelper.push(
-                                        Routes.actionRequiredFiles);
+                                      Routes.actionRequiredFiles,
+                                    );
                                   },
                                   loading: dashboardState.loading,
                                 ),
@@ -276,7 +284,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     fontWeight: FontWeight.bold,
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   backgroundColor: Colors.green,
                                   alignment: Alignment.topLeft,
                                   offset: const Offset(-2, -2),
@@ -324,7 +334,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 _buildFileList(
                                   files: dashboardState.pendingFiles,
                                   fileType: FileType.pending,
-                                  loading: dashboardState.loadingPendingFiles &&
+                                  loading:
+                                      dashboardState.loadingPendingFiles &&
                                       dashboardState.pendingFiles.isEmpty,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
@@ -332,7 +343,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                                 _buildDaakList(
                                   daakLetters: dashboardState.daakLetters,
-                                  loading: dashboardState.loadingDaakLetters &&
+                                  loading:
+                                      dashboardState.loadingDaakLetters &&
                                       dashboardState.daakLetters.isEmpty,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
@@ -343,7 +355,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   fileType: FileType.forwarded,
                                   loading:
                                       dashboardState.loadingForwardedFiles &&
-                                          dashboardState.forwardedFiles.isEmpty,
+                                      dashboardState.forwardedFiles.isEmpty,
                                   onRefresh: () => ref
                                       .read(dashboardController.notifier)
                                       .fetchForwardedFiles(),
@@ -380,11 +392,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             const SizedBox(height: 16),
             AppText.bodyMedium('No files found'),
             const SizedBox(height: 16),
-            AppSolidButton(
-              onPressed: onRefresh,
-              text: "Reload",
-              width: 120,
-            ),
+            AppSolidButton(onPressed: onRefresh, text: "Reload", width: 120),
           ],
         ),
       );
@@ -395,10 +403,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       itemCount: files.length,
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: FileCard(
-          fileType: fileType,
-          data: files[i],
-        ),
+        child: FileCard(fileType: fileType, data: files[i]),
       ),
     );
   }
@@ -421,11 +426,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             const SizedBox(height: 16),
             AppText.bodyMedium('No Daak letters found'),
             const SizedBox(height: 16),
-            AppSolidButton(
-              onPressed: onRefresh,
-              text: "Reload",
-              width: 120,
-            ),
+            AppSolidButton(onPressed: onRefresh, text: "Reload", width: 120),
           ],
         ),
       );
@@ -434,15 +435,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       itemCount: daakLetters.length,
-      itemBuilder: (ctx, i) => DaakCard(
-        daak: daakLetters[i],
-      ),
+      itemBuilder: (ctx, i) => DaakCard(daak: daakLetters[i]),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 }

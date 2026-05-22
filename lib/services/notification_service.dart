@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:efiling_balochistan/repository/notification/notification_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
+  final NotificationRepo notificationRepo = NotificationRepo();
   static final NotificationService _instance = NotificationService._internal();
 
   factory NotificationService() {
@@ -21,41 +23,42 @@ class NotificationService {
 
   String? get fcmToken => _fcmToken;
 
-  Future initNotification() async {
+  Future initNotification(int? userDesgId) async {
     try {
-      NotificationSettings settings =
-          await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        provisional: false,
-        sound: true,
-      );
+      NotificationSettings settings = await _firebaseMessaging
+          .requestPermission(
+            alert: true,
+            badge: true,
+            provisional: false,
+            sound: true,
+          );
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
         Toast.show(
-            message:
-                "Please allow notification permission to receive notifications about your jobs.");
+          message:
+              "Please allow notification permission to receive notifications about your jobs.",
+        );
         return;
       }
       bool? grantedLocalPermission = await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
       if (grantedLocalPermission == false) {
         Toast.show(
-            message:
-                "Please allow notification permission to receive notifications about your jobs.");
+          message:
+              "Please allow notification permission to receive notifications about your jobs.",
+        );
         return;
       }
       await getToken();
-      saveFcmToken();
+      saveFcmToken(userDesgId);
 
       // Initialize local notification settings
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@drawable/notification_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(
-        android: initializationSettingsAndroid,
-      );
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
@@ -75,20 +78,20 @@ class NotificationService {
 
   Future<void> getToken() async {
     _fcmToken = await _firebaseMessaging.getToken();
-    print('FCM Token: $_fcmToken');
   }
 
   void _showNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'your_channel_id',
-      'your_channel_name',
-      channelDescription: 'your_channel_description',
-      importance: Importance.max,
-      priority: Priority.high,
+          'your_channel_id',
+          'your_channel_name',
+          channelDescription: 'your_channel_description',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
       message.hashCode,
@@ -123,15 +126,12 @@ class NotificationService {
     // }
   }
 
-  Future<void> saveFcmToken() async {
-    // try {
-    //   await postApi(
-    //     saveFcmTokenApi,
-    //     json.encode({'fcm_token': fcmToken}),
-    //   );
-    // } catch (e, s) {
-    //   print("FCM ERR_______${e}_____$s");
-    // }
+  Future<void> saveFcmToken(int? desgId) async {
+    try {
+      await notificationRepo.storeNotificationToken(desgId, _fcmToken);
+    } catch (e, s) {
+      print("SAVE FCM ERR_______${e}_____$s");
+    }
   }
 
   Future<void> clearFcmToken() async {
