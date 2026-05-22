@@ -227,7 +227,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 builder: (context, _) {
                   final bool mobileCompact = isMobile && _compactNotifier.value;
                   final double cardsOverlap = mobileCompact
-                      ? 42.0
+                      ? 62.0
                       : isMobile
                       ? 110.0
                       : 16;
@@ -519,9 +519,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeading('Files'),
-            recentPendingFilesSection,
-            gap,
             efileKpisSection,
+            gap,
+            recentPendingFilesSection,
             sectionGap,
             _buildSectionHeading('Daak'),
             daakOverviewSection,

@@ -181,9 +181,9 @@ class DashboardCard extends StatelessWidget {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 12,
+                          vertical: showSmallCard ? 6 : 12,
                         ),
                         child: showSmallCard
                             ? cardSmall(context)
@@ -289,31 +289,27 @@ class DashboardCard extends StatelessWidget {
 
   Widget cardSmall(BuildContext context) {
     final onCardText = Colors.grey[900];
-    return Padding(
-      padding: value == null
-          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
-          : const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _buildIconBadge(),
-          if (value != null) ...[
-            const SizedBox(height: 4),
-            AppText.headlineMedium(
-              value!,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: onCardText,
-            ).animate().scale(
-              begin: const Offset(0.6, 0.6),
-              end: const Offset(1, 1),
-              duration: 500.ms,
-              delay: 180.ms,
-              curve: Curves.elasticOut,
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildIconBadge(),
+        if (value != null) ...[
+          const SizedBox(height: 4),
+          AppText.headlineMedium(
+            value!,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: onCardText,
+          ).animate().scale(
+            begin: const Offset(0.6, 0.6),
+            end: const Offset(1, 1),
+            duration: 500.ms,
+            delay: 180.ms,
+            curve: Curves.elasticOut,
+          ),
         ],
-      ),
+      ],
     );
   }
 }
