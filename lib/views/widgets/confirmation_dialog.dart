@@ -43,23 +43,28 @@ class ConfirmationDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [iconColor.withAlpha(40), iconColor.withAlpha(15)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        iconColor.withAlpha(40),
+                        iconColor.withAlpha(15),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Icon(icon, size: 44, color: iconColor),
+                )
+                .animate(delay: 100.ms)
+                .scale(
+                  begin: const Offset(0, 0),
+                  end: const Offset(1, 1),
+                  duration: 600.ms,
+                  curve: Curves.easeOutBack,
                 ),
-              ),
-              child: Icon(icon, size: 44, color: iconColor),
-            ).animate().scale(
-              begin: const Offset(0, 0),
-              end: const Offset(1, 1),
-              duration: 600.ms,
-              curve: Curves.easeOutBack,
-            ),
             const SizedBox(height: 20),
             AppText.headlineSmall(title, textAlign: TextAlign.center),
             const SizedBox(height: 10),
