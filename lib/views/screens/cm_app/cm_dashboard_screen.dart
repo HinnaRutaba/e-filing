@@ -61,7 +61,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     final double cardsOverlap = isMobile ? 130.0 : 60.0;
     final CMDashboardState dashboardState = ref.watch(cmDashboardController);
 
-    final statsCardTop = isMobile ? 154.0 : 132.0;
+    final statsCardTop = isMobile ? 144.0 : 132.0;
 
     final Widget headerBackground = Positioned(
       left: 0,
@@ -128,7 +128,7 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Column(

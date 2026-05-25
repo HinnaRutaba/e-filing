@@ -23,22 +23,19 @@ class CMShell extends ConsumerWidget {
         }
       },
       child: GradientScaffold(
-        child: SafeArea(
-          bottom: false,
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            extendBody: true,
-            bottomNavigationBar: const CMBottomNavBar(),
-            body: Padding(
-              padding: const EdgeInsets.only(bottom: 100.0),
-              child: IndexedStack(
-                index: activeTab.index,
-                children: const [
-                  CMDashboardScreen(),
-                  CMSummariesListScreen(),
-                  CMApprovalDesk(),
-                ],
-              ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBody: true,
+          bottomNavigationBar: const CMBottomNavBar(),
+          body: Padding(
+            padding: const EdgeInsets.only(bottom: 100.0),
+            child: IndexedStack(
+              index: activeTab.index,
+              children: const [
+                CMDashboardScreen(),
+                CMSummariesListScreen(),
+                CMApprovalDesk(),
+              ],
             ),
           ),
         ),
