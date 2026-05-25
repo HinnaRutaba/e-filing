@@ -343,6 +343,16 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         details?.isLatestMovementCmSignedAndReturned == true;
   }
 
+  // pstocm + last two movements are cm_signed_and_returned → brief_added
+  bool get isPsToCmCmReturnedBriefAdded {
+    if (!isPsToCm) return false;
+    final movements =
+        ref.read(summariesController).details?.movements ?? const [];
+    if (movements.length < 2) return false;
+    return movements[movements.length - 1].actionType == 'brief_added' &&
+        movements[movements.length - 2].actionType == 'cm_signed_and_returned';
+  }
+
   bool get isOnlySentToDeptCrossDept {
     final movements =
         ref.read(summariesController).details?.movements ?? const [];
@@ -370,7 +380,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
                 showHandWrittedRemarksSection &&
                 !(isDeo &&
                     details?.isLatestMovementSignedAndForwarded == true))) &&
-        !isPsToCmCmReturned;
+        !isPsToCmCmReturned &&
+        !isPsToCmCmReturnedBriefAdded;
   }
 
   @override
@@ -692,7 +703,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       return;
     }
 
-    if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+    if (action == SummaryAction.signForward &&
+        (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded)) {
       setState(() => _selectedAction = action);
       _scrollActionBarToTop();
       return;
@@ -1099,6 +1111,11 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         SummaryAction.shareInternally,
         SummaryAction.signForward,
       ];
+    } else if (isPsToCmCmReturnedBriefAdded) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
     } else if (isPsToCm) {
       allowedActions = [
         SummaryAction.shareInternally,
@@ -1182,7 +1199,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     if (action == SummaryAction.shareInternally && _isDeoForwardInternally) {
       return 'Forward to another user';
     }
-    if (action == SummaryAction.signForward && isPsToCmCmReturned) {
+    if (action == SummaryAction.signForward &&
+        (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded)) {
       return 'Forward to department';
     }
     if (action == SummaryAction.signForward && isPsToCm) {
@@ -1855,7 +1873,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   Widget _signForwardBody(SummaryAction action) {
-    final hideSignPad = isPsToCmCmReturned;
+    final hideSignPad = isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2119,7 +2137,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         widget.summary?.id;
     final notifier = ref.read(summariesController.notifier);
 
-    if (isPsToCmCmReturned) {
+    if (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded) {
       final success = await notifier.psToSectForwardPostCM(
         summaryId: summaryId,
         targetDepartmentId: deptId,
@@ -2431,7 +2449,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           actionsAvailable &&
           !showHandWrittedRemarksSection &&
           userDesg?.roleEnum != ActiveUserDesgRole.deo &&
-          !isPsToCmCmReturned,
+          !isPsToCmCmReturned &&
+          !isPsToCmCmReturnedBriefAdded,
     );
   }
 
