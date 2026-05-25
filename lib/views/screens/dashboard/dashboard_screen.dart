@@ -471,7 +471,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildSectionHeading(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: AppText.titleMedium(
+      child: AppText.headlineSmall(
         title,
         fontWeight: FontWeight.w700,
         color: context.appColors.textPrimary,
