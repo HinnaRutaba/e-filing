@@ -244,6 +244,11 @@ class _SignaturePadState extends State<SignaturePad> {
   int _strokeCount = 0;
   double _canvasWidth = 0;
 
+  // Auto pencil-lock: once a stylus event is detected, fingers are ignored
+  // so the parent ScrollView can handle finger scrolling naturally.
+  // Resets when the canvas is cleared.
+  bool _stylusDetected = false;
+
   final _StrokeNotifier _notifier = _StrokeNotifier();
 
   SignaturePenPreset get _currentPen => widget.pens[_penIndex];
@@ -275,7 +280,16 @@ class _SignaturePadState extends State<SignaturePad> {
 
   // ── pointer handlers ──────────────────────────────────────────────────────
 
+  static bool _isStylusKind(PointerDeviceKind kind) =>
+      kind == PointerDeviceKind.stylus ||
+      kind == PointerDeviceKind.invertedStylus;
+
   void _onPointerDown(PointerDownEvent e) {
+    if (_isStylusKind(e.kind)) {
+      if (!_stylusDetected) setState(() => _stylusDetected = true);
+    } else if (_stylusDetected) {
+      return; // finger ignored once stylus has been used
+    }
     _notifier.startStroke(_Stroke(
       points: [e.localPosition],
       color: _penColor,
@@ -285,12 +299,19 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    // Directly notifies the painter — zero widget-tree rebuild overhead.
+    if (_stylusDetected && !_isStylusKind(e.kind)) return;
     _notifier.addPoint(e.localPosition);
   }
 
-  void _onPointerUp(PointerUpEvent e) => _finishStroke();
-  void _onPointerCancel(PointerCancelEvent e) => _finishStroke();
+  void _onPointerUp(PointerUpEvent e) {
+    if (_stylusDetected && !_isStylusKind(e.kind)) return;
+    _finishStroke();
+  }
+
+  void _onPointerCancel(PointerCancelEvent e) {
+    if (_stylusDetected && !_isStylusKind(e.kind)) return;
+    _finishStroke();
+  }
 
   void _finishStroke() {
     if (_notifier.currentStroke == null) return;
@@ -457,6 +478,8 @@ class _SignaturePadState extends State<SignaturePad> {
                 children: [
                   // ImmediateMultiDragGestureRecognizer wins the arena instantly
                   // so the parent ScrollView cannot scroll while drawing.
+                  // Once a stylus is detected it only wins for stylus events,
+                  // letting finger touches fall through to the scroll view.
                   RawGestureDetector(
                     behavior: HitTestBehavior.opaque,
                     gestures: {
@@ -465,6 +488,12 @@ class _SignaturePadState extends State<SignaturePad> {
                               ImmediateMultiDragGestureRecognizer>(
                             () => ImmediateMultiDragGestureRecognizer(),
                             (instance) {
+                              instance.supportedDevices = _stylusDetected
+                                  ? {
+                                      PointerDeviceKind.stylus,
+                                      PointerDeviceKind.invertedStylus,
+                                    }
+                                  : null;
                               instance.onStart = (_) => _DrawDrag();
                             },
                           ),

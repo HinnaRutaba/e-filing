@@ -463,7 +463,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
       builder: (context, constraints) {
         if (_ctrl._canvasWidth != constraints.maxWidth) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _ctrl._updateCanvasWidth(constraints.maxWidth));
+            if (mounted)
+              setState(() => _ctrl._updateCanvasWidth(constraints.maxWidth));
           });
         }
         return SignaturePad(
