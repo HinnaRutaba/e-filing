@@ -175,7 +175,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   bool get _expanded => _ctrl.isExpanded;
 
   // Compact signature state (used only when widget.compactSignature == true)
-  bool _signPadExpanded = false;
+  late bool _signPadExpanded;
   Uint8List? _signaturePreview;
 
   // Local keys — unique per state instance, never shared across pages.
@@ -186,6 +186,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   @override
   void initState() {
     super.initState();
+    // Sign pad starts open on CM desk so the user can sign immediately.
+    _signPadExpanded = widget.compactSignature;
     // Set directly to avoid notifyListeners() during mount, which would call
     // setState on any sibling page's state that already has a listener on this
     // shared controller — causing setState-during-build errors in the pager.
