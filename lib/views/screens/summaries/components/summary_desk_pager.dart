@@ -208,6 +208,7 @@ class _SummaryDeskPagerState extends State<SummaryDeskPager> {
                           initialPenColor: widget.initialPenColor,
                           signPadWidth: 450,
                           onLockToggle: widget.onLockToggle,
+                          compactSignature: widget.isCm,
                         ),
                     ],
                   ),

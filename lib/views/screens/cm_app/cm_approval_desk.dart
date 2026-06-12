@@ -10,3 +10,4 @@ class CMApprovalDesk extends StatelessWidget {
     return const ApprovalDesk(role: ActiveUserDesgRole.cm, skipInitialLoad: true);
   }
 }
+

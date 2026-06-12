@@ -209,6 +209,15 @@ class SignaturePad extends StatefulWidget {
   final bool showCustomColorPicker;
   final VoidCallback? onExpand;
 
+  /// Optional widget rendered right-aligned between the canvas and the
+  /// clear/undo buttons — use this to embed e.g. a compact sign button
+  /// without any drawing-gesture conflicts.
+  final Widget? bottomTrailingWidget;
+
+  /// When false the canvas container renders without a border or border-radius,
+  /// letting the parent's own border/clip define the visual boundary.
+  final bool showCanvasBorder;
+
   const SignaturePad({
     super.key,
     this.controller,
@@ -231,6 +240,8 @@ class SignaturePad extends StatefulWidget {
     this.showStrokeInfo = false,
     this.showCustomColorPicker = false,
     this.onExpand,
+    this.bottomTrailingWidget,
+    this.showCanvasBorder = true,
   });
 
   @override
@@ -467,13 +478,19 @@ class _SignaturePadState extends State<SignaturePad> {
                         MediaQuery.sizeOf(context).height * 0.2),
               decoration: BoxDecoration(
                 color: widget.canvasColor,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.secondaryLight.withValues(alpha: 0.6),
-                  width: 1.5,
-                ),
+                borderRadius: widget.showCanvasBorder
+                    ? BorderRadius.circular(10)
+                    : null,
+                border: widget.showCanvasBorder
+                    ? Border.all(
+                        color: AppColors.secondaryLight.withValues(alpha: 0.6),
+                        width: 1.5,
+                      )
+                    : null,
               ),
-              clipBehavior: Clip.antiAlias,
+              clipBehavior: widget.showCanvasBorder
+                  ? Clip.antiAlias
+                  : Clip.none,
               child: Stack(
                 children: [
                   // ImmediateMultiDragGestureRecognizer wins the arena instantly
@@ -552,6 +569,13 @@ class _SignaturePadState extends State<SignaturePad> {
             );
           },
         ),
+        if (widget.bottomTrailingWidget != null) ...[
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: widget.bottomTrailingWidget!,
+          ),
+        ],
         if (widget.showClearButton || widget.showUndoButton) ...[
           Row(
             children: [

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/cm_nav_controller.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -423,7 +424,11 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
             const SizedBox(height: 16),
             AppOutlineButton(
               onPressed: () {
-                ref.read(cmNavController.notifier).select(CMNavTab.dashboard);
+                if (isCm) {
+                  ref.read(cmNavController.notifier).select(CMNavTab.dashboard);
+                } else {
+                  RouteHelper.pop();
+                }
               },
               text: "Open Dashboard",
             ),
@@ -503,6 +508,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                                 : SignatureColor.darkBlue,
                             signPadWidth: 450,
                             onLockToggle: _remarksPanelCtrl.toggleLock,
+                            compactSignature: isCm,
                           ),
                         )
                         .animate()
