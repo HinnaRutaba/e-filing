@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/services/pencil_settings_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/gestures.dart';
@@ -255,10 +256,12 @@ class _SignaturePadState extends State<SignaturePad> {
   int _strokeCount = 0;
   double _canvasWidth = 0;
 
-  // Auto pencil-lock: once a stylus event is detected, fingers are ignored
-  // so the parent ScrollView can handle finger scrolling naturally.
-  // Resets when the canvas is cleared.
+  // Fingers are blocked when a stylus has been used OR the iPad system setting
+  // "Only Draw with Apple Pencil" is enabled.
   bool _stylusDetected = false;
+  bool _pencilOnlyEnabled = false;
+
+  bool get _fingersBlocked => _stylusDetected || _pencilOnlyEnabled;
 
   final _StrokeNotifier _notifier = _StrokeNotifier();
 
@@ -271,6 +274,9 @@ class _SignaturePadState extends State<SignaturePad> {
     _penColor = widget.initialPenColor.color;
     _canvasHeight = widget.canvasHeight ?? 280;
     widget.controller?._attach(this);
+    PencilSettingsService.isPencilOnlyDrawingEnabled().then((enabled) {
+      if (mounted && enabled) setState(() => _pencilOnlyEnabled = true);
+    });
   }
 
   @override
@@ -298,8 +304,8 @@ class _SignaturePadState extends State<SignaturePad> {
   void _onPointerDown(PointerDownEvent e) {
     if (_isStylusKind(e.kind)) {
       if (!_stylusDetected) setState(() => _stylusDetected = true);
-    } else if (_stylusDetected) {
-      return; // finger ignored once stylus has been used
+    } else if (_fingersBlocked) {
+      return;
     }
     _notifier.startStroke(_Stroke(
       points: [e.localPosition],
@@ -310,17 +316,17 @@ class _SignaturePadState extends State<SignaturePad> {
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    if (_stylusDetected && !_isStylusKind(e.kind)) return;
+    if (_fingersBlocked && !_isStylusKind(e.kind)) return;
     _notifier.addPoint(e.localPosition);
   }
 
   void _onPointerUp(PointerUpEvent e) {
-    if (_stylusDetected && !_isStylusKind(e.kind)) return;
+    if (_fingersBlocked && !_isStylusKind(e.kind)) return;
     _finishStroke();
   }
 
   void _onPointerCancel(PointerCancelEvent e) {
-    if (_stylusDetected && !_isStylusKind(e.kind)) return;
+    if (_fingersBlocked && !_isStylusKind(e.kind)) return;
     _finishStroke();
   }
 
@@ -505,7 +511,7 @@ class _SignaturePadState extends State<SignaturePad> {
                               ImmediateMultiDragGestureRecognizer>(
                             () => ImmediateMultiDragGestureRecognizer(),
                             (instance) {
-                              instance.supportedDevices = _stylusDetected
+                              instance.supportedDevices = _fingersBlocked
                                   ? {
                                       PointerDeviceKind.stylus,
                                       PointerDeviceKind.invertedStylus,

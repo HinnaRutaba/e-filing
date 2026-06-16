@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/services/pencil_settings_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
@@ -178,6 +179,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   late bool _signPadExpanded;
   Uint8List? _signaturePreview;
 
+  bool _pencilOnlyEnabled = false;
+
   // Local keys — unique per state instance, never shared across pages.
   final GlobalKey _signPadKey = GlobalKey();
   final GlobalKey _writtenPadKey = GlobalKey();
@@ -196,6 +199,9 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     if (!_ctrl.isLocked) _ctrl._expanded = widget.initiallyExpanded;
     _ctrl._attachKeys(_signPadKey, _writtenPadKey, _remarksPadKey);
     _ctrl.addListener(_onControllerChanged);
+    PencilSettingsService.isPencilOnlyDrawingEnabled().then((enabled) {
+      if (mounted && enabled) setState(() => _pencilOnlyEnabled = true);
+    });
   }
 
   @override
@@ -328,25 +334,25 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _modeToggle(),
-          const SizedBox(height: 4),
-          const Row(
+          const SizedBox(height: 8),
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                Icons.info_outline_rounded,
+                _pencilOnlyEnabled && _ctrl.mode == RemarksPanelMode.write
+                    ? Icons.edit_outlined
+                    : Icons.info_outline_rounded,
                 size: 13,
                 color: AppColors.secondary,
               ),
-              SizedBox(width: 5),
+              const SizedBox(width: 4),
               Expanded(
-                child: Text(
-                  'Type your remark or switch to Write and use your tablet pen. '
-                  'Your handwriting will appear on the printed summary as proof of authorship.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.secondary,
-                    height: 1.4,
-                  ),
+                child: AppText.labelMedium(
+                  _pencilOnlyEnabled && _ctrl.mode == RemarksPanelMode.write
+                      ? 'Apple Pencil only — finger input is disabled by your iPad settings.'
+                      : 'Type your remark or switch to Write and use your tablet pen. '
+                            'Your handwriting will appear on the printed summary as proof of authorship.',
+                  color: AppColors.secondary,
                 ),
               ),
             ],
@@ -385,7 +391,12 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
                             _typedField(showBorder: false),
                             if (!_signPadExpanded)
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  8,
+                                  10,
+                                  8,
+                                ),
                                 child: Align(
                                   alignment: Alignment.centerRight,
                                   child: _compactSignCollapsed(),
@@ -521,9 +532,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
         color: AppColors.white,
         borderRadius: showBorder ? BorderRadius.circular(8) : null,
         border: showBorder
-            ? Border.all(
-                color: AppColors.secondaryLight.withValues(alpha: 0.4),
-              )
+            ? Border.all(color: AppColors.secondaryLight.withValues(alpha: 0.4))
             : null,
       ),
       child: HtmlEditor(
@@ -533,10 +542,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
       ),
     );
     if (!showBorder) return content;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: content,
-    );
+    return ClipRRect(borderRadius: BorderRadius.circular(8), child: content);
   }
 
   Widget _writtenCanvas({Widget? bottomTrailing, bool compact = false}) {
@@ -608,7 +614,9 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   /// The collapsed state: either an empty "Tap to sign" button or a
   /// thumbnail preview of the captured signature with an edit overlay.
   Widget _compactSignCollapsed() {
-    return _signaturePreview != null ? _compactSignPreview() : _compactSignButton();
+    return _signaturePreview != null
+        ? _compactSignPreview()
+        : _compactSignButton();
   }
 
   Widget _compactSignButton() {
@@ -628,9 +636,17 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.edit_outlined, size: 16, color: AppColors.secondaryDark),
+            const Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: AppColors.secondaryDark,
+            ),
             const SizedBox(width: 6),
-            AppText.labelLarge('Tap to sign', color: AppColors.secondaryDark, fontWeight: FontWeight.w600),
+            AppText.labelLarge(
+              'Tap to sign',
+              color: AppColors.secondaryDark,
+              fontWeight: FontWeight.w600,
+            ),
           ],
         ),
       ),
@@ -677,7 +693,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.edit_outlined, size: 13, color: AppColors.secondaryDark),
+              child: const Icon(
+                Icons.edit_outlined,
+                size: 13,
+                color: AppColors.secondaryDark,
+              ),
             ),
           ),
         ],
