@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -492,7 +493,25 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           backgroundColor: Colors.transparent,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
-            title: AppText.headlineSmall("Summary Details"),
+            title: context.isMobile
+                ? AppText.headlineSmall("Summary Details")
+                : RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.appColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Summary Details'),
+                        if (details?.summary?.summaryNo != null)
+                          TextSpan(
+                            text: " (${details?.summary?.summaryNo})",
+                            style: const TextStyle(fontWeight: FontWeight.w300),
+                          ),
+                      ],
+                    ),
+                  ),
             actions: [
               if (details != null) ...[
                 Consumer(
@@ -2185,7 +2204,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
   }
 
   Widget _forwardingFields({bool showForwardButton = false}) {
-    return Column(
+    final isMobile = context.isMobile;
+    final deptColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2201,7 +2221,12 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
             fontStyle: FontStyle.italic,
           ),
         ),
-        const SizedBox(height: 12),
+      ],
+    );
+    final officerColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
         _forwardingLabel('DESTINATION OFFICER'),
         const SizedBox(height: 6),
         _officerDropdown(),
@@ -2218,6 +2243,25 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
             ),
           ),
         ],
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isMobile) ...[
+          deptColumn,
+          const SizedBox(height: 12),
+          officerColumn,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: deptColumn),
+              const SizedBox(width: 12),
+              Expanded(child: officerColumn),
+            ],
+          ),
         if (showForwardButton) ...[
           const SizedBox(height: 14),
           _actionButton(
@@ -2420,6 +2464,8 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         .read(summariesController.notifier)
         .getSummaryPrintPdf(summaryId: summaryId);
 
+    log("PRINT_________${url}");
+
     if (!mounted || url == null) return;
     Navigator.push(
       context,
@@ -2437,7 +2483,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       summary: summary,
       remarkTrack: details?.remarkTrack ?? const [],
       actions: details?.actions,
-      forwardingSection: null,
+      forwardingSection: actionsAvailable ? _forwardingFields() : null,
       onSignatureChanged: (bytes) {
         setState(() => _cardSignatureBytes = bytes);
       },
@@ -2473,7 +2519,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
               text: 'Sign and Return',
               width: double.infinity,
             )
-          : null,
+          : _forwardingFields(),
     );
   }
 

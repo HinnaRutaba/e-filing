@@ -242,11 +242,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     // The scroll view height is capped to show just the remarks-input section;
     // signature + forwarding fields are revealed by scrolling.
     if (_ctrl.isLocked && _expanded) {
-      // Type editor = 220 px, write canvas = 280 px.
+      // Type editor = 220 px, write canvas = 500 px.
       // Add mode-toggle (~44), info row (~35), spacing (~26), padding (~14).
       final scrollMaxHeight = _ctrl.mode == RemarksPanelMode.write
-          ? 400.0
-          : 340.0;
+          ? 360.0
+          : 320.0;
       return Container(
         decoration: decoration,
         child: Column(
@@ -528,11 +528,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           showRuledLines: true,
           initialPenColor: widget.initialPenColor,
           autoExpand: true,
-          autoExpandStep: 120,
-          autoExpandBoundaryOffset: expandBoundaryOffset ?? 60.0,
+          autoExpandStep: 100,
+          autoExpandBoundaryOffset: expandBoundaryOffset ?? 50.0,
           showStrokeInfo: true,
           showCustomColorPicker: true,
-          canvasHeight: 560,
+          canvasHeight: 500,
           showDescription: false,
           canvasColor: Colors.grey.shade50,
           showCanvasBorder: !compact,
@@ -542,7 +542,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             final sc = widget.scrollController;
             if (sc == null || !sc.hasClients) return;
             final pos = sc.position;
-            final target = (pos.pixels + 120).clamp(0.0, pos.maxScrollExtent);
+            final target = (pos.pixels + 100).clamp(0.0, pos.maxScrollExtent);
             sc.animateTo(
               target,
               duration: const Duration(milliseconds: 300),
@@ -560,7 +560,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   }
 
   static const double _kSignPadW = 400;
-  static const double _kSignPadH = 220;
+  static const double _kSignPadH = 200;
   static const double _kSignPadMargin = 8;
 
   /// Write canvas with the sign pad permanently anchored at the bottom-right
@@ -577,7 +577,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           ),
           child: _writtenCanvas(
             compact: true,
-            expandBoundaryOffset: _kSignPadH + _kSignPadMargin + 3 * 54.0,
+            expandBoundaryOffset: _kSignPadH + _kSignPadMargin,
           ),
         ),
         const Positioned(
