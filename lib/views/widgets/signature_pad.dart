@@ -24,12 +24,12 @@ class SignaturePenPreset {
 }
 
 const List<SignaturePenPreset> kDefaultSignaturePens = [
-  SignaturePenPreset(
-    label: 'Natural flow',
-    icon: Icons.edit_outlined,
-    width: 3.0,
-    description: 'Smooth and balanced stroke for regular signatures.',
-  ),
+  // SignaturePenPreset(
+  //   label: 'Natural flow',
+  //   icon: Icons.edit_outlined,
+  //   width: 3.0,
+  //   description: 'Smooth and balanced stroke for regular signatures.',
+  // ),
   SignaturePenPreset(
     label: 'Ballpoint',
     icon: Icons.create_outlined,
@@ -42,18 +42,18 @@ const List<SignaturePenPreset> kDefaultSignaturePens = [
     width: 1.5,
     description: 'Extra fine lines for detailed signatures.',
   ),
-  SignaturePenPreset(
-    label: 'Marker',
-    icon: Icons.brush_outlined,
-    width: 5.0,
-    description: 'Bold, expressive strokes.',
-  ),
-  SignaturePenPreset(
-    label: 'Brush',
-    icon: Icons.format_paint_outlined,
-    width: 7.0,
-    description: 'Smooth brush-like strokes.',
-  ),
+  // SignaturePenPreset(
+  //   label: 'Marker',
+  //   icon: Icons.brush_outlined,
+  //   width: 5.0,
+  //   description: 'Bold, expressive strokes.',
+  // ),
+  // SignaturePenPreset(
+  //   label: 'Brush',
+  //   icon: Icons.format_paint_outlined,
+  //   width: 7.0,
+  //   description: 'Smooth brush-like strokes.',
+  // ),
 ];
 
 const List<Color> kDefaultSignatureColors = [
@@ -159,13 +159,17 @@ class SignaturePadController {
     final s = _state;
     if (s == null || s._notifier.strokes.isEmpty) return null;
 
-    final strokes = s._notifier.strokes.map((stroke) => {
-      'color': _hexFromColor(stroke.color),
-      'widthRange': [stroke.width],
-      'points': stroke.points
-          .map((p) => {'x': p.dx, 'y': p.dy, 'p': 0.5, 't': null})
-          .toList(),
-    }).toList();
+    final strokes = s._notifier.strokes
+        .map(
+          (stroke) => {
+            'color': _hexFromColor(stroke.color),
+            'widthRange': [stroke.width],
+            'points': stroke.points
+                .map((p) => {'x': p.dx, 'y': p.dy, 'p': 0.5, 't': null})
+                .toList(),
+          },
+        )
+        .toList();
 
     return jsonEncode({
       'w': canvasWidth,
@@ -207,6 +211,7 @@ class SignaturePad extends StatefulWidget {
   final bool autoExpand;
   final double autoExpandStep;
   final bool showStrokeInfo;
+  final bool showColorPicker;
   final bool showCustomColorPicker;
   final VoidCallback? onExpand;
 
@@ -225,7 +230,7 @@ class SignaturePad extends StatefulWidget {
     this.pens = kDefaultSignaturePens,
     this.colors = kDefaultSignatureColors,
     this.initialPenColor = SignatureColor.darkBlue,
-    this.initialPenIndex = 2,
+    this.initialPenIndex = 0,
     this.canvasHeight,
     this.canvasColor = AppColors.cardColorLight,
     this.onChanged,
@@ -239,6 +244,7 @@ class SignaturePad extends StatefulWidget {
     this.autoExpand = false,
     this.autoExpandStep = 120,
     this.showStrokeInfo = false,
+    this.showColorPicker = false,
     this.showCustomColorPicker = false,
     this.onExpand,
     this.bottomTrailingWidget,
@@ -307,11 +313,13 @@ class _SignaturePadState extends State<SignaturePad> {
     } else if (_fingersBlocked) {
       return;
     }
-    _notifier.startStroke(_Stroke(
-      points: [e.localPosition],
-      color: _penColor,
-      width: _currentPen.width,
-    ));
+    _notifier.startStroke(
+      _Stroke(
+        points: [e.localPosition],
+        color: _penColor,
+        width: _currentPen.width,
+      ),
+    );
     widget.onDrawStart?.call();
   }
 
@@ -384,10 +392,9 @@ class _SignaturePadState extends State<SignaturePad> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, cropW, cropH));
     canvas.translate(-minX, -minY);
-    _SignaturePainter(notifier: _notifier).paint(
-      canvas,
-      Size(_canvasWidth, _canvasHeight),
-    );
+    _SignaturePainter(
+      notifier: _notifier,
+    ).paint(canvas, Size(_canvasWidth, _canvasHeight));
     final picture = recorder.endRecording();
     final image = await picture.toImage(cropW.round(), cropH.round());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -430,7 +437,10 @@ class _SignaturePadState extends State<SignaturePad> {
   void _undo() {
     if (_notifier.strokes.isEmpty) return;
     _notifier.removeLast();
-    if (widget.showStrokeInfo) setState(() { if (_strokeCount > 0) _strokeCount--; });
+    if (widget.showStrokeInfo)
+      setState(() {
+        if (_strokeCount > 0) _strokeCount--;
+      });
     widget.onChanged?.call();
   }
 
@@ -460,7 +470,7 @@ class _SignaturePadState extends State<SignaturePad> {
           children: [
             if (widget.showPenSelector) _penTypeSelector(),
             if (widget.showPenSelector) _penCurrentChip(pen),
-            _penColorRow(),
+            if (widget.showColorPicker) _penColorRow(),
           ],
         ),
         if (widget.showDescription) ...[
@@ -508,18 +518,18 @@ class _SignaturePadState extends State<SignaturePad> {
                     gestures: {
                       ImmediateMultiDragGestureRecognizer:
                           GestureRecognizerFactoryWithHandlers<
-                              ImmediateMultiDragGestureRecognizer>(
-                            () => ImmediateMultiDragGestureRecognizer(),
-                            (instance) {
-                              instance.supportedDevices = _fingersBlocked
-                                  ? {
-                                      PointerDeviceKind.stylus,
-                                      PointerDeviceKind.invertedStylus,
-                                    }
-                                  : null;
-                              instance.onStart = (_) => _DrawDrag();
-                            },
-                          ),
+                            ImmediateMultiDragGestureRecognizer
+                          >(() => ImmediateMultiDragGestureRecognizer(), (
+                            instance,
+                          ) {
+                            instance.supportedDevices = _fingersBlocked
+                                ? {
+                                    PointerDeviceKind.stylus,
+                                    PointerDeviceKind.invertedStylus,
+                                  }
+                                : null;
+                            instance.onStart = (_) => _DrawDrag();
+                          }),
                     },
                     child: Listener(
                       onPointerDown: _onPointerDown,
@@ -779,7 +789,7 @@ class _SignaturePainter extends CustomPainter {
   final bool showRuledLines;
 
   _SignaturePainter({required this.notifier, this.showRuledLines = false})
-      : super(repaint: notifier);
+    : super(repaint: notifier);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -787,7 +797,8 @@ class _SignaturePainter extends CustomPainter {
     for (final stroke in notifier.strokes) {
       _paintStroke(canvas, stroke);
     }
-    if (notifier.currentStroke != null) _paintStroke(canvas, notifier.currentStroke!);
+    if (notifier.currentStroke != null)
+      _paintStroke(canvas, notifier.currentStroke!);
   }
 
   void _paintStroke(Canvas canvas, _Stroke stroke) {
@@ -857,15 +868,60 @@ class _FullColorPickerDialogState extends State<_FullColorPickerDialog> {
   late Color _selected;
 
   static const List<List<Color>> _palette = [
-    [Color(0xFF7F1D1D), Color(0xFFB91C1C), Color(0xFFEF4444), Color(0xFFFCA5A5)],
-    [Color(0xFF7C2D12), Color(0xFFEA580C), Color(0xFFFB923C), Color(0xFFFED7AA)],
-    [Color(0xFF713F12), Color(0xFFCA8A04), Color(0xFFFACC15), Color(0xFFFEF08A)],
-    [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF4ADE80), Color(0xFFBBF7D0)],
-    [Color(0xFF164E63), Color(0xFF0E7490), Color(0xFF22D3EE), Color(0xFFA5F3FC)],
-    [Color(0xFF1E3A5F), Color(0xFF1D4ED8), Color(0xFF60A5FA), Color(0xFFBFDBFE)],
-    [Color(0xFF4C1D95), Color(0xFF7C3AED), Color(0xFFA78BFA), Color(0xFFEDE9FE)],
-    [Color(0xFF831843), Color(0xFFBE185D), Color(0xFFF472B6), Color(0xFFFCE7F3)],
-    [Color(0xFF111827), Color(0xFF374151), Color(0xFF9CA3AF), Color(0xFFE5E7EB)],
+    [
+      Color(0xFF7F1D1D),
+      Color(0xFFB91C1C),
+      Color(0xFFEF4444),
+      Color(0xFFFCA5A5),
+    ],
+    [
+      Color(0xFF7C2D12),
+      Color(0xFFEA580C),
+      Color(0xFFFB923C),
+      Color(0xFFFED7AA),
+    ],
+    [
+      Color(0xFF713F12),
+      Color(0xFFCA8A04),
+      Color(0xFFFACC15),
+      Color(0xFFFEF08A),
+    ],
+    [
+      Color(0xFF14532D),
+      Color(0xFF15803D),
+      Color(0xFF4ADE80),
+      Color(0xFFBBF7D0),
+    ],
+    [
+      Color(0xFF164E63),
+      Color(0xFF0E7490),
+      Color(0xFF22D3EE),
+      Color(0xFFA5F3FC),
+    ],
+    [
+      Color(0xFF1E3A5F),
+      Color(0xFF1D4ED8),
+      Color(0xFF60A5FA),
+      Color(0xFFBFDBFE),
+    ],
+    [
+      Color(0xFF4C1D95),
+      Color(0xFF7C3AED),
+      Color(0xFFA78BFA),
+      Color(0xFFEDE9FE),
+    ],
+    [
+      Color(0xFF831843),
+      Color(0xFFBE185D),
+      Color(0xFFF472B6),
+      Color(0xFFFCE7F3),
+    ],
+    [
+      Color(0xFF111827),
+      Color(0xFF374151),
+      Color(0xFF9CA3AF),
+      Color(0xFFE5E7EB),
+    ],
   ];
 
   @override
@@ -902,13 +958,13 @@ class _FullColorPickerDialogState extends State<_FullColorPickerDialog> {
                               color: color,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color:
-                                    _selected.toARGB32() == color.toARGB32()
-                                        ? Colors.white
-                                        : Colors.transparent,
+                                color: _selected.toARGB32() == color.toARGB32()
+                                    ? Colors.white
+                                    : Colors.transparent,
                                 width: 2.5,
                               ),
-                              boxShadow: _selected.toARGB32() == color.toARGB32()
+                              boxShadow:
+                                  _selected.toARGB32() == color.toARGB32()
                                   ? [
                                       BoxShadow(
                                         color: color.withValues(alpha: 0.5),
