@@ -1,4 +1,3 @@
-import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
@@ -36,13 +35,19 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
     ref.read(cmAutoNavConsumedProvider.notifier).state = false;
     await ref.read(cmDashboardController.notifier).initData();
     if (!mounted) return;
+    // Yield to the event queue so any in-flight tap events (e.g. the logout
+    // button press) can run and update cmAutoNavConsumedProvider before we read
+    // it. Without this, there is a narrow window where the tap event arrives
+    // after initData() resolves but before we check the flag.
+    await Future.delayed(Duration.zero);
+    if (!mounted) return;
     // If the user tapped the nav bar while data was loading, the flag is already
     // true and we skip. Otherwise, auto-navigate if there are pending approvals.
     if (!ref.read(cmAutoNavConsumedProvider)) {
-      // Skip if any dialog/overlay is currently on top of the root navigator
-      // (e.g. a logout confirmation dialog). Navigating while a dialog is open
-      // would dismiss it unexpectedly.
-      if (AppRouter.navigatorKey.currentState?.canPop() == true) return;
+      // Skip if any dialog/overlay is currently shown on top of this route.
+      // ModalRoute.of(context).isCurrent is false whenever a dialog sits on top,
+      // which is more reliable than checking canPop() on the root navigator.
+      if (ModalRoute.of(context)?.isCurrent == false) return;
 
       ref.read(cmAutoNavConsumedProvider.notifier).state = true;
       final pending =
@@ -173,15 +178,15 @@ class _CMDashboardScreenState extends ConsumerState<CMDashboardScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     GestureDetector(
                           onTap: () => ref
                               .read(cmNavController.notifier)
                               .select(CMNavTab.approvals),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
+                              horizontal: 16,
+                              vertical: 8,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.15),

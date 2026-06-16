@@ -108,7 +108,7 @@ class AuthController extends BaseControllerState<UserModel> {
     final confirmed = await showDialog<bool>(
       context: context,
       useRootNavigator: true,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (_) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
