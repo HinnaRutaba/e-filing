@@ -3,12 +3,38 @@ import 'dart:typed_data';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/services/pencil_settings_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
 import 'package:flutter/material.dart';
 
 enum RemarksPanelMode { type, write }
+
+class _BottomRightExcludeClipper extends CustomClipper<Path> {
+  final double excludeW;
+  final double excludeH;
+  const _BottomRightExcludeClipper({
+    required this.excludeW,
+    required this.excludeH,
+  });
+
+  @override
+  Path getClip(Size size) {
+    final exclude = Rect.fromLTRB(
+      size.width - excludeW,
+      size.height - excludeH,
+      size.width,
+      size.height,
+    );
+    return Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRect(exclude)
+      ..fillType = PathFillType.evenOdd;
+  }
+
+  @override
+  bool shouldReclip(_BottomRightExcludeClipper old) =>
+      old.excludeW != excludeW || old.excludeH != excludeH;
+}
 
 /// Holds internal controllers and exposes methods to read panel data.
 /// Create one instance in the parent, pass it to [RemarksSignPanel],
@@ -54,6 +80,10 @@ class RemarksSignPanelController extends ChangeNotifier {
 
   bool get isWrittenEmpty => _writtenCtrl.isEmpty;
   bool get isSignatureEmpty => _signCtrl.isEmpty;
+
+  /// Exposed so callers can build their own sign-pad widget (e.g. a floating
+  /// overlay) while still storing strokes in the shared controller.
+  SignaturePadController get signaturePadController => _signCtrl;
 
   /// Returns the typed HTML remarks (only meaningful when mode == type).
   Future<String> getTypedRemarks() => _typedCtrl.getText();
@@ -175,10 +205,6 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
 
   bool get _expanded => _ctrl.isExpanded;
 
-  // Compact signature state (used only when widget.compactSignature == true)
-  late bool _signPadExpanded;
-  Uint8List? _signaturePreview;
-
   bool _pencilOnlyEnabled = false;
 
   // Local keys — unique per state instance, never shared across pages.
@@ -189,8 +215,6 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
   @override
   void initState() {
     super.initState();
-    // Sign pad starts open on CM desk so the user can sign immediately.
-    _signPadExpanded = widget.compactSignature;
     // Set directly to avoid notifyListeners() during mount, which would call
     // setState on any sibling page's state that already has a listener on this
     // shared controller — causing setState-during-build errors in the pager.
@@ -383,44 +407,28 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
                   // avoiding the platform-view gesture conflict from a Stack.
                   // Write mode: bottomTrailingWidget places it outside the canvas.
                   // In both cases the button is hidden once the pad is expanded.
-                  _ctrl.mode == RemarksPanelMode.type
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _typedField(showBorder: false),
-                            if (!_signPadExpanded)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  10,
-                                  8,
-                                  10,
-                                  8,
-                                ),
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: _compactSignCollapsed(),
-                                ),
-                              ),
-                          ],
-                        )
-                      : _writtenCanvas(
-                          compact: true,
-                          bottomTrailing: _signPadExpanded
-                              ? null
-                              : _compactSignCollapsed(),
+                  if (_ctrl.mode == RemarksPanelMode.type)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _typedField(showBorder: false),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              0,
+                              0,
+                              _kSignPadMargin,
+                              _kSignPadMargin,
+                            ),
+                            child: _stackedSignPad(),
+                          ),
                         ),
-                  // Sign pad slides in/out while staying in the tree so the
-                  // SignaturePad's stroke state is never lost on collapse.
-                  ClipRect(
-                    child: AnimatedAlign(
-                      duration: const Duration(milliseconds: 280),
-                      curve: Curves.easeOutCubic,
-                      alignment: Alignment.topCenter,
-                      heightFactor: _signPadExpanded ? 1.0 : 0.0,
-                      child: _inlineSignPad(),
-                    ),
-                  ),
+                      ],
+                    )
+                  else
+                    _writtenCanvasWithStackedSignPad(),
                 ],
               ),
             ),
@@ -567,7 +575,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           autoExpandStep: 120,
           showStrokeInfo: true,
           showCustomColorPicker: true,
-          canvasHeight: 280,
+          canvasHeight: 380,
           showDescription: false,
           canvasColor: Colors.grey.shade50,
           showCanvasBorder: !compact,
@@ -594,178 +602,64 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     );
   }
 
-  // ── Compact signature (CM mode) ───────────────────────────────────────────
+  static const double _kSignPadW = 310;
+  static const double _kSignPadH = 148;
+  static const double _kSignPadMargin = 8;
 
-  void _openSignPad() {
-    setState(() => _signPadExpanded = true);
-    final sc = widget.scrollController;
-    if (sc == null) return;
-    // Wait for AnimatedAlign (280 ms) to finish expanding before scrolling,
-    // otherwise maxScrollExtent hasn't grown yet and the scroll is a no-op.
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted || !sc.hasClients) return;
-      sc.animateTo(
-        sc.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
-  /// The collapsed state: either an empty "Tap to sign" button or a
-  /// thumbnail preview of the captured signature with an edit overlay.
-  Widget _compactSignCollapsed() {
-    return _signaturePreview != null
-        ? _compactSignPreview()
-        : _compactSignButton();
-  }
-
-  Widget _compactSignButton() {
-    return InkWell(
-      onTap: _openSignPad,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 160,
-        height: 52,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: AppColors.secondaryLight.withValues(alpha: 0.45),
-          ),
-          color: AppColors.secondaryLight.withValues(alpha: 0.06),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: AppColors.secondaryDark,
-            ),
-            const SizedBox(width: 6),
-            AppText.labelLarge(
-              'Tap to sign',
-              color: AppColors.secondaryDark,
-              fontWeight: FontWeight.w600,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _compactSignPreview() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: _openSignPad,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 160,
-            height: 52,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.secondaryLight.withValues(alpha: 0.45),
-              ),
-              color: Colors.white,
-            ),
-            clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Image.memory(_signaturePreview!, fit: BoxFit.contain),
-          ),
-          Positioned(
-            top: -8,
-            right: -8,
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(
-                  color: AppColors.secondaryLight.withValues(alpha: 0.5),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.edit_outlined,
-                size: 13,
-                color: AppColors.secondaryDark,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Borderless sign pad that lives inside the shared outer container.
-  Widget _inlineSignPad() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  /// Write canvas with the sign pad permanently anchored at the bottom-right
+  /// (CM compact mode only). No expand/collapse — it is always visible and
+  /// styled to blend with the surrounding panel.
+  Widget _writtenCanvasWithStackedSignPad() {
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  width: widget.signPadWidth ?? double.infinity,
-                  child: SignaturePad(
-                    key: _signPadKey,
-                    controller: _ctrl._signCtrl,
-                    canvasHeight: 180,
-                    canvasColor: Colors.white,
-                    initialPenColor: widget.initialPenColor,
-                    showPenSelector: false,
-                    showDescription: false,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  AppText.labelSmall(
-                    'Sign above',
-                    color: AppColors.textSecondary,
-                  ),
-                  const Spacer(),
-                  AppOutlineButton(
-                    onPressed: () async {
-                      if (_ctrl._signCtrl.isNotEmpty) {
-                        final bytes = await _ctrl._signCtrl.toPngBytes();
-                        if (!mounted) return;
-                        setState(() {
-                          _signaturePreview = bytes;
-                          _signPadExpanded = false;
-                        });
-                      } else {
-                        setState(() {
-                          _signaturePreview = null;
-                          _signPadExpanded = false;
-                        });
-                      }
-                    },
-                    icon: Icons.check,
-                    text: 'Done',
-                    color: AppColors.secondaryDark,
-                  ),
-                ],
-              ),
-            ],
+        ClipPath(
+          clipper: const _BottomRightExcludeClipper(
+            excludeW: _kSignPadW + _kSignPadMargin,
+            excludeH: _kSignPadH + _kSignPadMargin,
           ),
+          child: _writtenCanvas(compact: true),
+        ),
+        const Positioned(
+          bottom: _kSignPadMargin,
+          right: _kSignPadMargin,
+          child: AbsorbPointer(
+            child: SizedBox(width: _kSignPadW, height: _kSignPadH),
+          ),
+        ),
+        Positioned(
+          bottom: _kSignPadMargin,
+          right: _kSignPadMargin,
+          child: _stackedSignPad(),
         ),
       ],
+    );
+  }
+
+  Widget _stackedSignPad() {
+    return SizedBox(
+      width: 310,
+      child: SignaturePad(
+        key: _signPadKey,
+        controller: _ctrl._signCtrl,
+        canvasHeight: 148,
+        canvasColor: Colors.white,
+        initialPenColor: widget.initialPenColor,
+        showPenSelector: false,
+        showDescription: false,
+        showClearButton: false,
+        showUndoButton: false,
+        bottomHintAction: GestureDetector(
+          onTap: () => setState(() {
+            _ctrl._signCtrl.clearSilently();
+          }),
+          child: const Icon(
+            Icons.delete_outline_rounded,
+            size: 16,
+            color: AppColors.error,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -194,6 +194,33 @@ class SignaturePadController {
   void undo() => _state?._undo();
   void setPenColor(Color color) => _state?._setPenColor(color);
   void setPenIndex(int index) => _state?._setPenIndex(index);
+
+  /// Externally start a stroke at [position] in the canvas's local coordinates.
+  void injectStrokeStart(Offset position) {
+    final s = _state;
+    if (s == null) return;
+    s._notifier.startStroke(_Stroke(
+      points: [position],
+      color: s._penColor,
+      width: s._isErasing ? 24.0 : s._currentPen.width,
+      isEraser: s._isErasing,
+    ));
+  }
+
+  /// Add a point to the current injected stroke.
+  void injectStrokePoint(Offset position) {
+    _state?._notifier.addPoint(position);
+  }
+
+  /// Commit the current injected stroke (triggers auto-expand, callbacks, etc.).
+  void injectStrokeEnd() {
+    _state?._finishStroke();
+  }
+
+  /// Cancel the current stroke without committing it.
+  void injectStrokeCancel() {
+    _state?._notifier.cancelStroke();
+  }
 }
 
 // ── Widget ────────────────────────────────────────────────────────────────────
@@ -231,6 +258,12 @@ class SignaturePad extends StatefulWidget {
   /// letting the parent's own border/clip define the visual boundary.
   final bool showCanvasBorder;
 
+  /// Optional interactive widget placed at the leading edge of the
+  /// "Sign above the line" hint row (only visible when [showPenSelector] is
+  /// false). Use this for a compact clear/delete button that sits inside the
+  /// canvas area without gesture conflicts.
+  final Widget? bottomHintAction;
+
   const SignaturePad({
     super.key,
     this.controller,
@@ -257,6 +290,7 @@ class SignaturePad extends StatefulWidget {
     this.onExpand,
     this.bottomTrailingWidget,
     this.showCanvasBorder = true,
+    this.bottomHintAction,
   });
 
   @override
@@ -471,21 +505,48 @@ class _SignaturePadState extends State<SignaturePad> {
   @override
   Widget build(BuildContext context) {
     final pen = _currentPen;
+    final hasToolbar = widget.showPenSelector ||
+        widget.showColorPicker ||
+        widget.showEraser ||
+        widget.showClearButton ||
+        widget.showUndoButton;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            if (widget.showPenSelector) _penTypeSelector(),
-            if (widget.showPenSelector) _penCurrentChip(pen),
-            if (widget.showColorPicker) _penColorRow(),
-            if (widget.showEraser) _penEraserButton(),
-          ],
-        ),
+        if (hasToolbar)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (widget.showPenSelector) _penTypeSelector(),
+              if (widget.showPenSelector) const SizedBox(width: 8),
+              if (widget.showPenSelector) _penCurrentChip(pen),
+              if (widget.showColorPicker) ...[
+                const SizedBox(width: 8),
+                _penColorRow(),
+              ],
+              if (widget.showEraser) ...[
+                const SizedBox(width: 8),
+                _penEraserButton(),
+              ],
+              if (widget.showClearButton || widget.showUndoButton)
+                const Spacer(),
+              if (widget.showClearButton)
+                _padButton(
+                  label: 'Clear All',
+                  icon: Icons.delete_outline_rounded,
+                  onPressed: _clear,
+                ),
+              if (widget.showClearButton && widget.showUndoButton)
+                const SizedBox(width: 12),
+              if (widget.showUndoButton)
+                _padButton(
+                  label: 'Undo Last Stroke',
+                  icon: Icons.undo_rounded,
+                  onPressed: _undo,
+                ),
+            ],
+          ),
         if (widget.showDescription) ...[
           const SizedBox(height: 8),
           Text(
@@ -565,32 +626,41 @@ class _SignaturePadState extends State<SignaturePad> {
                   ),
                   if (!widget.showPenSelector)
                     Positioned(
-                      right: 10,
-                      bottom: 24,
-                      child: IgnorePointer(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 340,
-                              height: 1,
-                              color: AppColors.secondaryLight.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Sign above the line',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.secondaryLight.withValues(
-                                  alpha: 0.5,
+                      left: 8,
+                      right: 8,
+                      bottom: 6,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (widget.bottomHintAction != null)
+                            widget.bottomHintAction!,
+                          const Spacer(),
+                          IgnorePointer(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 180,
+                                  height: 1,
+                                  color: AppColors.secondaryLight.withValues(
+                                    alpha: 0.35,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Sign above',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.secondaryLight.withValues(
+                                      alpha: 0.45,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
@@ -603,30 +673,6 @@ class _SignaturePadState extends State<SignaturePad> {
           Align(
             alignment: Alignment.centerRight,
             child: widget.bottomTrailingWidget!,
-          ),
-        ],
-        if (widget.showClearButton || widget.showUndoButton) ...[
-          Row(
-            children: [
-              if (widget.showClearButton)
-                Expanded(
-                  child: _padButton(
-                    label: 'Clear All',
-                    icon: Icons.delete_outline_rounded,
-                    onPressed: _clear,
-                  ),
-                ),
-              if (widget.showClearButton && widget.showUndoButton)
-                const SizedBox(width: 10),
-              if (widget.showUndoButton)
-                Expanded(
-                  child: _padButton(
-                    label: 'Undo Last Stroke',
-                    icon: Icons.undo_rounded,
-                    onPressed: _undo,
-                  ),
-                ),
-            ],
           ),
         ],
       ],
