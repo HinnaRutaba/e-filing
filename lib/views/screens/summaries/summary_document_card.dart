@@ -53,7 +53,6 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
   @override
   void initState() {
     super.initState();
-    debugPrint("REMARK_______${widget.remarkTrack.length}");
   }
 
   @override
@@ -654,7 +653,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                   fontFamily: fileFont,
                 ),
               if (track.actedAtDisplay != null)
-                AppText.labelSmall(track.actedAtDisplay!),
+                AppText.bodyMedium(track.actedAtDisplay!),
               const SizedBox(height: 24),
               Align(
                 alignment: Alignment.centerLeft,

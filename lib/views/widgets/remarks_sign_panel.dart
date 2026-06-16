@@ -553,7 +553,11 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     return ClipRRect(borderRadius: BorderRadius.circular(8), child: content);
   }
 
-  Widget _writtenCanvas({Widget? bottomTrailing, bool compact = false}) {
+  Widget _writtenCanvas({
+    Widget? bottomTrailing,
+    bool compact = false,
+    double? expandBoundaryOffset,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Subtract padding so canvas width measurement stays accurate.
@@ -573,9 +577,10 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           initialPenColor: widget.initialPenColor,
           autoExpand: true,
           autoExpandStep: 120,
+          autoExpandBoundaryOffset: expandBoundaryOffset ?? 60.0,
           showStrokeInfo: true,
           showCustomColorPicker: true,
-          canvasHeight: 380,
+          canvasHeight: 560,
           showDescription: false,
           canvasColor: Colors.grey.shade50,
           showCanvasBorder: !compact,
@@ -618,7 +623,10 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             excludeW: _kSignPadW + _kSignPadMargin,
             excludeH: _kSignPadH + _kSignPadMargin,
           ),
-          child: _writtenCanvas(compact: true),
+          child: _writtenCanvas(
+            compact: true,
+            expandBoundaryOffset: _kSignPadH + _kSignPadMargin + 3 * 54.0,
+          ),
         ),
         const Positioned(
           bottom: _kSignPadMargin,
@@ -638,17 +646,18 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
 
   Widget _stackedSignPad() {
     return SizedBox(
-      width: 310,
+      width: 400,
       child: SignaturePad(
         key: _signPadKey,
         controller: _ctrl._signCtrl,
-        canvasHeight: 148,
+        canvasHeight: 220,
         canvasColor: Colors.white,
         initialPenColor: widget.initialPenColor,
         showPenSelector: false,
         showDescription: false,
         showClearButton: false,
         showUndoButton: false,
+
         bottomHintAction: GestureDetector(
           onTap: () => setState(() {
             _ctrl._signCtrl.clearSilently();

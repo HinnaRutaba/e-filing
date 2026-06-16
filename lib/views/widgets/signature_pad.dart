@@ -199,12 +199,14 @@ class SignaturePadController {
   void injectStrokeStart(Offset position) {
     final s = _state;
     if (s == null) return;
-    s._notifier.startStroke(_Stroke(
-      points: [position],
-      color: s._penColor,
-      width: s._isErasing ? 24.0 : s._currentPen.width,
-      isEraser: s._isErasing,
-    ));
+    s._notifier.startStroke(
+      _Stroke(
+        points: [position],
+        color: s._penColor,
+        width: s._isErasing ? 24.0 : s._currentPen.width,
+        isEraser: s._isErasing,
+      ),
+    );
   }
 
   /// Add a point to the current injected stroke.
@@ -249,6 +251,12 @@ class SignaturePad extends StatefulWidget {
   final bool showEraser;
   final VoidCallback? onExpand;
 
+  /// When [autoExpand] is true, expansion is triggered when the lowest stroke
+  /// point is within this many pixels of the canvas bottom. Defaults to 60.
+  /// Pass a larger value (e.g. signPadH + margin + N×lineSpacing) to trigger
+  /// expansion before the user's writing collides with an overlaid widget.
+  final double autoExpandBoundaryOffset;
+
   /// Optional widget rendered right-aligned between the canvas and the
   /// clear/undo buttons — use this to embed e.g. a compact sign button
   /// without any drawing-gesture conflicts.
@@ -288,6 +296,7 @@ class SignaturePad extends StatefulWidget {
     this.showCustomColorPicker = false,
     this.showEraser = false,
     this.onExpand,
+    this.autoExpandBoundaryOffset = 60.0,
     this.bottomTrailingWidget,
     this.showCanvasBorder = true,
     this.bottomHintAction,
@@ -392,7 +401,7 @@ class _SignaturePadState extends State<SignaturePad> {
       final allPoints = _notifier.strokes.expand((s) => s.points);
       if (allPoints.isNotEmpty) {
         final maxY = allPoints.map((p) => p.dy).reduce(math.max);
-        if (maxY > _canvasHeight - 60) {
+        if (maxY > _canvasHeight - widget.autoExpandBoundaryOffset) {
           setState(() => _canvasHeight += widget.autoExpandStep);
           WidgetsBinding.instance.addPostFrameCallback(
             (_) => widget.onExpand?.call(),
@@ -505,7 +514,8 @@ class _SignaturePadState extends State<SignaturePad> {
   @override
   Widget build(BuildContext context) {
     final pen = _currentPen;
-    final hasToolbar = widget.showPenSelector ||
+    final hasToolbar =
+        widget.showPenSelector ||
         widget.showColorPicker ||
         widget.showEraser ||
         widget.showClearButton ||
@@ -574,7 +584,7 @@ class _SignaturePadState extends State<SignaturePad> {
                 border: widget.showCanvasBorder
                     ? Border.all(
                         color: AppColors.secondaryLight.withValues(alpha: 0.6),
-                        width: 1.5,
+                        width: 0.5,
                       )
                     : null,
               ),
@@ -641,19 +651,20 @@ class _SignaturePadState extends State<SignaturePad> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  width: 180,
+                                  width: 364,
                                   height: 1,
                                   color: AppColors.secondaryLight.withValues(
                                     alpha: 0.35,
                                   ),
                                 ),
                                 const SizedBox(height: 3),
-                                Text(
-                                  'Sign above',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.secondaryLight.withValues(
-                                      alpha: 0.45,
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 160),
+                                  child: Text(
+                                    'Signature',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.secondaryLight,
                                     ),
                                   ),
                                 ),

@@ -2465,6 +2465,9 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
           ? RemarksPanelMode.write
           : RemarksPanelMode.type,
       initiallyExpanded: isCM,
+      initialPenColor: isCM
+          ? SignatureColor.darkGreen
+          : SignatureColor.darkBlue,
       onLockToggle: () => setState(() => _remarksPanelCtrl.toggleLock()),
       bottomContent: isCMCurrentHolder
           ? AppSolidButton(

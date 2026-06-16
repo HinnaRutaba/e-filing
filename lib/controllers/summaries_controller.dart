@@ -253,17 +253,23 @@ class SummariesController extends BaseControllerState<SummariesState> {
     final counts = state.stats?.tabCounts;
     if (counts == null) return;
 
-    final displayTabs = subTabsForRole(role);
-    final priorityTabs = _autoSelectPriorityOrder(role, displayTabs);
-    final best = priorityTabs.firstWhere(
+    // Always land on the first main tab (Action Required).
+    const mainTab = SummaryMainTab.actionRequired;
+
+    // Within that main tab, pick the sub-tab with the most priority that has data.
+    final allDisplayTabs = subTabsForRole(role);
+    final actionRequiredSubs = allDisplayTabs
+        .where((s) => s.configFor(role).parent == mainTab)
+        .toList();
+    final prioritySubs = _autoSelectPriorityOrder(role, actionRequiredSubs);
+    final bestSub = prioritySubs.firstWhere(
       (t) => (counts.countForSubTab(t, role: role) ?? 0) > 0,
-      orElse: () => displayTabs.first,
+      orElse: () => actionRequiredSubs.first,
     );
 
-    final bestConfig = best.configFor(role);
     state = state.copyWith(
-      selectedSubTab: best,
-      selectedMainTab: bestConfig.parent,
+      selectedMainTab: mainTab,
+      selectedSubTab: bestSub,
     );
   }
 
