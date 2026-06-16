@@ -250,6 +250,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                                   i != 0 ||
                                   visibleTracks[i].actionType ==
                                       'sent_to_department',
+                              isLast: i == visibleTracks.length - 1,
                             ),
                             const SizedBox(height: 18),
                           ],
@@ -586,6 +587,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
   Widget _remarkTrackBlock(
     SummaryRemarkTrackModel track, {
     bool showRemarks = true,
+    bool isLast = true,
   }) {
     final hasHtmlRemarks =
         showRemarks &&
@@ -668,6 +670,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       fontFamily: fileFont,
+                      decoration: isLast ? null : TextDecoration.lineThrough,
                     ),
 
                     AppText.bodySmall(
@@ -675,6 +678,7 @@ class _SummaryDocumentCardState extends ConsumerState<SummaryDocumentCard> {
                       color: Colors.grey[900],
                       fontSize: 12,
                       fontFamily: fileFont,
+                      decoration: isLast ? null : TextDecoration.lineThrough,
                     ),
                   ],
                 ),
