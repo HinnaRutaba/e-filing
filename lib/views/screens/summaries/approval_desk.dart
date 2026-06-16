@@ -506,9 +506,7 @@ class _ApprovalDeskState extends ConsumerState<ApprovalDesk> {
                             initialPenColor: isCm
                                 ? SignatureColor.darkGreen
                                 : SignatureColor.darkBlue,
-                            signPadWidth: 450,
                             onLockToggle: _remarksPanelCtrl.toggleLock,
-                            compactSignature: isCm,
                           ),
                         )
                         .animate()

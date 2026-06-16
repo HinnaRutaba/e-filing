@@ -19,15 +19,18 @@ class _BottomRightExcludeClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final exclude = Rect.fromLTRB(
-      size.width - excludeW,
-      size.height - excludeH,
-      size.width,
-      size.height,
+    final exclude = RRect.fromRectAndCorners(
+      Rect.fromLTRB(
+        size.width - excludeW,
+        size.height - excludeH,
+        size.width,
+        size.height,
+      ),
+      topLeft: const Radius.circular(10),
     );
     return Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRect(exclude)
+      ..addRRect(exclude)
       ..fillType = PathFillType.evenOdd;
   }
 
@@ -169,18 +172,8 @@ class RemarksSignPanel extends StatefulWidget {
 
   final bool showHeading;
 
-  /// Constrains the signature pad to this width and right-aligns it.
-  /// When null (default) the pad stretches to full width.
-  final double? signPadWidth;
-
   /// Called when the user taps the lock/unlock button in the panel header.
   final VoidCallback? onLockToggle;
-
-  /// When true, the signature pad starts collapsed ("Tap to sign").
-  /// Tapping expands it; after signing and pressing Done it collapses
-  /// back to a small preview with an edit overlay — same UX as the
-  /// inline sign pad in SummaryDocumentCard.
-  final bool compactSignature;
 
   const RemarksSignPanel({
     super.key,
@@ -191,9 +184,7 @@ class RemarksSignPanel extends StatefulWidget {
     this.initialMode = RemarksPanelMode.type,
     this.initialPenColor = SignatureColor.darkBlue,
     this.showHeading = true,
-    this.signPadWidth = 400,
     this.onLockToggle,
-    this.compactSignature = false,
   });
 
   @override
@@ -382,84 +373,45 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
             ],
           ),
           const SizedBox(height: 12),
-          // CM: one white bordered container that holds BOTH the remarks input
-          // (top) and the sign pad (bottom). The sign button sits at the
-          // bottom-right corner of the remarks area. Tapping it slides the
-          // sign pad in below — all within the same box.
-          // Secretary: plain remarks input + separate "Sign here" section.
-          if (widget.compactSignature) ...[
-            Container(
-              key: _remarksPadKey,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.secondaryLight.withValues(alpha: 0.4),
-                ),
+          Container(
+            key: _remarksPadKey,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.4),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Remarks area with sign button/preview at bottom-right.
-                  // Type mode: Column so the button sits below HtmlEditor,
-                  // avoiding the platform-view gesture conflict from a Stack.
-                  // Write mode: bottomTrailingWidget places it outside the canvas.
-                  // In both cases the button is hidden once the pad is expanded.
-                  if (_ctrl.mode == RemarksPanelMode.type)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _typedField(showBorder: false),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              0,
-                              0,
-                              _kSignPadMargin,
-                              _kSignPadMargin,
-                            ),
-                            child: _stackedSignPad(),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_ctrl.mode == RemarksPanelMode.type)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _typedField(showBorder: false),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            0,
+                            0,
+                            _kSignPadMargin,
+                            _kSignPadMargin,
                           ),
+                          child: _stackedSignPad(),
                         ),
-                      ],
-                    )
-                  else
-                    _writtenCanvasWithStackedSignPad(),
-                ],
-              ),
+                      ),
+                    ],
+                  )
+                else
+                  _writtenCanvasWithStackedSignPad(),
+              ],
             ),
-          ] else ...[
-            SizedBox(
-              key: _remarksPadKey,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _ctrl.mode == RemarksPanelMode.type
-                    ? _typedField()
-                    : _writtenCanvas(),
-              ),
-            ),
-            const Divider(height: 24),
-            AppText.titleLarge('Sign here'),
-            const SizedBox(height: 16),
-            Align(
-              alignment: widget.signPadWidth != null
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              child: SizedBox(
-                width: widget.signPadWidth,
-                child: SignaturePad(
-                  key: _signPadKey,
-                  controller: _ctrl._signCtrl,
-                  initialPenColor: widget.initialPenColor,
-                  showPenSelector: false,
-                ),
-              ),
-            ),
-          ],
+          ),
           if (widget.bottomContent != null) ...[
             const SizedBox(height: 16),
             widget.bottomContent!,
@@ -607,8 +559,8 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
     );
   }
 
-  static const double _kSignPadW = 310;
-  static const double _kSignPadH = 148;
+  static const double _kSignPadW = 400;
+  static const double _kSignPadH = 220;
   static const double _kSignPadMargin = 8;
 
   /// Write canvas with the sign pad permanently anchored at the bottom-right

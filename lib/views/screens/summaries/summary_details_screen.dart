@@ -2437,9 +2437,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
       summary: summary,
       remarkTrack: details?.remarkTrack ?? const [],
       actions: details?.actions,
-      forwardingSection: actionsAvailable
-          ? _forwardingFields(showForwardButton: true)
-          : null,
+      forwardingSection: null,
       onSignatureChanged: (bytes) {
         setState(() => _cardSignatureBytes = bytes);
       },
@@ -2475,19 +2473,7 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
               text: 'Sign and Return',
               width: double.infinity,
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _forwardingFields(),
-                const SizedBox(height: 16),
-                _actionButton(
-                  SummaryAction.signForward,
-                  expand: false,
-                  width: double.infinity,
-                  onTapOverride: _submitFromRemarksPanel,
-                ),
-              ],
-            ),
+          : null,
     );
   }
 
