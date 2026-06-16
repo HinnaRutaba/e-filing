@@ -572,6 +572,7 @@ class _RemarksSignPanelState extends State<RemarksSignPanel> {
           canvasColor: Colors.grey.shade50,
           showCanvasBorder: !compact,
           bottomTrailingWidget: bottomTrailing,
+          showEraser: true,
           onExpand: () {
             final sc = widget.scrollController;
             if (sc == null || !sc.hasClients) return;

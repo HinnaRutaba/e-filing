@@ -78,7 +78,13 @@ class _Stroke {
   final List<Offset> points;
   final Color color;
   final double width;
-  _Stroke({required this.points, required this.color, required this.width});
+  final bool isEraser;
+  _Stroke({
+    required this.points,
+    required this.color,
+    required this.width,
+    this.isEraser = false,
+  });
 }
 
 // ── Stroke notifier ───────────────────────────────────────────────────────────
@@ -213,6 +219,7 @@ class SignaturePad extends StatefulWidget {
   final bool showStrokeInfo;
   final bool showColorPicker;
   final bool showCustomColorPicker;
+  final bool showEraser;
   final VoidCallback? onExpand;
 
   /// Optional widget rendered right-aligned between the canvas and the
@@ -246,6 +253,7 @@ class SignaturePad extends StatefulWidget {
     this.showStrokeInfo = false,
     this.showColorPicker = false,
     this.showCustomColorPicker = false,
+    this.showEraser = false,
     this.onExpand,
     this.bottomTrailingWidget,
     this.showCanvasBorder = true,
@@ -266,6 +274,7 @@ class _SignaturePadState extends State<SignaturePad> {
   // "Only Draw with Apple Pencil" is enabled.
   bool _stylusDetected = false;
   bool _pencilOnlyEnabled = false;
+  bool _isErasing = false;
 
   bool get _fingersBlocked => _stylusDetected || _pencilOnlyEnabled;
 
@@ -317,7 +326,8 @@ class _SignaturePadState extends State<SignaturePad> {
       _Stroke(
         points: [e.localPosition],
         color: _penColor,
-        width: _currentPen.width,
+        width: _isErasing ? 24.0 : _currentPen.width,
+        isEraser: _isErasing,
       ),
     );
     widget.onDrawStart?.call();
@@ -403,12 +413,11 @@ class _SignaturePadState extends State<SignaturePad> {
 
   void _clearSilent() {
     _notifier.clearAll();
-    if (widget.showStrokeInfo || widget.autoExpand) {
-      setState(() {
-        _strokeCount = 0;
-        if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
-      });
-    }
+    setState(() {
+      _isErasing = false;
+      _strokeCount = 0;
+      if (widget.autoExpand) _canvasHeight = widget.canvasHeight ?? 280;
+    });
     widget.onChanged?.call();
   }
 
@@ -446,7 +455,10 @@ class _SignaturePadState extends State<SignaturePad> {
 
   void _setPenIndex(int index) {
     if (index < 0 || index >= widget.pens.length || index == _penIndex) return;
-    setState(() => _penIndex = index);
+    setState(() {
+      _penIndex = index;
+      _isErasing = false;
+    });
   }
 
   void _setPenColor(Color color) {
@@ -471,6 +483,7 @@ class _SignaturePadState extends State<SignaturePad> {
             if (widget.showPenSelector) _penTypeSelector(),
             if (widget.showPenSelector) _penCurrentChip(pen),
             if (widget.showColorPicker) _penColorRow(),
+            if (widget.showEraser) _penEraserButton(),
           ],
         ),
         if (widget.showDescription) ...[
@@ -648,6 +661,47 @@ class _SignaturePadState extends State<SignaturePad> {
     );
   }
 
+  Widget _penEraserButton() {
+    return GestureDetector(
+      onTap: () => setState(() => _isErasing = !_isErasing),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: _isErasing
+              ? AppColors.error.withValues(alpha: 0.1)
+              : AppColors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: _isErasing
+                ? AppColors.error
+                : AppColors.secondaryLight.withValues(alpha: 0.45),
+            width: _isErasing ? 1.6 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cleaning_services_rounded,
+              size: 13,
+              color: _isErasing ? AppColors.error : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Eraser',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: _isErasing ? FontWeight.w600 : FontWeight.w500,
+                color: _isErasing ? AppColors.error : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _penIconButton(int index) {
     final pen = widget.pens[index];
     final selected = _penIndex == index;
@@ -793,28 +847,37 @@ class _SignaturePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Ruled lines sit below the ink layer so the eraser never removes them.
     if (showRuledLines) _paintRuledLines(canvas, size);
+    // saveLayer isolates ink strokes: BlendMode.clear only punches through
+    // this layer, leaving ruled lines and the canvas background intact.
+    canvas.saveLayer(Offset.zero & size, Paint());
     for (final stroke in notifier.strokes) {
       _paintStroke(canvas, stroke);
     }
-    if (notifier.currentStroke != null)
+    if (notifier.currentStroke != null) {
       _paintStroke(canvas, notifier.currentStroke!);
+    }
+    canvas.restore();
   }
 
   void _paintStroke(Canvas canvas, _Stroke stroke) {
     if (stroke.points.isEmpty) return;
     final paint = Paint()
-      ..color = stroke.color
+      ..color = stroke.isEraser ? Colors.black : stroke.color
       ..strokeWidth = stroke.width
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..blendMode = stroke.isEraser ? BlendMode.clear : BlendMode.srcOver;
 
     if (stroke.points.length == 1) {
       canvas.drawCircle(
         stroke.points.first,
         stroke.width / 2,
-        Paint()..color = stroke.color,
+        Paint()
+          ..color = stroke.isEraser ? Colors.black : stroke.color
+          ..blendMode = stroke.isEraser ? BlendMode.clear : BlendMode.srcOver,
       );
       return;
     }
