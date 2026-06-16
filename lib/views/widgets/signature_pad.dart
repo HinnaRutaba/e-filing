@@ -529,8 +529,6 @@ class _SignaturePadState extends State<SignaturePad> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (widget.showPenSelector) _penTypeSelector(),
-              if (widget.showPenSelector) const SizedBox(width: 8),
-              if (widget.showPenSelector) _penCurrentChip(pen),
               if (widget.showColorPicker) ...[
                 const SizedBox(width: 8),
                 _penColorRow(),
@@ -713,7 +711,7 @@ class _SignaturePadState extends State<SignaturePad> {
           padding: const EdgeInsets.only(right: 4),
           child: AppText.titleSmall('Pen', fontSize: 14),
         ),
-        for (int i = 0; i < widget.pens.length; i++) _penIconButton(i),
+        for (int i = 0; i < widget.pens.length; i++) _penChipButton(i),
       ],
     );
   }
@@ -759,21 +757,19 @@ class _SignaturePadState extends State<SignaturePad> {
     );
   }
 
-  Widget _penIconButton(int index) {
+  Widget _penChipButton(int index) {
     final pen = widget.pens[index];
-    final selected = _penIndex == index;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
+    final selected = _penIndex == index && !_isErasing;
+    return GestureDetector(
       onTap: () => _setPenIndex(index),
-      child: Container(
-        width: 32,
-        height: 30,
-        alignment: Alignment.center,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.secondary.withValues(alpha: 0.1)
               : AppColors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
                 ? AppColors.secondary
@@ -781,24 +777,26 @@ class _SignaturePadState extends State<SignaturePad> {
             width: selected ? 1.6 : 1.0,
           ),
         ),
-        child: Icon(
-          pen.icon,
-          size: 16,
-          color: selected ? AppColors.secondaryDark : AppColors.textSecondary,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              pen.icon,
+              size: 13,
+              color: selected ? AppColors.secondary : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              pen.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? AppColors.secondary : AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _penCurrentChip(SignaturePenPreset pen) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.secondary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.4)),
-      ),
-      child: AppText.labelSmall(pen.label, color: AppColors.secondaryDark),
     );
   }
 
