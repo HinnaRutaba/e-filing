@@ -45,6 +45,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     NotificationService().initNotification(
       ref.read(authController).currentDesignation?.userDesgId,
     );
+    NotificationService().clearBadge();
     _loadInitialData();
 
     _tabController.addListener(() {
@@ -230,7 +231,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               Expanded(
                                 child: DashboardCard(
                                   cardColor: Colors.orange,
-                                  iconColor: Color(0xFFFF8C00),
+                                  iconColor: const Color(0xFFFF8C00),
                                   title: "Pending Files",
                                   value: "${dashboardState.pendingFilesCount}",
                                   onTap: () {

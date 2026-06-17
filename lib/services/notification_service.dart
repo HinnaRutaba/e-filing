@@ -1,10 +1,28 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:efiling_balochistan/firebase_options.dart';
 import 'package:efiling_balochistan/repository/notifications/notification_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_new_badger/flutter_new_badger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _badgeCountKey = 'notification_badge_count';
+
+// Must be a top-level function — runs in a separate isolate when app is
+// background or killed. SharedPreferences is used because the singleton
+// is not available across isolates.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final prefs = await SharedPreferences.getInstance();
+  final count = (prefs.getInt(_badgeCountKey) ?? 0) + 1;
+  await prefs.setInt(_badgeCountKey, count);
+  await FlutterNewBadger.setBadge(count);
+}
 
 class NotificationService {
   final NotificationRepo notificationRepo = NotificationRepo();
@@ -55,7 +73,6 @@ class NotificationService {
       await getToken();
       saveFcmToken(userDesgId);
 
-      // Initialize local notification settings
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@drawable/notification_icon');
       const InitializationSettings initializationSettings =
@@ -79,31 +96,51 @@ class NotificationService {
     }
   }
 
+  Future<void> clearBadge() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_badgeCountKey, 0);
+      await FlutterNewBadger.removeBadge();
+    } catch (e) {
+      log("Badge clear error: $e");
+    }
+  }
+
   Future<void> getToken() async {
     _fcmToken = await _firebaseMessaging.getToken();
     log("FCM_________$_fcmToken");
   }
 
   void _showNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-          'your_channel_id',
-          'your_channel_name',
-          channelDescription: 'your_channel_description',
-          importance: Importance.max,
-          priority: Priority.high,
-        );
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final count = (prefs.getInt(_badgeCountKey) ?? 0) + 1;
+      await prefs.setInt(_badgeCountKey, count);
+      await FlutterNewBadger.setBadge(count);
 
-    await flutterLocalNotificationsPlugin.show(
-      message.hashCode,
-      message.notification?.title,
-      message.notification?.body,
-      platformChannelSpecifics,
-      payload: jsonEncode(message.data), // Pass data as payload
-    );
+      final AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            'your_channel_id',
+            'your_channel_name',
+            channelDescription: 'your_channel_description',
+            importance: Importance.max,
+            priority: Priority.high,
+            number: count,
+          );
+      final NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        message.hashCode,
+        message.notification?.title,
+        message.notification?.body,
+        platformChannelSpecifics,
+        payload: jsonEncode(message.data),
+      );
+    } catch (e) {
+      log("Show notification error: $e");
+    }
   }
 
   Future<void> _handleNotificationTap(String? payload) async {
@@ -112,41 +149,17 @@ class NotificationService {
     _navigateToScreenFromData(data);
   }
 
-  Future<void> _navigateToScreenFromData(Map<String, dynamic> data) async {
-    // if (data['job_id'] != null) {
-    //   int jobId = int.parse(data['job_id']);
-    //   int? status;
-    //   if (data['status'] != null) {
-    //     status = int.parse(data['status']);
-    //   }
-    //   Job? job = await assessmentController.getJob(jobId);
-    //   await Future.delayed(const Duration(seconds: 500));
-    //   if (job != null) {
-    //     homeController.checkAssess(
-    //       job,
-    //       status ?? job.jobMobileStatus?.first.jobId,
-    //     );
-    //   }
-    // }
-  }
+  Future<void> _navigateToScreenFromData(Map<String, dynamic> data) async {}
 
   Future<void> saveFcmToken(int? desgId) async {
     try {
       await notificationRepo.storeNotificationToken(desgId, _fcmToken);
     } catch (e, s) {
-      print("SAVE FCM ERR_______${e}_____$s");
+      log("SAVE FCM ERR_______${e}_____$s");
     }
   }
 
   Future<void> clearFcmToken() async {
     _fcmToken = null;
-    // try {
-    //   await postApi(
-    //     saveFcmTokenApi,
-    //     json.encode({'fcm_token': _fcmToken}),
-    //   );
-    // } catch (e, s) {
-    //   print("FCM ERR_______${e}_____$s");
-    // }
   }
 }
