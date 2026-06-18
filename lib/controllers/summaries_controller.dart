@@ -261,32 +261,10 @@ class SummariesController extends BaseControllerState<SummariesState> {
     final actionRequiredSubs = allDisplayTabs
         .where((s) => s.configFor(role).parent == mainTab)
         .toList();
-    final prioritySubs = _autoSelectPriorityOrder(role, actionRequiredSubs);
-    final bestSub = prioritySubs.firstWhere(
-      (t) => (counts.countForSubTab(t, role: role) ?? 0) > 0,
-      orElse: () => actionRequiredSubs.first,
-    );
-
     state = state.copyWith(
       selectedMainTab: mainTab,
-      selectedSubTab: bestSub,
+      selectedSubTab: actionRequiredSubs.first,
     );
-  }
-
-  /// Returns tabs in the order they should be checked for auto-selection.
-  /// Differs from display order when certain tabs have higher action priority.
-  List<SummarySubTab> _autoSelectPriorityOrder(
-    ActiveUserDesgRole? role,
-    List<SummarySubTab> displayTabs,
-  ) {
-    if (role == ActiveUserDesgRole.pstocm) {
-      // CM returned items require immediate forwarding — check before inbox.
-      return [
-        SummarySubTab.cmReturned,
-        ...displayTabs.where((t) => t != SummarySubTab.cmReturned),
-      ];
-    }
-    return displayTabs;
   }
 
   Future<void> fetchSummariesStats() async {
