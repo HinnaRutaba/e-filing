@@ -1,11 +1,10 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
@@ -60,13 +59,13 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
-  List<ChatParticipantModel> usersForChat = [];
+  List<DepartmentUserModel> usersForChat = [];
   String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
   XFile? disposeOffLetter;
 
-  ChatParticipantModel? forwardTo;
+  DepartmentUserModel? forwardTo;
   final TextEditingController forwardToController = TextEditingController();
   DaakAction selectedAction = DaakAction.forward;
 
@@ -120,7 +119,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   Future<void> fetchDetails() async {
     int? desgId = ref.read(authController).currentDesignation?.userDesgId;
-    List<ChatParticipantModel> users = await ref
+    List<DepartmentUserModel> users = await ref
         .read(chatRepo)
         .getUsersForChat(desgId);
     users.removeWhere((element) => element.userDesignationId == desgId);
@@ -169,19 +168,16 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
     final sttState = ref.watch(speechToTextController);
     DaakMeta? meta = ref.watch(daakController).daakMeta;
     final bool showOtherAction = meta?.activeUserDesg?.role == 'deo';
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.appBarColor,
         title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
         elevation: 0,
         scrolledUnderElevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(72),
-          child: Container(
-            color: AppColors.appBarColor,
-            // height: 120,
-            child: collapsedPDFViewer(),
-          ),
+          child: collapsedPDFViewer(),
         ),
       ),
       body: RefreshIndicator(
@@ -192,18 +188,17 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //const SizedBox(height: 108),
               AppText.headlineSmall(
                 'Next Actions',
                 fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
+                color: appColors.secondaryLight,
               ),
               const SizedBox(height: 8),
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 3,
-                shadowColor: AppColors.secondaryDark.withValues(alpha: .1),
-                color: AppColors.white,
+                shadowColor: appColors.shadow,
+                color: theme.cardColor,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8.0,
@@ -234,22 +229,22 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.primaryDark.withValues(
+                                        ? appColors.primaryDark.withValues(
                                             alpha: 0.2,
                                           )
-                                        : AppColors.appBarColor,
+                                        : appColors.surfaceMuted,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isSelected
-                                          ? AppColors.primaryDark
-                                          : Colors.grey.shade300,
+                                          ? appColors.primaryDark
+                                          : appColors.border,
                                     ),
                                   ),
                                   child: AppText.bodySmall(
                                     action.label,
                                     color: isSelected
-                                        ? AppColors.primaryDark
-                                        : Colors.black87,
+                                        ? appColors.primaryDark
+                                        : appColors.textPrimary,
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -268,11 +263,11 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                               ? "Dispose Off Letter"
                               : "",
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: appColors.textPrimary,
                         ),
                         const SizedBox(height: 4),
                         if (selectedAction == DaakAction.forward) ...[
-                          SearchDropDownField<ChatParticipantModel>(
+                          SearchDropDownField<DepartmentUserModel>(
                             suggestionsCallback: (pattern) {
                               return usersForChat
                                   .where(
@@ -305,8 +300,9 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                         color: Colors.yellow[400],
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.yellow[600]!
-                                              .withOpacity(0.3),
+                                          color: Colors.yellow[600]!.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           width: 0.5,
                                         ),
                                       ),
@@ -356,7 +352,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ),
                                             border: Border.all(
                                               color: Colors.yellow[600]!
-                                                  .withOpacity(0.3),
+                                                  .withValues(alpha: 0.3),
                                               width: 0.5,
                                             ),
                                           ),
@@ -445,7 +441,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           ),
                           AppText.labelSmall(
                             "This is optional",
-                            color: Colors.grey[600],
+                            color: appColors.textSecondary,
                           ),
                         ],
                         const SizedBox(height: 8),
@@ -465,7 +461,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         ),
                         AppText.labelSmall(
                           "pdf, docx, jpg, jpeg, png. Max size: 10MB",
-                          color: Colors.grey[600],
+                          color: appColors.textSecondary,
                         ),
                         const SizedBox(height: 6),
                         selectedAction == DaakAction.forward
@@ -558,7 +554,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
               AppText.headlineSmall(
                 'Previous Correspondences',
                 fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
+                color: appColors.secondaryLight,
               ),
               const SizedBox(height: 4),
               ConstrainedBox(
@@ -576,7 +572,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
               AppText.headlineSmall(
                 'Attachments',
                 fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
+                color: appColors.secondaryLight,
               ),
               const SizedBox(height: 4),
               ConstrainedBox(
@@ -599,17 +595,18 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   }
 
   Widget collapsedPDFViewer() {
+    final appColors = context.appColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.appBarColor,
+        color: appColors.surfaceMuted,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.secondaryDark.withValues(alpha: .2),
+            color: appColors.shadow,
             blurRadius: 2,
             offset: const Offset(0, 2.5),
           ),
@@ -655,12 +652,13 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
       'png',
     ],
   }) {
+    final appColors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppText.labelLarge(
           title,
-          color: Colors.grey[800],
+          color: appColors.textSecondary,
           fontWeight: FontWeight.w500,
           fontSize: 12,
         ),
@@ -676,27 +674,27 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.appBarColor,
+              color: appColors.surfaceMuted,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: attachment != null
-                    ? AppColors.primaryDark
+                    ? appColors.primaryDark
                     : Colors.transparent,
                 width: 1,
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.attach_file_outlined,
-                  color: AppColors.primaryDark,
+                  color: appColors.primaryDark,
                   size: 28,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: AppText.titleSmall(
                     attachment != null
-                        ? attachment!.name
+                        ? attachment.name
                         : 'Select file to attach',
                   ),
                 ),

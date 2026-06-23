@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:efiling_balochistan/config/router/app_router.dart';
@@ -13,9 +12,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VersionSyncService {
-  static final String _appStoreUrl =
+  static const String _appStoreUrl =
       "https://apps.apple.com/pk/app/balochistan-e-filing-system/id6758300893";
-  static final String _playStoreUrl =
+  static const String _playStoreUrl =
       "https://play.google.com/store/apps/details?id=com.lrm.efiling_balochistan&pcampaignid=web_share";
 
   static final VersionSyncService _instance = VersionSyncService._internal();
@@ -28,13 +27,11 @@ class VersionSyncService {
 
   VersionSyncModel? _versionSyncModel;
 
-  VersionSyncModel? get versionSyncModel => _versionSyncModel;
-
   set versionSyncModel(VersionSyncModel? model) {
     _versionSyncModel = model;
   }
 
-  VersionSyncRepo _versionSyncRepo = VersionSyncRepo();
+  final VersionSyncRepo _versionSyncRepo = VersionSyncRepo();
 
   Future<void> fetchVersionSync() async {
     try {
@@ -81,10 +78,10 @@ class VersionSyncService {
   }
 
   Future<bool> isAppVersionOutdated() async {
-    if (versionSyncModel == null) {
+    if (_versionSyncModel == null) {
       await fetchVersionSync();
     }
-    if (versionSyncModel != null && versionSyncModel!.latestVersion != null) {
+    if (_versionSyncModel != null && _versionSyncModel!.latestVersion != null) {
       final currentVersion = await getAppVersionString();
       return _compareVersions(
             currentVersion,
@@ -103,9 +100,9 @@ class VersionSyncService {
 
     if (!isOutdated) return true;
 
-    final title = versionSyncModel?.title ?? "Update Available";
+    final title = _versionSyncModel?.title ?? "Update Available";
     final message =
-        versionSyncModel?.message ??
+        _versionSyncModel?.message ??
         "A new version of the app is available. Please update to continue.";
 
     if (!context.mounted) return true;
@@ -148,7 +145,7 @@ class VersionSyncService {
                   text: "Update Now",
                   width: double.infinity,
                 ),
-                if (!(versionSyncModel?.forceUpdate ?? false)) ...[
+                if (!(_versionSyncModel?.forceUpdate ?? false)) ...[
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {

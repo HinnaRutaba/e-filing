@@ -1,11 +1,13 @@
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
+import 'package:efiling_balochistan/views/screens/cm_app/cm_shell.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/archived_files_screen.dart';
@@ -23,6 +25,11 @@ import 'package:efiling_balochistan/views/screens/settings/sections_screen.dart'
 import 'package:efiling_balochistan/views/screens/settings/settings_screen.dart';
 import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/create_draft_remarks_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/secretary_approval_desk.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summary_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -42,7 +49,7 @@ class AppRouter {
       path: Routes.login,
       pageBuilder: GoTransitions.fade.build(
         settings: GoTransitionSettings(duration: 200.ms),
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => LoginScreen(static: state.extra != false),
       ),
     ),
     GoRoute(
@@ -57,8 +64,15 @@ class AppRouter {
     GoRoute(
       path: Routes.dashboard,
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
+        settings: GoTransitionSettings(duration: 400.ms),
         builder: (context, state) => const DashboardScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.cmDashboard,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const CMShell(),
       ),
     ),
     GoRoute(
@@ -66,6 +80,39 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const CreateNewFileScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaries,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const SummariesScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.createSummary,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) =>
+            CreateSummaryScreen(summaryId: state.extra as int?),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaryDraftRemarks,
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) =>
+            CreateDraftRemarksScreen(summary: state.extra as SummaryModel),
+      ),
+    ),
+    GoRoute(
+      path: Routes.summaryDetails,
+      pageBuilder: GoTransitions.slide.toLeft.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) {
+          final item = state.extra as SummaryModel?;
+          return SummaryDetailsScreen(summary: item);
+        },
       ),
     ),
     GoRoute(
@@ -88,9 +135,25 @@ class AppRouter {
     ),
     GoRoute(
       path: Routes.chats,
-      pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const ChatsScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        transitionDuration: const Duration(milliseconds: 420),
+        reverseTransitionDuration: const Duration(milliseconds: 320),
+        child: const ChatsScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          final scale = Tween<double>(begin: 0.05, end: 1.0).animate(curved);
+          final fade = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
+          return ScaleTransition(
+            alignment: const Alignment(1.0, -0.95),
+            scale: scale,
+            child: FadeTransition(opacity: fade, child: child),
+          );
+        },
       ),
     ),
     GoRoute(
@@ -180,6 +243,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.secretaryApprovalDesk,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const SecretaryApprovalDesk(),
       ),
     ),
     GoRoute(

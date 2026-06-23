@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:flutter/material.dart';
 
 /// File Statuses (files table)
@@ -89,7 +90,8 @@ class FileModel {
       barcode: json[FileSchema.barcode],
       status: json[FileSchema.status] is int
           ? FileStatus.fromValue(
-              json[FileSchema.status] ?? json[FileSchema.fileStatus])
+              json[FileSchema.status] ?? json[FileSchema.fileStatus],
+            )
           : status,
       receivedAt: json[FileSchema.receivedAt] != null
           ? DateTime.tryParse(json[FileSchema.receivedAt])
@@ -99,11 +101,14 @@ class FileModel {
           : null,
       tag: json[FileSchema.tag] != null
           ? json[FileSchema.tag] is String
-              ? TagModel(
-                  id: null,
-                  title: json[FileSchema.tag],
-                  color: getTagColor(json[FileSchema.tagColor] ?? 'primary'))
-              : TagModel.fromJson(json[FileSchema.tag])
+                ? TagModel(
+                    id: null,
+                    title: json[FileSchema.tag],
+                    color: HelperUtils.getTagColor(
+                      json[FileSchema.tagColor] ?? 'primary',
+                    ),
+                  )
+                : TagModel.fromJson(json[FileSchema.tag])
           : null,
       sender: json[FileSchema.sender] as String?,
       receiver: json[FileSchema.receiver] as String?,
@@ -140,26 +145,18 @@ class TagModel {
   final String? title;
   final Color? color;
 
-  TagModel({
-    this.id,
-    this.title,
-    this.color,
-  });
+  TagModel({this.id, this.title, this.color});
 
   factory TagModel.fromJson(Map<String, dynamic> json) {
     return TagModel(
       id: json[TagSchema.id] as int?,
       title: json[TagSchema.title] as String?,
-      color: getTagColor(json[TagSchema.color]),
+      color: HelperUtils.getTagColor(json[TagSchema.color]),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      TagSchema.id: id,
-      TagSchema.title: title,
-      TagSchema.color: color,
-    };
+    return {TagSchema.id: id, TagSchema.title: title, TagSchema.color: color};
   }
 }
 
@@ -190,22 +187,4 @@ class TagSchema {
   static const String id = "id";
   static const String title = "title";
   static const String color = "color";
-}
-
-Color getTagColor(String colorName) {
-  Color tagColor = Colors.blue;
-  if (colorName == 'danger') {
-    tagColor = Colors.red[700]!;
-  } else if (colorName == 'warning') {
-    tagColor = Colors.amber[700]!;
-  } else if (colorName == 'success') {
-    tagColor = Colors.green[700]!;
-  } else if (colorName == 'info') {
-    tagColor = Colors.blue[700]!;
-  } else if (colorName == 'primary') {
-    tagColor = Colors.blue[700]!;
-  } else if (colorName == 'secondary') {
-    tagColor = Colors.grey[700]!;
-  }
-  return tagColor;
 }

@@ -15,25 +15,26 @@ enum RequestType {
 
 abstract class NetworkBase {
   final DioClient dioClient = DioClient(Dio());
-  static const String base = 'https://efiling.balochistan.gob.pk';
-  //'https://test-efiling.balochistan.gob.pk';
+  static const String base =
+      //'https://efiling.balochistan.gob.pk';
+      'https://test-efiling.balochistan.gob.pk';
   final String baseUrl = '$base/api/';
 
-  Map<String, dynamic> get headers => {
-        "Accept": "application/json",
-      };
+  Map<String, dynamic> get headers => {"Accept": "application/json"};
 
   Map<String, dynamic> get multipartHeader => {
-        "Content-Type": "multipart/form-data",
-        "Accept": "application/x-www-form-urlencoded",
-      };
+    "Content-Type": "multipart/form-data",
+    "Accept": "application/x-www-form-urlencoded",
+  };
 
   isSuccess(Map<String, dynamic> data) {
     return data.isNotEmpty && data['status'] == true;
   }
 
-  Future<Options> options(
-      {bool authRequired = true, bool isMultipartContentType = false}) async {
+  Future<Options> options({
+    bool authRequired = true,
+    bool isMultipartContentType = false,
+  }) async {
     final options = Options(
       headers: isMultipartContentType ? multipartHeader : headers,
       followRedirects: false,

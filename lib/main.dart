@@ -4,7 +4,9 @@ import 'package:device_preview_plus/device_preview_plus.dart';
 import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/firebase_options.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -17,40 +19,42 @@ import 'package:toastification/toastification.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  //debugRepaintTextRainbowEnabled = true;
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     DevicePreview(
       enabled: false,
-      builder: (context) => const ProviderScope(
-        child: MyApp(),
-      ), // Wrap your app
+      builder: (context) =>
+          const ProviderScope(child: MyApp()), // Wrap your app
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     configLoading();
+    final themeMode = ref.watch(themeController);
     return ToastificationWrapper(
       child: MaterialApp.router(
-        builder: EasyLoading.init(builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.noScaling),
-            child: child!,
-          );
-        }),
+        builder: EasyLoading.init(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: ResponsiveWrapper(child: child!),
+            );
+          },
+        ),
         debugShowCheckedModeBanner: false,
         title: "E-Filing",
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.light,
+        themeMode: themeMode,
         routerConfig: AppRouter.router,
       ),
     );

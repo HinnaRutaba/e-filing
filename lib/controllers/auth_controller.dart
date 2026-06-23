@@ -3,10 +3,13 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/keys.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
+import 'package:efiling_balochistan/views/widgets/confirmation_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class AuthController extends BaseControllerState<UserModel> {
@@ -14,8 +17,10 @@ class AuthController extends BaseControllerState<UserModel> {
 
   AuthRepo get repo => ref.read(authRepo);
 
-  Future<bool> login(
-      {required String username, required String password}) async {
+  Future<bool> login({
+    required String username,
+    required String password,
+  }) async {
     bool success = false;
     EasyLoading.show();
     try {
@@ -24,9 +29,18 @@ class AuthController extends BaseControllerState<UserModel> {
         state = model.user!;
         localStorage.setToken(model);
         getOpenAIToken();
+
         if (model.user?.designations.length == 1) {
           await setDesignation(model.user!.designations.first);
-          RouteHelper.navigateTo(Routes.dashboard);
+          await fetchLoggedInUser();
+
+          await ref.read(summariesController.notifier).fetchSummariesMeta();
+          await ref.read(daakController.notifier).fetchDaakMeta();
+          if (model.user?.userDesgRole == ActiveUserDesgRole.cm) {
+            RouteHelper.navigateTo(Routes.cmDashboard);
+          } else {
+            RouteHelper.navigateTo(Routes.dashboard);
+          }
         } else {
           RouteHelper.navigateTo(
             Routes.selectDesignation,
@@ -57,7 +71,8 @@ class AuthController extends BaseControllerState<UserModel> {
 
   Future<UserModel?> fetchLoggedInUser() async {
     try {
-      int desId = state.currentDesignation?.userDesgId ??
+      int desId =
+          state.currentDesignation?.userDesgId ??
           (await localStorage.getDesignation())?.userDesgId ??
           0;
       UserModel? model = await repo.fetchCurrentUserDetails(desId);
@@ -65,7 +80,7 @@ class AuthController extends BaseControllerState<UserModel> {
         state = state.copyWhole(model);
       }
       return model;
-    } catch (e, s) {
+    } catch (e) {
       Toast.error(message: handleException(e));
       return null;
     }
@@ -89,7 +104,29 @@ class AuthController extends BaseControllerState<UserModel> {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: false,
+      builder: (_) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: const ConfirmationDialog(
+            title: 'Log out?',
+            message: 'You will need to sign in again to continue.',
+            icon: Icons.logout_rounded,
+            iconColor: Colors.red,
+            confirmText: 'Log out',
+            cancelText: 'Cancel',
+            destructive: true,
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
     try {
       await repo.logout();
       RouteHelper.navigateTo(Routes.login);
@@ -98,10 +135,11 @@ class AuthController extends BaseControllerState<UserModel> {
     }
   }
 
-  Future<bool> changePassword(
-      {required String currentPassword,
-      required String newPassword,
-      required String confirmPassword}) async {
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     bool success = false;
     EasyLoading.show();
     try {
@@ -134,6 +172,7 @@ class AuthController extends BaseControllerState<UserModel> {
     try {
       await localStorage.setDesignation(model);
       state = state.copyWith(currentDesignation: model);
+
       return model;
     } catch (e) {
       Toast.error(message: handleException(e));

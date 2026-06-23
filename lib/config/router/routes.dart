@@ -6,6 +6,10 @@ class Routes {
   static const String login = '/login';
   static const String selectDesignation = '/selectDesignation';
   static const String dashboard = '/dashboard';
+  static const String cmDashboard = '/cmDashboard';
+  static const String cmApprovalDesk = '/cmApprovalDesk';
+  static const String secretaryApprovalDesk = '/secretaryApprovalDesk';
+  static const String cmSummaries = '/cmSummaries';
   static const String createFile = '/createFile';
   static String fileDetails([fileId]) =>
       '/fileDetails/${fileId ?? ':${PathParams.fileId}'}';
@@ -22,10 +26,13 @@ class Routes {
   static const String sections = '/sections';
   static const String designations = '/designations';
   static const String changePassword = '/changePassword';
+  static const String summaries = '/summaries';
+  static const String createSummary = '/createSummary';
+  static const String summaryDetails = '/summaryDetails';
+  static const String summaryDraftRemarks = '/summaryDraftRemarks';
   static const String daak = '/daak';
-    static String daakDetails([daakId]) =>
+  static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
-
 
   // Sub Routes
   static const String profile = 'profile';

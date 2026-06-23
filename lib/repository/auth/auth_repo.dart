@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -56,10 +54,7 @@ class AuthRepo extends AuthInterface {
       Map<String, dynamic> data = await dioClient.post(
         url: loginUrl,
         options: await options(authRequired: false),
-        data: {
-          UserSchema.username: username,
-          UserSchema.password: password,
-        },
+        data: {UserSchema.username: username, UserSchema.password: password},
       );
       if (data.isNotEmpty) {
         return TokenModel.fromJson(data);
@@ -73,19 +68,20 @@ class AuthRepo extends AuthInterface {
   @override
   Future<void> logout() async {
     try {
-      await localStorage.removeAll();
+      await localStorage.removeUserPrefs();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<void> changePassword(
-      {required String currentPassword,
-      required String newPassword,
-      required String confirmPassword}) async {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     try {
-      Map<String, dynamic> data = await dioClient.post(
+      await dioClient.post(
         url: changePasswordUrl,
         options: await options(authRequired: true),
         data: {

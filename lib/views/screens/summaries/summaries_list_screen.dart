@@ -1,0 +1,531 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/summary_card.dart';
+import 'package:efiling_balochistan/utils/typing_detector.dart';
+import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class SummariesScreen extends ConsumerWidget {
+  const SummariesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(summariesController).meta?.activeUserDesg?.roleEnum;
+    final isSecretary =
+        role == ActiveUserDesgRole.secretary ||
+        role == ActiveUserDesgRole.pstocm;
+    return GradientScaffold(
+      child: BaseScreen(
+        bgColor: Colors.transparent,
+        isdash: false,
+        title: 'Summaries',
+        actions: !isSecretary
+            ? [
+                AppOutlineButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  text: "Draft Summary",
+                  icon: Icons.edit_outlined,
+                  color: context.appColors.primaryDark,
+                ),
+              ]
+            : context.isMobile
+            ? [
+                AppTextLinkButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.secretaryApprovalDesk);
+                  },
+                  text: "Approval Desk",
+                ),
+
+                Container(
+                  color: AppColors.disabled,
+                  height: 24,
+                  width: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                AppTextLinkButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  text: "Draft Summary",
+                  color: context.appColors.primaryDark,
+                ),
+              ]
+            : [
+                AppOutlineButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.secretaryApprovalDesk);
+                  },
+                  text: "Approval Desk",
+                  icon: Icons.desk,
+                  color: context.appColors.secondaryDark,
+                ),
+                const SizedBox(width: 12),
+
+                AppOutlineButton(
+                  onPressed: () {
+                    RouteHelper.push(Routes.createSummary);
+                  },
+                  text: "Draft Summary",
+                  icon: Icons.edit_outlined,
+                  color: context.appColors.primaryDark,
+                ),
+              ],
+        body: const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: SummariesListScreen(),
+        ),
+      ),
+    );
+  }
+}
+
+class SummariesListScreen extends ConsumerStatefulWidget {
+  /// When true, skips the automatic [loadData] call on [initState].
+  final bool skipInitialLoad;
+
+  const SummariesListScreen({super.key, this.skipInitialLoad = false});
+
+  @override
+  ConsumerState<SummariesListScreen> createState() =>
+      _SummariesListScreenState();
+}
+
+class _SummariesListScreenState extends ConsumerState<SummariesListScreen> {
+  final ScrollController _mainTabScrollController = ScrollController();
+  final ScrollController _subTabScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final TypingDetector _typingDetector = TypingDetector(milliseconds: 500);
+  final Map<SummaryMainTab, GlobalKey> _mainTabKeys = {
+    for (final t in SummaryMainTab.values) t: GlobalKey(),
+  };
+
+  final Map<SummarySubTab, GlobalKey> _subTabKeys = {
+    for (final t in SummarySubTab.values) t: GlobalKey(),
+  };
+
+  List<SummarySubTab> _subTabsFor(SummaryMainTab mainTab) {
+    final role = ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+    return subTabsForRole(
+      role,
+    ).where((s) => s.configFor(role).parent == mainTab).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!widget.skipInitialLoad) {
+        ref
+            .read(summariesController.notifier)
+            .loadData(isInitialLoad: true, autoSelectBestTab: true);
+      }
+      final s = ref.read(summariesController);
+      _scrollMainTabIntoView(s.selectedMainTab);
+      _scrollSubTabIntoView(s.selectedSubTab);
+    });
+  }
+
+  @override
+  void dispose() {
+    _mainTabScrollController.dispose();
+    _subTabScrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onMainTabChanged(SummaryMainTab tab) {
+    ref.read(summariesController.notifier).setMainTab(tab);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _scrollMainTabIntoView(tab),
+    );
+  }
+
+  void _scrollMainTabIntoView(SummaryMainTab mainTab) {
+    final ctx = _mainTabKeys[mainTab]?.currentContext;
+    if (ctx == null) return;
+    final rb = ctx.findRenderObject();
+    if (rb is! RenderBox || !rb.hasSize) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.5,
+    );
+  }
+
+  void _scrollSubTabIntoView(SummarySubTab subTab) {
+    final ctx = _subTabKeys[subTab]?.currentContext;
+    if (ctx == null) return;
+    final rb = ctx.findRenderObject();
+    if (rb is! RenderBox || !rb.hasSize) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.5,
+    );
+  }
+
+  String? _helperBannerText(SummarySubTab subTab) {
+    final role = ref.read(summariesController).meta?.activeUserDesg?.roleEnum;
+    switch (subTab) {
+      case SummarySubTab.inbox:
+        return role == ActiveUserDesgRole.cm
+            ? 'Summaries pending your approval.'
+            : 'Summaries received by you and awaiting your action.';
+      case SummarySubTab.sharedToMe:
+        return ' Summaries shared with you internally that require your action — submit remarks or forward to another user.';
+      case SummarySubTab.drafts:
+        return 'Section drafts and internal remarks pending your review, signature, and forwarding.';
+      case SummarySubTab.disposal:
+        return 'Summaries that have been disposed off.';
+      case SummarySubTab.sentOut:
+        return 'Summaries you have already dispatched.';
+      case SummarySubTab.sharedInternally:
+        return 'Summaries shared internally within your section.';
+      case SummarySubTab.cmReturned:
+        return 'The Chief Minister has signed and returned these summaries. Forward each one to the action department — no further signature from you is required.';
+      case SummarySubTab.withCm:
+        return 'Summaries currently with the Chief Minister awaiting signature.';
+      case SummarySubTab.cmApprovedReturned:
+        return 'Summaries you have approved and returned to the originating department.';
+      case SummarySubTab.disposed:
+        return 'Summaries that have been fully disposed off and closed.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrlState = ref.watch(summariesController);
+    final mainTab = ctrlState.selectedMainTab;
+    final subTab = ctrlState.selectedSubTab;
+
+    ref.listen(summariesController.select((s) => s.stats), (prev, next) {
+      if (next != null && prev == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _scrollMainTabIntoView(ref.read(summariesController).selectedMainTab);
+          _scrollSubTabIntoView(ref.read(summariesController).selectedSubTab);
+        });
+      }
+    });
+    final currentSubTabs = _subTabsFor(mainTab);
+    final visibleItems = ctrlState.filteredSummaries;
+    final bannerText = _helperBannerText(subTab);
+
+    return Column(
+      children: [
+        _mainTabBar(mainTab),
+        const SizedBox(height: 2),
+        // Sub-tabs
+        if (currentSubTabs.isNotEmpty) _subTabBar(mainTab, subTab),
+        // Search bar
+        _searchBar(),
+        // Helper banner
+        if (bannerText != null) _helperBanner(bannerText),
+        // List
+        Expanded(
+          child: ctrlState.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () => ref
+                      .read(summariesController.notifier)
+                      .loadData(isInitialLoad: true),
+                  child: visibleItems.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 120),
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 56,
+                              color: context.appColors.textSecondary,
+                            ),
+                            const SizedBox(height: 12),
+                            const Center(child: Text('No summaries yet')),
+                          ],
+                        )
+                      : Builder(
+                          builder: (context) {
+                            final perRow = context.isMobile ? 1 : 2;
+                            final rowCount = (visibleItems.length / perRow)
+                                .ceil();
+                            return ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                              itemCount: rowCount,
+                              itemBuilder: (ctx, rowIndex) {
+                                final children = <Widget>[];
+                                for (var c = 0; c < perRow; c++) {
+                                  final i = rowIndex * perRow + c;
+                                  if (i >= visibleItems.length) {
+                                    children.add(
+                                      const Expanded(child: SizedBox.shrink()),
+                                    );
+                                    continue;
+                                  }
+                                  final card =
+                                      SummaryCard(item: visibleItems[i])
+                                          .animate()
+                                          .fadeIn(
+                                            delay: (80 * i).ms,
+                                            duration: 300.ms,
+                                            curve: Curves.easeOut,
+                                          )
+                                          .slideX(
+                                            begin: -0.15,
+                                            end: 0,
+                                            delay: (80 * i).ms,
+                                            duration: 350.ms,
+                                            curve: Curves.easeOutCubic,
+                                          );
+                                  if (c > 0) {
+                                    children.add(const SizedBox(width: 12));
+                                  }
+                                  children.add(Expanded(child: card));
+                                }
+                                if (perRow == 1) {
+                                  return children.first is Expanded
+                                      ? (children.first as Expanded).child
+                                      : children.first;
+                                }
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: children,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  int? _mainTabCount(SummaryMainTab tab) =>
+      ref.read(summariesController.notifier).mainTabCount(tab);
+
+  // ---------- Main tab bar ----------
+
+  Widget _mainTabBar(SummaryMainTab mainTab) {
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        controller: _mainTabScrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        itemCount: SummaryMainTab.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final tab = SummaryMainTab.values[index];
+          return KeyedSubtree(
+            key: _mainTabKeys[tab],
+            child: GradientTabChip(
+              label: tab.label,
+              icon: tab.icon,
+              count: _mainTabCount(tab),
+              selected: mainTab == tab,
+              onTap: () => _onMainTabChanged(tab),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ---------- Sub-tab bar ----------
+
+  Widget _subTabBar(SummaryMainTab mainTab, SummarySubTab subTab) {
+    final subs = _subTabsFor(mainTab);
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        controller: _subTabScrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        itemCount: subs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final sub = subs[index];
+          final role = ref
+              .watch(summariesController)
+              .meta
+              ?.activeUserDesg
+              ?.roleEnum;
+          final count = ref
+              .watch(summariesController)
+              .stats
+              ?.tabCounts
+              ?.countForSubTab(sub, role: role);
+          return KeyedSubtree(
+            key: _subTabKeys[sub],
+            child: _SubTabChip(
+              label: sub.configFor(role).label,
+              selected: subTab == sub,
+              count: count,
+              onTap: () {
+                ref.read(summariesController.notifier).setSubTab(sub);
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _scrollSubTabIntoView(sub),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _searchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: AppTextField(
+        controller: _searchController,
+        hintText: 'Search summaries...',
+        labelText: '',
+        showLabel: false,
+        onChanged: (value) {
+          setState(() {});
+          _typingDetector.run(() {
+            ref.read(summariesController.notifier).setSearchText(value);
+          });
+        },
+        prefix: const Icon(Icons.search_rounded),
+        suffixIcon: _searchController.text.isNotEmpty
+            ? InkWell(
+                onTap: () {
+                  _searchController.clear();
+                  ref.read(summariesController.notifier).setSearchText('');
+                },
+                child: const Icon(Icons.close_rounded),
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(50),
+          borderSide: const BorderSide(color: AppColors.cardColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _helperBanner(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark
+        ? const Color(0xFF3B2A0E)
+        : const Color.fromARGB(255, 253, 235, 179);
+    final borderColor = isDark
+        ? const Color(0xFF8A5A1A)
+        : const Color.fromARGB(255, 236, 159, 71);
+    final textColor = isDark
+        ? const Color.fromARGB(255, 169, 138, 84)
+        : const Color(0xFF8A4B08);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: textColor, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: AppText.bodySmall(text, color: textColor)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubTabChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final int? count;
+  final VoidCallback onTap;
+
+  const _SubTabChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final appColors = context.appColors;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : appColors.cardColorLight,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : appColors.secondaryLight.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : appColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (count != null && count! > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white
+                      : context.appColors.primaryDark,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: selected
+                        ? context.appColors.primaryDark
+                        : Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
