@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/models/summaries/summary_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/views/screens/chats/chats_screen.dart';
 import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
+import 'package:efiling_balochistan/views/screens/daak/daak_approval_desk.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_shell.dart';
@@ -257,6 +258,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const DaakListViewScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.daakDesk,
+      pageBuilder: GoTransitions.slide.toLeft.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const DaakApprovalDesk(),
       ),
     ),
     GoRoute(

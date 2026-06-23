@@ -43,10 +43,18 @@ class DaakDetailsInfo {
 class DaakDetailsScreen extends ConsumerStatefulWidget {
   final int? daakId;
   final DaakDetailsInfo daakDetailsInfo;
+  final bool showAppBar;
+
+  /// When provided (desk context), called on successful action instead of
+  /// popping the route.
+  final VoidCallback? onSuccess;
+
   const DaakDetailsScreen({
     super.key,
     required this.daakDetailsInfo,
     required this.daakId,
+    this.showAppBar = true,
+    this.onSuccess,
   });
 
   @override
@@ -67,23 +75,27 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   DaakAction selectedAction = DaakAction.forward;
 
   Future<void> fetchDetails() async {
-    int? desgId = ref.read(authController).currentDesignation?.userDesgId;
-    List<DepartmentUserModel> users = await ref
-        .read(chatRepo)
-        .getUsersForChat(desgId);
-    users.removeWhere((element) => element.userDesignationId == desgId);
-    setState(() {
-      usersForChat = users;
-    });
-    DaakModel? model = await ref
-        .read(daakController.notifier)
-        .fetchDaakDetails(
-          daakId: widget.daakId,
-          status: widget.daakDetailsInfo.status,
-        );
-    setState(() {
-      daakDetails = model;
-    });
+    if (context.mounted) {
+      int? desgId = ref.read(authController).currentDesignation?.userDesgId;
+      List<DepartmentUserModel> users = await ref
+          .read(chatRepo)
+          .getUsersForChat(desgId);
+      users.removeWhere((element) => element.userDesignationId == desgId);
+
+      setState(() {
+        usersForChat = users;
+      });
+
+      DaakModel? model = await ref
+          .read(daakController.notifier)
+          .fetchDaakDetails(
+            daakId: widget.daakId,
+            status: widget.daakDetailsInfo.status,
+          );
+      setState(() {
+        daakDetails = model;
+      });
+    }
   }
 
   @override
@@ -113,11 +125,13 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
     final theme = Theme.of(context);
     final appColors = context.appColors;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: fetchDetails,
         child: SingleChildScrollView(
@@ -436,6 +450,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ? null
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )
@@ -458,6 +473,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ? null
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )
@@ -482,6 +498,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
                                         issuedLetter: disposeOffLetter,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )

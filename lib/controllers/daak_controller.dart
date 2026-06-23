@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -232,6 +233,7 @@ class DaakController extends BaseControllerState<DaakState> {
     required int? fwdToDesId,
     String? remarks,
     XFile? supportingAttachment,
+    VoidCallback? onSuccess,
   }) async {
     try {
       EasyLoading.show();
@@ -245,7 +247,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak forwarded successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.inbox);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.inbox);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();
@@ -258,6 +264,7 @@ class DaakController extends BaseControllerState<DaakState> {
     String? remarks,
     XFile? supportingAttachment,
     XFile? issuedLetter,
+    VoidCallback? onSuccess,
   }) async {
     try {
       EasyLoading.show();
@@ -271,7 +278,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak disposed off successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.nfa);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.nfa);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();
@@ -283,6 +294,7 @@ class DaakController extends BaseControllerState<DaakState> {
     required int? daakId,
     String? remarks,
     XFile? supportingAttachment,
+    VoidCallback? onSuccess,
   }) async {
     try {
       EasyLoading.show();
@@ -295,7 +307,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak marked as NFA successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.nfa);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.nfa);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();

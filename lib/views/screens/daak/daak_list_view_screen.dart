@@ -1,3 +1,6 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -8,6 +11,7 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
@@ -61,6 +65,15 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
         bgColor: Colors.transparent,
         title: "Daak Inbox",
         isdash: false,
+        actions: [
+          AppOutlineButton(
+            onPressed: () {
+              RouteHelper.push(Routes.daakDesk);
+            },
+            text: "Daak Desk",
+            color: context.appColors.secondaryDark,
+          ),
+        ],
         body: Column(
           children: [
             Padding(
