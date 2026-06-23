@@ -95,11 +95,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       icon: Icons.send_time_extension_rounded,
       routeName: Routes.forwarded,
     ),
-    DrawerMenu(
-      title: "Summaries",
-      icon: Icons.summarize_outlined,
-      routeName: Routes.summaries,
-    ),
+    // DrawerMenu(
+    //   title: "Summaries",
+    //   icon: Icons.summarize_outlined,
+    //   routeName: Routes.summaries,
+    // ),
     DrawerMenu(
       title: "Create New File",
       icon: Icons.add_link,

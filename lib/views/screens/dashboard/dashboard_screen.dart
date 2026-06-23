@@ -10,12 +10,10 @@ import 'package:efiling_balochistan/services/notification_service.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_dept_totals_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_efile_kpis_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_daak_overview_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_daak_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_files_section.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_summaries_section.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -60,7 +58,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Future<void> _loadInitialData() async {
     try {
-      ref.read(summariesController.notifier).fetchSummariesStats();
       await ref.read(dashboardController.notifier).initData();
       await _showDaakAchievementDialogIfNeeded();
     } catch (error) {}
@@ -373,7 +370,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final bool isMobile = context.isMobile;
     final bool smallCard = isMobile && compact;
     final kpis = dashboardState.stats?.efileKpis;
-    final tabCounts = dashboardState.stats?.summaryStats?.tabCounts;
 
     Widget animated(Widget child, int index) {
       final delay = (index * 120).ms;
@@ -389,14 +385,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           .fadeIn(delay: delay, duration: 300.ms);
     }
 
-    final summariesCard = DashboardCard(
+    final forwardedCard = DashboardCard(
       cardColor: Colors.blue[200]!,
       iconColor: context.appColors.secondaryDark,
-      title: "Summaries",
-      value: '${tabCounts?.total ?? 0}',
-      onTap: () => RouteHelper.push(Routes.summaries),
-      loading: dashboardState.loadingStats,
-      icon: Icons.summarize_rounded,
+      title: "Forwarded Files",
+      value: '${dashboardState.forwardedFiles.length}',
+      onTap: () => RouteHelper.push(Routes.forwarded),
+      loading: dashboardState.loadingForwardedFiles,
+      icon: Icons.forward_to_inbox_rounded,
       showSmallCard: smallCard,
     );
 
@@ -433,7 +429,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       showSmallCard: smallCard,
     );
 
-    final cards = [summariesCard, daakCard, pendingCard, actionRequiredCard];
+    final cards = [pendingCard, actionRequiredCard, forwardedCard, daakCard];
 
     if (!isMobile || compact) {
       return Row(
@@ -486,10 +482,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   ) {
     final stats = dashboardState.stats;
 
-    final recentSummariesSection = DashboardRecentSummariesSection(
-      tabCounts: stats?.summaryStats?.tabCounts,
-      loading: dashboardState.loadingStats,
-    );
     final recentPendingFilesSection = DashboardRecentFilesSection(
       kpis: stats?.efileKpis,
       loading: dashboardState.loadingStats,
@@ -503,10 +495,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       loading: dashboardState.loadingDaakLetters,
     );
     final efileKpisSection = DashboardEfileKpisSection(kpis: stats?.efileKpis);
-    final deptTotalsSection = DashboardDeptTotalsSection(
-      totals: stats?.summaryStats?.departmentTotals,
-    );
-
     const gap = SizedBox(height: 16);
     const hGap = SizedBox(width: 16);
     const sectionGap = SizedBox(height: 28);
@@ -528,11 +516,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
             gap,
             recentDaakSection,
-            sectionGap,
-            _buildSectionHeading('Summaries'),
-            recentSummariesSection,
-            gap,
-            deptTotalsSection,
             bottomPadding,
           ],
         ),
@@ -561,16 +544,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               Expanded(child: daakOverviewSection),
               hGap,
               Expanded(child: recentDaakSection),
-            ],
-          ),
-          sectionGap,
-          _buildSectionHeading('Summaries'),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: recentSummariesSection),
-              hGap,
-              Expanded(child: deptTotalsSection),
             ],
           ),
         ],

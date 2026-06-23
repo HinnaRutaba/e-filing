@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
@@ -28,10 +31,40 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     colors: [Color(0xFF1A3A5C), Color(0xFF102040)],
   );
 
+  bool _noConnection = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
   @override
   void initState() {
     super.initState();
-    if (widget.navigate) fetchData();
+    if (widget.navigate) _startWithConnectivityCheck();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
+  Future<bool> _hasConnection() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.any((r) => r != ConnectivityResult.none);
+  }
+
+  Future<void> _startWithConnectivityCheck() async {
+    if (await _hasConnection()) {
+      fetchData();
+    } else {
+      setState(() => _noConnection = true);
+      _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+        if (results.any((r) => r != ConnectivityResult.none) && _noConnection) {
+          setState(() => _noConnection = false);
+          _connectivitySub?.cancel();
+          _connectivitySub = null;
+          fetchData();
+        }
+      });
+    }
   }
 
   Future<void> fetchData() async {
@@ -54,7 +87,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       RouteHelper.navigateTo(Routes.login, extra: false);
       return;
     }
-    ref.read(summariesController.notifier).fetchSummariesMeta();
+    //ref.read(summariesController.notifier).fetchSummariesMeta();
     ref.read(daakController.notifier).fetchDaakMeta();
     if (user?.userDesgRole == ActiveUserDesgRole.cm) {
       RouteHelper.navigateTo(Routes.cmDashboard);
@@ -151,6 +184,72 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ],
             ),
           ),
+
+          // No-connection banner
+          if (_noConnection)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                top: false,
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB71C1C),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppText.labelLarge(
+                              'No Internet Connection',
+                              color: Colors.white,
+                            ),
+                            AppText.bodySmall(
+                              'Waiting for connection to continue...',
+                              color: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

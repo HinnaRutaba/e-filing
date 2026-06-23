@@ -74,7 +74,7 @@ class DesignationCard extends ConsumerWidget {
       child: InkWell(
         onTap: () async {
           await ref.read(authController.notifier).setDesignation(designation);
-          ref.read(summariesController.notifier).fetchSummariesMeta();
+          //ref.read(summariesController.notifier).fetchSummariesMeta();
           ref.read(daakController.notifier).fetchDaakMeta();
           RouteHelper.navigateTo(Routes.dashboard);
         },

@@ -97,31 +97,61 @@ class DashboardController extends BaseControllerState<DashboardModel> {
 
   Future<void> initData() async {
     await Future.delayed(Duration.zero);
-    state = state.copyWith(loading: true, loadingPendingFiles: true);
+    state = state.copyWith(
+      loading: true,
+      loadingPendingFiles: true,
+      loadingActionFiles: true,
+      loadingForwardedFiles: true,
+    );
+
+    fetchDaakLetters();
 
     try {
-      fetchStats();
-      fetchDaakLetters();
       final filesCtrl = ref.read(filesController.notifier);
 
-      final ar = await filesCtrl.getFilesForDashboard(FileType.actionRequired);
-      final mf = await filesCtrl.getFilesForDashboard(FileType.my);
-      final pf = await filesCtrl.getFilesForDashboard(FileType.pending);
-      final df = await filesCtrl.getFilesForDashboard(FileType.archived);
-      final ff = await filesCtrl.getFilesForDashboard(FileType.forwarded);
+      final results = await Future.wait([
+        filesCtrl.getFilesForDashboard(FileType.actionRequired),
+        filesCtrl.getFilesForDashboard(FileType.my),
+        filesCtrl.getFilesForDashboard(FileType.pending),
+        filesCtrl.getFilesForDashboard(FileType.archived),
+        filesCtrl.getFilesForDashboard(FileType.forwarded),
+      ]);
+
+      final ar = results[0];
+      final mf = results[1];
+      final pf = results[2];
+      final df = results[3];
+      final ff = results[4];
+
+      final kpis = DashboardEfileKpisModel(
+        pending: pf.length,
+        archive: df.length,
+        filesSent: ff.length,
+        filesActionRequired: ar.length,
+        myFiles: mf.length,
+      );
 
       state = state.copyWith(
         actionRequiredCount: ar.length,
         myFilesCount: mf.length,
         pendingFilesCount: pf.length,
         disposedOffCount: df.length,
+        actionRequiredFiles: ar,
         pendingFiles: pf,
         forwardedFiles: ff,
+        stats: (state.stats ?? DashboardStatsModel()).copyWith(efileKpis: kpis),
         loading: false,
         loadingPendingFiles: false,
+        loadingActionFiles: false,
+        loadingForwardedFiles: false,
       );
     } catch (e) {
-      state = state.copyWith(loading: false, loadingPendingFiles: false);
+      state = state.copyWith(
+        loading: false,
+        loadingPendingFiles: false,
+        loadingActionFiles: false,
+        loadingForwardedFiles: false,
+      );
     }
   }
 

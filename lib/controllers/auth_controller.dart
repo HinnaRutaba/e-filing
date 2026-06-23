@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/keys.dart';
@@ -34,7 +36,7 @@ class AuthController extends BaseControllerState<UserModel> {
           await setDesignation(model.user!.designations.first);
           await fetchLoggedInUser();
 
-          await ref.read(summariesController.notifier).fetchSummariesMeta();
+         // await ref.read(summariesController.notifier).fetchSummariesMeta();
           await ref.read(daakController.notifier).fetchDaakMeta();
           if (model.user?.userDesgRole == ActiveUserDesgRole.cm) {
             RouteHelper.navigateTo(Routes.cmDashboard);
@@ -49,7 +51,8 @@ class AuthController extends BaseControllerState<UserModel> {
         }
         success = true;
       }
-    } catch (e) {
+    } catch (e, s) {
+      
       Toast.error(message: handleException(e));
     }
     EasyLoading.dismiss();

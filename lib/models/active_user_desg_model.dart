@@ -45,7 +45,8 @@ enum ActiveUserDesgRole {
   final int value;
   const ActiveUserDesgRole(this.label, this.value);
 
-  static ActiveUserDesgRole? fromValue(int value) {
+  static ActiveUserDesgRole? fromValue(int? value) {
+    if (value == null) return null;
     return ActiveUserDesgRole.values.firstWhere(
       (e) => e.value == value,
       orElse: () => ActiveUserDesgRole.deo,
