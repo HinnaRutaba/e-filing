@@ -78,7 +78,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                       _tabChip(
                         context,
                         label: 'Inbox',
-                        icon: Icons.inbox_rounded,
+                        icon: context.isMobile ? null : Icons.inbox_rounded,
                         selected:
                             controller.selectedFilter == DaakViewFilter.inbox,
                         onTap: () => ref
@@ -89,7 +89,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                       _tabChip(
                         context,
                         label: 'My NFA',
-                        icon: Icons.folder_open_rounded,
+                        icon: context.isMobile
+                            ? null
+                            : Icons.folder_open_rounded,
                         selected:
                             controller.selectedFilter == DaakViewFilter.nfa,
                         onTap: () => ref
@@ -100,7 +102,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                       _tabChip(
                         context,
                         label: 'Forwarded',
-                        icon: Icons.forward_to_inbox_rounded,
+                        icon: context.isMobile
+                            ? null
+                            : Icons.forward_to_inbox_rounded,
                         selected:
                             controller.selectedFilter ==
                             DaakViewFilter.forwarded,
@@ -299,9 +303,10 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
                                             const AlwaysScrollableScrollPhysics(),
                                         itemBuilder: (context, index) =>
                                             Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 12.0,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                  ),
                                               child: buildAnimated(index),
                                             ),
                                       );
@@ -321,7 +326,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
   Widget _tabChip(
     BuildContext context, {
     required String label,
-    required IconData icon,
+    IconData? icon,
     required bool selected,
     required VoidCallback onTap,
   }) {

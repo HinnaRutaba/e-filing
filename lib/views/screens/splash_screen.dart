@@ -94,7 +94,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } else {
       RouteHelper.navigateTo(Routes.dashboard);
     }
-
   }
 
   Widget _poweredBySection(bool isMobile) {

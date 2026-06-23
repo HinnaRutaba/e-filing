@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class GradientTabChip extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final int? count;
   final bool selected;
   final VoidCallback onTap;
@@ -15,7 +15,7 @@ class GradientTabChip extends StatelessWidget {
   const GradientTabChip({
     super.key,
     required this.label,
-    required this.icon,
+    this.icon,
     this.count,
     required this.selected,
     required this.onTap,
@@ -96,10 +96,14 @@ class GradientTabChip extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: expand ? MainAxisAlignment.center : MainAxisAlignment.start,
+        mainAxisAlignment: expand
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
         children: [
-          Icon(icon, color: filled ? Colors.white : Colors.black54, size: 18),
-          const SizedBox(width: 8),
+          if (icon != null) ...[
+            Icon(icon, color: filled ? Colors.white : Colors.black54, size: 18),
+            const SizedBox(width: 8),
+          ],
           Flexible(
             child: AppText.bodySmall(
               label,

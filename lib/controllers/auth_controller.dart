@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/keys.dart';
@@ -51,8 +49,7 @@ class AuthController extends BaseControllerState<UserModel> {
         }
         success = true;
       }
-    } catch (e, s) {
-      
+    } catch (e) {
       Toast.error(message: handleException(e));
     }
     EasyLoading.dismiss();
