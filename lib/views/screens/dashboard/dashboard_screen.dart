@@ -118,7 +118,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {}
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      NotificationService().clearBadge();
+    }
+  }
 
   @override
   void dispose() {
