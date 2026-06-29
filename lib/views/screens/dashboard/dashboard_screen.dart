@@ -32,7 +32,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final RefreshController _refreshController = RefreshController();
   late TabController _tabController;
   final ChatService chatService = ChatService();
@@ -41,10 +41,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
     NotificationService().initNotification(
       ref.read(authController).currentDesignation?.userDesgId,
     );
+    NotificationService().clearBadge();
     _loadInitialData();
 
     _tabController.addListener(() {
@@ -113,6 +115,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     } catch (error) {
       _refreshController.refreshFailed();
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      NotificationService().clearBadge();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -230,7 +246,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               Expanded(
                                 child: DashboardCard(
                                   cardColor: Colors.orange,
-                                  iconColor: Color(0xFFFF8C00),
+                                  iconColor: const Color(0xFFFF8C00),
                                   title: "Pending Files",
                                   value: "${dashboardState.pendingFilesCount}",
                                   onTap: () {
