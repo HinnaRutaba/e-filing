@@ -35,7 +35,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final RefreshController _refreshController = RefreshController();
   final ChatService chatService = ChatService();
   final ValueNotifier<bool> _compactNotifier = ValueNotifier<bool>(false);
@@ -43,14 +43,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     NotificationService().initNotification(
       ref.read(authController).currentDesignation?.userDesgId,
     );
+    NotificationService().clearBadge();
     _loadInitialData();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshController.dispose();
     _compactNotifier.dispose();
     super.dispose();
@@ -112,6 +115,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     } catch (error) {
       _refreshController.refreshFailed();
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      NotificationService().clearBadge();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
