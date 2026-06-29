@@ -125,13 +125,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final DashboardModel dashboardState = ref.watch(dashboardController);
     UserModel currentUser = ref.read(authController);
