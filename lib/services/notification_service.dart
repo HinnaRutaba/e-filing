@@ -8,20 +8,28 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_new_badger/flutter_new_badger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-const _badgeCountKey = 'notification_badge_count';
 
 // Must be a top-level function — runs in a separate isolate when app is
-// background or killed. SharedPreferences is used because the singleton
-// is not available across isolates.
+// background or killed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  final prefs = await SharedPreferences.getInstance();
-  final count = (prefs.getInt(_badgeCountKey) ?? 0) + 1;
-  await prefs.setInt(_badgeCountKey, count);
-  await FlutterNewBadger.setBadge(count);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    final badge = _extractBadgeCount(message);
+    if (badge > 0) {
+      await FlutterNewBadger.setBadge(badge);
+    }
+  } catch (e, s) {}
+}
+
+int _extractBadgeCount(RemoteMessage message) {
+  final androidCount = message.notification?.android?.count;
+  if (androidCount != null && androidCount > 0) return androidCount;
+  final iosBadge = int.tryParse(message.notification?.apple?.badge ?? '');
+  if (iosBadge != null && iosBadge > 0) return iosBadge;
+  return 0;
 }
 
 class NotificationService {
@@ -75,14 +83,31 @@ class NotificationService {
 
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@drawable/notification_icon');
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
       const InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+          );
       await flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           _handleNotificationTap(response.payload);
         },
       );
+
+      // Required for iOS to show alerts/badges while the app is in the foreground
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _showNotification(message);
@@ -98,8 +123,6 @@ class NotificationService {
 
   Future<void> clearBadge() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_badgeCountKey, 0);
       await FlutterNewBadger.removeBadge();
     } catch (e) {
       log("Badge clear error: $e");
@@ -113,10 +136,10 @@ class NotificationService {
 
   void _showNotification(RemoteMessage message) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final count = (prefs.getInt(_badgeCountKey) ?? 0) + 1;
-      await prefs.setInt(_badgeCountKey, count);
-      await FlutterNewBadger.setBadge(count);
+      final badge = _extractBadgeCount(message);
+      if (badge > 0) {
+        await FlutterNewBadger.setBadge(badge);
+      }
 
       final AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
@@ -125,7 +148,7 @@ class NotificationService {
             channelDescription: 'your_channel_description',
             importance: Importance.max,
             priority: Priority.high,
-            number: count,
+            number: badge,
           );
       final NotificationDetails platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics,

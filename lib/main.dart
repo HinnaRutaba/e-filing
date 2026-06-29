@@ -19,17 +19,14 @@ import 'package:toastification/toastification.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   runApp(
     DevicePreview(
       enabled: false,
-      builder: (context) => const ProviderScope(
-        child: MyApp(),
-      ), // Wrap your app
+      builder: (context) =>
+          const ProviderScope(child: MyApp()), // Wrap your app
     ),
   );
 }
@@ -42,13 +39,16 @@ class MyApp extends StatelessWidget {
     configLoading();
     return ToastificationWrapper(
       child: MaterialApp.router(
-        builder: EasyLoading.init(builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.noScaling),
-            child: child!,
-          );
-        }),
+        builder: EasyLoading.init(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: child!,
+            );
+          },
+        ),
         debugShowCheckedModeBanner: false,
         title: "E-Filing",
         theme: AppTheme.light,
