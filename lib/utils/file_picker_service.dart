@@ -16,6 +16,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
@@ -232,6 +234,38 @@ class FilePickerService {
       return compressedImageFile;
     }
     return null;
+  }
+
+  Future<XFile?> imageToPdf(XFile image) async {
+    try {
+      final bytes = await image.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+
+      final pdfImage = pw.MemoryImage(bytes);
+      final pageFormat = PdfPageFormat(
+        decoded.width.toDouble(),
+        decoded.height.toDouble(),
+      );
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: pageFormat,
+          margin: pw.EdgeInsets.zero,
+          build: (context) => pw.Image(pdfImage, fit: pw.BoxFit.fill),
+        ),
+      );
+
+      final tempDir = await getTemporaryDirectory();
+      final fileName = '${const Uuid().v4()}.pdf';
+      final outFile = File(p.join(tempDir.path, fileName));
+      await outFile.writeAsBytes(await doc.save());
+      return XFile(outFile.path, name: fileName);
+    } catch (e, s) {
+      print('Error converting image to PDF: $e\n$s');
+      return null;
+    }
   }
 
   Future<File> fileFromImageUrl(String networkImage) async {

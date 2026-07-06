@@ -60,7 +60,7 @@ class _HtmlEditorState extends State<HtmlEditor> {
         darkMode: isDark,
         spellCheck: true,
         autoAdjustHeight: true,
-        adjustHeightForKeyboard: true,
+        adjustHeightForKeyboard: false,
       ),
 
       htmlToolbarOptions: he.HtmlToolbarOptions(

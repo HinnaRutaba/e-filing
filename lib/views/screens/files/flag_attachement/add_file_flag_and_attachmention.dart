@@ -3,8 +3,8 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
-import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/attachment_picker_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +37,22 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
     padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
+
+  bool _isPickingAttachment = false;
+
+  Future<void> _pickAttachment() async {
+    if (_isPickingAttachment) return;
+    setState(() => _isPickingAttachment = true);
+
+    final picked = await showAttachmentPickerSheet(context);
+    if (!mounted) return;
+
+    if (picked != null) {
+      m.attachment = picked;
+      m.existingAttachment = null;
+    }
+    setState(() => _isPickingAttachment = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,13 +116,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                         ),
                         const SizedBox(height: 4),
                         InkWell(
-                          onTap: () async {
-                            final files = await FilePickerService().pickFiles();
-                            m.attachment = files.isNotEmpty
-                                ? files.first
-                                : null;
-                            setState(() {});
-                          },
+                          onTap: _isPickingAttachment ? null : _pickAttachment,
                           child: Container(
                             height: 48,
                             padding: const EdgeInsets.symmetric(
@@ -126,11 +136,20 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  Icons.attachment,
-                                  color: AppColors.secondaryDark,
-                                  size: 20,
-                                ),
+                                _isPickingAttachment
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.secondaryDark,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.attachment,
+                                        color: AppColors.secondaryDark,
+                                        size: 20,
+                                      ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -139,7 +158,9 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       AppText.bodyMedium(
-                                        "Add attachment",
+                                        _isPickingAttachment
+                                            ? "Processing..."
+                                            : "Add attachment",
                                         color: m.attachment != null
                                             ? AppColors.secondaryDark
                                             : AppColors.secondaryLight,
@@ -161,14 +182,12 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
             const SizedBox(height: 8),
             if (m.hasAttachment)
               InkWell(
-                onTap: (widget.isReadOnly || !m.canDeleteExisting) ? null : () async {
-                  final files = await FilePickerService().pickFiles();
-                  if (files.isNotEmpty) {
-                    m.attachment = files.first;
-                    m.existingAttachment = null;
-                  }
-                  setState(() {});
-                },
+                onTap:
+                    (widget.isReadOnly ||
+                        !m.canDeleteExisting ||
+                        _isPickingAttachment)
+                    ? null
+                    : _pickAttachment,
                 child: Container(
                   height: 50, // Match dropdown height
                   padding: const EdgeInsets.symmetric(
