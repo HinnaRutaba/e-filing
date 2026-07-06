@@ -38,13 +38,20 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
 
-  Future<void> _pickAttachment() async {
-    final picked = await showAttachmentPickerSheet(context);
-    if (!mounted || picked == null) return;
+  bool _isPickingAttachment = false;
 
-    m.attachment = picked;
-    m.existingAttachment = null;
-    setState(() {});
+  Future<void> _pickAttachment() async {
+    if (_isPickingAttachment) return;
+    setState(() => _isPickingAttachment = true);
+
+    final picked = await showAttachmentPickerSheet(context);
+    if (!mounted) return;
+
+    if (picked != null) {
+      m.attachment = picked;
+      m.existingAttachment = null;
+    }
+    setState(() => _isPickingAttachment = false);
   }
 
   @override
@@ -109,7 +116,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                         ),
                         const SizedBox(height: 4),
                         InkWell(
-                          onTap: _pickAttachment,
+                          onTap: _isPickingAttachment ? null : _pickAttachment,
                           child: Container(
                             height: 48,
                             padding: const EdgeInsets.symmetric(
@@ -129,11 +136,20 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  Icons.attachment,
-                                  color: AppColors.secondaryDark,
-                                  size: 20,
-                                ),
+                                _isPickingAttachment
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.secondaryDark,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.attachment,
+                                        color: AppColors.secondaryDark,
+                                        size: 20,
+                                      ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -142,7 +158,9 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       AppText.bodyMedium(
-                                        "Add attachment",
+                                        _isPickingAttachment
+                                            ? "Processing..."
+                                            : "Add attachment",
                                         color: m.attachment != null
                                             ? AppColors.secondaryDark
                                             : AppColors.secondaryLight,
@@ -164,7 +182,10 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
             const SizedBox(height: 8),
             if (m.hasAttachment)
               InkWell(
-                onTap: (widget.isReadOnly || !m.canDeleteExisting)
+                onTap:
+                    (widget.isReadOnly ||
+                        !m.canDeleteExisting ||
+                        _isPickingAttachment)
                     ? null
                     : _pickAttachment,
                 child: Container(
