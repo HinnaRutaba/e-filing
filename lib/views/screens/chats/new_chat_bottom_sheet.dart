@@ -1,13 +1,12 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
@@ -22,9 +21,9 @@ class NewChatBottomSheet extends ConsumerStatefulWidget {
 
 class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
   late TextEditingController _searchController;
-  List<ChatParticipantModel> _allParticipants = [];
-  List<ChatParticipantModel> _filteredParticipants = [];
-  ChatParticipantModel? _selectedParticipant;
+  List<DepartmentUserModel> _allParticipants = [];
+  List<DepartmentUserModel> _filteredParticipants = [];
+  DepartmentUserModel? _selectedParticipant;
   bool _isLoading = true;
   bool _isCreatingChat = false;
   final ChatService _chatService = ChatService();
@@ -51,9 +50,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
           .read(chatRepo)
           .getUsersForChat(currentUser.currentDesignation!.userDesgId!);
 
-      // Filter out the current user from the list
-      _allParticipants =
-          participants.where((p) => p.userId != currentUser.id).toList();
+      _allParticipants = participants
+          .where((p) => p.userId != currentUser.id)
+          .toList();
 
       _filteredParticipants = List.from(_allParticipants);
 
@@ -61,9 +60,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading users: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading users: $e')));
       }
     }
   }
@@ -74,15 +73,16 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
         _filteredParticipants = List.from(_allParticipants);
       } else {
         _filteredParticipants = _allParticipants
-            .where((p) =>
-                (p.userTitle?.toLowerCase().contains(query.toLowerCase()) ??
-                    false) ||
-                (p.designation?.toLowerCase().contains(query.toLowerCase()) ??
-                    false))
+            .where(
+              (p) =>
+                  (p.userTitle?.toLowerCase().contains(query.toLowerCase()) ??
+                      false) ||
+                  (p.designation?.toLowerCase().contains(query.toLowerCase()) ??
+                      false),
+            )
             .toList();
       }
 
-      // Clear selection if filtered participant is no longer in results
       if (_selectedParticipant != null &&
           !_filteredParticipants.contains(_selectedParticipant)) {
         _selectedParticipant = null;
@@ -90,9 +90,8 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
     });
   }
 
-  void _selectParticipant(ChatParticipantModel participant) {
+  void _selectParticipant(DepartmentUserModel participant) {
     setState(() {
-      // Toggle selection - if same participant is selected, deselect them
       if (_selectedParticipant?.userId == participant.userId &&
           _selectedParticipant?.userDesignationId ==
               participant.userDesignationId) {
@@ -105,17 +104,15 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
   Future<void> _startChatWithSelectedUser() async {
     if (_selectedParticipant == null) return;
-
     await _createChatWithUser(_selectedParticipant!);
   }
 
-  Future<void> _createChatWithUser(ChatParticipantModel selectedUser) async {
+  Future<void> _createChatWithUser(DepartmentUserModel selectedUser) async {
     try {
       setState(() => _isCreatingChat = true);
 
       final currentUser = ref.read(authController);
 
-      // First, check if a direct chat already exists between these two users
       final existingChatId = await _chatService.getDirectChatBetweenUsers(
         currentUser.id!,
         selectedUser.userId!,
@@ -127,7 +124,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
         chatId = existingChatId;
       } else {
         final participants = [
-          ChatParticipantModel(
+          DepartmentUserModel(
             userDesignationId: currentUser.currentDesignation!.userDesgId!,
             userId: currentUser.id!,
             userTitle: currentUser.userTitle!,
@@ -153,34 +150,29 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
 
       setState(() => _isCreatingChat = false);
 
-      // Close the bottom sheet and navigate to the chat
       RouteHelper.pop();
       RouteHelper.push(Routes.fileChat(null, chatId));
     } catch (e) {
       setState(() => _isCreatingChat = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating chat: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error creating chat: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.90,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
       child: Column(
         children: [
           // Header with handle and title
-          Container(
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Column(
               children: [
@@ -189,7 +181,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: appColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -199,13 +191,15 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     Expanded(
                       child: AppText.titleLarge(
                         "Start New Chat",
-                        color: AppColors.textPrimary,
+                        color: appColors.textPrimary,
                       ),
                     ),
                     IconButton(
                       onPressed: () => RouteHelper.pop(),
-                      icon: const Icon(Icons.close,
-                          color: AppColors.textSecondary),
+                      icon: Icon(
+                        Icons.close,
+                        color: appColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -224,9 +218,9 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
               prefix: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.clear,
-                        color: AppColors.secondaryLight,
+                        color: appColors.secondaryLight,
                       ),
                       onPressed: () {
                         _searchController.clear();
@@ -243,145 +237,144 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredParticipants.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_search,
-                                size: 64,
-                                color: Colors.grey[400],
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_search,
+                            size: 64,
+                            color: appColors.textSecondary,
+                          ),
+                          const SizedBox(height: 16),
+                          AppText.titleMedium(
+                            _searchController.text.isEmpty
+                                ? 'No users available'
+                                : 'No users found',
+                            color: appColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredParticipants.length,
+                    itemBuilder: (context, index) {
+                      final participant = _filteredParticipants[index];
+                      final isSelected =
+                          _selectedParticipant?.userId == participant.userId &&
+                          _selectedParticipant?.userDesignationId ==
+                              participant.userDesignationId;
+                      final isOtherSelected =
+                          _selectedParticipant != null && !isSelected;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 100),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? appColors.primaryDark.withAlpha(12)
+                              : null,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isSelected
+                              ? Border.all(
+                                  color: appColors.primaryDark,
+                                  width: 1.2,
+                                )
+                              : null,
+                        ),
+                        child: Opacity(
+                          opacity: isOtherSelected ? 0.4 : 1.0,
+                          child: ListTile(
+                            contentPadding: isSelected
+                                ? const EdgeInsets.symmetric(horizontal: 8)
+                                : const EdgeInsets.all(0),
+                            horizontalTitleGap: 8,
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? appColors.primaryDark
+                                  : colorScheme.secondary,
+                              radius: 16,
+                              child: AppText.titleLarge(
+                                HelperUtils.firstTwoLetters(
+                                  participant.userTitle ?? '',
+                                ),
+                                color: Colors.white,
+                                fontSize: 14,
                               ),
-                              const SizedBox(height: 16),
-                              AppText.titleMedium(
-                                _searchController.text.isEmpty
-                                    ? 'No users available'
-                                    : 'No users found',
-                                color: AppColors.textSecondary,
+                            ),
+                            title: AppText.titleMedium(
+                              participant.userTitle ?? 'Unknown User',
+                              fontSize: 16,
+                              color: isSelected ? appColors.primaryDark : null,
+                            ),
+                            subtitle: Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? appColors.primaryDark
+                                                .withValues(alpha:0.1)
+                                            : appColors.cardColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: isSelected
+                                            ? Border.all(
+                                                color: appColors.primaryDark
+                                                    .withValues(alpha:0.3),
+                                              )
+                                            : null,
+                                      ),
+                                      child: AppText.labelMedium(
+                                        participant.designation ?? '',
+                                        fontSize: 12,
+                                        color: isSelected
+                                            ? appColors.primaryDark
+                                            : appColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                            trailing: isSelected
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: appColors.primaryDark,
+                                  )
+                                : Icon(
+                                    Icons.add_circle_outline,
+                                    color: appColors.textSecondary,
+                                  ),
+                            onTap: () {
+                              HelperUtils.hideKeyboard(context);
+                              _selectParticipant(participant);
+                            },
                           ),
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredParticipants.length,
-                        itemBuilder: (context, index) {
-                          final participant = _filteredParticipants[index];
-                          final isSelected = _selectedParticipant?.userId ==
-                                  participant.userId &&
-                              _selectedParticipant?.userDesignationId ==
-                                  participant.userDesignationId;
-                          final isOtherSelected =
-                              _selectedParticipant != null && !isSelected;
-
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 100),
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 0, vertical: 0),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primaryDark.withAlpha(12)
-                                  : null,
-                              borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppColors.primaryDark, width: 1.2)
-                                  : null,
-                            ),
-                            child: Opacity(
-                              opacity: isOtherSelected ? 0.4 : 1.0,
-                              child: ListTile(
-                                contentPadding: isSelected
-                                    ? const EdgeInsets.symmetric(horizontal: 8)
-                                    : const EdgeInsets.all(0),
-                                horizontalTitleGap: 8,
-                                leading: CircleAvatar(
-                                  backgroundColor: isSelected
-                                      ? AppColors.primaryDark
-                                      : AppColors.secondary,
-                                  radius: 16,
-                                  child: AppText.titleLarge(
-                                    HelperUtils.firstTwoLetters(
-                                        participant.userTitle ?? ''),
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                title: AppText.titleMedium(
-                                  participant.userTitle ?? 'Unknown User',
-                                  fontSize: 16,
-                                  color:
-                                      isSelected ? AppColors.primaryDark : null,
-                                ),
-                                subtitle: Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? AppColors.primaryDark
-                                                    .withOpacity(0.1)
-                                                : AppColors.cardColor,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: isSelected
-                                                ? Border.all(
-                                                    color: AppColors.primaryDark
-                                                        .withOpacity(0.3))
-                                                : null,
-                                          ),
-                                          child: AppText.labelMedium(
-                                            participant.designation ?? '',
-                                            fontSize: 12,
-                                            color: isSelected
-                                                ? AppColors.primaryDark
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                trailing: isSelected
-                                    ? const Icon(
-                                        Icons.check_circle,
-                                        color: AppColors.primaryDark,
-                                      )
-                                    : const Icon(
-                                        Icons.add_circle_outline,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                onTap: () {
-                                  HelperUtils.hideKeyboard(context);
-                                  _selectParticipant(participant);
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        separatorBuilder: (_, __) => const Divider(
-                          color: AppColors.cardColor,
-                          thickness: 1,
-                          height: 1,
-                        ),
-                      ),
+                      );
+                    },
+                    separatorBuilder: (_, __) => Divider(
+                      color: appColors.cardColor,
+                      thickness: 1,
+                      height: 1,
+                    ),
+                  ),
           ),
 
           // Bottom button
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey[200]!),
-              ),
+              border: Border(top: BorderSide(color: appColors.border)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -393,13 +386,13 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                       : null,
                   backgroundColor:
                       (_selectedParticipant != null && !_isCreatingChat)
-                          ? AppColors.primary
-                          : AppColors.disabled,
+                      ? colorScheme.primary
+                      : appColors.disabled,
                   text: _isCreatingChat
                       ? 'Creating Chat...'
                       : _selectedParticipant != null
-                          ? 'Start Chat with ${_selectedParticipant!.userTitle}'
-                          : 'Select a user to start chat',
+                      ? 'Start Chat with ${_selectedParticipant!.userTitle}'
+                      : 'Select a user to start chat',
                 ),
               ),
             ),

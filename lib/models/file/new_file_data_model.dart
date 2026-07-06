@@ -1,5 +1,5 @@
 // ================= SCHEMA =================
-import 'package:efiling_balochistan/models/file_model.dart';
+import 'package:efiling_balochistan/models/file/file_model.dart';
 
 class NewFileDataSchema {
   static const String data = "data";

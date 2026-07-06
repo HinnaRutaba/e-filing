@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 
 class UserSchema {
   static const String id = 'id';
@@ -35,6 +36,7 @@ class UserModel {
   DateTime? updatedAt;
   List<DesignationModel> designations;
   DesignationModel? currentDesignation;
+  ActiveUserDesgRole? userDesgRole;
 
   UserModel({
     this.id,
@@ -51,6 +53,7 @@ class UserModel {
     this.section,
     this.designations = const [],
     this.currentDesignation,
+    this.userDesgRole,
   });
 
   String get signature {
@@ -75,11 +78,13 @@ class UserModel {
           : null,
       designation: json[UserSchema.designation] as String?,
       section: json[UserSchema.section] as String?,
-      designations: ((json[UserSchema.designations] ??
-                  json[UserSchema.allDesignations]) as List<dynamic>?)
+      designations:
+          ((json[UserSchema.designations] ?? json[UserSchema.allDesignations])
+                  as List<dynamic>?)
               ?.map((e) => DesignationModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      userDesgRole: ActiveUserDesgRole.fromValue(json[UserSchema.roleId]),
     );
   }
 
@@ -113,6 +118,7 @@ class UserModel {
     String? section,
     List<DesignationModel>? designations,
     DesignationModel? currentDesignation,
+    ActiveUserDesgRole? userDesgRole,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -129,6 +135,7 @@ class UserModel {
       section: section ?? this.section,
       designations: designations ?? this.designations,
       currentDesignation: currentDesignation ?? this.currentDesignation,
+      userDesgRole: userDesgRole ?? this.userDesgRole,
     );
   }
 
@@ -147,7 +154,8 @@ class UserModel {
       designation: (user ?? this).designation,
       section: (user ?? this).section,
       designations: (user ?? this).designations,
-      currentDesignation: (user ?? this).currentDesignation,
+      currentDesignation: user?.currentDesignation ?? currentDesignation,
+      userDesgRole: user?.userDesgRole ?? userDesgRole,
     );
   }
 }

@@ -1,9 +1,8 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
-import 'package:efiling_balochistan/models/file_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
+import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
+import 'package:efiling_balochistan/models/file/file_model.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 
 class DashboardModel {
@@ -24,6 +23,11 @@ class DashboardModel {
   final bool loadingForwardedFiles;
   final bool loadingDaakLetters;
 
+  final bool animated;
+
+  final DashboardStatsModel? stats;
+  final bool loadingStats;
+
   DashboardModel({
     this.actionRequiredCount = 0,
     this.myFilesCount = 0,
@@ -38,6 +42,9 @@ class DashboardModel {
     this.loadingForwardedFiles = false,
     this.daakLetters = const [],
     this.loadingDaakLetters = false,
+    this.animated = false,
+    this.stats,
+    this.loadingStats = false,
   });
 
   DashboardModel copyWith({
@@ -54,6 +61,9 @@ class DashboardModel {
     bool? loadingPendingFiles,
     bool? loadingForwardedFiles,
     bool? loadingDaakLetters,
+    bool? backdropAnimated,
+    DashboardStatsModel? stats,
+    bool? loadingStats,
   }) {
     return DashboardModel(
       actionRequiredCount: actionRequiredCount ?? this.actionRequiredCount,
@@ -70,6 +80,9 @@ class DashboardModel {
           loadingForwardedFiles ?? this.loadingForwardedFiles,
       daakLetters: daakLetters ?? this.daakLetters,
       loadingDaakLetters: loadingDaakLetters ?? this.loadingDaakLetters,
+      animated: backdropAnimated ?? animated,
+      stats: stats ?? this.stats,
+      loadingStats: loadingStats ?? this.loadingStats,
     );
   }
 }
@@ -77,31 +90,68 @@ class DashboardModel {
 class DashboardController extends BaseControllerState<DashboardModel> {
   DashboardController(super.state, super.ref);
 
+  void markBackdropAnimated() {
+    if (state.animated) return;
+    state = state.copyWith(backdropAnimated: true);
+  }
+
   Future<void> initData() async {
     await Future.delayed(Duration.zero);
-    state = state.copyWith(loading: true, loadingPendingFiles: true);
+    state = state.copyWith(
+      loading: true,
+      loadingPendingFiles: true,
+      loadingActionFiles: true,
+      loadingForwardedFiles: true,
+    );
+
+    fetchDaakLetters();
 
     try {
       final filesCtrl = ref.read(filesController.notifier);
 
-      final ar = await filesCtrl.getFilesForDashboard(FileType.actionRequired);
-      final mf = await filesCtrl.getFilesForDashboard(FileType.my);
-      final pf = await filesCtrl.getFilesForDashboard(FileType.pending);
-      final df = await filesCtrl.getFilesForDashboard(FileType.archived);
-      final ff = await filesCtrl.getFilesForDashboard(FileType.forwarded);
+      final results = await Future.wait([
+        filesCtrl.getFilesForDashboard(FileType.actionRequired),
+        filesCtrl.getFilesForDashboard(FileType.my),
+        filesCtrl.getFilesForDashboard(FileType.pending),
+        filesCtrl.getFilesForDashboard(FileType.archived),
+        filesCtrl.getFilesForDashboard(FileType.forwarded),
+      ]);
+
+      final ar = results[0];
+      final mf = results[1];
+      final pf = results[2];
+      final df = results[3];
+      final ff = results[4];
+
+      final kpis = DashboardEfileKpisModel(
+        pending: pf.length,
+        archive: df.length,
+        filesSent: ff.length,
+        filesActionRequired: ar.length,
+        myFiles: mf.length,
+      );
 
       state = state.copyWith(
         actionRequiredCount: ar.length,
         myFilesCount: mf.length,
         pendingFilesCount: pf.length,
         disposedOffCount: df.length,
+        actionRequiredFiles: ar,
         pendingFiles: pf,
         forwardedFiles: ff,
+        stats: (state.stats ?? DashboardStatsModel()).copyWith(efileKpis: kpis),
         loading: false,
         loadingPendingFiles: false,
+        loadingActionFiles: false,
+        loadingForwardedFiles: false,
       );
     } catch (e) {
-      state = state.copyWith(loading: false, loadingPendingFiles: false);
+      state = state.copyWith(
+        loading: false,
+        loadingPendingFiles: false,
+        loadingActionFiles: false,
+        loadingForwardedFiles: false,
+      );
     }
   }
 
@@ -110,17 +160,16 @@ class DashboardController extends BaseControllerState<DashboardModel> {
 
     try {
       final filesCtrl = ref.read(filesController.notifier);
-      final files =
-          await filesCtrl.getFilesForDashboard(FileType.actionRequired);
+      final files = await filesCtrl.getFilesForDashboard(
+        FileType.actionRequired,
+      );
 
       state = state.copyWith(
         actionRequiredFiles: files,
         loadingActionFiles: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        loadingActionFiles: false,
-      );
+      state = state.copyWith(loadingActionFiles: false);
     }
   }
 
@@ -131,14 +180,9 @@ class DashboardController extends BaseControllerState<DashboardModel> {
       final filesCtrl = ref.read(filesController.notifier);
       final files = await filesCtrl.getFilesForDashboard(FileType.pending);
 
-      state = state.copyWith(
-        pendingFiles: files,
-        loadingPendingFiles: false,
-      );
+      state = state.copyWith(pendingFiles: files, loadingPendingFiles: false);
     } catch (e) {
-      state = state.copyWith(
-        loadingPendingFiles: false,
-      );
+      state = state.copyWith(loadingPendingFiles: false);
     }
   }
 
@@ -154,9 +198,23 @@ class DashboardController extends BaseControllerState<DashboardModel> {
         loadingForwardedFiles: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        loadingForwardedFiles: false,
-      );
+      state = state.copyWith(loadingForwardedFiles: false);
+    }
+  }
+
+  Future<void> fetchStats() async {
+    state = state.copyWith(loadingStats: true);
+    try {
+      final userDesgId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
+      final result = await ref
+          .read(dashboardRepo)
+          .getDashboardStats(userDesgId: userDesgId);
+      state = state.copyWith(stats: result, loadingStats: false);
+    } catch (e) {
+      state = state.copyWith(loadingStats: false);
     }
   }
 
@@ -166,19 +224,17 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     try {
       final daakCtrl = ref.read(daakController.notifier);
       daakCtrl.resetData();
-      
+
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
-      daakCtrl.fetchDaakMeta(desId);
+      daakCtrl.fetchDaakMeta();
       final List<DaakModel>? daak = await daakCtrl.fetchDaakInbox(desId: desId);
 
       state = state.copyWith(
         daakLetters: daak ?? [],
         loadingDaakLetters: false,
       );
-    } catch (e, s) {
-      state = state.copyWith(
-        loadingDaakLetters: false,
-      );
+    } catch (e) {
+      state = state.copyWith(loadingDaakLetters: false);
     }
   }
 }

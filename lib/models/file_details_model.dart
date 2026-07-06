@@ -65,7 +65,8 @@ class FileContentModel {
             : null,
         sender: json[FileContentSchema.sender] as String?,
         receiver: json[FileContentSchema.receiver] as String?,
-        designation: json[FileContentSchema.designation] ??
+        designation:
+            json[FileContentSchema.designation] ??
             json[FileContentSchema.senderDesignation],
         sendingDate: json[FileContentSchema.sendingDate] != null
             ? DateTime.tryParse(json[FileContentSchema.sendingDate])
@@ -75,8 +76,7 @@ class FileContentModel {
         tagColor: json[FileContentSchema.tagColor] as String?,
         fileContentNumber: json[FileContentSchema.partFileNo] as String?,
       );
-    } catch (e, s) {
-      print("ERROR FILEEEEEE_____${e}______$s");
+    } catch (e) {
       return FileContentModel();
     }
   }
@@ -103,8 +103,9 @@ class FileContentModel {
   }
 
   static Future<
-          Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>>
-      toAddRemarksJson({
+    Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+  >
+  toAddRemarksJson({
     required int fileId,
     required int userId,
     required String content,
@@ -126,8 +127,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(
@@ -142,8 +143,9 @@ class FileContentModel {
   }
 
   static Future<
-          Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>>
-      toSubmitJson({
+    Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+  >
+  toSubmitJson({
     required int fileId,
     required int userId,
     required String content,
@@ -179,8 +181,9 @@ class FileContentModel {
   }
 
   static Future<
-          Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>>
-      toReopenJson({
+    Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+  >
+  toReopenJson({
     required int fileId,
     required int sectionId,
     required String content,
@@ -198,8 +201,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(
@@ -214,8 +217,9 @@ class FileContentModel {
   }
 
   static Future<
-          Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>>
-      toCreateFileJson({
+    Tuple2<Map<String, dynamic>, List<MapEntry<String, MultipartFile>>>
+  >
+  toCreateFileJson({
     required String subject,
     required int fileType,
     required String content,
@@ -241,8 +245,8 @@ class FileContentModel {
     final files = <MapEntry<String, MultipartFile>>[];
 
     if (flags != null && flags.isNotEmpty) {
-      for (var i = 0; i < flags!.length; i++) {
-        payload['flag_name[$i]'] = flags![i].flagType?.id;
+      for (var i = 0; i < flags.length; i++) {
+        payload['flag_name[$i]'] = flags[i].flagType?.id;
         if (flags[i].attachment != null) {
           files.add(
             MapEntry(
@@ -282,10 +286,7 @@ class FileAttachmentModel {
   final String? flagAttach;
   final String? flagTitle;
 
-  FileAttachmentModel({
-    this.flagAttach,
-    this.flagTitle,
-  });
+  FileAttachmentModel({this.flagAttach, this.flagTitle});
 
   String? get attachmentFlag =>
       flagAttach == null ? null : "${NetworkBase.base}/$flagAttach";
@@ -311,10 +312,7 @@ class FileAttachmentModel {
     };
   }
 
-  FileAttachmentModel copyWith({
-    String? flagAttach,
-    String? flagTitle,
-  }) {
+  FileAttachmentModel copyWith({String? flagAttach, String? flagTitle}) {
     return FileAttachmentModel(
       flagAttach: flagAttach ?? this.flagAttach,
       flagTitle: flagTitle ?? this.flagTitle,
@@ -330,11 +328,13 @@ class FileDetailsModel {
 
   factory FileDetailsModel.fromJsonPending(Map<String, dynamic> json) {
     return FileDetailsModel(
-      content: (json[FileDetailsSchema.fileContent] as List?)
+      content:
+          (json[FileDetailsSchema.fileContent] as List?)
               ?.map((item) => FileContentModel.fromJson(item))
               .toList() ??
           [],
-      attachments: (json[FileDetailsSchema.attachments] as List?)
+      attachments:
+          (json[FileDetailsSchema.attachments] as List?)
               ?.map((item) => FileAttachmentModel.fromJson(item))
               .toList() ??
           [],
@@ -343,11 +343,13 @@ class FileDetailsModel {
 
   factory FileDetailsModel.fromJsonMy(Map<String, dynamic> json) {
     return FileDetailsModel(
-      content: (json[FileDetailsSchema.details] as List?)
+      content:
+          (json[FileDetailsSchema.details] as List?)
               ?.map((item) => FileContentModel.fromJson(item))
               .toList() ??
           [],
-      attachments: (json[FileDetailsSchema.flags] as List?)
+      attachments:
+          (json[FileDetailsSchema.flags] as List?)
               ?.map((item) => FileAttachmentModel.fromJson(item))
               .toList() ??
           [],
@@ -356,11 +358,13 @@ class FileDetailsModel {
 
   factory FileDetailsModel.fromJsonActionReq(Map<String, dynamic> json) {
     return FileDetailsModel(
-      content: (json[FileDetailsSchema.file] as List?)
+      content:
+          (json[FileDetailsSchema.file] as List?)
               ?.map((item) => FileContentModel.fromJson(item))
               .toList() ??
           [],
-      attachments: (json[FileDetailsSchema.attachments] as List?)
+      attachments:
+          (json[FileDetailsSchema.attachments] as List?)
               ?.map((item) => FileAttachmentModel.fromJson(item))
               .toList() ??
           [],
@@ -369,11 +373,13 @@ class FileDetailsModel {
 
   factory FileDetailsModel.fromJsonForwardedFiles(Map<String, dynamic> json) {
     return FileDetailsModel(
-      content: (json[FileDetailsSchema.fileDetails] as List?)
+      content:
+          (json[FileDetailsSchema.fileDetails] as List?)
               ?.map((item) => FileContentModel.fromJson(item))
               .toList() ??
           [],
-      attachments: (json[FileDetailsSchema.attachments] as List?)
+      attachments:
+          (json[FileDetailsSchema.attachments] as List?)
               ?.map((item) => FileAttachmentModel.fromJson(item))
               .toList() ??
           [],
@@ -383,17 +389,20 @@ class FileDetailsModel {
   Map<String, dynamic> toJson() {
     return {
       FileDetailsSchema.fileContent: content.map((e) => e.toJson()).toList(),
-      FileDetailsSchema.attachments:
-          attachments.map((e) => e.toJson()).toList(),
+      FileDetailsSchema.attachments: attachments
+          .map((e) => e.toJson())
+          .toList(),
     };
   }
 
   Map<String, dynamic> toContentJson() {
     return {
-      FileDetailsSchema.fileContent:
-          content.map((e) => e.toContentJson()).toList(),
-      FileDetailsSchema.attachments:
-          attachments.map((e) => e.toContentJson()).toList(),
+      FileDetailsSchema.fileContent: content
+          .map((e) => e.toContentJson())
+          .toList(),
+      FileDetailsSchema.attachments: attachments
+          .map((e) => e.toContentJson())
+          .toList(),
     };
   }
 }

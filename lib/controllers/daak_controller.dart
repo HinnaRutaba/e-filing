@@ -1,10 +1,11 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -76,7 +77,7 @@ class DaakController extends BaseControllerState<DaakState> {
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
-    fetchDaakMeta(desId);
+    fetchDaakMeta();
     if (state.selectedFilter == DaakViewFilter.inbox) {
       await fetchDaakInbox(desId: desId);
     } else if (state.selectedFilter == DaakViewFilter.nfa) {
@@ -114,8 +115,9 @@ class DaakController extends BaseControllerState<DaakState> {
 
   List<DaakModel> get filteredDaak => state.filteredDaak;
 
-  Future<DaakMeta?> fetchDaakMeta(int? desId) async {
+  Future<DaakMeta?> fetchDaakMeta() async {
     try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
       DaakMeta meta = await repo.fetchDaakMeta(desId);
       state = state.copyWith(daakMeta: meta);
       return meta;
@@ -231,10 +233,9 @@ class DaakController extends BaseControllerState<DaakState> {
     required int? fwdToDesId,
     String? remarks,
     XFile? supportingAttachment,
+    VoidCallback? onSuccess,
   }) async {
     try {
-      log("FWD DAAK____${daakId}____${fwdToDesId}_____${daakId}");
-
       EasyLoading.show();
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       await repo.forwardDaakSecretary(
@@ -246,7 +247,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak forwarded successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.inbox);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.inbox);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();
@@ -259,6 +264,7 @@ class DaakController extends BaseControllerState<DaakState> {
     String? remarks,
     XFile? supportingAttachment,
     XFile? issuedLetter,
+    VoidCallback? onSuccess,
   }) async {
     try {
       EasyLoading.show();
@@ -272,7 +278,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak disposed off successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.nfa);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.nfa);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();
@@ -284,6 +294,7 @@ class DaakController extends BaseControllerState<DaakState> {
     required int? daakId,
     String? remarks,
     XFile? supportingAttachment,
+    VoidCallback? onSuccess,
   }) async {
     try {
       EasyLoading.show();
@@ -296,7 +307,11 @@ class DaakController extends BaseControllerState<DaakState> {
       );
       Toast.success(message: "Daak marked as NFA successfully");
       EasyLoading.dismiss();
-      RouteHelper.pop(DaakViewFilter.nfa);
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.pop(DaakViewFilter.nfa);
+      }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
       EasyLoading.dismiss();

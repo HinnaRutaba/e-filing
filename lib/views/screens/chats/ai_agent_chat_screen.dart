@@ -51,7 +51,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
         'canAccept':
             msg.content.contains(AIAgent.responseKey) || widget.generateNew,
         'toShow': msg.toShow,
-        'isError': msg.isError
+        'isError': msg.isError,
       },
     );
   }
@@ -73,11 +73,7 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
     _aiStream.listen((history) {
       _messages
         ..clear()
-        ..addAll(
-          history.reversed.map(
-            (msg) => parseTextMessage(msg),
-          ),
-        );
+        ..addAll(history.reversed.map((msg) => parseTextMessage(msg)));
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {});
@@ -103,30 +99,33 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
     });
 
     _aiAgent
-        .sendMessageStream(text, widget.file?.toContentJson(),
-            sendAsUserMessage: sendAsUserMessage,
-            suggestResponse: widget.suggestResponse)
+        .sendMessageStream(
+          text,
+          widget.file?.toContentJson(),
+          sendAsUserMessage: sendAsUserMessage,
+          suggestResponse: widget.suggestResponse,
+        )
         .listen((partialResponse) {
-      if (_messages.isNotEmpty &&
-          _messages.first.author.id == _chatPartner.id) {
-        _messages[0] = (_messages[0] as types.TextMessage).copyWith(
-          text: partialResponse,
-        );
-      } else {
-        _messages.insert(
-          0,
-          types.TextMessage(
-            author: _chatPartner,
-            createdAt: DateTime.now().millisecondsSinceEpoch,
-            id: _uuid.v4(),
-            text: partialResponse,
-          ),
-        );
-      }
-      setState(() {
-        loading = false;
-      });
-    });
+          if (_messages.isNotEmpty &&
+              _messages.first.author.id == _chatPartner.id) {
+            _messages[0] = (_messages[0] as types.TextMessage).copyWith(
+              text: partialResponse,
+            );
+          } else {
+            _messages.insert(
+              0,
+              types.TextMessage(
+                author: _chatPartner,
+                createdAt: DateTime.now().millisecondsSinceEpoch,
+                id: _uuid.v4(),
+                text: partialResponse,
+              ),
+            );
+          }
+          setState(() {
+            loading = false;
+          });
+        });
   }
 
   @override
@@ -180,8 +179,9 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                     : Alignment.centerLeft,
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 4),
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isUser
                                         ? AppColors.secondary
@@ -192,15 +192,17 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      HtmlReader(
-                                        html: message.text,
-                                        textStyle: TextStyle(
-                                          color: isUser
-                                              ? Colors.white
-                                              : Colors.black87,
-                                          fontWeight: isUser
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
+                                      SelectionArea(
+                                        child: HtmlReader(
+                                          html: message.text,
+                                          textStyle: TextStyle(
+                                            color: isUser
+                                                ? Colors.white
+                                                : Colors.black87,
+                                            fontWeight: isUser
+                                                ? FontWeight.w600
+                                                : FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                       if (!isUser &&
@@ -216,7 +218,9 @@ class _AIAgentChatScreenState extends State<AIAgentChatScreen> {
                                           onTap: () {
                                             RouteHelper.pop(
                                               message.text.replaceAll(
-                                                  AIAgent.responseKey, ''),
+                                                AIAgent.responseKey,
+                                                '',
+                                              ),
                                             );
                                           },
                                         ),
