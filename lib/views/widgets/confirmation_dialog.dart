@@ -1,93 +1,106 @@
-import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-class ConfirmationDialog extends StatefulWidget {
+class ConfirmationDialog extends StatelessWidget {
   final String title;
-  final VoidCallback onConfirm;
-  final VoidCallback? onCancel;
-  const ConfirmationDialog(
-      {super.key, required this.title, required this.onConfirm, this.onCancel});
+  final String message;
+  final IconData icon;
+  final Color iconColor;
+  final String confirmText;
+  final String cancelText;
+  final Color? confirmColor;
+  final bool destructive;
 
-  @override
-  State<ConfirmationDialog> createState() => _ConfirmationDialogState();
-}
-
-class _ConfirmationDialogState extends State<ConfirmationDialog>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _scaleAnimation =
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const ConfirmationDialog({
+    super.key,
+    required this.title,
+    required this.message,
+    this.icon = Icons.help_outline_rounded,
+    this.iconColor = AppColors.secondaryDark,
+    this.confirmText = 'Confirm',
+    this.cancelText = 'Cancel',
+    this.confirmColor,
+    this.destructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        backgroundColor: AppColors.background,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              AppText.headlineSmall(
-                widget.title,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  AppSolidButton(
-                    text: 'Yes',
-                    onPressed: () {
-                      widget.onConfirm();
-                    },
-                    width: 100,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    final accent =
+        confirmColor ??
+        (destructive ? AppColors.error : AppColors.secondaryDark);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        iconColor.withAlpha(40),
+                        iconColor.withAlpha(15),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                  const SizedBox(width: 16),
-                  AppOutlineButton(
-                    text: 'No',
-                    onPressed: () {
-                      if (widget.onCancel == null) {
-                        RouteHelper.pop();
-                        return;
-                      }
-                      widget.onCancel?.call();
-                    },
-                    width: 100,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Icon(icon, size: 44, color: iconColor),
+                )
+                .animate(delay: 100.ms)
+                .scale(
+                  begin: const Offset(0, 0),
+                  end: const Offset(1, 1),
+                  duration: 600.ms,
+                  curve: Curves.easeOutBack,
+                ),
+            const SizedBox(height: 20),
+            AppText.headlineSmall(title, textAlign: TextAlign.center),
+            const SizedBox(height: 10),
+            AppText.bodyMedium(
+              message,
+              textAlign: TextAlign.center,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppOutlineButton(
+                    text: cancelText,
+                    onPressed: () => Navigator.of(context).pop(false),
+                    color: AppColors.textSecondary,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppSolidButton(
+                    text: confirmText,
+                    onPressed: () => Navigator.of(context).pop(true),
+                    backgroundColor: accent,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+    ).animate().scale(
+      begin: const Offset(0, 0),
+      end: const Offset(1, 1),
+      duration: 500.ms,
+      curve: Curves.easeOutBack,
     );
   }
 }

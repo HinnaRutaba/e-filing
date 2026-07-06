@@ -1,0 +1,2732 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:efiling_balochistan/models/department/department_model.dart';
+import 'package:efiling_balochistan/models/department/department_secretaries_model.dart';
+import 'package:efiling_balochistan/models/internal_user_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_brief_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_details_model.dart';
+import 'package:efiling_balochistan/models/summaries/summary_model.dart';
+import 'package:efiling_balochistan/utils/file_picker_service.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/gallery/gallery_view.dart';
+import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
+import 'package:efiling_balochistan/views/screens/sticky_tag_drawer.dart';
+import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/attachments_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/internal_forward_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/internal_files_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/movement_timeline_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/voice_notes_section.dart';
+import 'package:efiling_balochistan/views/screens/summaries/components/summary_brief.dart';
+import 'package:efiling_balochistan/views/screens/summaries/summary_document_card.dart';
+import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
+import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/views/widgets/remarks_sign_panel.dart';
+import 'package:efiling_balochistan/views/widgets/signature_pad.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:flutter/foundation.dart';
+import 'package:keyboard_detection/keyboard_detection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
+import 'package:efiling_balochistan/views/widgets/voice_note_recorder.dart';
+import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
+
+enum SummaryAction {
+  returnToSection(
+    label: 'Return to Section',
+    icon: Icons.undo_rounded,
+    color: AppColors.error,
+    filled: false,
+  ),
+  editRemarks(
+    label: 'Edit Drafted Remarks',
+    icon: Icons.edit_outlined,
+    color: AppColors.secondary,
+    filled: true,
+  ),
+  shareInternally(
+    label: 'Share Internally',
+    icon: Icons.group_rounded,
+    color: Color(0xFFF0A63A),
+    filled: false,
+  ),
+  signForward(
+    label: 'Forward to Department',
+    icon: Icons.arrow_forward_rounded,
+    color: Colors.deepPurpleAccent,
+    filled: true,
+  ),
+  draftRemarks(
+    label: 'Draft Remarks & Return',
+    icon: Icons.edit_note_rounded,
+    color: AppColors.primary,
+    filled: true,
+  ),
+  disposedOff(
+    label: 'Dispose Off',
+    icon: Icons.archive_outlined,
+    color: Colors.teal,
+    filled: false,
+  ),
+  forwardToCM(
+    label: 'Forward to Chief Minister',
+    icon: Icons.account_balance_rounded,
+    color: AppColors.primaryDark,
+    filled: true,
+  );
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool filled;
+
+  const SummaryAction({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.filled,
+  });
+}
+
+class SummaryDetailsScreen extends ConsumerStatefulWidget {
+  final SummaryModel? summary;
+
+  const SummaryDetailsScreen({super.key, required this.summary});
+
+  @override
+  ConsumerState<SummaryDetailsScreen> createState() =>
+      _SummaryDetailsScreenState();
+}
+
+const String _kFallbackHtml = '''
+<p>nb cdcbdnmcbdchndmc dscdbcnscbnmsdc sccscvbnsdc dm cmdvchncvnmdc nsc snmcv dnsmc dmnc dmn cdns cds</p>
+''';
+
+class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
+    with WidgetsBindingObserver {
+  late final KeyboardDetectionController _keyboardCtrl =
+      KeyboardDetectionController(
+        onChanged: (state) {
+          if (state == KeyboardState.visibling ||
+              state == KeyboardState.visible) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              if (_actionBarScrollController.hasClients) {
+                _actionBarScrollController.animateTo(
+                  _actionBarScrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+          }
+          if (mounted) setState(() {});
+        },
+      );
+  SummaryAction? _selectedAction;
+  bool _loadingAction = false;
+  final TextEditingController _remarksController = TextEditingController();
+  final TextEditingController _shareSearchController = TextEditingController();
+  final HtmlEditorController _editDraftController = HtmlEditorController();
+  late String _currentHtml;
+  InternalUserModel? _shareTarget;
+  final List<FlagAndAttachmentModel> _pendingAttachments = [];
+
+  final SignaturePadController _signaturePadController =
+      SignaturePadController();
+  final SignaturePadController _disposeOffSignaturePadController =
+      SignaturePadController();
+
+  final RemarksSignPanelController _remarksPanelCtrl =
+      RemarksSignPanelController();
+  final ScrollController _mainScrollController = ScrollController();
+  final ScrollController _actionBarScrollController = ScrollController();
+  final ScrollController _stickyPanelScrollController = ScrollController();
+  final GlobalKey _remarksPanelKey = GlobalKey();
+
+  final TextEditingController _destDeptController = TextEditingController();
+  final TextEditingController _destOfficerController = TextEditingController();
+
+  DepartmentModel? _selectedDestDept;
+  DepartmentSecretariesModel? _selectedDestOfficer;
+  int? _officerCacheDeptId;
+  List<DepartmentSecretariesModel> _officerCache = const [];
+  Uint8List? _cardSignatureBytes;
+
+  String? _shareVoiceNotePath;
+  int _shareVoiceNoteDurationSec = 0;
+  final VoiceNoteRecorderController _shareVoiceRecorderCtrl =
+      VoiceNoteRecorderController();
+
+  String? _cmVoiceNotePath;
+  int _cmVoiceNoteDurationSec = 0;
+  final VoiceNoteRecorderController _cmVoiceRecorderCtrl =
+      VoiceNoteRecorderController();
+
+  final FocusScopeNode _actionBarScopeNode = FocusScopeNode();
+  bool _actionBarHasFocus = false;
+
+  Future<void> _fetchOfficersForCurrentDept() async {
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      if (mounted) {
+        setState(() {
+          _officerCache = const [];
+          _officerCacheDeptId = null;
+        });
+      }
+      return;
+    }
+    if (_officerCacheDeptId == deptId) return;
+    final list = await ref
+        .read(summariesController.notifier)
+        .fetchDepartmentSecretaries(deptId: deptId);
+    if (!mounted) return;
+    setState(() {
+      _officerCache = list;
+      _officerCacheDeptId = deptId;
+      if (list.length == 1) {
+        _selectedDestOfficer = list.first;
+        _destOfficerController.text = list.first.name ?? '';
+      }
+    });
+  }
+
+  DepartmentModel? _matchDepartment(String? name) {
+    if (name == null || name.trim().isEmpty) return null;
+    final departments =
+        ref.read(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    final normalized = name.trim().toLowerCase();
+    for (final d in departments) {
+      if ((d.title ?? '').trim().toLowerCase() == normalized) return d;
+    }
+    return null;
+  }
+
+  ActiveUserDesg? get userDesg {
+    return ref.read(summariesController).meta?.activeUserDesg;
+  }
+
+  int? get currentDesignationId =>
+      ref.read(authController).currentDesignation?.userDesgId;
+
+  bool get isDeo => userDesg?.roleEnum == ActiveUserDesgRole.deo;
+
+  bool get isDeoInCmSecretariat =>
+      isDeo &&
+      (userDesg?.department ?? '').toLowerCase().contains(
+        'chief minister secretariat',
+      );
+
+  bool get isCM => userDesg?.roleEnum == ActiveUserDesgRole.cm;
+
+  bool get isPsToCm => userDesg?.roleEnum == ActiveUserDesgRole.pstocm;
+
+  bool get isCMCurrentHolder {
+    final details = ref.read(summariesController).details;
+    return isCM &&
+        details?.summary?.currentHolder != null &&
+        details?.summary?.currentHolder?.toLowerCase().trim() ==
+            ('Mr Chief Minister').toLowerCase().trim();
+  }
+
+  bool get isDeoCurrentHolder {
+    final details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.summary?.currentHolderUserDesgId != null &&
+        details?.summary?.currentHolderUserDesgId == userDesg?.id &&
+        details?.hasForwardedBefore == true;
+  }
+
+  /// True when: DEO role + status is sharedInternallyForFeedback + internalForwards not empty.
+  /// In this case Share Internally acts as Forward Internally.
+  bool get _isDeoForwardInternally {
+    final details = ref.read(summariesController).details;
+    return isDeo &&
+        (details?.summary?.summaryStatus ==
+                SummaryStatus.sharedInternallyForFeedback ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.collectingInternalRemarks) &&
+        (details?.internalForwards.isNotEmpty == true);
+  }
+
+  bool get isInternalInDeptForFeedback {
+    final SummaryDetailsModel? details = ref.read(summariesController).details;
+    return isDeo &&
+        details?.hasForwardedBefore != true &&
+        _isDeoForwardInternally;
+  }
+
+  bool get actionsAvailable {
+    final ActiveUserDesg? activeUser = userDesg;
+    SummaryDetailsModel? details = ref.read(summariesController).details;
+
+    if (isCM) {
+      return false;
+    }
+
+    if (!isCM &&
+        details?.summary?.summaryStatus ==
+            SummaryStatus.withChiefMinisterForApproval) {
+      return false;
+    }
+
+    if (details?.summary?.summaryStatus == SummaryStatus.disposedOff) {
+      return false;
+    }
+
+    if (isInternalInDeptForFeedback &&
+        details?.internalFwdWithoutRemarks.any(
+              (r) => r.forwardedToUserDesgId == currentDesignationId,
+            ) ==
+            true) {
+      return true;
+    }
+
+    if (_isDeoForwardInternally &&
+        details?.internalForwards.first.forwardedToUserDesgId !=
+            currentDesignationId) {
+      return false;
+    }
+
+    if (isDeo &&
+        (details?.summary?.summaryStatus == SummaryStatus.draftFromSection ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.pendingWithSecretary ||
+            details?.summary?.summaryStatus ==
+                SummaryStatus.withPersonalSecretaryForPreReview)) {
+      return false;
+    }
+
+    if ((activeUser?.roleEnum == ActiveUserDesgRole.secretary ||
+            activeUser?.roleEnum == ActiveUserDesgRole.pstocm) &&
+        details?.summary?.currentHolder?.trim() != activeUser?.name?.trim()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool get showDisposedOff {
+    final details = ref.read(summariesController).details;
+    final summary = details?.summary;
+    if (summary == null) return false;
+    final isSecretary = userDesg?.roleEnum == ActiveUserDesgRole.secretary;
+    if (!isSecretary) return false;
+    final originatingId = summary.originatingDepartmentId;
+    final currentHolderId = summary.currentDepartmentId;
+    if (originatingId == null ||
+        currentHolderId == null ||
+        originatingId != currentHolderId) {
+      return false;
+    }
+    return details?.hasForwardedBefore == true;
+  }
+
+  bool get isPsToCmCmReturned {
+    final details = ref.read(summariesController).details;
+    return userDesg?.roleEnum == ActiveUserDesgRole.pstocm &&
+        details?.isLatestMovementCmSignedAndReturned == true;
+  }
+
+  // pstocm + last two movements are cm_signed_and_returned → brief_added
+  bool get isPsToCmCmReturnedBriefAdded {
+    if (!isPsToCm) return false;
+    final movements =
+        ref.read(summariesController).details?.movements ?? const [];
+    if (movements.length < 2) return false;
+    return movements[movements.length - 1].actionType == 'brief_added' &&
+        movements[movements.length - 2].actionType == 'cm_signed_and_returned';
+  }
+
+  bool get isOnlySentToDeptCrossDept {
+    final movements =
+        ref.read(summariesController).details?.movements ?? const [];
+    final sentToDept = movements
+        .where((m) => m.actionType == 'sent_to_department')
+        .toList();
+    if (sentToDept.isEmpty) return false;
+    final m = sentToDept.last;
+    return m.fromDepartment != m.toDepartment;
+  }
+
+  bool get showHandWrittedRemarksSection {
+    SummaryDetailsModel? details = ref.read(summariesController).details;
+    return (details?.hasForwardedBefore == true &&
+            details?.isLatestRemarksAdded != true) ||
+        (details?.movements.last.actionType == 'sent_to_department' &&
+            details?.movements.last.fromDepartment !=
+                details?.movements.last.toDepartment);
+  }
+
+  bool _showRemarksPanel(SummaryDetailsModel? details) {
+    return (isCMCurrentHolder ||
+            (!isDeo &&
+                actionsAvailable &&
+                showHandWrittedRemarksSection &&
+                !(isDeo &&
+                    details?.isLatestMovementSignedAndForwarded == true))) &&
+        !isPsToCmCmReturned &&
+        !isPsToCmCmReturnedBriefAdded;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _actionBarScopeNode.addListener(_onActionBarFocusChange);
+    _currentHtml = widget.summary?.body ?? _kFallbackHtml;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDetails();
+      _fetchOfficersForCurrentDept();
+    });
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // Ensure ConstrainedBox recalculates when keyboard appears via any input device.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  void _onActionBarFocusChange() {
+    if (!mounted) return;
+    final focused = _actionBarScopeNode.hasFocus;
+    if (focused != _actionBarHasFocus) {
+      setState(() => _actionBarHasFocus = focused);
+    }
+    if (focused) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _scrollToFocusedField(),
+      );
+    }
+  }
+
+  void _scrollToFocusedField() {
+    if (!mounted) return;
+    final focusedCtx = FocusManager.instance.primaryFocus?.context;
+    if (focusedCtx != null) {
+      final renderObj = focusedCtx.findRenderObject();
+      if (renderObj != null && renderObj.attached) {
+        Scrollable.maybeOf(focusedCtx)?.position.ensureVisible(
+          renderObj,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+        return;
+      }
+    }
+    if (_actionBarScrollController.hasClients) {
+      _actionBarScrollController.animateTo(
+        _actionBarScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _loadDetails() async {
+    final details = await ref
+        .read(summariesController.notifier)
+        .fetchSummaryDetails(summaryId: widget.summary?.id);
+    ref.read(filesController.notifier).getFlags();
+    if (!mounted) return;
+    final body = details?.summary?.body;
+    if (body != null && body.isNotEmpty) {
+      setState(() => _currentHtml = body);
+    }
+    final target = details?.summary?.draftTargetDepartment;
+    if (details?.hasForwardedBefore != true &&
+        target != null &&
+        target.isNotEmpty) {
+      setState(() {
+        _destDeptController.text = target;
+        _selectedDestDept = _matchDepartment(target);
+      });
+      _fetchOfficersForCurrentDept();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _actionBarScopeNode.removeListener(_onActionBarFocusChange);
+    _actionBarScopeNode.dispose();
+    _remarksController.dispose();
+    _shareSearchController.dispose();
+    _destDeptController.dispose();
+    _destOfficerController.dispose();
+    _mainScrollController.dispose();
+    _actionBarScrollController.dispose();
+    _stickyPanelScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrlState = ref.watch(summariesController);
+    final details = ctrlState.details;
+    final isLoading = ctrlState.isLoadingDetails && details == null;
+
+    return KeyboardDetection(
+      controller: _keyboardCtrl,
+      child: GradientScaffold(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            title: context.isMobile
+                ? AppText.headlineSmall("Summary Details")
+                : RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.appColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Summary Details'),
+                        if (details?.summary?.summaryNo != null)
+                          TextSpan(
+                            text: " (${details?.summary?.summaryNo})",
+                            style: const TextStyle(fontWeight: FontWeight.w300),
+                          ),
+                      ],
+                    ),
+                  ),
+            actions: [
+              if (details != null) ...[
+                Consumer(
+                  builder: (context, ref, _) {
+                    final loading = ref.watch(
+                      summariesController.select((s) => s.gettingPrintUrl),
+                    );
+                    return loading
+                        ? const SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : AppOutlineButton(
+                            onPressed: _onPrint,
+                            text: 'Print Summary',
+                            icon: Icons.print_outlined,
+                            color: AppColors.primaryDark,
+                            width: 160,
+                          );
+                  },
+                ),
+                const SizedBox(width: 12),
+              ],
+            ],
+          ),
+
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : (!ctrlState.isLoadingDetails && details == null)
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.lock_outline_rounded,
+                        size: 72,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
+                      AppText.headlineSmall("Access Restricted"),
+                      const SizedBox(height: 8),
+                      AppText.bodyMedium(
+                        'You do not have access to this summary',
+                      ),
+                    ],
+                  ),
+                )
+              : Builder(
+                  builder: (context) {
+                    final showPanel = _showRemarksPanel(details);
+                    final isLocked = _remarksPanelCtrl.isLocked && showPanel;
+                    final tags = [
+                      _buildAttachmentsTag(details),
+                      _buildBriefsTag(details),
+                      if (isPsToCm || isCM || isDeoInCmSecretariat)
+                        _buildVoiceNotesTag(),
+                    ];
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              StickyTagDrawer(
+                                panelWidth:
+                                    MediaQuery.sizeOf(context).width * 0.85,
+                                tagsAlignment: const Alignment(0.0, -0.5),
+                                mainContent: RefreshIndicator(
+                                  onRefresh: _loadDetails,
+                                  child: Scrollbar(
+                                    controller: _mainScrollController,
+                                    thickness: 16,
+                                    radius: const Radius.circular(8),
+                                    trackVisibility: true,
+                                    thumbVisibility: true,
+                                    interactive: true,
+                                    child: SingleChildScrollView(
+                                      controller: _mainScrollController,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _documentCard(),
+                                          if (showPanel && !isLocked)
+                                            _buildRemarksPanel(details),
+                                          const SizedBox(height: 16),
+                                          _sidebar(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                tags: tags,
+                              ),
+                              if (_selectedAction != null)
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () =>
+                                      setState(() => _selectedAction = null),
+                                ),
+                              Positioned(
+                                right: 8,
+                                top: 72,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _mainScrollButton(
+                                      icon: Icons.keyboard_arrow_up_rounded,
+                                      onTap: () =>
+                                          _mainScrollController.animateTo(
+                                            0,
+                                            duration: const Duration(
+                                              milliseconds: 350,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _mainScrollButton(
+                                      icon: Icons.keyboard_arrow_down_rounded,
+                                      onTap: () =>
+                                          _mainScrollController.animateTo(
+                                            _mainScrollController
+                                                .position
+                                                .maxScrollExtent,
+                                            duration: const Duration(
+                                              milliseconds: 350,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (showPanel && isLocked)
+                          Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).scaffoldBackgroundColor,
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: AppColors.secondaryLight
+                                          .withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.secondaryDark.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, -2),
+                                    ),
+                                  ],
+                                ),
+                                child: _buildRemarksPanel(details),
+                              )
+                              .animate()
+                              .slideY(
+                                begin: 1.0,
+                                end: 0.0,
+                                duration: 320.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .fadeIn(duration: 220.ms, curve: Curves.easeOut),
+                        if (_selectedAction != null)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  (MediaQuery.of(context).size.height -
+                                      MediaQuery.of(
+                                        context,
+                                      ).viewInsets.bottom) *
+                                  0.60,
+                            ),
+                            child: _actionBar(),
+                          )
+                        else
+                          _actionBar(),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+
+  void _onActionTap(SummaryAction action) {
+    if (action == SummaryAction.draftRemarks) {
+      final summary =
+          ref.read(summariesController).details?.summary ?? widget.summary;
+      if (summary == null) return;
+      RouteHelper.push(
+        Routes.summaryDraftRemarks,
+        extra: summary,
+      ).then((_) => _loadDetails());
+      return;
+    }
+
+    if (action == SummaryAction.signForward &&
+        (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded)) {
+      setState(() => _selectedAction = action);
+      _scrollActionBarToTop();
+      return;
+    }
+
+    if (action == SummaryAction.signForward && showHandWrittedRemarksSection) {
+      _remarksPanelCtrl.expand();
+      // When sticky the panel is already visible — skip the main-scroll jump so
+      // it doesn't race against the sig-error scroll inside _submitFromRemarksPanel.
+      if (!_remarksPanelCtrl.isLocked) _scrollActionBarToTop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _submitFromRemarksPanel();
+      });
+      return;
+    }
+
+    if (action == SummaryAction.signForward) {
+      final hasSigned =
+          _cardSignatureBytes != null && _cardSignatureBytes!.isNotEmpty;
+      final hasDept = _selectedDestDept?.id != null;
+      final hasOfficer =
+          _selectedDestOfficer?.userDesgId != null ||
+          (_officerCacheDeptId == _selectedDestDept?.id &&
+              _officerCache.isEmpty);
+      if (hasSigned && hasDept && hasOfficer) {
+        _submitSignForward();
+        return;
+      }
+    }
+
+    setState(() {
+      if (_selectedAction == action) {
+        _selectedAction = null;
+      } else {
+        _selectedAction = action;
+      }
+    });
+    if (action == SummaryAction.signForward && !_remarksPanelCtrl.isLocked)
+      _scrollActionBarToTop();
+  }
+
+  void _scrollStickyPanelToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_stickyPanelScrollController.hasClients) return;
+      _stickyPanelScrollController.animateTo(
+        _stickyPanelScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  /// Scrolls the sticky panel to fully reveal the signature pad.
+  void _scrollToSignatureSection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _remarksPanelCtrl.signPadKey?.currentContext;
+      if (ctx == null) return;
+      final renderObj = ctx.findRenderObject();
+      if (renderObj == null || !renderObj.attached) return;
+      Scrollable.maybeOf(ctx)?.position.ensureVisible(
+        renderObj,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+    });
+  }
+
+  void _scrollActionBarToTop() {
+    _remarksPanelCtrl.expand();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _remarksPanelKey.currentContext;
+      if (ctx == null) return;
+      final scrollable = Scrollable.maybeOf(ctx);
+      if (scrollable == null) return;
+      Future.delayed(const Duration(milliseconds: 280), () {
+        if (!mounted) return;
+        final renderObj = _remarksPanelKey.currentContext?.findRenderObject();
+        if (renderObj == null || !renderObj.attached) return;
+        scrollable.position.ensureVisible(
+          renderObj,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: 0.0,
+        );
+      });
+    });
+  }
+
+  Future<void> _onAcceptDraftedRemarks() async {
+    final details = ref.read(summariesController).details;
+    if (details?.isLastMovemenRemarksAdded != true) return;
+    final remarks = (details?.movements.last.remarks ?? '').trim();
+    if (remarks.isEmpty) {
+      Toast.error(message: 'No drafted remarks to accept.');
+      return;
+    }
+    final summaryId = details?.summary?.id ?? widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+    setState(() => _loadingAction = true);
+    final success = await notifier.updateDraftContent(
+      summaryId: summaryId,
+      body: remarks,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingAction = false;
+      if (success) {
+        _currentHtml = remarks;
+        _selectedAction = SummaryAction.signForward;
+      }
+    });
+  }
+
+  Future<void> _onSubmitAction() async {
+    final action = _selectedAction;
+    if (action == null) return;
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+    bool success = true;
+
+    if (action == SummaryAction.editRemarks) {
+      final newHtml = await _editDraftController.getText();
+      if (!mounted) return;
+      setState(() {
+        _loadingAction = true;
+      });
+      success = await notifier.updateDraftContent(
+        summaryId: summaryId,
+        body: newHtml,
+      );
+      if (!mounted) return;
+      if (success) {
+        setState(() {
+          _loadingAction = false;
+          _currentHtml = newHtml;
+        });
+      }
+    } else if (action == SummaryAction.returnToSection) {
+      final remark = _remarksController.text.trim();
+      if (remark.isEmpty) {
+        Toast.error(message: 'Please enter remarks for the section');
+        return;
+      }
+      setState(() {
+        _loadingAction = true;
+      });
+      success = await notifier.returnToSection(
+        summaryId: summaryId,
+        remark: remark,
+      );
+      setState(() {
+        _loadingAction = true;
+      });
+    } else if (action == SummaryAction.shareInternally) {
+      final targetDesgId = _shareTarget?.userDesgId;
+      if (targetDesgId == null) {
+        Toast.error(message: 'Please select a department member');
+        return;
+      }
+      await _shareVoiceRecorderCtrl.stopIfRecording();
+      if (!mounted) return;
+      setState(() {
+        _loadingAction = true;
+      });
+
+      if (_isDeoForwardInternally) {
+        final details = ref.read(summariesController).details;
+        final internalFwd = details?.internalForwards.first;
+        if (internalFwd == null) {
+          Toast.error(message: 'Internal forward record not found');
+          setState(() => _loadingAction = false);
+          return;
+        }
+        success = await notifier.forwardInternally(
+          summaryId: summaryId,
+          targetDesgId: targetDesgId,
+          instruction: _remarksController.text.trim(),
+          internalFwd: internalFwd,
+        );
+      } else {
+        success = await notifier.shareInternally(
+          summaryId: summaryId,
+          instruction: _remarksController.text.trim(),
+          recipientDesIds: [targetDesgId],
+        );
+      }
+
+      if (!mounted) return;
+
+      if (success) {
+        final voicePath = _shareVoiceNotePath;
+        final voiceDur = _shareVoiceNoteDurationSec;
+        if (voicePath != null && voiceDur > 0) {
+          await notifier.uploadVoiceNote(
+            summaryId: summaryId,
+            filePath: voicePath,
+            durationSec: voiceDur,
+            visibility: VoiceNoteVisibility.internal,
+            context: VoiceNoteContext.shareInternal,
+          );
+          _shareVoiceNotePath = null;
+          _shareVoiceNoteDurationSec = 0;
+        }
+        _shareTarget = null;
+        _shareSearchController.clear();
+      }
+      setState(() {
+        _loadingAction = false;
+      });
+    } else if (action == SummaryAction.signForward) {
+      await _submitSignForward();
+      return;
+    } else if (action == SummaryAction.disposedOff) {
+      await _submitDisposeOff();
+      return;
+    } else if (action == SummaryAction.forwardToCM) {
+      await _cmVoiceRecorderCtrl.stopIfRecording();
+      if (!mounted) return;
+      setState(() => _loadingAction = true);
+      success = await notifier.forwardToCM(summaryId: summaryId);
+      if (!mounted) return;
+      if (success) {
+        final voicePath = _cmVoiceNotePath;
+        final voiceDur = _cmVoiceNoteDurationSec;
+        if (voicePath != null && voiceDur > 0) {
+          await notifier.uploadVoiceNote(
+            summaryId: summaryId,
+            filePath: voicePath,
+            durationSec: voiceDur,
+            visibility: VoiceNoteVisibility.cm,
+            context: VoiceNoteContext.forwardToCM,
+          );
+          _cmVoiceNotePath = null;
+          _cmVoiceNoteDurationSec = 0;
+        }
+      }
+      setState(() => _loadingAction = false);
+    }
+
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = action == SummaryAction.editRemarks
+            ? SummaryAction.signForward
+            : null;
+        _remarksController.clear();
+      });
+    }
+  }
+
+  Widget _mainScrollButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Theme.of(context).bottomSheetTheme.backgroundColor,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 3,
+      shadowColor: AppColors.secondaryDark,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 22, color: AppColors.secondaryLight),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionBar() {
+    if (!actionsAvailable) {
+      return const SizedBox.shrink();
+    }
+    final expanded = _selectedAction != null;
+    final hPad = context.isMobile ? 12.0 : 24.0;
+    final vPad = context.isMobile ? 12.0 : 32.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).bottomSheetTheme.backgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.secondaryLight.withValues(alpha: 0.6),
+            width: 1.5,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondaryDark.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Sticky: header title + action buttons
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                hPad,
+                vPad,
+                hPad,
+                expanded ? 0 : vPad,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: expanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _expandedHeader(),
+                          )
+                        : const SizedBox(width: double.infinity),
+                  ),
+                  if (_isDeoForwardInternally) ...[
+                    _internalForwardBanner(),
+                    const SizedBox(height: 10),
+                  ],
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: expanded
+                        ? const SizedBox(
+                            key: ValueKey('empty'),
+                            width: double.infinity,
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey('buttons'),
+                            child: _actionButtonRow(),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            // Scrollable: form body + submit button
+            if (expanded)
+              Flexible(
+                child: FocusScope(
+                  node: _actionBarScopeNode,
+                  child: SingleChildScrollView(
+                    controller: _actionBarScrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      hPad,
+                      0,
+                      hPad,
+                      _actionBarHasFocus ? vPad + 80 : vPad,
+                    ),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: _expandedRemarks(),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButtonRow() {
+    final details = ref.read(summariesController).details;
+
+    List<SummaryAction> allowedActions;
+    if (isDeo) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.draftRemarks,
+      ];
+    } else if (userDesg?.roleEnum == ActiveUserDesgRole.secretary &&
+        details?.isLatestMovementBriefAdded == true) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
+    } else if (isPsToCm &&
+        details?.isLatestMovementCmSignedAndReturned == true) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
+    } else if (isPsToCmCmReturnedBriefAdded) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
+    } else if (isPsToCm) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+        SummaryAction.forwardToCM,
+      ];
+    } else if (details?.isLatestMovementSignedAndForwarded == true) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+        if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm)
+          SummaryAction.forwardToCM,
+        if (showDisposedOff) SummaryAction.disposedOff,
+      ];
+    } else if (isOnlySentToDeptCrossDept) {
+      allowedActions = [
+        SummaryAction.shareInternally,
+        SummaryAction.signForward,
+      ];
+    } else {
+      allowedActions = SummaryAction.values
+          .where((a) => a != SummaryAction.draftRemarks)
+          .where((a) => a != SummaryAction.forwardToCM)
+          .where((a) => a != SummaryAction.disposedOff || showDisposedOff)
+          .toList();
+    }
+
+    final isMobile = context.isMobile;
+    final buttons = allowedActions
+        .map((a) => _actionButton(a, expand: !isMobile))
+        .toList(growable: false);
+    if (!isMobile) {
+      return Row(
+        children: [
+          for (int i = 0; i < buttons.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: buttons[i]),
+          ],
+        ],
+      );
+    }
+    // Mobile: if exactly 3 buttons, first two share a row, third spans full width.
+    if (buttons.length == 3) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final halfWidth = (constraints.maxWidth - 10) / 2;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  SizedBox(width: halfWidth, child: buttons[0]),
+                  const SizedBox(width: 10),
+                  SizedBox(width: halfWidth, child: buttons[1]),
+                ],
+              ),
+              const SizedBox(height: 10),
+              buttons[2],
+            ],
+          );
+        },
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: buttons
+              .map(
+                (b) =>
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: b),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+
+  String _labelFor(SummaryAction action) {
+    if (action == SummaryAction.shareInternally && _isDeoForwardInternally) {
+      return 'Forward to another user';
+    }
+    if (action == SummaryAction.signForward &&
+        (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded)) {
+      return 'Forward to department';
+    }
+    if (action == SummaryAction.signForward && isPsToCm) {
+      return 'Add remarks & forward to department';
+    }
+    return action.label;
+  }
+
+  Widget _actionButton(
+    SummaryAction action, {
+    required bool expand,
+    VoidCallback? onTapOverride,
+    double? width,
+  }) {
+    if (_loadingAction) {
+      return SizedBox(
+        height: 44,
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: action.color,
+            ),
+          ),
+        ),
+      );
+    }
+    final bool selected = _selectedAction == action;
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: action.filled
+            ? action.color
+            : (selected
+                  ? action.color.withValues(alpha: 0.08)
+                  : action.color.withValues(alpha: 0.02)),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTapOverride ?? () => _onActionTap(action),
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: action.color,
+                width: selected ? 2 : 1.4,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  action.icon,
+                  size: 16,
+                  color: action.filled ? AppColors.white : action.color,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    _labelFor(action),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: action.filled ? AppColors.white : action.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _expandedHeader() {
+    final action = _selectedAction!;
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Material(
+            color: AppColors.cardColorLight,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _onActionTap(action),
+              child: Container(
+                height: 44,
+                width: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.secondaryLight.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Icon(action.icon, size: 18, color: action.color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _labelFor(action),
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: action.color,
+              ),
+            ),
+          ),
+          if (!context.isMobile) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedAction = null;
+                });
+              },
+              child: const Icon(Icons.clear),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _expandedRemarks() {
+    final action = _selectedAction!;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child:
+          Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (action == SummaryAction.editRemarks)
+                    _draftEditor(action)
+                  else if (action == SummaryAction.returnToSection)
+                    _returnToSectionBody(action)
+                  else if (action == SummaryAction.shareInternally)
+                    _shareInternallyBody(action)
+                  else if (action == SummaryAction.signForward)
+                    _signForwardBody(action)
+                  else if (action == SummaryAction.draftRemarks)
+                    const SizedBox.shrink()
+                  else if (action == SummaryAction.disposedOff)
+                    _disposedOffBody()
+                  else if (action == SummaryAction.forwardToCM)
+                    _forwardToCMBody()
+                  else
+                    AppTextField(
+                      controller: _remarksController,
+                      labelText: "Remarks / Instructions",
+                      isMandatory: true,
+                      hintText: "Please specify what ammendments are needed",
+                      maxLines: 5,
+                    ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _actionButton(
+                      action,
+                      expand: false,
+                      width: double.infinity,
+                      onTapOverride: _onSubmitAction,
+                    ),
+                  ),
+                ],
+              )
+              .animate(key: ValueKey(action))
+              .fadeIn(duration: 220.ms, curve: Curves.easeOut)
+              .slideY(
+                begin: 0.08,
+                end: 0,
+                duration: 220.ms,
+                curve: Curves.easeOut,
+              ),
+    );
+  }
+
+  Widget _returnToSectionBody(SummaryAction action) {
+    SummaryDetailsModel? details = ref.read(summariesController).details;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF8E1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: const Color(0xFFE6B84D).withValues(alpha: 0.55),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.info_rounded,
+                  size: 16,
+                  color: Color(0xFF8A6A12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      color: Color(0xFF7A5A10),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                    children: [
+                      const TextSpan(text: 'This will return the draft to '),
+                      TextSpan(
+                        text: details?.internalForwards.isNotEmpty == true
+                            ? details?.internalForwards.first.forwardedBy
+                            : details?.summary?.originatingUser ??
+                                  'the originating department',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      const TextSpan(
+                        text:
+                            ' for amendments. Provide clear instructions on what needs to be changed.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _remarksController,
+          labelText: "Remarks / Instructions",
+          isMandatory: true,
+          hintText: "Please specify what ammendments are needed",
+          maxLines: 5,
+        ),
+      ],
+    );
+  }
+
+  Widget _internalForwardBanner() {
+    final fwd = ref.read(summariesController).details?.internalForwards.first;
+    if (fwd == null) return const SizedBox.shrink();
+    final instruction = (fwd.instruction ?? '').trim();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.feedback_outlined,
+                size: 15,
+                color: Colors.orange,
+              ),
+              const SizedBox(width: 6),
+              AppText.titleMedium(
+                'Instructions from ${fwd.forwardedBy ?? 'Unknown'}',
+                color: Colors.orange[700],
+                fontWeight: FontWeight.w700,
+              ),
+            ],
+          ),
+          if (instruction.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            AppText.bodyMedium(instruction),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _shareInternallyBody(SummaryAction action) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: AppColors.secondaryDark.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.secondaryDark.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.group_rounded,
+                  size: 16,
+                  color: AppColors.secondaryLight,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  _isDeoForwardInternally
+                      ? 'Select one department member to forward this summary to internally.'
+                      : 'Select a department member to share this summary with for review. They will receive a read-only copy along with your optional instructions.',
+                  color: AppColors.secondaryLight,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        SearchDropDownField<InternalUserModel>(
+          controller: _shareSearchController,
+          labelText: 'Select Department Member',
+          hintText: 'Search users…',
+
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: AppColors.secondaryLight.withValues(alpha: 0.5),
+            ),
+          ),
+          suggestionsCallback: (pattern) {
+            final q = pattern.toLowerCase();
+            final users =
+                ref.read(summariesController).meta?.internalUsers ??
+                const <InternalUserModel>[];
+            return users.where((u) {
+              return (u.name ?? '').toLowerCase().contains(q) ||
+                  (u.designation ?? '').toLowerCase().contains(q);
+            }).toList();
+          },
+          itemBuilder: (context, item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    item.name ?? '',
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText.bodySmall(
+                    item.designation ?? '',
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ],
+              ),
+            );
+          },
+          onSelected: (item) {
+            setState(() {
+              _shareTarget = item;
+              _shareSearchController.clear();
+            });
+          },
+        ),
+        if (_shareTarget != null) ...[
+          const SizedBox(height: 8),
+          _shareTargetCard(_shareTarget!),
+        ],
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _remarksController,
+          labelText: 'Instruction (Optional)',
+          hintText: '',
+          maxLines: 4,
+        ),
+        if (userDesg?.roleEnum == ActiveUserDesgRole.pstocm) ...[
+          const SizedBox(height: 12),
+          VoiceNoteRecorder(
+            controller: _shareVoiceRecorderCtrl,
+            onVoiceNoteReady: (path, dur) {
+              _shareVoiceNotePath = path;
+              _shareVoiceNoteDurationSec = dur;
+            },
+            onVoiceNoteCleared: () {
+              _shareVoiceNotePath = null;
+              _shareVoiceNoteDurationSec = 0;
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _shareTargetCard(InternalUserModel user) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.cardColorLight,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: AppColors.secondary.withValues(alpha: 0.15),
+            child: const Icon(
+              Icons.person,
+              size: 16,
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText.bodySmall(
+                  user.name ?? '',
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                AppText.bodySmall(
+                  user.designation ?? '',
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _shareTarget = null;
+              });
+            },
+            child: const Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _disposedOffBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: Colors.teal.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.teal.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  Icons.archive_outlined,
+                  size: 16,
+                  color: Colors.teal,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  'This will mark the summary as disposed off. The action cannot be undone. Optionally add closing remarks.',
+                  color: Colors.teal,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _stepCard(
+          stepLabel: 'STEP 1',
+          title: 'Signature',
+          child: SignaturePad(controller: _disposeOffSignaturePadController),
+        ),
+        const SizedBox(height: 12),
+        _stepCard(
+          stepLabel: 'STEP 2',
+          title: 'Closing Remarks (Optional)',
+          child: AppTextField(
+            controller: _remarksController,
+            labelText: 'Closing Remarks (Optional)',
+            hintText: 'Add any closing remarks…',
+            maxLines: 4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _forwardToCMBody() {
+    const cmColor = Color(0xFF1565C0);
+    const cmColorLight = Color(0xFFE8EAF6);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Info card
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          decoration: BoxDecoration(
+            color: cmColorLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cmColor.withValues(alpha: 0.25)),
+          ),
+          child: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.55,
+                color: Color(0xFF1A237E),
+              ),
+              children: [
+                TextSpan(text: 'You are about to forward this summary to the '),
+                TextSpan(
+                  text: 'Chief Minister',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(text: ' for approval.\n\n'),
+                TextSpan(
+                  text: 'Your signature will not appear on the summary. ',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                TextSpan(
+                  text:
+                      'Only the Chief Minister signs and adds remarks at this stage. '
+                      'Any briefs added by you or your staff will be visible to the '
+                      'Chief Minister but will not leave the department.\n\n',
+                ),
+                TextSpan(
+                  text:
+                      'After the Chief Minister signs, the summary will return to your '
+                      'inbox so you can forward it onward.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Voice note card
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          decoration: BoxDecoration(
+            color: cmColorLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cmColor.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.mic_rounded, size: 16, color: cmColor),
+                  const SizedBox(width: 6),
+                  const Expanded(
+                    child: Text(
+                      'Voice note for Chief Minister (optional)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: cmColor,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cmColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _cmVoiceNotePath != null ? 'Recorded' : 'Idle',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: cmColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 13,
+                    color: Color(0xFF3949AB),
+                  ),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Record a short voice note that only the Chief Minister will hear before signing. Max 5 minutes.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF3949AB),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              VoiceNoteRecorder(
+                controller: _cmVoiceRecorderCtrl,
+                onVoiceNoteReady: (path, dur) {
+                  setState(() {
+                    _cmVoiceNotePath = path;
+                    _cmVoiceNoteDurationSec = dur;
+                  });
+                },
+                onVoiceNoteCleared: () {
+                  setState(() {
+                    _cmVoiceNotePath = null;
+                    _cmVoiceNoteDurationSec = 0;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _signForwardBody(SummaryAction action) {
+    final hideSignPad = isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded;
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!hideSignPad) ...[
+            _stepCard(
+              stepLabel: 'STEP 1',
+              title: 'Signature',
+              child: SignaturePad(controller: _signaturePadController),
+            ),
+            const SizedBox(height: 12),
+          ],
+          _stepCard(
+            stepLabel: hideSignPad ? 'STEP 1' : 'STEP 2',
+            title: 'Forwarding',
+            child: _forwardingStep(action),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepCard({
+    required String stepLabel,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.secondaryLight.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: context.appColors.secondaryLight.withValues(
+                    alpha: 0.2,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: AppText.labelSmall(
+                  stepLabel,
+                  color: context.appColors.secondaryLight,
+                ),
+              ),
+              const SizedBox(width: 10),
+              AppText.titleMedium(title),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _forwardingStep(SummaryAction action) {
+    return _forwardingFields();
+  }
+
+  /// Submit from the remarks panel (used when [showHandWrittedRemarksSection]
+  /// is true and the user taps Sign & Forward from the action bar).
+  Future<void> _submitFromRemarksPanel() async {
+    // 1 – Validate remarks
+    final String typedRemarks;
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
+      typedRemarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      if (!mounted) return;
+      if (typedRemarks.isEmpty) {
+        Toast.error(message: 'Please type your remarks before forwarding');
+        return;
+      }
+    } else {
+      typedRemarks = '';
+      if (_remarksPanelCtrl.isWrittenEmpty) {
+        Toast.error(message: 'Please write your remarks before forwarding');
+        return;
+      }
+    }
+
+    // 2 – Validate signature
+    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign in the "Sign here" section');
+      if (_remarksPanelCtrl.isLocked) _scrollToSignatureSection();
+      return;
+    }
+
+    // 3 – Validate forwarding destination
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      Toast.error(message: 'Please select a destination department');
+      if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
+      return;
+    }
+    final hasOfficers =
+        _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
+    if (hasOfficers && _selectedDestOfficer?.userDesgId == null) {
+      Toast.error(message: 'Please select a destination officer');
+      if (_remarksPanelCtrl.isLocked) _scrollStickyPanelToBottom();
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    bool success;
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+      // Handwritten path
+      final strokesJson = _remarksPanelCtrl.getStrokesJson();
+      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+      if (!mounted) return;
+      final handwrittenBase64 = handwrittenPng != null
+          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+          : '';
+      success = await notifier.signAndForward(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+        handwrittenStrokesJson: strokesJson,
+        handwrittenPngBase64: handwrittenBase64,
+        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+      );
+    } else {
+      // Typed path
+      success = await notifier.signAndForward(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+        remarks: typedRemarks,
+      );
+    }
+
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+      });
+    }
+  }
+
+  Future<void> _submitSignAndReturnCM() async {
+    // 1 – Validate remarks
+    final String typedRemarks;
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.type) {
+      typedRemarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      if (!mounted) return;
+      if (typedRemarks.isEmpty) {
+        Toast.error(message: 'Please type your remarks before returning');
+        return;
+      }
+    } else {
+      typedRemarks = '';
+      if (_remarksPanelCtrl.isWrittenEmpty) {
+        Toast.error(message: 'Please write your remarks before returning');
+        return;
+      }
+    }
+
+    // 2 – Validate signature
+    final signatureBytes = await _remarksPanelCtrl.getSignatureBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign in the "Sign here" section');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    if (_remarksPanelCtrl.mode == RemarksPanelMode.write) {
+      final strokesJson = _remarksPanelCtrl.getStrokesJson();
+      final handwrittenPng = await _remarksPanelCtrl.getWrittenPngBytes();
+      if (!mounted) return;
+      final handwrittenBase64 = handwrittenPng != null
+          ? 'data:image/png;base64,${base64Encode(handwrittenPng)}'
+          : '';
+      await notifier.signAndReturnCM(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        handwrittenStrokesJson: strokesJson,
+        handwrittenPngBase64: handwrittenBase64,
+        handwrittenWidth: _remarksPanelCtrl.canvasWidth.toInt(),
+        handwrittenHeight: _remarksPanelCtrl.canvasHeight.toInt(),
+        handwrittenPenColor: _remarksPanelCtrl.penColorHex,
+      );
+    } else {
+      await notifier.signAndReturnCM(
+        summaryId: summaryId,
+        signatureBytes: signatureBytes,
+        body: typedRemarks,
+      );
+    }
+  }
+
+  Future<void> _submitDisposeOff() async {
+    final signatureBytes = await _disposeOffSignaturePadController.toPngBytes();
+    if (!mounted) return;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign before disposing off');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    final success = await notifier.disposeOffSummary(
+      summaryId: summaryId,
+      remarks: _remarksController.text.trim(),
+      signatureBytes: signatureBytes,
+    );
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+        _remarksController.clear();
+      });
+    }
+  }
+
+  Future<void> _submitSignForward() async {
+    final deptId = _selectedDestDept?.id;
+    if (deptId == null) {
+      Toast.error(message: 'Please select a destination department');
+      return;
+    }
+    final hasOfficers =
+        _officerCacheDeptId == deptId && _officerCache.isNotEmpty;
+    if (hasOfficers && _selectedDestOfficer?.id == null) {
+      Toast.error(message: 'Please select a destination officer');
+      return;
+    }
+
+    final summaryId =
+        ref.read(summariesController).details?.summary?.id ??
+        widget.summary?.id;
+    final notifier = ref.read(summariesController.notifier);
+
+    if (isPsToCmCmReturned || isPsToCmCmReturnedBriefAdded) {
+      final success = await notifier.psToSectForwardPostCM(
+        summaryId: summaryId,
+        targetDepartmentId: deptId,
+        targetUserDesgId: _selectedDestOfficer?.userDesgId,
+      );
+      if (!mounted) return;
+      if (success) setState(() => _selectedAction = null);
+      return;
+    }
+
+    Uint8List? signatureBytes = _cardSignatureBytes;
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      signatureBytes = await _signaturePadController.toPngBytes();
+      if (!mounted) return;
+    }
+    if (signatureBytes == null || signatureBytes.isEmpty) {
+      Toast.error(message: 'Please sign before forwarding');
+      return;
+    }
+
+    String remarks = '';
+    if (_selectedAction == SummaryAction.signForward) {
+      try {
+        remarks = (await _remarksPanelCtrl.getTypedRemarks()).trim();
+      } catch (_) {
+        remarks = '';
+      }
+    }
+    if (!mounted) return;
+
+    final success = await notifier.signAndForward(
+      summaryId: summaryId,
+      signatureBytes: signatureBytes,
+      targetDepartmentId: deptId,
+      targetUserDesgId: _selectedDestOfficer?.userDesgId,
+      remarks: remarks.trim(),
+    );
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _selectedAction = null;
+        _cardSignatureBytes = null;
+      });
+    }
+  }
+
+  Widget _forwardingFields({bool showForwardButton = false}) {
+    final isMobile = context.isMobile;
+    final deptColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _forwardingLabel('DESTINATION DEPARTMENT'),
+        const SizedBox(height: 6),
+        _departmentDropdown(),
+        const SizedBox(height: 4),
+        Text(
+          'Pre-filled from section draft. You may change if needed.',
+          style: TextStyle(
+            fontSize: 11,
+            color: context.appColors.secondaryLight,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+    final officerColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _forwardingLabel('DESTINATION OFFICER'),
+        const SizedBox(height: 6),
+        _officerDropdown(),
+        if (_selectedDestDept?.id != null &&
+            _officerCacheDeptId == _selectedDestDept?.id &&
+            _officerCache.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'No user found for selected department.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.red[700],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isMobile) ...[
+          deptColumn,
+          const SizedBox(height: 12),
+          officerColumn,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: deptColumn),
+              const SizedBox(width: 12),
+              Expanded(child: officerColumn),
+            ],
+          ),
+        if (showForwardButton) ...[
+          const SizedBox(height: 14),
+          _actionButton(
+            SummaryAction.signForward,
+            expand: false,
+            width: double.infinity,
+            onTapOverride: _submitSignForward,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _forwardingLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.6,
+      ),
+    );
+  }
+
+  Widget _departmentDropdown() {
+    final departments =
+        ref.watch(summariesController).meta?.departments ??
+        const <DepartmentModel>[];
+    return SearchDropDownField<DepartmentModel>(
+      controller: _destDeptController,
+      labelText: 'Destination Department',
+      hintText: 'Select department',
+      showLabel: false,
+
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return departments
+            .where((d) => (d.title ?? '').toLowerCase().contains(q))
+            .toList(growable: false);
+      },
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: AppText.bodyMedium(
+            item.title ?? '',
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        );
+      },
+      onSelected: (item) {
+        setState(() {
+          _selectedDestDept = item;
+          _destDeptController.text = item.title ?? '';
+          _selectedDestOfficer = null;
+          _destOfficerController.clear();
+          _officerCacheDeptId = null;
+          _officerCache = const [];
+        });
+        _fetchOfficersForCurrentDept();
+      },
+    );
+  }
+
+  Widget _officerDropdown() {
+    final dept = _selectedDestDept;
+    return SearchDropDownField<DepartmentSecretariesModel>(
+      controller: _destOfficerController,
+      labelText: 'Destination Officer',
+      hintText: 'Select officer',
+      showLabel: false,
+      enabled: dept?.id != null,
+      border: _forwardingBorder(),
+      suggestionsCallback: (pattern) {
+        final q = pattern.toLowerCase();
+        return _officerCache
+            .where((o) {
+              return (o.name ?? '').toLowerCase().contains(q) ||
+                  (o.designation ?? '').toLowerCase().contains(q);
+            })
+            .toList(growable: false);
+      },
+      itemBuilder: (context, item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyMedium(
+                item.name ?? '',
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              if ((item.designation ?? '').isNotEmpty)
+                AppText.bodySmall(
+                  item.designation!,
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+            ],
+          ),
+        );
+      },
+      onSelected: (item) {
+        setState(() {
+          _selectedDestOfficer = item;
+          _destOfficerController.text = item.name ?? '';
+        });
+      },
+    );
+  }
+
+  OutlineInputBorder _forwardingBorder() {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(
+        color: AppColors.secondaryLight.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  Widget _draftEditor(SummaryAction action) {
+    final mq = MediaQuery.of(context);
+    final isKeyboardOpen = _keyboardCtrl.stateAsBool(true) == true;
+    final keyboardHeight = _keyboardCtrl.size;
+    final available = mq.size.height - keyboardHeight;
+    final editorHeight = isKeyboardOpen
+        ? (available * 0.30).clamp(140.0, 260.0)
+        : (mq.size.height * 0.32).clamp(200.0, 360.0);
+    final details = ref.read(summariesController).details;
+    final lastRemarks = details?.isLastMovemenRemarksAdded == true
+        ? (details?.movements.last.remarks ?? '').trim()
+        : '';
+    final initialHtml = lastRemarks.isNotEmpty ? lastRemarks : _currentHtml;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF3FB),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.secondaryLight.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 16,
+                color: AppColors.secondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppText.bodySmall(
+                  'You can modify the draft content before signing and forwarding.',
+                  color: AppColors.secondaryDark,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        AppText.labelLarge('Summary Body', fontWeight: FontWeight.w700),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.secondaryLight.withValues(alpha: 0.5),
+              ),
+            ),
+            padding: const EdgeInsets.all(6),
+            child: SizedBox(
+              height: editorHeight.toDouble(),
+              child: HtmlEditor(
+                controller: _editDraftController,
+                initialHtml: initialHtml,
+                hint: 'Edit draft content…',
+                height: editorHeight.toDouble(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onPrint() async {
+    final summaryId = widget.summary?.id;
+    if (summaryId == null) return;
+    final url = await ref
+        .read(summariesController.notifier)
+        .getSummaryPrintPdf(summaryId: summaryId);
+
+    log("PRINT_________${url}");
+
+    if (!mounted || url == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewer(url: url, title: widget.summary?.summaryNo),
+      ),
+    );
+  }
+
+  Widget _documentCard() {
+    final details = ref.read(summariesController).details;
+    final baseSummary = details?.summary ?? widget.summary ?? SummaryModel();
+    final summary = baseSummary.copyWith(body: _currentHtml);
+    return SummaryDocumentCard(
+      summary: summary,
+      remarkTrack: details?.remarkTrack ?? const [],
+      actions: details?.actions,
+      forwardingSection: actionsAvailable ? _forwardingFields() : null,
+      onSignatureChanged: (bytes) {
+        setState(() => _cardSignatureBytes = bytes);
+      },
+      onEditRemarks: () => _onActionTap(SummaryAction.editRemarks),
+      onAcceptRemarks: _onAcceptDraftedRemarks,
+      showSignPad:
+          actionsAvailable &&
+          !showHandWrittedRemarksSection &&
+          userDesg?.roleEnum != ActiveUserDesgRole.deo &&
+          !isPsToCmCmReturned &&
+          !isPsToCmCmReturnedBriefAdded,
+    );
+  }
+
+  Widget _buildRemarksPanel(SummaryDetailsModel? details) {
+    return RemarksSignPanel(
+      key: _remarksPanelKey,
+      controller: _remarksPanelCtrl,
+      scrollController: _remarksPanelCtrl.isLocked
+          ? _stickyPanelScrollController
+          : _mainScrollController,
+      initialMode: isCM || !context.isMobile
+          ? RemarksPanelMode.write
+          : RemarksPanelMode.type,
+      initiallyExpanded: isCM,
+      initialPenColor: isCM
+          ? SignatureColor.darkGreen
+          : SignatureColor.darkBlue,
+      onLockToggle: () => setState(() => _remarksPanelCtrl.toggleLock()),
+      bottomContent: isCMCurrentHolder
+          ? AppSolidButton(
+              onPressed: _submitSignAndReturnCM,
+              text: 'Sign and Return',
+              width: double.infinity,
+            )
+          : _forwardingFields(),
+    );
+  }
+
+  StickyTag _buildAttachmentsTag(dynamic details) {
+    final savedAttachments = details?.attachments ?? const [];
+    final totalAttachments =
+        (savedAttachments as List).length + _pendingAttachments.length;
+    final attachments = AttachmentsSection(
+      canAddMore:
+          actionsAvailable && userDesg?.roleEnum == ActiveUserDesgRole.deo,
+      canDelete: false, //actionsAvailable,
+      mainPdf: null,
+      attachments: details?.attachments ?? const [],
+      pendingAttachments: _pendingAttachments,
+      onRemovePendingAttachment: (index) {
+        setState(() {
+          _pendingAttachments.removeAt(index);
+        });
+      },
+      onViewAttachment: (attachment) {
+        if (attachment.fileUrl == null) {
+          Toast.error(message: 'No file URL found for this attachment.');
+          return;
+        }
+        FileCategory category = HelperUtils.getFileCategoryFromUrl(
+          attachment.fileUrl!,
+        );
+        if (category == FileCategory.pdf) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PdfViewer(
+                url: attachment.fileUrl,
+                title: attachment.originalName ?? 'Attachment',
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (category == FileCategory.image) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GalleryView(
+                imageUrls: [attachment.fileUrl!],
+                initialIndex: 0,
+              ),
+            ),
+          );
+          return;
+        }
+
+        FilePickerService().downloadFile(
+          context,
+          attachment.fileUrl!,
+          attachment.originalName ?? 'Attachment',
+        );
+      },
+      onDeleteAttachment: (attachment) {
+        ref.read(summariesController.notifier).deleteAttachment(attachment.id);
+      },
+      onAddAttachment: (model) {
+        setState(() {
+          _pendingAttachments.add(model);
+        });
+      },
+    );
+
+    return StickyTag(
+      text: "Attachments ($totalAttachments)",
+      backgroundColor: AppColors.primaryDark,
+      panelContent: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: attachments,
+        ),
+      ),
+    );
+  }
+
+  StickyTag _buildBriefsTag(dynamic details) {
+    final briefs = details?.briefs ?? const <SummaryBriefModel>[];
+
+    return StickyTag(
+      text: "Briefs (${briefs.length})",
+      backgroundColor: Colors.orange,
+      panelContent: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        physics: const BouncingScrollPhysics(),
+        child: briefs.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AppText.bodyMedium(
+                    "No briefs added yet.",
+                    color: context.appColors.textSecondary,
+                  ),
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < briefs.length; i++) ...[
+                    SummaryBrief(
+                      note:
+                          briefs[i].briefNote != null &&
+                              briefs[i].briefNote!.isNotEmpty
+                          ? null
+                          : null,
+                      paragraphs: [
+                        if (briefs[i].briefNote != null &&
+                            briefs[i].briefNote!.isNotEmpty)
+                          briefs[i].briefNote!,
+                      ],
+                      authorName: briefs[i].actor ?? 'Unknown',
+                      authorDesignation: '',
+                      timestamp: briefs[i].actedAt ?? DateTime.now(),
+                    ),
+                    if (i < briefs.length - 1) const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+
+  StickyTag _buildVoiceNotesTag() {
+    final allNotes =
+        ref.read(summariesController).details?.voiceNotes ?? const [];
+    final visibility = isCM
+        ? VoiceNoteVisibility.cm
+        : isPsToCm
+        ? null
+        : VoiceNoteVisibility.internal;
+    final count = visibility == null
+        ? allNotes.length
+        : allNotes.where((n) => n.visibility == visibility).length;
+    return StickyTag(
+      text: 'Voice Notes ($count)',
+      backgroundColor: const Color(0xFF6A1B9A),
+      panelContent: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: VoiceNotesSection(
+            summaryId: widget.summary?.id,
+            visibility: visibility,
+            canDelete: !isCM && !isDeoInCmSecretariat,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sidebar() {
+    final movement = MovementTimelineSection(
+      movements:
+          ref.read(summariesController).details?.departmentalMoevements ??
+          const [],
+      currentHolderName: ref
+          .read(summariesController)
+          .details
+          ?.summary
+          ?.currentHolder,
+    );
+
+    final internal = InternalForwardSection(
+      forwards:
+          ref.read(summariesController).details?.internalForwards ?? const [],
+    );
+    final files = InternalFilesSection(
+      links: ref.read(summariesController).details?.localLinks ?? const [],
+    );
+
+    if (context.isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          files,
+          const SizedBox(height: 16),
+          movement,
+          const SizedBox(height: 16),
+          internal,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sidebarRow(files, movement),
+        const SizedBox(height: 16),
+        internal,
+      ],
+    );
+  }
+
+  Widget _sidebarRow(Widget left, Widget right) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 16),
+        Expanded(child: right),
+      ],
+    );
+  }
+}

@@ -86,9 +86,7 @@ class _FileViewerState extends State<FileViewer> {
         height: _containerSize,
         decoration: BoxDecoration(
           borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
-          border: Border.all(
-            color: AppColors.secondaryLight.withOpacity(0.3),
-          ),
+          border: Border.all(color: AppColors.secondaryLight.withValues(alpha: 0.3)),
           color: widget.backgroundColor ?? AppColors.cardColor,
         ),
         child: Stack(
@@ -284,7 +282,7 @@ class _FileViewerState extends State<FileViewer> {
         children: [
           Icon(icon, color: color, size: _iconSize),
           if (widget.size != FileViewerSize.small) ...[
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
@@ -317,19 +315,33 @@ class _FileViewerState extends State<FileViewer> {
       _videoThumbnailCache[cacheKey] = thumbnail;
       return thumbnail;
     } catch (e) {
-      print('Error generating video thumbnail: $e');
       return null;
     }
   }
 
   bool _isImageFile() {
-    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg']
-        .contains(_fileExtension);
+    return [
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'bmp',
+      'webp',
+      'svg',
+    ].contains(_fileExtension);
   }
 
   bool _isVideoFile() {
-    return ['mp4', 'mov', 'avi', 'mkv', '3gp', 'webm', 'flv', 'wmv']
-        .contains(_fileExtension);
+    return [
+      'mp4',
+      'mov',
+      'avi',
+      'mkv',
+      '3gp',
+      'webm',
+      'flv',
+      'wmv',
+    ].contains(_fileExtension);
   }
 
   bool _isDocumentFile() {
@@ -337,8 +349,15 @@ class _FileViewerState extends State<FileViewer> {
   }
 
   bool _isAudioFile() {
-    return ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 'wma']
-        .contains(_fileExtension);
+    return [
+      'mp3',
+      'wav',
+      'm4a',
+      'aac',
+      'ogg',
+      'flac',
+      'wma',
+    ].contains(_fileExtension);
   }
 
   bool _isArchiveFile() {
@@ -351,10 +370,6 @@ class _FileViewerState extends State<FileViewer> {
 
   bool _isPresentationFile() {
     return ['ppt', 'pptx', 'odp'].contains(_fileExtension);
-  }
-
-  static void clearVideoThumbnailCache() {
-    _videoThumbnailCache.clear();
   }
 }
 
@@ -430,8 +445,8 @@ class FileHorizontalList extends StatelessWidget {
     final containerSize = size == FileViewerSize.small
         ? 48.0
         : size == FileViewerSize.medium
-            ? 80.0
-            : 120.0;
+        ? 80.0
+        : 120.0;
 
     return SizedBox(
       height: height ?? containerSize,
@@ -446,8 +461,9 @@ class FileHorizontalList extends StatelessWidget {
               fileName: fileNames?[index],
               size: size,
               onTap: () => onFileTap?.call(filePaths[index], index),
-              onRemove:
-                  onFileRemove != null ? () => onFileRemove!(index) : null,
+              onRemove: onFileRemove != null
+                  ? () => onFileRemove!(index)
+                  : null,
               showRemoveButton: showRemoveButtons,
             ),
           );

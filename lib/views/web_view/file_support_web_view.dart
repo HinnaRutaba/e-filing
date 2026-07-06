@@ -51,10 +51,11 @@ class _InAppWebViewWithFileUploadState
                 handlerName: 'pickFile',
                 callback: (args) async {
                   final result = await FilePicker.platform.pickFiles(
-                      allowMultiple: false,
-                      type: FileType.custom,
-                      allowedExtensions: ['pdf'],
-                      allowCompression: true);
+                    allowMultiple: false,
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf'],
+                    compressionQuality: 50,
+                  );
 
                   if (result != null && result.files.single.path != null) {
                     final file = File(result.files.single.path!);
@@ -64,7 +65,8 @@ class _InAppWebViewWithFileUploadState
                     return {
                       'base64': base64Data,
                       'name': result.files.single.name,
-                      'type': result.files.single.identifier ??
+                      'type':
+                          result.files.single.identifier ??
                           'application/octet-stream',
                     };
                   }
@@ -80,7 +82,8 @@ class _InAppWebViewWithFileUploadState
             },
             onLoadStop: (controller, url) async {
               // Inject JS to catch input[type=file]
-              await controller.evaluateJavascript(source: """
+              await controller.evaluateJavascript(
+                source: """
                 document.querySelectorAll('input[type="application/pdf"]').forEach(input => {
                   input.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -105,7 +108,8 @@ class _InAppWebViewWithFileUploadState
                     });
                   });
                 });
-              """);
+              """,
+              );
 
               setState(() {
                 init = true;

@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/models/section_schema.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
+import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/chats/ai_agent_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -23,7 +24,7 @@ import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quill_html_editor_v2/quill_html_editor_v2.dart';
+import 'package:efiling_balochistan/views/widgets/html_editor.dart';
 
 enum FileAction {
   approved(1, "Approved"),
@@ -53,7 +54,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   final ScrollController scrollController = ScrollController();
   final GlobalKey remarksKey = GlobalKey();
 
-  final quillEditorController = QuillEditorController();
+  final quillEditorController = HtmlEditorController();
   String? selectedFileType;
   bool showHtmlEditor = true;
   bool loading = true;
@@ -117,10 +118,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
         FlagAndAttachmentModel(
           usedFlags: [
             ...flagsUsed,
-            ...attachmentsNotifier.value
-                    .map((e) => e.flagType ?? FlagModel())
-                    .toList() ??
-                [],
+            ...attachmentsNotifier.value.map((e) => e.flagType ?? FlagModel()),
           ],
         ),
       ];
@@ -163,13 +161,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     AIAgent().resetMessages();
     attachmentsNotifier.value = [FlagAndAttachmentModel()];
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final delta = {
-        "ops": [
-          {"insert": "\u00A0\u00A0\u00A0"}, // three nbsp
-        ],
-      };
-      await quillEditorController.setDelta(delta);
-
       fetchData();
     });
     super.initState();
@@ -182,6 +173,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     return RefreshIndicator(
       onRefresh: fetchData,
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: AppText.headlineSmall("File Details"),
           backgroundColor: AppColors.background,
@@ -248,33 +240,42 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
               )
             : SafeArea(
                 child: StickyTagDrawer(
-                  flagText: "Flags",
                   panelWidth: MediaQuery.sizeOf(context).width * 0.8,
-                  panelContent: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child:
-                          details?.attachments != null &&
-                              details!.attachments.isNotEmpty
-                          ? ReadOnlyFlagAttachmentList(
-                                  header: header(
-                                    Icons.flag_outlined,
-                                    "Attached Flags",
+                  tags: [
+                    StickyTag(
+                      text: "Flags",
+                      panelContent: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child:
+                              details?.attachments != null &&
+                                  details!.attachments.isNotEmpty
+                              ? ReadOnlyFlagAttachmentList(
+                                      header: header(
+                                        Icons.flag_outlined,
+                                        "Attached Flags",
+                                      ),
+                                      data: details!.attachments,
+                                    )
+                                    .animate(delay: 100.ms)
+                                    .fade(
+                                      duration: 400.ms,
+                                      curve: Curves.easeInOut,
+                                    )
+                                    .slide(
+                                      begin: const Offset(1, 0),
+                                      end: Offset.zero,
+                                    )
+                              : Center(
+                                  child: AppText.bodyMedium(
+                                    "No flags available",
                                   ),
-                                  data: details!.attachments,
-                                )
-                                .animate(delay: 100.ms)
-                                .fade(duration: 400.ms, curve: Curves.easeInOut)
-                                .slide(
-                                  begin: const Offset(1, 0),
-                                  end: Offset.zero,
-                                )
-                          : Center(
-                              child: AppText.bodyMedium("No flags available"),
-                            ),
+                                ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                   mainContent: SingleChildScrollView(
                     controller: scrollController,
                     physics: const BouncingScrollPhysics(
@@ -308,74 +309,19 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: AppColors.secondaryLight
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                       ),
                                       borderRadius: BorderRadius.circular(12),
                                       color: AppColors.white,
                                     ),
-                                    child: Column(
-                                      children: [
-                                        ToolBar(
-                                          activeIconColor: Colors.blue,
-                                          padding: const EdgeInsets.all(8),
-                                          iconSize: 24,
-                                          controller: quillEditorController,
-                                          toolBarConfig: const [
-                                            ToolBarStyle.bold,
-                                            ToolBarStyle.italic,
-                                            ToolBarStyle.underline,
-                                            //ToolBarStyle.listBullet,
-                                            ToolBarStyle.listOrdered,
-                                            ToolBarStyle.size,
-                                            ToolBarStyle.headerOne,
-                                            ToolBarStyle.headerTwo,
-                                            ToolBarStyle.link,
-                                            ToolBarStyle.align,
-                                            ToolBarStyle.color,
-                                            ToolBarStyle.blockQuote,
-                                            ToolBarStyle.codeBlock,
-                                            ToolBarStyle.addTable,
-                                            ToolBarStyle.editTable,
-                                          ],
-                                        ),
-                                        Divider(color: Colors.grey[300]!),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          child: showHtmlEditor
-                                              ? GestureDetector(
-                                                  onLongPress: () {},
-                                                  onLongPressStart: (_) {},
-                                                  onLongPressMoveUpdate: (_) {},
-                                                  child: AbsorbPointer(
-                                                    absorbing: false,
-                                                    child: QuillHtmlEditor(
-                                                      text: '',
-                                                      hintText: "...",
-                                                      autoFocus: true,
-                                                      controller:
-                                                          quillEditorController,
-                                                      minHeight: 270,
-                                                      textStyle:
-                                                          const TextStyle(
-                                                            fontSize: 16,
-                                                            color: Colors.black,
-                                                          ),
-                                                      hintTextStyle:
-                                                          const TextStyle(
-                                                            fontSize: 16,
-                                                            color: Colors.grey,
-                                                          ),
-                                                      onEditorCreated: () {
-                                                        quillEditorController
-                                                            .requestFocus();
-                                                      },
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox.shrink(),
-                                        ),
-                                      ],
-                                    ),
+                                    child: showHtmlEditor
+                                        ? HtmlEditor(
+                                            controller: quillEditorController,
+                                            initialHtml: '',
+                                            hint: "...",
+                                            height: 270,
+                                          )
+                                        : const SizedBox.shrink(),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -540,184 +486,164 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                             FileAction.forward) ||
                                     (widget.fileType == FileType.archived &&
                                         reOpenedFile)) ...[
-                                  Column(
-                                    children: [
-                                      header(
-                                        Icons.work_history_outlined,
-                                        "Forward to",
-                                      ),
-                                      const SizedBox(height: 16),
-                                      AppDropDownField<SectionModel>(
-                                        items: state.sections,
-                                        onChanged: (item) async {
-                                          setState(() {
-                                            selectedSection = item;
-                                          });
-                                          forwardToList = await controller
-                                              .getForwardTo(item?.id);
-                                          setState(() {
-                                            if (forwardToList != null &&
-                                                forwardToList?.length == 1) {
-                                              forwardTo = forwardToList?.first;
-                                            }
-                                          });
-                                        },
-                                        labelText: "Section",
-                                        hintText: "Select Section",
-                                        prefix: state.loadingSections
-                                            ? fieldLoader
-                                            : null,
-                                        itemBuilder: (item) {
-                                          return AppText.titleMedium(
-                                            item?.title ?? '',
+                                  Builder(
+                                    builder: (context) {
+                                      final sectionDropdown =
+                                          AppDropDownField<SectionModel>(
+                                            items: state.sections,
+                                            onChanged: (item) async {
+                                              setState(() {
+                                                selectedSection = item;
+                                              });
+                                              forwardToList = await controller
+                                                  .getForwardTo(item?.id);
+                                              setState(() {
+                                                if (forwardToList != null &&
+                                                    forwardToList?.length ==
+                                                        1) {
+                                                  forwardTo =
+                                                      forwardToList?.first;
+                                                }
+                                              });
+                                            },
+                                            labelText: "Section",
+                                            hintText: "Select Section",
+                                            prefix: state.loadingSections
+                                                ? fieldLoader
+                                                : null,
+                                            itemBuilder: (item) {
+                                              return AppText.titleMedium(
+                                                item?.title ?? '',
+                                              );
+                                            },
+                                            validator: (item) {
+                                              if (selectedSection == null ||
+                                                  item == null) {
+                                                return 'Please select a value';
+                                              }
+                                              return null;
+                                            },
                                           );
-                                        },
-                                        validator: (item) {
-                                          if (selectedSection == null ||
-                                              item == null) {
-                                            return 'Please select a value';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 12),
-                                      AppDropDownField<ForwardToModel>(
-                                        items: forwardToList ?? [],
-                                        onChanged: (item) async {
-                                          setState(() {
-                                            forwardTo = item;
-                                          });
-                                        },
-                                        labelText: "Forward this file to",
-                                        hintText: "Forward To",
-                                        prefix: state.loadingSections
-                                            ? fieldLoader
-                                            : null,
-                                        buttonHeight: forwardTo == null
-                                            ? null
-                                            : 57,
-                                        itemBuilder: (item) {
-                                          return Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              AppText.titleMedium(
-                                                item?.userTitle ?? '',
-                                              ),
-                                              // In your itemBuilder or wherever you use it:
-                                              // Height: ~20px (half of standard)
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 1,
+                                      final forwardDropdown =
+                                          AppDropDownField<ForwardToModel>(
+                                            items: forwardToList ?? [],
+                                            onChanged: (item) async {
+                                              setState(() {
+                                                forwardTo = item;
+                                              });
+                                            },
+                                            labelText: "Forward this file to",
+                                            hintText: "Forward To",
+                                            prefix: state.loadingSections
+                                                ? fieldLoader
+                                                : null,
+                                            buttonHeight: forwardTo == null
+                                                ? null
+                                                : 57,
+                                            itemBuilder: (item) {
+                                              return Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  AppText.titleMedium(
+                                                    item?.userTitle ?? '',
+                                                  ),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 1,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.yellow[400],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .yellow[600]!
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        width: 0.5,
+                                                      ),
                                                     ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.yellow[400],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: Colors.yellow[600]!
-                                                        .withOpacity(0.3),
-                                                    width: 0.5,
+                                                    child: AppText.labelSmall(
+                                                      item?.designationTitle ??
+                                                          '',
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 10,
+                                                    ),
                                                   ),
-                                                ),
-                                                child: AppText.labelSmall(
-                                                  item?.designationTitle ?? '',
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 10, // Smaller font
-                                                ),
-                                              ),
-                                            ],
+                                                ],
+                                              );
+                                            },
+                                            selectedItemBuilder: (ctx) {
+                                              return forwardToList?.map((item) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            8.0,
+                                                          ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          AppText.titleMedium(
+                                                            item.userTitle ??
+                                                                '',
+                                                          ),
+                                                          AppText.labelLarge(
+                                                            item.designationTitle ??
+                                                                '',
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList() ??
+                                                  [];
+                                            },
+                                            validator: (item) {
+                                              if (forwardTo == null ||
+                                                  item == null) {
+                                                return 'Please select a value';
+                                              }
+                                              return null;
+                                            },
                                           );
-                                        },
-                                        selectedItemBuilder: (ctx) {
-                                          return forwardToList?.map((item) {
-                                                return Padding(
-                                                  padding: const EdgeInsets.all(
-                                                    8.0,
-                                                  ),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      AppText.titleMedium(
-                                                        item.userTitle ?? '',
-                                                      ),
-                                                      AppText.labelLarge(
-                                                        item.designationTitle ??
-                                                            '',
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList() ??
-                                              [];
-                                        },
-                                        validator: (item) {
-                                          if (forwardTo == null ||
-                                              item == null) {
-                                            return 'Please select a value';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      // AppDropDownField<ForwardToModel>(
-                                      //   enabled: selectedSection != null &&
-                                      //       !state.loadingForwardList,
-                                      //   controller: TextEditingController(
-                                      //       text:
-                                      //           "${forwardTo?.userTitle ?? ''} ${forwardTo?.designationTitle == null ? "" : "(" + forwardTo!.designationTitle! + ")"}"),
-                                      //   suggestionsCallback: (_) {
-                                      //     return forwardToList ?? [];
-                                      //   },
-                                      //   onSelected: (item) {
-                                      //     setState(() {
-                                      //       forwardTo = item;
-                                      //     });
-                                      //   },
-                                      //   labelText: "Forward this file to",
-                                      //   hintText: "Forward to",
-                                      //   prefix: selectedSection != null &&
-                                      //           state.loadingForwardList
-                                      //       ? SizedBox(
-                                      //           width: 24,
-                                      //           height: 24,
-                                      //           child: Padding(
-                                      //             padding:
-                                      //                 const EdgeInsets.symmetric(
-                                      //               horizontal: 8.0,
-                                      //               vertical: 8,
-                                      //             ),
-                                      //             child: fieldLoader,
-                                      //           ),
-                                      //         )
-                                      //       : null,
-                                      //   itemBuilder: (ctx, item) {
-                                      //     return Padding(
-                                      //       padding: const EdgeInsets.all(8.0),
-                                      //       child: Column(
-                                      //         crossAxisAlignment:
-                                      //             CrossAxisAlignment.start,
-                                      //         children: [
-                                      //           AppText.titleMedium(
-                                      //               item?.userTitle ?? ''),
-                                      //           AppText.labelLarge(
-                                      //               item?.designationTitle ?? ''),
-                                      //         ],
-                                      //       ),
-                                      //     );
-                                      //   },
-                                      //   validator: (item) {
-                                      //     if (forwardTo == null || item == null) {
-                                      //       return 'Please select a value';
-                                      //     }
-                                      //     return null;
-                                      //   },
-                                      // ),
-                                    ],
+
+                                      return Column(
+                                        children: [
+                                          header(
+                                            Icons.work_history_outlined,
+                                            "Forward to",
+                                          ),
+                                          const SizedBox(height: 16),
+                                          if (context.isMobile) ...[
+                                            sectionDropdown,
+                                            const SizedBox(height: 12),
+                                            forwardDropdown,
+                                          ] else
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  child: sectionDropdown,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: forwardDropdown,
+                                                ),
+                                              ],
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ],
                                 const SizedBox(height: 8),
@@ -734,8 +660,8 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   separatorBuilder: (_, i) => Divider(
                                     height: 40,
-                                    color: AppColors.secondaryLight.withOpacity(
-                                      0.5,
+                                    color: AppColors.secondaryLight.withValues(
+                                      alpha: 0.5,
                                     ),
                                   ),
                                   itemBuilder: (ctx, i) {
@@ -773,14 +699,10 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                             FlagAndAttachmentModel(
                                               usedFlags: [
                                                 ...flagsUsed,
-                                                ...attachments
-                                                        .map(
-                                                          (e) =>
-                                                              e.flagType ??
-                                                              FlagModel(),
-                                                        )
-                                                        .toList() ??
-                                                    [],
+                                                ...attachments.map(
+                                                  (e) =>
+                                                      e.flagType ?? FlagModel(),
+                                                ),
                                               ],
                                             ),
                                           );
@@ -842,7 +764,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   }
                                   String spacedText = text;
                                   controller.reopenFile(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo?.userDesgId,
                                     sectionId: selectedSection?.id,
@@ -882,25 +804,24 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                               if (widget.fileType == FileType.pending) {
                                 try {
                                   await controller.sendPendingFileRemarks(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo!.userDesgId!,
                                     fileMovNo: autoGeneratedFileNumber,
-                                    lastTrackId:
-                                        details!.content!.last!.trackId!,
+                                    lastTrackId: details!.content.last.trackId!,
                                     flags: attachments,
                                   );
                                   submissionSuccess = true;
                                 } catch (e) {
                                   submissionSuccess = false;
-                                  print("Error: $e");
+
                                   Toast.error(message: "Failed to submit file");
                                 }
                               } else if (widget.fileType ==
                                   FileType.actionRequired) {
                                 try {
                                   await controller.submitFile(
-                                    fileId: details!.content.first!.fileId!,
+                                    fileId: details!.content.first.fileId!,
                                     content: spacedText,
                                     forwardTo: forwardTo?.userDesgId,
                                     fileMovNo: autoGeneratedFileNumber,
@@ -910,7 +831,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   submissionSuccess = true;
                                 } catch (e) {
                                   submissionSuccess = false;
-                                  print("Error: $e");
+
                                   Toast.error(message: "Failed to submit file");
                                 }
                               }
@@ -932,7 +853,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                     RouteHelper.pop();
                                   }
                                 } catch (e) {
-                                  print("Error: $e");
                                   if (mounted) {
                                     RouteHelper.pop();
                                   }

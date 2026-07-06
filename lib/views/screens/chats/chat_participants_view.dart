@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
@@ -15,7 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatParticipantsView extends ConsumerStatefulWidget {
   final String chatId;
-  final List<ChatParticipantModel> participantsToAdd;
+  final List<DepartmentUserModel> participantsToAdd;
   final bool addMembers;
   final ChatService _chatService = ChatService();
 
@@ -33,7 +33,7 @@ class ChatParticipantsView extends ConsumerStatefulWidget {
 
 class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
   late TextEditingController _searchController;
-  late ChatModel _chatData;
+  ChatModel? _chatData;
   late StreamSubscription<ChatModel> _chatSubscription;
   bool _isLoading = true;
 
@@ -42,18 +42,21 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
     super.initState();
     _searchController = TextEditingController();
 
-    // Initialize stream in initState
-    _chatSubscription =
-        widget._chatService.readChatStream(widget.chatId).listen((chatModel) {
-      setState(() {
-        _chatData = chatModel;
-        _isLoading = false;
-      });
-    }, onError: (error) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
+    _chatSubscription = widget._chatService
+        .readChatStream(widget.chatId)
+        .listen(
+          (chatModel) {
+            setState(() {
+              _chatData = chatModel;
+              _isLoading = false;
+            });
+          },
+          onError: (error) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
@@ -66,38 +69,46 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
   @override
   Widget build(BuildContext context) {
     final uid = ref.watch(authController).id;
+    final appColors = context.appColors;
 
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_chatData == null && widget.participantsToAdd.isEmpty) {
+    if (_chatData == null) {
       return const Center(child: Text("No participants found"));
     }
 
     final notInChatParticipants = widget.participantsToAdd
-        .where((p) => !_chatData.activeParticipants
-            .any((ap) => ap.userId == p.userId && !ap.removed))
+        .where(
+          (p) => !_chatData!.activeParticipants.any(
+            (ap) => ap.userId == p.userId && !ap.removed,
+          ),
+        )
         .toList();
 
-    final activeParticipants = _chatData.activeParticipants
-        .where((ap) => !ap.removed)
-        .toList()
-      ..sort((a, b) => (b.joinedAt ?? DateTime.now())
-          .compareTo(a.joinedAt ?? DateTime.now()));
+    final activeParticipants =
+        _chatData!.activeParticipants.where((ap) => !ap.removed).toList()..sort(
+          (a, b) => (b.joinedAt ?? DateTime.now()).compareTo(
+            a.joinedAt ?? DateTime.now(),
+          ),
+        );
 
-    // Filter participants based on search
     final searchQuery = _searchController.text.toLowerCase();
     final filteredNotInChat = notInChatParticipants
-        .where((p) =>
-            (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
-            (p.designation?.toLowerCase().contains(searchQuery) ?? false))
+        .where(
+          (p) =>
+              (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
+              (p.designation?.toLowerCase().contains(searchQuery) ?? false),
+        )
         .toList();
 
     final filteredActive = activeParticipants
-        .where((p) =>
-            (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
-            (p.designation?.toLowerCase().contains(searchQuery) ?? false))
+        .where(
+          (p) =>
+              (p.userTitle?.toLowerCase().contains(searchQuery) ?? false) ||
+              (p.designation?.toLowerCase().contains(searchQuery) ?? false),
+        )
         .toList();
 
     return Column(
@@ -110,7 +121,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
               Expanded(
                 child: AppText.headlineSmall(
                   widget.addMembers ? "Add Participants" : "Participants",
-                  color: AppColors.textPrimary,
+                  color: appColors.textPrimary,
                 ),
               ),
               IconButton(
@@ -132,9 +143,9 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
             prefix: const Icon(Icons.search),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.refresh_outlined,
-                      color: AppColors.secondaryLight,
+                      color: appColors.secondaryLight,
                     ),
                     onPressed: () {
                       _searchController.clear();
@@ -149,7 +160,6 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
         ),
         Expanded(
           child: SingleChildScrollView(
-            // padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
               children: [
                 _AddedParticipantsWidget(
@@ -158,8 +168,8 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
                   chatId: widget.chatId,
                   uid: uid!,
                 ),
-                const Divider(
-                  color: AppColors.cardColor,
+                Divider(
+                  color: appColors.cardColor,
                   thickness: 1,
                   height: 0,
                 ),
@@ -180,7 +190,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
 }
 
 class _NotAddedParticipantsWidget extends StatelessWidget {
-  final List<ChatParticipantModel> participants;
+  final List<DepartmentUserModel> participants;
   final ChatService chatService;
   final String chatId;
   final int uid;
@@ -196,13 +206,16 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return participants.isEmpty && showUnavailableMessage
         ? Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: AppText.titleMedium(
                 'No participants available to add',
-                color: AppColors.textSecondary,
+                color: appColors.textSecondary,
               ),
             ),
           )
@@ -216,11 +229,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
               final isCurrentUser = uid == participant.userId;
 
               return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 dense: true,
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: colorScheme.secondary,
                   radius: 16,
                   child: AppText.titleLarge(
                     HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
@@ -237,7 +252,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    if (isCurrentUser) AppText.labelSmall("(You)")
+                    if (isCurrentUser) AppText.labelSmall("(You)"),
                   ],
                 ),
                 subtitle: Row(
@@ -245,16 +260,18 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cardColor,
+                          color: appColors.cardColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: AppText.labelMedium(
                           participant.designation ?? '',
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: appColors.textSecondary,
                         ),
                       ),
                     ),
@@ -269,13 +286,13 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
                     );
                   },
                   text: "Add +",
-                  color: AppColors.primaryDark,
+                  color: appColors.primaryDark,
                   fontSize: 14,
                 ),
               );
             },
-            separatorBuilder: (_, __) => const Divider(
-              color: AppColors.cardColor,
+            separatorBuilder: (context, __) => Divider(
+              color: context.appColors.cardColor,
               endIndent: 16,
               indent: 16,
               thickness: 0.8,
@@ -286,7 +303,7 @@ class _NotAddedParticipantsWidget extends StatelessWidget {
 }
 
 class _AddedParticipantsWidget extends StatelessWidget {
-  final List<ChatParticipantModel> participants;
+  final List<DepartmentUserModel> participants;
   final ChatService chatService;
   final String chatId;
   final int uid;
@@ -300,13 +317,16 @@ class _AddedParticipantsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = context.appColors;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return participants.isEmpty
         ? Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: AppText.titleMedium(
                 'No active participants',
-                color: AppColors.textSecondary,
+                color: appColors.textSecondary,
               ),
             ),
           )
@@ -320,11 +340,13 @@ class _AddedParticipantsWidget extends StatelessWidget {
               final isCurrentUser = uid == participant.userId;
 
               return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 dense: true,
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: colorScheme.secondary,
                   radius: 16,
                   child: AppText.titleLarge(
                     HelperUtils.firstTwoLetters(participant.userTitle ?? ''),
@@ -341,7 +363,7 @@ class _AddedParticipantsWidget extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    if (isCurrentUser) AppText.labelSmall("(You)")
+                    if (isCurrentUser) AppText.labelSmall("(You)"),
                   ],
                 ),
                 subtitle: Row(
@@ -349,16 +371,18 @@ class _AddedParticipantsWidget extends StatelessWidget {
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cardColor,
+                          color: appColors.cardColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: AppText.labelMedium(
                           participant.designation ?? '',
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: appColors.textSecondary,
                         ),
                       ),
                     ),
@@ -371,7 +395,6 @@ class _AddedParticipantsWidget extends StatelessWidget {
                       userId: participant.userId!,
                       removedByUserId: uid,
                     );
-                    // Navigate to chats screen if current user leaves
                     if (isCurrentUser) {
                       RouteHelper.pop();
                       RouteHelper.pop();
@@ -379,16 +402,16 @@ class _AddedParticipantsWidget extends StatelessWidget {
                   },
                   text: isCurrentUser
                       ? participant.removed
-                          ? ""
-                          : "Leave"
+                            ? ""
+                            : "Leave"
                       : "Remove",
-                  color: AppColors.error,
+                  color: colorScheme.error,
                   fontSize: 14,
                 ),
               );
             },
-            separatorBuilder: (_, __) => const Divider(
-              color: AppColors.cardColor,
+            separatorBuilder: (context, __) => Divider(
+              color: context.appColors.cardColor,
               endIndent: 16,
               indent: 16,
               thickness: 0.8,

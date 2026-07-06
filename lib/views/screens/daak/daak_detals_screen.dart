@@ -1,19 +1,15 @@
-import 'dart:developer';
-
-import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/chat/participant_model.dart';
-import 'package:efiling_balochistan/models/daak_meta_model.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
-import 'package:efiling_balochistan/utils/date_time_helper.dart';
+import 'package:efiling_balochistan/models/department/department_user_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -47,10 +43,18 @@ class DaakDetailsInfo {
 class DaakDetailsScreen extends ConsumerStatefulWidget {
   final int? daakId;
   final DaakDetailsInfo daakDetailsInfo;
+  final bool showAppBar;
+
+  /// When provided (desk context), called on successful action instead of
+  /// popping the route.
+  final VoidCallback? onSuccess;
+
   const DaakDetailsScreen({
     super.key,
     required this.daakDetailsInfo,
     required this.daakId,
+    this.showAppBar = true,
+    this.onSuccess,
   });
 
   @override
@@ -60,82 +64,38 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController remarksController = TextEditingController();
-  List<ChatParticipantModel> usersForChat = [];
+  List<DepartmentUserModel> usersForChat = [];
   String _speechBaseText = '';
   XFile? attachment;
   DaakModel? daakDetails;
   XFile? disposeOffLetter;
 
-  ChatParticipantModel? forwardTo;
+  DepartmentUserModel? forwardTo;
   final TextEditingController forwardToController = TextEditingController();
   DaakAction selectedAction = DaakAction.forward;
 
-  openPDFSheet() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "PDF Sheet",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (ctx, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.86,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-              child: PdfViewer(
-                url: daakDetails?.incomingScanUrl,
-                title: "Daak PDF title",
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: OutlinedButton(
-                      onPressed: () {
-                        RouteHelper.pop();
-                      },
-                      child: const Text("Process"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (ctx, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, -1),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
-          child: child,
-        );
-      },
-    );
-  }
-
   Future<void> fetchDetails() async {
-    int? desgId = ref.read(authController).currentDesignation?.userDesgId;
-    List<ChatParticipantModel> users = await ref
-        .read(chatRepo)
-        .getUsersForChat(desgId);
-    users.removeWhere((element) => element.userDesignationId == desgId);
-    setState(() {
-      usersForChat = users;
-    });
-    DaakModel? model = await ref
-        .read(daakController.notifier)
-        .fetchDaakDetails(
-          daakId: widget.daakId,
-          status: widget.daakDetailsInfo.status,
-        );
-    setState(() {
-      daakDetails = model;
-    });
+    if (context.mounted) {
+      int? desgId = ref.read(authController).currentDesignation?.userDesgId;
+      List<DepartmentUserModel> users = await ref
+          .read(chatRepo)
+          .getUsersForChat(desgId);
+      users.removeWhere((element) => element.userDesignationId == desgId);
+
+      setState(() {
+        usersForChat = users;
+      });
+
+      DaakModel? model = await ref
+          .read(daakController.notifier)
+          .fetchDaakDetails(
+            daakId: widget.daakId,
+            status: widget.daakDetailsInfo.status,
+          );
+      setState(() {
+        daakDetails = model;
+      });
+    }
   }
 
   @override
@@ -145,13 +105,6 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
         daakDetails = widget.daakDetailsInfo.daak;
       });
       fetchDetails();
-      if (widget.daakDetailsInfo.openPDF == true &&
-          daakDetails?.incomingScanUrl != null &&
-          daakDetails?.status != DaakStatus.disposedOff &&
-          daakDetails?.status != DaakStatus.nfa &&
-          daakDetails?.status != DaakStatus.forwarded) {
-        openPDFSheet();
-      }
     });
 
     super.initState();
@@ -169,41 +122,39 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
     final sttState = ref.watch(speechToTextController);
     DaakMeta? meta = ref.watch(daakController).daakMeta;
     final bool showOtherAction = meta?.activeUserDesg?.role == 'deo';
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.appBarColor,
-        title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(72),
-          child: Container(
-            color: AppColors.appBarColor,
-            // height: 120,
-            child: collapsedPDFViewer(),
-          ),
-        ),
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: fetchDetails,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //const SizedBox(height: 108),
-              AppText.headlineSmall(
-                'Next Actions',
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
+              // Inline PDF viewer
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: PdfViewer(
+                  url: daakDetails?.incomingScanUrl,
+                  title: daakDetails?.subject ?? "Daak PDF",
+                  fullScreen: false,
+                ),
               ),
-              const SizedBox(height: 8),
+
+              // Action section — no heading
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 3,
-                shadowColor: AppColors.secondaryDark.withValues(alpha: .1),
-                color: AppColors.white,
+                shadowColor: appColors.shadow,
+                color: theme.cardColor,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8.0,
@@ -234,22 +185,22 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.primaryDark.withValues(
+                                        ? appColors.primaryDark.withValues(
                                             alpha: 0.2,
                                           )
-                                        : AppColors.appBarColor,
+                                        : appColors.surfaceMuted,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isSelected
-                                          ? AppColors.primaryDark
-                                          : Colors.grey.shade300,
+                                          ? appColors.primaryDark
+                                          : appColors.border,
                                     ),
                                   ),
                                   child: AppText.bodySmall(
                                     action.label,
                                     color: isSelected
-                                        ? AppColors.primaryDark
-                                        : Colors.black87,
+                                        ? appColors.primaryDark
+                                        : appColors.textPrimary,
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -268,11 +219,11 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                               ? "Dispose Off Letter"
                               : "",
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: appColors.textPrimary,
                         ),
                         const SizedBox(height: 4),
                         if (selectedAction == DaakAction.forward) ...[
-                          SearchDropDownField<ChatParticipantModel>(
+                          SearchDropDownField<DepartmentUserModel>(
                             suggestionsCallback: (pattern) {
                               return usersForChat
                                   .where(
@@ -305,8 +256,9 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                         color: Colors.yellow[400],
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.yellow[600]!
-                                              .withOpacity(0.3),
+                                          color: Colors.yellow[600]!.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           width: 0.5,
                                         ),
                                       ),
@@ -356,7 +308,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ),
                                             border: Border.all(
                                               color: Colors.yellow[600]!
-                                                  .withOpacity(0.3),
+                                                  .withValues(alpha: 0.3),
                                               width: 0.5,
                                             ),
                                           ),
@@ -445,7 +397,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                           ),
                           AppText.labelSmall(
                             "This is optional",
-                            color: Colors.grey[600],
+                            color: appColors.textSecondary,
                           ),
                         ],
                         const SizedBox(height: 8),
@@ -465,7 +417,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                         ),
                         AppText.labelSmall(
                           "pdf, docx, jpg, jpeg, png. Max size: 10MB",
-                          color: Colors.grey[600],
+                          color: appColors.textSecondary,
                         ),
                         const SizedBox(height: 6),
                         selectedAction == DaakAction.forward
@@ -498,6 +450,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ? null
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )
@@ -520,6 +473,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             ? null
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )
@@ -544,6 +498,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                                             : remarksController.text.trim(),
                                         supportingAttachment: attachment,
                                         issuedLetter: disposeOffLetter,
+                                        onSuccess: widget.onSuccess,
                                       );
                                 },
                               )
@@ -554,89 +509,62 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              AppText.headlineSmall(
-                'Previous Correspondences',
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
-              ),
-              const SizedBox(height: 4),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  itemCount: daakDetails?.movements?.length ?? 0,
-                  itemBuilder: (context, index) => DaakCorrespondenceCard(
-                    movement: daakDetails?.movements?[index],
-                  ),
+
+              // Previous Correspondences
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.headlineSmall(
+                      'Previous Correspondences',
+                      fontWeight: FontWeight.w600,
+                      color: appColors.secondaryLight,
+                    ),
+                    const SizedBox(height: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: daakDetails?.movements?.length ?? 0,
+                        itemBuilder: (context, index) => DaakCorrespondenceCard(
+                          movement: daakDetails?.movements?[index],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              AppText.headlineSmall(
-                'Attachments',
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryDark,
-              ),
-              const SizedBox(height: 4),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  itemCount: daakDetails?.attachments?.length ?? 0,
-                  itemBuilder: (context, index) => DaakAttachmentCard(
-                    attachment: daakDetails?.attachments?[index],
-                  ),
+
+              // Attachments
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.headlineSmall(
+                      'Attachments',
+                      fontWeight: FontWeight.w600,
+                      color: appColors.secondaryLight,
+                    ),
+                    const SizedBox(height: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: daakDetails?.attachments?.length ?? 0,
+                        itemBuilder: (context, index) => DaakAttachmentCard(
+                          attachment: daakDetails?.attachments?[index],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget collapsedPDFViewer() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.appBarColor,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondaryDark.withValues(alpha: .2),
-            blurRadius: 2,
-            offset: const Offset(0, 2.5),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: openPDFSheet,
-        child: ListTile(
-          leading: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Icon(Icons.picture_as_pdf, color: Colors.red[700], size: 32),
-          ),
-          horizontalTitleGap: 12,
-          titleAlignment: ListTileTitleAlignment.top,
-          title: AppText.titleMedium(
-            daakDetails?.subject ?? "Daak PDF title",
-            fontWeight: FontWeight.w600,
-          ),
-          subtitle: daakDetails?.status == DaakStatus.forwarded
-              ? AppText.labelLarge(
-                  'Received at: ${DateTimeHelper.dateFormatSlashWithTime(daakDetails?.forwardDetails?.lastForward?.forwardedAt)}',
-                )
-              : AppText.labelLarge(
-                  'Letter date: ${DateTimeHelper.dateFormatSlashWithTime(daakDetails?.letterDate)}',
-                ),
-          trailing: AppTextLinkButton(onPressed: openPDFSheet, text: "Open"),
         ),
       ),
     );
@@ -655,12 +583,13 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
       'png',
     ],
   }) {
+    final appColors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppText.labelLarge(
           title,
-          color: Colors.grey[800],
+          color: appColors.textSecondary,
           fontWeight: FontWeight.w500,
           fontSize: 12,
         ),
@@ -676,27 +605,27 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.appBarColor,
+              color: appColors.surfaceMuted,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: attachment != null
-                    ? AppColors.primaryDark
+                    ? appColors.primaryDark
                     : Colors.transparent,
                 width: 1,
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.attach_file_outlined,
-                  color: AppColors.primaryDark,
+                  color: appColors.primaryDark,
                   size: 28,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: AppText.titleSmall(
                     attachment != null
-                        ? attachment!.name
+                        ? attachment.name
                         : 'Select file to attach',
                   ),
                 ),

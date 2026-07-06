@@ -28,9 +28,8 @@ class VersionSyncModel {
         title: json[VersionSyncSchema.title],
         message: json[VersionSyncSchema.message],
       );
-    } catch (e, s) {
-      print("Error parsing VersionSyncModel: $e");
-      print("Stack trace: $s");
+    } catch (e) {
+    
       rethrow;
     }
   }

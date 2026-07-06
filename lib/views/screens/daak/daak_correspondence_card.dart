@@ -1,5 +1,5 @@
-import 'package:efiling_balochistan/constants/app_colors.dart';
-import 'package:efiling_balochistan/models/daak_model.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +20,7 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
   @override
   Widget build(BuildContext context) {
     if (widget.movement == null) return const SizedBox.shrink();
+    final colors = context.appColors;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
@@ -30,7 +31,7 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
         margin: const EdgeInsets.only(left: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: colors.cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade200),
         ),
@@ -75,10 +76,7 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
           ),
         ),
         const SizedBox(width: 8),
-        Icon(
-          _isExpanded ? Icons.expand_less : Icons.expand_more,
-          color: Colors.black54,
-        ),
+        Icon(_isExpanded ? Icons.expand_less : Icons.expand_more),
       ],
     );
   }
@@ -97,10 +95,9 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
                     widget.movement?.fromUser ?? 'Unknown',
                     fontWeight: FontWeight.w600,
                   ),
-                  AppText.labelLarge(
+                  AppText.labelMedium(
                     "To: ${widget.movement?.toUser ?? 'Unknown'}",
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
                   ),
                 ],
               ),
@@ -108,8 +105,9 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color:
-                    widget.movement?.statusAfter?.color.withValues(alpha: 0.15),
+                color: widget.movement?.statusAfter?.color.withValues(
+                  alpha: 0.15,
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: AppText.labelMedium(
@@ -121,7 +119,7 @@ class _DaakCorrespondenceCardState extends State<DaakCorrespondenceCard> {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: _toggle,
-              child: const Icon(Icons.expand_less, color: Colors.black54),
+              child: const Icon(Icons.expand_less),
             ),
           ],
         ),
