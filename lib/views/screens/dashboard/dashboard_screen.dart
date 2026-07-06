@@ -234,12 +234,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 builder: (context, _) {
                   final bool mobileCompact = isMobile && _compactNotifier.value;
                   final double cardsOverlap = mobileCompact
-                      ? 62.0
+                      ? 78.0
                       : isMobile
-                      ? 110.0
+                      ? 126.0
                       : 16;
                   final double statsCardTop = isMobile
-                      ? (mobileCompact ? 172.0 : 164.0)
+                      ? (mobileCompact ? 188.0 : 180.0)
                       : 124.0;
                   const Duration animDuration = Duration(milliseconds: 320);
                   const Curve animCurve = Curves.easeOutCubic;
