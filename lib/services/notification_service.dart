@@ -27,7 +27,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 int _extractBadgeCount(RemoteMessage message) {
   final androidCount = message.notification?.android?.count;
   if (androidCount != null && androidCount > 0) return androidCount;
-  final iosBadge = message.notification?.apple?.badge;
+  final iosBadge = int.tryParse(message.notification?.apple?.badge ?? '');
   if (iosBadge != null && iosBadge > 0) return iosBadge;
   return 0;
 }
