@@ -239,7 +239,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ? 110.0
                       : 16;
                   final double statsCardTop = isMobile
-                      ? (mobileCompact ? 172.0 : 160.0)
+                      ? (mobileCompact ? 172.0 : 164.0)
                       : 124.0;
                   const Duration animDuration = Duration(milliseconds: 320);
                   const Curve animCurve = Curves.easeOutCubic;
@@ -280,6 +280,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   controller: _refreshController,
                   onRefresh: _onRefresh,
                   child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(top: 8),
                     child: _buildSections(context, dashboardState, isMobile),
                   ),
                 ),

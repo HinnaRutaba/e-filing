@@ -3,8 +3,8 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
-import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/attachment_picker_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +37,15 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
     padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
+
+  Future<void> _pickAttachment() async {
+    final picked = await showAttachmentPickerSheet(context);
+    if (!mounted || picked == null) return;
+
+    m.attachment = picked;
+    m.existingAttachment = null;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,13 +109,7 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                         ),
                         const SizedBox(height: 4),
                         InkWell(
-                          onTap: () async {
-                            final files = await FilePickerService().pickFiles();
-                            m.attachment = files.isNotEmpty
-                                ? files.first
-                                : null;
-                            setState(() {});
-                          },
+                          onTap: _pickAttachment,
                           child: Container(
                             height: 48,
                             padding: const EdgeInsets.symmetric(
@@ -161,14 +164,9 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
             const SizedBox(height: 8),
             if (m.hasAttachment)
               InkWell(
-                onTap: (widget.isReadOnly || !m.canDeleteExisting) ? null : () async {
-                  final files = await FilePickerService().pickFiles();
-                  if (files.isNotEmpty) {
-                    m.attachment = files.first;
-                    m.existingAttachment = null;
-                  }
-                  setState(() {});
-                },
+                onTap: (widget.isReadOnly || !m.canDeleteExisting)
+                    ? null
+                    : _pickAttachment,
                 child: Container(
                   height: 50, // Match dropdown height
                   padding: const EdgeInsets.symmetric(

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:pdfrx/pdfrx.dart' as pdfrx;
@@ -43,6 +45,9 @@ class _PdfViewerState extends State<PdfViewer> {
     }
   }
 
+  bool get _isLocalFile =>
+      widget.url != null && !widget.url!.startsWith('http');
+
   @override
   Widget build(BuildContext context) {
     return widget.fullScreen
@@ -64,6 +69,18 @@ class _PdfViewerState extends State<PdfViewer> {
                         style: const TextStyle(color: Colors.red),
                       ),
                     ),
+                  )
+                : _isLocalFile
+                ? SfPdfViewer.file(
+                    File(widget.url!),
+                    controller: pdfViewerController,
+                    onDocumentLoadFailed:
+                        (PdfDocumentLoadFailedDetails details) {
+                          setState(() {
+                            _errorMessage =
+                                '${details.error}\n\n${details.description}';
+                          });
+                        },
                   )
                 : _headers == null
                 ? const Center(child: CircularProgressIndicator())
