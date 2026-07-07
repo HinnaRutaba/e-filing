@@ -555,7 +555,9 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: HelperUtils.isKeyboardOpen(context) ? 240 : 24,
+                  ),
                 ],
               ),
             ),
