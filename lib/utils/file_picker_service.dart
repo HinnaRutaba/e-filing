@@ -236,26 +236,34 @@ class FilePickerService {
     return null;
   }
 
-  Future<XFile?> imageToPdf(XFile image) async {
+  Future<XFile?> imageToPdf(XFile image) => imagesToPdf([image]);
+
+  /// Builds a single PDF with one page per image, each page sized to match
+  /// that image's dimensions.
+  Future<XFile?> imagesToPdf(List<XFile> images) async {
+    if (images.isEmpty) return null;
     try {
-      final bytes = await image.readAsBytes();
-      final decoded = img.decodeImage(bytes);
-      if (decoded == null) return null;
-
-      final pdfImage = pw.MemoryImage(bytes);
-      final pageFormat = PdfPageFormat(
-        decoded.width.toDouble(),
-        decoded.height.toDouble(),
-      );
-
       final doc = pw.Document();
-      doc.addPage(
-        pw.Page(
-          pageFormat: pageFormat,
-          margin: pw.EdgeInsets.zero,
-          build: (context) => pw.Image(pdfImage, fit: pw.BoxFit.fill),
-        ),
-      );
+
+      for (final image in images) {
+        final bytes = await image.readAsBytes();
+        final decoded = img.decodeImage(bytes);
+        if (decoded == null) continue;
+
+        final pdfImage = pw.MemoryImage(bytes);
+        final pageFormat = PdfPageFormat(
+          decoded.width.toDouble(),
+          decoded.height.toDouble(),
+        );
+
+        doc.addPage(
+          pw.Page(
+            pageFormat: pageFormat,
+            margin: pw.EdgeInsets.zero,
+            build: (context) => pw.Image(pdfImage, fit: pw.BoxFit.fill),
+          ),
+        );
+      }
 
       final tempDir = await getTemporaryDirectory();
       final fileName = '${const Uuid().v4()}.pdf';
@@ -263,7 +271,7 @@ class FilePickerService {
       await outFile.writeAsBytes(await doc.save());
       return XFile(outFile.path, name: fileName);
     } catch (e, s) {
-      print('Error converting image to PDF: $e\n$s');
+      print('Error converting images to PDF: $e\n$s');
       return null;
     }
   }
