@@ -817,8 +817,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   submissionSuccess = true;
                                 } catch (e) {
                                   submissionSuccess = false;
-
-                                  Toast.error(message: "Failed to submit file");
                                 }
                               }
 
@@ -830,10 +828,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
 
                                   await dashboardNotifier.initData();
                                   await dashboardNotifier.fetchPendingFiles();
-
-                                  Toast.show(
-                                    message: "File submitted successfully",
-                                  );
 
                                   if (mounted) {
                                     RouteHelper.pop();
