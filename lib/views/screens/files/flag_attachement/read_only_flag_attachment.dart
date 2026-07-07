@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/pdf_viewer.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path/path.dart' as p;
 
 class ReadOnlyFlagAttachmentList extends StatelessWidget {
@@ -45,8 +46,10 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -72,9 +75,9 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -148,18 +151,19 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
                           },
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.picture_as_pdf,
+                        Icon(
+                          _iconForFileType(attachment.fileType),
                           color: AppColors.secondaryDark,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: AppText.bodyLarge(
                             attachment.flagAttach != null
-                                ? "View Attachment"
+                                ? attachment?.cleanName ?? 'View Attachment'
                                 : "No Attachment",
                             color: AppColors.secondaryLight,
                             overflow: TextOverflow.ellipsis,
+                            maxLines: 4,
                           ),
                         ),
                       ],
@@ -172,5 +176,26 @@ class ReadOnlyFlagAttachmentRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _iconForFileType(String fileType) {
+    switch (fileType) {
+      case 'image':
+        return Icons.image;
+      case 'video':
+        return Icons.videocam;
+      case 'audio':
+        return Icons.audiotrack;
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'word':
+        return FontAwesomeIcons.fileWord;
+      case 'excel':
+        return Icons.table_chart;
+      case 'powerpoint':
+        return Icons.slideshow;
+      default:
+        return Icons.insert_drive_file;
+    }
   }
 }

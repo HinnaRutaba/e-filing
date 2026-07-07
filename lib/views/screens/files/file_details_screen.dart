@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/models/forward_to.dart';
 import 'package:efiling_balochistan/models/section_schema.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/chats/ai_agent_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
@@ -53,6 +54,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final ScrollController scrollController = ScrollController();
   final GlobalKey remarksKey = GlobalKey();
+  final GlobalKey forwardDropdownKey = GlobalKey();
 
   final quillEditorController = HtmlEditorController();
   String? selectedFileType;
@@ -65,9 +67,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   SectionModel? selectedSection;
   ForwardToModel? forwardTo;
   bool reOpenedFile = false;
-  final attachmentsNotifier = ValueNotifier<List<FlagAndAttachmentModel>>([]);
   final actionNotifier = ValueNotifier<FileAction>(FileAction.approved);
-  final allFlagsNotifier = ValueNotifier<List<FlagModel>>([]);
   final isLoadingFlagsNotifier = ValueNotifier<bool>(false);
   List<FlagAndAttachmentModel> attachments = [FlagAndAttachmentModel()];
 
@@ -109,20 +109,24 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     });
   }
 
-  initAttachment() {
-    if (widget.fileType == FileType.actionRequired &&
-        actionNotifier.value != FileAction.forward) {
-      attachmentsNotifier.value = [FlagAndAttachmentModel(usedFlags: [])];
-    } else {
-      attachmentsNotifier.value = [
-        FlagAndAttachmentModel(
-          usedFlags: [
-            ...flagsUsed,
-            ...attachmentsNotifier.value.map((e) => e.flagType ?? FlagModel()),
-          ],
-        ),
-      ];
+  // Runs on tap-down, before the dropdown menu opens. The menu's overlay
+  // position is captured once when it opens and doesn't follow later
+  // scrolling, so the field must already be in its final place (and any
+  // keyboard already dismissed) before the tap-up actually opens the menu.
+  scrollToForwardDropdown() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final context = forwardDropdownKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.5,
+        duration: Duration.zero,
+      );
     }
+  }
+
+  initAttachment() {
+    attachments = [FlagAndAttachmentModel()];
   }
 
   Future fetchData() async {
@@ -139,7 +143,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     }
 
     controller.getSections();
-    allFlagsNotifier.value = await controller.getFlags(
+    allFlags = await controller.getFlags(
       onlyFinal: widget.fileType == FileType.actionRequired,
     );
     details = await controller.fetchFileDetails(
@@ -159,7 +163,6 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   @override
   void initState() {
     AIAgent().resetMessages();
-    attachmentsNotifier.value = [FlagAndAttachmentModel()];
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       fetchData();
     });
@@ -452,22 +455,16 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
 
                                         // Update notifiers
                                         actionNotifier.value = val;
-                                        allFlagsNotifier.value = newFlags;
+                                        allFlags = newFlags;
 
-                                        // Update attachments based on selection
-                                        if (val != FileAction.forward) {
-                                          attachmentsNotifier.value = [
-                                            FlagAndAttachmentModel(
-                                              usedFlags: [],
-                                            ),
+                                        // Reset attachments; dropdown options
+                                        // are recomputed per row on build.
+                                        setState(() {
+                                          attachments = [
+                                            FlagAndAttachmentModel(),
                                           ];
-                                        } else {
-                                          attachmentsNotifier.value = [
-                                            FlagAndAttachmentModel(
-                                              usedFlags: newFlags,
-                                            ),
-                                          ];
-                                        }
+                                        });
+                                        scrollToForwardDropdown();
                                       } catch (e) {
                                         Toast.error(
                                           message: "Failed to load flags",
@@ -524,97 +521,98 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                               return null;
                                             },
                                           );
-                                      final forwardDropdown =
-                                          AppDropDownField<ForwardToModel>(
-                                            items: forwardToList ?? [],
-                                            onChanged: (item) async {
-                                              setState(() {
-                                                forwardTo = item;
-                                              });
-                                            },
-                                            labelText: "Forward this file to",
-                                            hintText: "Forward To",
-                                            prefix: state.loadingSections
-                                                ? fieldLoader
-                                                : null,
-                                            buttonHeight: forwardTo == null
-                                                ? null
-                                                : 57,
-                                            itemBuilder: (item) {
-                                              return Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  AppText.titleMedium(
-                                                    item?.userTitle ?? '',
-                                                  ),
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 6,
-                                                          vertical: 1,
+                                      final forwardDropdown = GestureDetector(
+                                        behavior: HitTestBehavior.translucent,
+
+                                        child: AppDropDownField<ForwardToModel>(
+                                          key: forwardDropdownKey,
+                                          items: forwardToList ?? [],
+                                          onChanged: (item) async {
+                                            setState(() {
+                                              forwardTo = item;
+                                            });
+                                          },
+                                          labelText: "Forward this file to",
+                                          hintText: "Forward To",
+                                          prefix: state.loadingSections
+                                              ? fieldLoader
+                                              : null,
+                                          buttonHeight: forwardTo == null
+                                              ? null
+                                              : 57,
+                                          itemBuilder: (item) {
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                AppText.titleMedium(
+                                                  item?.userTitle ?? '',
+                                                ),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 1,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.yellow[400],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
                                                         ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.yellow[400],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
+                                                    border: Border.all(
+                                                      color: Colors.yellow[600]!
+                                                          .withValues(
+                                                            alpha: 0.3,
                                                           ),
-                                                      border: Border.all(
-                                                        color: Colors
-                                                            .yellow[600]!
-                                                            .withValues(
-                                                              alpha: 0.3,
-                                                            ),
-                                                        width: 0.5,
-                                                      ),
-                                                    ),
-                                                    child: AppText.labelSmall(
-                                                      item?.designationTitle ??
-                                                          '',
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 10,
+                                                      width: 0.5,
                                                     ),
                                                   ),
-                                                ],
-                                              );
-                                            },
-                                            selectedItemBuilder: (ctx) {
-                                              return forwardToList?.map((item) {
-                                                    return Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            8.0,
-                                                          ),
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          AppText.titleMedium(
-                                                            item.userTitle ??
-                                                                '',
-                                                          ),
-                                                          AppText.labelLarge(
-                                                            item.designationTitle ??
-                                                                '',
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }).toList() ??
-                                                  [];
-                                            },
-                                            validator: (item) {
-                                              if (forwardTo == null ||
-                                                  item == null) {
-                                                return 'Please select a value';
-                                              }
-                                              return null;
-                                            },
-                                          );
+                                                  child: AppText.labelSmall(
+                                                    item?.designationTitle ??
+                                                        '',
+                                                    color: Colors.black,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                          selectedItemBuilder: (ctx) {
+                                            return forwardToList?.map((item) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
+                                                        ),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        AppText.titleMedium(
+                                                          item.userTitle ?? '',
+                                                        ),
+                                                        AppText.labelLarge(
+                                                          item.designationTitle ??
+                                                              '',
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList() ??
+                                                [];
+                                          },
+                                          validator: (item) {
+                                            if (forwardTo == null ||
+                                                item == null) {
+                                              return 'Please select a value';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      );
 
                                       return Column(
                                         children: [
@@ -666,6 +664,13 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   ),
                                   itemBuilder: (ctx, i) {
                                     final model = attachments[i];
+                                    model.usedFlags = [
+                                      ...flagsUsed,
+                                      ...attachments
+                                          .where((e) => e != model)
+                                          .map((e) => e.flagType)
+                                          .whereType<FlagModel>(),
+                                    ];
                                     return AddFlagAndAttachment(
                                       key: ValueKey(model),
                                       model: model,
@@ -685,28 +690,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   child: AppOutlineButton(
                                     onPressed: () {
                                       setState(() {
-                                        if (widget.fileType ==
-                                                FileType.actionRequired &&
-                                            actionNotifier.value !=
-                                                FileAction.forward) {
-                                          attachments.add(
-                                            FlagAndAttachmentModel(
-                                              usedFlags: [],
-                                            ),
-                                          );
-                                        } else {
-                                          attachments.add(
-                                            FlagAndAttachmentModel(
-                                              usedFlags: [
-                                                ...flagsUsed,
-                                                ...attachments.map(
-                                                  (e) =>
-                                                      e.flagType ?? FlagModel(),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }
+                                        attachments.add(
+                                          FlagAndAttachmentModel(),
+                                        );
                                       });
                                     },
                                     text: "Add More",
@@ -867,7 +853,11 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                             backgroundColor: AppColors.primary,
                             width: double.infinity,
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: HelperUtils.isKeyboardOpen(context)
+                                ? 240
+                                : 24,
+                          ),
                         ],
                       ),
                     ),
