@@ -20,6 +20,7 @@ class SearchDropDownField<T> extends StatelessWidget {
   final Color? fillColor;
   final bool isMandatory;
   final bool enforceTypeLimit;
+  final LayoutArchitecture? layoutArchitecture;
 
   const SearchDropDownField({
     super.key,
@@ -39,6 +40,7 @@ class SearchDropDownField<T> extends StatelessWidget {
     this.value,
     this.controller,
     this.enforceTypeLimit = false,
+    this.layoutArchitecture,
   });
 
   @override
@@ -99,6 +101,7 @@ class SearchDropDownField<T> extends StatelessWidget {
           suggestionsCallback: suggestionsCallback,
           itemBuilder: itemBuilder,
           onSuggestionSelected: onSelected,
+          layoutArchitecture: layoutArchitecture,
           suggestionsBoxDecoration: SuggestionsBoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: theme.cardColor,

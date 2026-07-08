@@ -49,6 +49,11 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
 
   bool get isOtherDepartment => selectedDepartment?.isOther == true;
 
+  DepartmentModel? get otherDepartmentOption {
+    final others = (meta?.departments ?? []).where((d) => d.isOther == true);
+    return others.isEmpty ? null : others.first;
+  }
+
   Future<void> fetchMeta() async {
     final DaakDepartmentsModel? data = await ref
         .read(daakController.notifier)
@@ -143,12 +148,15 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
                           isMandatory: true,
                           suggestionsCallback: (pattern) {
                             final q = pattern.toLowerCase();
-                            return (meta?.departments ?? [])
-                                .where(
-                                  (d) =>
-                                      (d.title ?? '').toLowerCase().contains(q),
-                                )
-                                .toList();
+                            final other = otherDepartmentOption;
+                            final matches = (meta?.departments ?? []).where(
+                              (d) =>
+                                  d.isOther != true &&
+                                  (d.title ?? '').toLowerCase().contains(q),
+                            );
+                            // "Other Department" is always pinned at the top
+                            // of the suggestions box via layoutArchitecture.
+                            return [if (other != null) other, ...matches];
                           },
                           itemBuilder: (context, item) => Padding(
                             padding: const EdgeInsets.symmetric(
@@ -170,18 +178,57 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
                             }
                             return null;
                           },
+                          layoutArchitecture: (items, scrollController) {
+                            if (items.isEmpty) return const SizedBox.shrink();
+                            if (otherDepartmentOption == null) {
+                              return ListView(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                controller: scrollController,
+                                children: items.toList(),
+                              );
+                            }
+                            final sticky = items.first;
+                            final rest = items.skip(1).toList();
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                sticky,
+                                Divider(height: 1, color: appColors.border),
+                                Flexible(
+                                  child: ListView(
+                                    shrinkWrap: true,
+                                    padding: EdgeInsets.zero,
+                                    controller: scrollController,
+                                    children: rest,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          child: AppText.labelSmall(
+                            "Choose 'Other Department' to manually type the department name.",
+                          ),
                         ),
                         if (isOtherDepartment) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           AppTextField(
                             controller: sourceDepartmentNameController,
-                            labelText: "External Agency Name",
-                            hintText: "Enter the sending agency's name",
+                            labelText: "Other Department Name",
+                            hintText: "Enter other department name",
                             isMandatory: true,
                             validator: Validators.notEmptyValidator,
                           ),
                         ],
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         SearchDropDownField<DepartmentUser>(
                           controller: fwdToSearchController,
                           labelText: "Forward To Department User",
@@ -258,7 +305,9 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
 
                         const SizedBox(height: 8),
                         DashedBorderBox(
-                          color: appColors.accent.withValues(alpha: 0.5),
+                          color: appColors.secondaryLight.withValues(
+                            alpha: 0.5,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
