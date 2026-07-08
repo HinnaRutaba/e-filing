@@ -20,7 +20,7 @@ import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/shimmer_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/chips/selection_chips.dart';
-import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -55,6 +55,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   final ScrollController scrollController = ScrollController();
   final GlobalKey remarksKey = GlobalKey();
   final GlobalKey forwardDropdownKey = GlobalKey();
+  final TextEditingController sectionSearchController = TextEditingController();
+  final TextEditingController forwardToSearchController =
+      TextEditingController();
 
   final quillEditorController = HtmlEditorController();
   String? selectedFileType;
@@ -486,36 +489,57 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                   Builder(
                                     builder: (context) {
                                       final sectionDropdown =
-                                          AppDropDownField<SectionModel>(
-                                            items: state.sections,
-                                            onChanged: (item) async {
+                                          SearchDropDownField<SectionModel>(
+                                            controller: sectionSearchController,
+                                            labelText: "Section",
+                                            hintText: "Select Section",
+                                            prefix: state.loadingSections
+                                                ? fieldLoader
+                                                : null,
+                                            suggestionsCallback: (pattern) {
+                                              final q = pattern.toLowerCase();
+                                              return state.sections
+                                                  .where(
+                                                    (e) => (e.title ?? '')
+                                                        .toLowerCase()
+                                                        .contains(q),
+                                                  )
+                                                  .toList();
+                                            },
+                                            itemBuilder: (context, item) =>
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 10,
+                                                      ),
+                                                  child: AppText.titleMedium(
+                                                    item.title ?? '',
+                                                  ),
+                                                ),
+                                            onSelected: (item) async {
                                               setState(() {
                                                 selectedSection = item;
+                                                sectionSearchController.text =
+                                                    item.title ?? '';
                                               });
                                               forwardToList = await controller
-                                                  .getForwardTo(item?.id);
+                                                  .getForwardTo(item.id);
                                               setState(() {
                                                 if (forwardToList != null &&
                                                     forwardToList?.length ==
                                                         1) {
                                                   forwardTo =
                                                       forwardToList?.first;
+                                                  forwardToSearchController
+                                                          .text =
+                                                      forwardTo?.userTitle ??
+                                                      '';
                                                 }
                                               });
                                             },
-                                            labelText: "Section",
-                                            hintText: "Select Section",
-                                            prefix: state.loadingSections
-                                                ? fieldLoader
-                                                : null,
-                                            itemBuilder: (item) {
-                                              return AppText.titleMedium(
-                                                item?.title ?? '',
-                                              );
-                                            },
-                                            validator: (item) {
-                                              if (selectedSection == null ||
-                                                  item == null) {
+                                            validator: (_) {
+                                              if (selectedSection == null) {
                                                 return 'Please select a value';
                                               }
                                               return null;
@@ -524,29 +548,35 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       final forwardDropdown = GestureDetector(
                                         behavior: HitTestBehavior.translucent,
 
-                                        child: AppDropDownField<ForwardToModel>(
+                                        child: SearchDropDownField<ForwardToModel>(
                                           key: forwardDropdownKey,
-                                          items: forwardToList ?? [],
-                                          onChanged: (item) async {
-                                            setState(() {
-                                              forwardTo = item;
-                                            });
-                                          },
+                                          controller: forwardToSearchController,
                                           labelText: "Forward this file to",
                                           hintText: "Forward To",
                                           prefix: state.loadingSections
                                               ? fieldLoader
                                               : null,
-                                          buttonHeight: forwardTo == null
-                                              ? null
-                                              : 57,
-                                          itemBuilder: (item) {
-                                            return Column(
+                                          suggestionsCallback: (pattern) {
+                                            final q = pattern.toLowerCase();
+                                            return (forwardToList ?? [])
+                                                .where(
+                                                  (e) => (e.userTitle ?? '')
+                                                      .toLowerCase()
+                                                      .contains(q),
+                                                )
+                                                .toList();
+                                          },
+                                          itemBuilder: (context, item) => Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 10,
+                                            ),
+                                            child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 AppText.titleMedium(
-                                                  item?.userTitle ?? '',
+                                                  item.userTitle ?? '',
                                                 ),
                                                 Container(
                                                   padding:
@@ -569,44 +599,80 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                                     ),
                                                   ),
                                                   child: AppText.labelSmall(
-                                                    item?.designationTitle ??
-                                                        '',
+                                                    item.designationTitle ?? '',
                                                     color: Colors.black,
                                                     fontWeight: FontWeight.w500,
                                                     fontSize: 10,
                                                   ),
                                                 ),
                                               ],
-                                            );
+                                            ),
+                                          ),
+                                          onSelected: (item) {
+                                            setState(() {
+                                              forwardTo = item;
+                                              forwardToSearchController.text =
+                                                  item.userTitle ?? '';
+                                            });
                                           },
-                                          selectedItemBuilder: (ctx) {
-                                            return forwardToList?.map((item) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          8.0,
+                                          suffixIcon:
+                                              (forwardTo != null &&
+                                                  (forwardTo!.designationTitle ??
+                                                          '')
+                                                      .isNotEmpty)
+                                              ? Container(
+                                                  width: 120,
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 8,
+                                                        right: 8,
+                                                      ),
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 6,
+                                                              vertical: 1,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors
+                                                              .yellow[400],
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: Colors
+                                                                .yellow[600]!
+                                                                .withValues(
+                                                                  alpha: 0.3,
+                                                                ),
+                                                            width: 0.5,
+                                                          ),
                                                         ),
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        AppText.titleMedium(
-                                                          item.userTitle ?? '',
-                                                        ),
-                                                        AppText.labelLarge(
-                                                          item.designationTitle ??
+                                                        child: AppText.labelSmall(
+                                                          forwardTo!
+                                                                  .designationTitle ??
                                                               '',
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 10,
                                                         ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList() ??
-                                                [];
-                                          },
-                                          validator: (item) {
-                                            if (forwardTo == null ||
-                                                item == null) {
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              : null,
+                                          validator: (_) {
+                                            if (forwardTo == null) {
                                               return 'Please select a value';
                                             }
                                             return null;

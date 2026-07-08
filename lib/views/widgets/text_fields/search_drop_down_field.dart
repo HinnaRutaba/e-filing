@@ -65,25 +65,21 @@ class SearchDropDownField<T> extends StatelessWidget {
                 AppText.headlineSmall(' *', color: theme.colorScheme.error),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
         ],
         DropDownSearchField<T>(
           textFieldConfiguration: TextFieldConfiguration(
             controller: controller,
             autofocus: false,
-            style: DefaultTextStyle.of(context).style.copyWith(
-              fontSize: 16,
-              color: appColors.textPrimary,
-            ),
+            style: DefaultTextStyle.of(
+              context,
+            ).style.copyWith(fontSize: 16, color: appColors.textPrimary),
             decoration: InputDecoration(
               enabled: enabled,
               hintText: hintText,
               suffixIcon:
                   suffixIcon ??
-                  Icon(
-                    Icons.arrow_drop_down,
-                    color: appColors.textSecondary,
-                  ),
+                  Icon(Icons.arrow_drop_down, color: appColors.textSecondary),
               border: border,
               fillColor: fillColor,
               filled: true,
