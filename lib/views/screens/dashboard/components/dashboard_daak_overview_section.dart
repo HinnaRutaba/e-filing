@@ -18,10 +18,18 @@ class DashboardDaakOverviewSection extends StatelessWidget {
   final bool loading;
 
   static const _rows = [
-    (label: 'In Progress', color: Color(0xFF42A5F5), icon: Icons.hourglass_top_rounded),
-    (label: 'Forwarded',   color: Color(0xFFFFB74D), icon: Icons.send_rounded),
-    (label: 'NFA',         color: Color(0xFF90A4AE), icon: Icons.do_not_disturb_alt_rounded),
-    (label: 'Disposed',    color: Color(0xFFEF5350), icon: Icons.archive_rounded),
+    (
+      label: 'In Progress',
+      color: Color(0xFF42A5F5),
+      icon: Icons.hourglass_top_rounded,
+    ),
+    (label: 'Forwarded', color: Color(0xFFFFB74D), icon: Icons.send_rounded),
+    (
+      label: 'NFA',
+      color: Color(0xFF90A4AE),
+      icon: Icons.do_not_disturb_alt_rounded,
+    ),
+    (label: 'Disposed', color: Color(0xFFEF5350), icon: Icons.archive_rounded),
   ];
 
   Map<String, int> _groupCounts(List<DaakModel> items) {
@@ -39,7 +47,7 @@ class DashboardDaakOverviewSection extends StatelessWidget {
         case DaakStatus.filePutup:
           counts['In Progress'] = (counts['In Progress'] ?? 0) + 1;
           break;
-        case DaakStatus.forwarded:
+        case DaakStatus.inProgress4:
           counts['Forwarded'] = (counts['Forwarded'] ?? 0) + 1;
           break;
         case DaakStatus.nfa:
