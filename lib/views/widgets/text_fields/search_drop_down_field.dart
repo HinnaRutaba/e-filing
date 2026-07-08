@@ -69,7 +69,7 @@ class SearchDropDownField<T> extends StatelessWidget {
           ),
           const SizedBox(height: 4),
         ],
-        DropDownSearchField<T>(
+        DropDownSearchFormField<T>(
           textFieldConfiguration: TextFieldConfiguration(
             controller: controller,
             autofocus: false,
@@ -97,6 +97,8 @@ class SearchDropDownField<T> extends StatelessWidget {
               ),
             ),
           ),
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           displayAllSuggestionWhenTap: true,
           suggestionsCallback: suggestionsCallback,
           itemBuilder: itemBuilder,

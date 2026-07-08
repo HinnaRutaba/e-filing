@@ -420,7 +420,9 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
                                   ? null
                                   : letterNoController.text.trim(),
                               letterDate: selectedLetterDate,
-                              sourceDepartmentId: selectedDepartment!.id,
+                              sourceDepartmentId: isOtherDepartment
+                                  ? 0
+                                  : selectedDepartment!.id,
                               sourceDepartmentName: isOtherDepartment
                                   ? sourceDepartmentNameController.text.trim()
                                   : null,
