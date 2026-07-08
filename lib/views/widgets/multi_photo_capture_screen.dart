@@ -223,7 +223,7 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
                   ),
                   _buildActionButton(
                     icon: Icons.check_circle,
-                    label: "Finish",
+                    label: "Generate PDF",
                     color: AppColors.primary,
                     onTap: _capturing ? null : _finish,
                   ),

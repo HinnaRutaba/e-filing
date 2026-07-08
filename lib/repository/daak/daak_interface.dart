@@ -1,4 +1,6 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
+import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:image_picker/image_picker.dart';
@@ -57,6 +59,11 @@ abstract class DaakInterface extends NetworkBase {
   String daakDisposeOffUrl(int daakId) => '${baseUrl}daak/$daakId/dispose';
 
   String daakNFAUrl(int daakId) => '${baseUrl}daak/$daakId/nfa';
+
+  String getDepertmentsUrl(int desgId) =>
+      "${baseUrl}daak/create-form?userDesgID=$desgId";
+
+  String get scanDaakUrl => "${baseUrl}daak/store-incoming";
 
   Future<DaakMeta> fetchDaakMeta(int? desId);
 
@@ -118,4 +125,8 @@ abstract class DaakInterface extends NetworkBase {
     XFile? supportingAttachment,
     XFile? issuedLetter,
   });
+
+  Future<DaakDepartmentsModel> fetchCreateFormMeta(int desId);
+
+  Future<void> scanDaak(CreateDaakModel model);
 }

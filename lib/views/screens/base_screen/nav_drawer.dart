@@ -81,6 +81,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       routeName: Routes.daak,
     ),
     DrawerMenu(
+      title: "Scan Daak",
+      icon: Icons.document_scanner_outlined,
+      routeName: Routes.scanDaak,
+    ),
+    DrawerMenu(
       title: "Pending Files",
       icon: Icons.event_repeat_rounded,
       routeName: Routes.pendingFiles,

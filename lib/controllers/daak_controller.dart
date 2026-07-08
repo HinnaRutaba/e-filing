@@ -2,8 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
@@ -311,6 +314,39 @@ class DaakController extends BaseControllerState<DaakState> {
         onSuccess();
       } else {
         RouteHelper.pop(DaakViewFilter.nfa);
+      }
+    } catch (e, s) {
+      log("ERRR_____${e}______$s");
+      EasyLoading.dismiss();
+      Toast.error(message: handleException(e));
+    }
+  }
+
+  Future<DaakDepartmentsModel?> fetchCreateFormMeta() async {
+    try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return null;
+      return await repo.fetchCreateFormMeta(desId);
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future<void> scanDaak({
+    required CreateDaakModel model,
+    VoidCallback? onSuccess,
+  }) async {
+    try {
+      EasyLoading.show();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.scanDaak(model.copyWith(userDesgId: desId));
+      Toast.success(message: "Daak scanned successfully");
+      EasyLoading.dismiss();
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.navigateTo(Routes.daak);
       }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
