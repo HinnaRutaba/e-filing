@@ -251,6 +251,7 @@ class DaakController extends BaseControllerState<DaakState> {
         supportingAttachment: supportingAttachment,
       );
       Toast.success(message: "Daak forwarded successfully");
+      await setViewFilter(DaakViewFilter.inbox);
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();

@@ -78,6 +78,11 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
   final GlobalKey forwardToFieldKey = GlobalKey();
   DaakAction selectedAction = DaakAction.forward;
 
+  // Counts active pointers down on the PDF viewer. While > 0, the outer
+  // scroll view's physics are disabled so drag/scale gestures are consumed
+  // entirely by the PDF (panning/zooming) instead of the list behind it.
+  int _pdfPointerCount = 0;
+
   Future<void> fetchDetails() async {
     if (context.mounted) {
       int? desgId = ref.read(authController).currentDesignation?.userDesgId;
@@ -175,20 +180,36 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
           onRefresh: fetchDetails,
           child: SingleChildScrollView(
             controller: scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
+            // Disabled while a pointer is down on the PDF so its own
+            // pan/zoom gestures aren't hijacked by this outer scroll view.
+            physics: _pdfPointerCount > 0
+                ? const NeverScrollableScrollPhysics()
+                : const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Inline PDF viewer
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  child: PdfViewer(
-                    url: daakDetails?.incomingScanUrl,
-                    title: daakDetails?.subject ?? "Daak PDF",
-                    fullScreen: false,
+                // Inline PDF viewer — the Listener below lets the PDF
+                // absorb its own drag/scale gestures instead of scrolling
+                // the list behind it.
+                Listener(
+                  onPointerDown: (_) => setState(() => _pdfPointerCount++),
+                  onPointerUp: (_) => setState(
+                    () =>
+                        _pdfPointerCount = (_pdfPointerCount - 1).clamp(0, 999),
+                  ),
+                  onPointerCancel: (_) => setState(
+                    () =>
+                        _pdfPointerCount = (_pdfPointerCount - 1).clamp(0, 999),
+                  ),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: PdfViewer(
+                      url: daakDetails?.incomingScanUrl,
+                      title: daakDetails?.subject ?? "Daak PDF",
+                      fullScreen: false,
+                    ),
                   ),
                 ),
-
                 // Action section — no heading
                 Card(
                   margin: const EdgeInsets.all(0),

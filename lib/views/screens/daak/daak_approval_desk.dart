@@ -142,7 +142,7 @@ class _DaakApprovalDeskState extends ConsumerState<DaakApprovalDesk> {
             ),
             const SizedBox(height: 16),
             AppOutlineButton(
-              onPressed: () => RouteHelper.pop(),
+              onPressed: () => RouteHelper.pop(DaakViewFilter.inbox),
               text: 'Go Back',
             ),
           ],
