@@ -398,18 +398,15 @@ class FilePickerService {
             content: Text('Downloaded $fileName to E-Filing folder'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
-              label: 'Open Folder',
+              label: 'Open File',
               textColor: Colors.white,
               onPressed: () async {
-                final folderPath = File(filePath).parent.path;
-                final result = await OpenFile.open(folderPath);
+                final result = await OpenFile.open(filePath);
                 if (result.type != ResultType.done) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          'Could not open folder: ${result.message}',
-                        ),
+                        content: Text('Could not open file: ${result.message}'),
                         backgroundColor: Colors.orange,
                       ),
                     );

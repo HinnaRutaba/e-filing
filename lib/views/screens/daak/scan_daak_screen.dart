@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/department/department_model.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -27,8 +28,10 @@ class ScanDaakScreen extends ConsumerStatefulWidget {
   ConsumerState<ScanDaakScreen> createState() => _ScanDaakScreenState();
 }
 
-class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
+class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final ScrollController scrollController = ScrollController();
 
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController letterNoController = TextEditingController();
@@ -38,6 +41,8 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
   final TextEditingController sourceDepartmentNameController =
       TextEditingController();
   final TextEditingController fwdToSearchController = TextEditingController();
+  final FocusNode departmentFocusNode = FocusNode();
+  final FocusNode fwdToFocusNode = FocusNode();
 
   DaakDepartmentsModel? meta;
   bool loading = true;
@@ -67,12 +72,22 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
 
   @override
   void initState() {
+    selectedLetterDate = DateTime.now();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => fetchMeta());
+    departmentFocusNode.addListener(_onSearchFieldFocusChanged);
+    fwdToFocusNode.addListener(_onSearchFieldFocusChanged);
     super.initState();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    departmentFocusNode.removeListener(_onSearchFieldFocusChanged);
+    fwdToFocusNode.removeListener(_onSearchFieldFocusChanged);
+    departmentFocusNode.dispose();
+    fwdToFocusNode.dispose();
+    scrollController.dispose();
     subjectController.dispose();
     letterNoController.dispose();
     letterDateController.dispose();
@@ -82,370 +97,420 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen> {
     super.dispose();
   }
 
+  // Keeps a focused search field scrolled above the keyboard: these fields
+  // can sit low in the form, so their suggestions list can otherwise end up
+  // hidden behind the keyboard once it opens.
+  void _onSearchFieldFocusChanged() {
+    if (departmentFocusNode.hasFocus || fwdToFocusNode.hasFocus) {
+      _scrollToBottom();
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (departmentFocusNode.hasFocus || fwdToFocusNode.hasFocus) {
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollController.hasClients) return;
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
-    return GradientScaffold(
-      child: BaseScreen(
-        bgColor: Colors.transparent,
-        isdash: false,
-        title: "Scan Daak",
-        body: loading
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppText.titleSmall(
-                          "Letter Details",
-                          color: appColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        const SizedBox(height: 8),
-                        AppTextField(
-                          controller: subjectController,
-                          labelText: "Subject",
-                          hintText: "Enter subject",
-                          isMandatory: true,
-                          validator: Validators.notEmptyValidator,
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: AppTextField(
-                                controller: letterNoController,
-                                labelText: "Letter Number (Optional)",
-                                hintText: "Enter letter number",
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DatePickerTextField(
-                                config: TextFieldConfig(
-                                  controller: letterDateController,
-                                  labelText: "Letter Date (Optional)",
-                                  hintText: "Select date",
-                                ),
-                                lastDate: DateTime.now(),
-                                onDateSelected: (date) {
-                                  setState(() => selectedLetterDate = date);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        SearchDropDownField<DepartmentModel>(
-                          controller: departmentSearchController,
-                          labelText: "Received From Department",
-                          hintText: "Search department",
-                          isMandatory: true,
-                          suggestionsCallback: (pattern) {
-                            final q = pattern.toLowerCase();
-                            final other = otherDepartmentOption;
-                            final matches = (meta?.departments ?? []).where(
-                              (d) =>
-                                  d.isOther != true &&
-                                  (d.title ?? '').toLowerCase().contains(q),
-                            );
-                            // "Other Department" is always pinned at the top
-                            // of the suggestions box via layoutArchitecture.
-                            return [if (other != null) other, ...matches];
-                          },
-                          itemBuilder: (context, item) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            child: AppText.titleMedium(item.title ?? ''),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: GradientScaffold(
+        child: BaseScreen(
+          bgColor: Colors.transparent,
+          isdash: false,
+          title: "Scan Daak",
+          body: loading
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    // Extra bottom space so fields near the end of the form
+                    // (like "Forward To") can still be scrolled clear of the
+                    // keyboard once it's open.
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      16 + MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText.titleSmall(
+                            "Letter Details",
+                            color: appColors.textPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
-                          onSelected: (item) {
-                            setState(() {
-                              selectedDepartment = item;
-                              departmentSearchController.text =
-                                  item.title ?? '';
-                            });
-                          },
-                          validator: (_) {
-                            if (selectedDepartment == null) {
-                              return 'Please select a department';
-                            }
-                            return null;
-                          },
-                          layoutArchitecture: (items, scrollController) {
-                            if (items.isEmpty) return const SizedBox.shrink();
-                            if (otherDepartmentOption == null) {
-                              return ListView(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                controller: scrollController,
-                                children: items.toList(),
-                              );
-                            }
-                            final sticky = items.first;
-                            final rest = items.skip(1).toList();
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                sticky,
-                                Divider(height: 1, color: appColors.border),
-                                Flexible(
-                                  child: ListView(
-                                    shrinkWrap: true,
-                                    padding: EdgeInsets.zero,
-                                    controller: scrollController,
-                                    children: rest,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 4,
-                          ),
-                          child: AppText.labelSmall(
-                            "Choose 'Other Department' to manually type the department name.",
-                          ),
-                        ),
-                        if (isOtherDepartment) ...[
                           const SizedBox(height: 8),
                           AppTextField(
-                            controller: sourceDepartmentNameController,
-                            labelText: "Other Department Name",
-                            hintText: "Enter other department name",
+                            controller: subjectController,
+                            labelText: "Subject",
+                            hintText: "Enter subject",
                             isMandatory: true,
                             validator: Validators.notEmptyValidator,
                           ),
-                        ],
-                        const SizedBox(height: 8),
-                        SearchDropDownField<DepartmentUser>(
-                          controller: fwdToSearchController,
-                          labelText: "Forward To Department User",
-                          hintText: "Search user",
-                          isMandatory: true,
-                          suggestionsCallback: (pattern) {
-                            final q = pattern.toLowerCase();
-                            return (meta?.departmentUsers ?? [])
-                                .where(
-                                  (u) =>
-                                      (u.name ?? '').toLowerCase().contains(q),
-                                )
-                                .toList();
-                          },
-                          itemBuilder: (context, item) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: AppTextField(
+                                  controller: letterNoController,
+                                  labelText: "Letter Number (Optional)",
+                                  hintText: "Enter letter number",
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DatePickerTextField(
+                                  config: TextFieldConfig(
+                                    controller: letterDateController,
+                                    labelText: "Letter Date (Optional)",
+                                    hintText: "Select date",
+                                  ),
+                                  initialDate: selectedLetterDate,
+                                  lastDate: DateTime.now(),
+                                  onDateSelected: (date) {
+                                    setState(() => selectedLetterDate = date);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SearchDropDownField<DepartmentModel>(
+                            controller: departmentSearchController,
+                            focusNode: departmentFocusNode,
+                            labelText: "Received From Department",
+                            hintText: "Search department",
+                            isMandatory: true,
+                            suggestionsCallback: (pattern) {
+                              final q = pattern.toLowerCase();
+                              final other = otherDepartmentOption;
+                              final matches = (meta?.departments ?? []).where(
+                                (d) =>
+                                    d.isOther != true &&
+                                    (d.title ?? '').toLowerCase().contains(q),
+                              );
+                              // "Other Department" is always pinned at the top
+                              // of the suggestions box via layoutArchitecture.
+                              return [if (other != null) other, ...matches];
+                            },
+                            itemBuilder: (context, item) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: AppText.titleMedium(item.title ?? ''),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                AppText.titleSmall(item.name ?? ''),
-                                if ((item.designation ?? '').isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.yellow[400],
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: Colors.yellow[600]!.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        width: 0.5,
-                                      ),
-                                    ),
-                                    child: AppText.labelSmall(
-                                      item.designation ?? '',
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 10,
+                            onSelected: (item) {
+                              setState(() {
+                                selectedDepartment = item;
+                                departmentSearchController.text =
+                                    item.title ?? '';
+                              });
+                            },
+                            validator: (_) {
+                              if (selectedDepartment == null) {
+                                return 'Please select a department';
+                              }
+                              return null;
+                            },
+                            layoutArchitecture: (items, scrollController) {
+                              if (items.isEmpty) return const SizedBox.shrink();
+                              if (otherDepartmentOption == null) {
+                                return ListView(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  controller: scrollController,
+                                  children: items.toList(),
+                                );
+                              }
+                              final sticky = items.first;
+                              final rest = items.skip(1).toList();
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  sticky,
+                                  Divider(height: 1, color: appColors.border),
+                                  Flexible(
+                                    child: ListView(
+                                      shrinkWrap: true,
+                                      padding: EdgeInsets.zero,
+                                      controller: scrollController,
+                                      children: rest,
                                     ),
                                   ),
-                              ],
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
+                            ),
+                            child: AppText.labelSmall(
+                              "Choose 'Other Department' to manually type the department name.",
                             ),
                           ),
-                          onSelected: (item) {
-                            setState(() {
-                              selectedFwdToUser = item;
-                              fwdToSearchController.text = item.name ?? '';
-                            });
-                          },
-                          validator: (_) {
-                            if (selectedFwdToUser == null) {
-                              return 'Please select a user';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            AppText.titleSmall(
-                              "Scanned Letter (PDF Only)",
-                              color: appColors.textPrimary,
-                              fontWeight: FontWeight.w700,
+                          if (isOtherDepartment) ...[
+                            const SizedBox(height: 8),
+                            AppTextField(
+                              controller: sourceDepartmentNameController,
+                              labelText: "Other Department Name",
+                              hintText: "Enter other department name",
+                              isMandatory: true,
+                              validator: Validators.notEmptyValidator,
                             ),
-                            AppText.titleSmall(" *", color: Colors.red),
                           ],
-                        ),
-
-                        const SizedBox(height: 8),
-                        DashedBorderBox(
-                          color: appColors.secondaryLight.withValues(
-                            alpha: 0.5,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(8),
-                                  onTap: () async {
-                                    final file =
-                                        await showAttachmentPickerSheet(
-                                          context,
-                                        );
-                                    if (file != null) {
-                                      setState(() => scanAttachment = file);
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: appColors.border,
+                          const SizedBox(height: 8),
+                          SearchDropDownField<DepartmentUser>(
+                            controller: fwdToSearchController,
+                            focusNode: fwdToFocusNode,
+                            labelText: "Forward To Department User",
+                            hintText: "Search user",
+                            isMandatory: true,
+                            suggestionsCallback: (pattern) {
+                              final q = pattern.toLowerCase();
+                              return (meta?.departmentUsers ?? [])
+                                  .where(
+                                    (u) => (u.name ?? '')
+                                        .toLowerCase()
+                                        .contains(q),
+                                  )
+                                  .toList();
+                            },
+                            itemBuilder: (context, item) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppText.titleSmall(item.name ?? ''),
+                                  if ((item.designation ?? '').isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 1,
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context)
-                                          .inputDecorationTheme
-                                          .fillColor
-                                          ?.withValues(alpha: 0.2),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.yellow[400],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.yellow[600]!.withValues(
+                                            alpha: 0.3,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: appColors.surfaceMuted,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                                  topLeft: Radius.circular(8),
-                                                  bottomLeft: Radius.circular(
-                                                    8,
-                                                  ),
-                                                ),
-                                          ),
-                                          child: AppText.bodyMedium(
-                                            "Choose File",
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          width: 0.5,
                                         ),
-                                        Expanded(
-                                          child: Padding(
+                                      ),
+                                      child: AppText.labelSmall(
+                                        item.designation ?? '',
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            onSelected: (item) {
+                              setState(() {
+                                selectedFwdToUser = item;
+                                fwdToSearchController.text = item.name ?? '';
+                              });
+                            },
+                            validator: (_) {
+                              if (selectedFwdToUser == null) {
+                                return 'Please select a user';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              AppText.titleSmall(
+                                "Scanned Letter (PDF Only)",
+                                color: appColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              AppText.titleSmall(" *", color: Colors.red),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+                          DashedBorderBox(
+                            color: appColors.secondaryLight.withValues(
+                              alpha: 0.5,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(8),
+                                    onTap: () async {
+                                      final file =
+                                          await showAttachmentPickerSheet(
+                                            context,
+                                          );
+                                      if (file != null) {
+                                        setState(() => scanAttachment = file);
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: appColors.border,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Theme.of(context)
+                                            .inputDecorationTheme
+                                            .fillColor
+                                            ?.withValues(alpha: 0.2),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: appColors.surfaceMuted,
+                                              borderRadius:
+                                                  const BorderRadius.only(
+                                                    topLeft: Radius.circular(8),
+                                                    bottomLeft: Radius.circular(
+                                                      8,
+                                                    ),
+                                                  ),
                                             ),
                                             child: AppText.bodyMedium(
-                                              scanAttachment?.name ??
-                                                  "No file selected",
-                                              color: appColors.textSecondary,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
+                                              "Choose File",
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                        ),
-                                        if (scanAttachment != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 8,
-                                            ),
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(
-                                                  () => scanAttachment = null,
-                                                );
-                                              },
-                                              child: const Icon(
-                                                Icons.close,
-                                                size: 18,
-                                                color: Colors.red,
+                                          Expanded(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                  ),
+                                              child: AppText.bodyMedium(
+                                                scanAttachment?.name ??
+                                                    "No file selected",
+                                                color: appColors.textSecondary,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
                                               ),
                                             ),
                                           ),
-                                      ],
+                                          if (scanAttachment != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                right: 8,
+                                              ),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(
+                                                    () => scanAttachment = null,
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                  Icons.close,
+                                                  size: 18,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                AppText.labelMedium(
-                                  "Only PDF files are allowed, or scan with your camera. Max size 10MB.",
-                                  color: appColors.textPrimary,
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  AppText.labelMedium(
+                                    "Only PDF files are allowed, or scan with your camera. Max size 10MB.",
+                                    color: appColors.textPrimary,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        AppSolidButton(
-                          onPressed: () async {
-                            if (formKey.currentState?.validate() != true) {
-                              return;
-                            }
-                            if (scanAttachment == null) {
-                              Toast.error(
-                                message: "Attachment for daak is required",
-                              );
-                              return;
-                            }
-                            final model = CreateDaakModel(
-                              subject: subjectController.text.trim(),
-                              letterNo: letterNoController.text.trim().isEmpty
-                                  ? null
-                                  : letterNoController.text.trim(),
-                              letterDate: selectedLetterDate,
-                              sourceDepartmentId: isOtherDepartment
-                                  ? 0
-                                  : selectedDepartment!.id,
-                              sourceDepartmentName: isOtherDepartment
-                                  ? sourceDepartmentNameController.text.trim()
-                                  : null,
-                              toSecretaryUserDesgId: selectedFwdToUser!.id,
-                              incomingScan: scanAttachment,
-                            );
-                            await ref
-                                .read(daakController.notifier)
-                                .scanDaak(
-                                  model: model,
-                                  onSuccess: () =>
-                                      RouteHelper.navigateTo(Routes.daak),
+                          const SizedBox(height: 24),
+                          AppSolidButton(
+                            onPressed: () async {
+                              if (formKey.currentState?.validate() != true) {
+                                return;
+                              }
+                              if (scanAttachment == null) {
+                                Toast.error(
+                                  message: "Attachment for daak is required",
                                 );
-                          },
-                          text: "Submit",
-                          width: double.infinity,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                                return;
+                              }
+                              final model = CreateDaakModel(
+                                subject: subjectController.text.trim(),
+                                letterNo: letterNoController.text.trim().isEmpty
+                                    ? null
+                                    : letterNoController.text.trim(),
+                                letterDate: selectedLetterDate,
+                                sourceDepartmentId: isOtherDepartment
+                                    ? 0
+                                    : selectedDepartment!.id,
+                                sourceDepartmentName: isOtherDepartment
+                                    ? sourceDepartmentNameController.text.trim()
+                                    : null,
+                                toSecretaryUserDesgId: selectedFwdToUser!.id,
+                                incomingScan: scanAttachment,
+                              );
+                              await ref
+                                  .read(daakController.notifier)
+                                  .scanDaak(
+                                    model: model,
+                                    onSuccess: () =>
+                                        RouteHelper.navigateTo(Routes.daak),
+                                  );
+                            },
+                            text: "Submit",
+                            width: double.infinity,
+                          ),
+                          SizedBox(
+                            height: HelperUtils.isKeyboardOpen(context)
+                                ? 120
+                                : 16,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }

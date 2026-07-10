@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 class SearchDropDownField<T> extends StatelessWidget {
   final T? value;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final SuggestionsCallback<T> suggestionsCallback;
   final void Function(T suggestion) onSelected;
   final Widget Function(BuildContext context, T value) itemBuilder;
@@ -39,6 +40,7 @@ class SearchDropDownField<T> extends StatelessWidget {
     this.isMandatory = false,
     this.value,
     this.controller,
+    this.focusNode,
     this.enforceTypeLimit = false,
     this.layoutArchitecture,
   });
@@ -72,6 +74,7 @@ class SearchDropDownField<T> extends StatelessWidget {
         DropDownSearchFormField<T>(
           textFieldConfiguration: TextFieldConfiguration(
             controller: controller,
+            focusNode: focusNode,
             autofocus: false,
             style: DefaultTextStyle.of(
               context,

@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 const _thumbSize = 64.0;
 const _thumbRowHeight = 96.0;
+const _focusRingSize = 72.0;
 
 /// Opens a live camera preview with Capture/Finish controls, letting the
 /// user take one or more photos in sequence. Returns the captured images
@@ -33,10 +37,19 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
   Future<void>? _initializeControllerFuture;
   final List<XFile> _images = [];
   final GlobalKey _rowKey = GlobalKey();
+  final GlobalKey _previewKey = GlobalKey();
+  final GlobalKey _pendingImageKey = GlobalKey();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final ScrollController _rowScrollController = ScrollController();
+  final CropController _cropController = CropController();
   bool _capturing = false;
   String? _error;
+
+  // Review flow: the most recently captured photo, shown full-screen in the
+  // crop editor before it joins the thumbnail row.
+  XFile? _pendingImage;
+  Uint8List? _cropSourceBytes;
+  bool _cropBusy = false;
 
   @override
   void initState() {
@@ -92,13 +105,90 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
     }
   }
 
+  /// Focuses (and meters exposure) at the tapped point on the preview, and
+  /// shows a brief focus ring where the user tapped.
+  Future<void> _onFocusTap(TapUpDetails details) async {
+    final controller = _controller;
+    if (controller == null) return;
+    final box = _previewKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final size = box.size;
+    final normalized = Offset(
+      (details.localPosition.dx / size.width).clamp(0.0, 1.0),
+      (details.localPosition.dy / size.height).clamp(0.0, 1.0),
+    );
+    _showFocusRing(box.localToGlobal(details.localPosition));
+    try {
+      await controller.setExposurePoint(normalized);
+      await controller.setFocusPoint(normalized);
+    } catch (e) {
+      // Manual focus/exposure points aren't supported on this device.
+    }
+  }
+
+  void _showFocusRing(Offset globalPosition) {
+    final overlayState = Overlay.of(context);
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    final scaleAnim = Tween<double>(begin: 1.4, end: 1.0).animate(
+      CurvedAnimation(
+        parent: controller,
+        curve: const Interval(0.0, 0.2, curve: Curves.easeOut),
+      ),
+    );
+    final opacityAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 55),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 30),
+    ]).animate(controller);
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => AnimatedBuilder(
+        animation: controller,
+        builder: (context, child) => Positioned(
+          left: globalPosition.dx - _focusRingSize / 2,
+          top: globalPosition.dy - _focusRingSize / 2,
+          width: _focusRingSize,
+          height: _focusRingSize,
+          child: Opacity(
+            opacity: opacityAnim.value,
+            child: Transform.scale(scale: scaleAnim.value, child: child),
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.amber, width: 1.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    );
+
+    overlayState.insert(entry);
+    controller.forward().whenComplete(() {
+      entry.remove();
+      controller.dispose();
+    });
+  }
+
   Future<void> _capture() async {
     final controller = _controller;
-    if (controller == null || _capturing) return;
+    if (controller == null || _capturing || _pendingImage != null) return;
     setState(() => _capturing = true);
     try {
       final image = await controller.takePicture();
-      if (mounted) await _flyThumbnailToRow(image);
+      if (!mounted) return;
+      // Opens straight into the crop editor with the whole photo selected.
+      setState(() {
+        _pendingImage = image;
+        _cropSourceBytes = null;
+      });
+      final bytes = await File(image.path).readAsBytes();
+      if (mounted) setState(() => _cropSourceBytes = bytes);
     } catch (e) {
       // Capture failed — leave the array untouched, user can just retry.
     } finally {
@@ -106,23 +196,68 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
     }
   }
 
-  /// Animates a copy of the captured photo flying from the center of the
-  /// screen to its resting slot in the thumbnail row, then reveals it there.
-  Future<void> _flyThumbnailToRow(XFile image) async {
-    final overlayState = Overlay.of(context);
-    final screenSize = MediaQuery.of(context).size;
-    final startOffset = Offset(
-      screenSize.width / 2 - _thumbSize / 2,
-      screenSize.height / 2 - _thumbSize / 2,
-    );
+  /// Called when the user confirms the crop selection. Saves the cropped
+  /// image and animates it from its on-screen position into the thumbnail
+  /// row.
+  Future<void> _onCropResult(CropResult result) async {
+    if (result is! CropSuccess) {
+      Toast.error(message: "Could not crop the image.");
+      return;
+    }
+    if (_cropBusy) return;
+    setState(() => _cropBusy = true);
 
-    var endOffset = startOffset;
+    final box =
+        _pendingImageKey.currentContext?.findRenderObject() as RenderBox?;
+    final Rect startRect;
+    if (box != null && box.hasSize) {
+      startRect = box.localToGlobal(Offset.zero) & box.size;
+    } else {
+      final screenSize = MediaQuery.of(context).size;
+      startRect = Rect.fromLTWH(
+        screenSize.width / 2 - _thumbSize / 2,
+        screenSize.height / 2 - _thumbSize / 2,
+        _thumbSize,
+        _thumbSize,
+      );
+    }
+
+    final dir = await getTemporaryDirectory();
+    final file = File(
+      '${dir.path}/daak_scan_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+    await file.writeAsBytes(result.croppedImage);
+
+    if (!mounted) return;
+    setState(() {
+      _pendingImage = null;
+      _cropSourceBytes = null;
+      _cropBusy = false;
+    });
+    await _flyThumbnailToRow(XFile(file.path), startRect: startRect);
+  }
+
+  void _discardPendingImage() {
+    setState(() {
+      _pendingImage = null;
+      _cropSourceBytes = null;
+    });
+  }
+
+  /// Animates a copy of the captured photo flying from [startRect] to its
+  /// resting slot in the thumbnail row, then reveals it there.
+  Future<void> _flyThumbnailToRow(XFile image, {required Rect startRect}) async {
+    final overlayState = Overlay.of(context);
+
+    var endRect = startRect;
     final rowBox = _rowKey.currentContext?.findRenderObject() as RenderBox?;
     if (rowBox != null && rowBox.hasSize) {
       final rowPosition = rowBox.localToGlobal(Offset.zero);
-      endOffset = Offset(
+      endRect = Rect.fromLTWH(
         rowPosition.dx + rowBox.size.width - _thumbSize - 16,
         rowPosition.dy + (rowBox.size.height - _thumbSize) / 2,
+        _thumbSize,
+        _thumbSize,
       );
     }
 
@@ -130,24 +265,24 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
       vsync: this,
       duration: const Duration(milliseconds: 450),
     );
-    final curved = CurvedAnimation(parent: controller, curve: Curves.easeInOut);
-    final offsetAnim = Tween<Offset>(
-      begin: startOffset,
-      end: endOffset,
-    ).animate(curved);
-    final scaleAnim = Tween<double>(begin: 1.3, end: 0.7).animate(curved);
+    final rectAnim = RectTween(begin: startRect, end: endRect).animate(
+      CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+    );
 
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (context) => AnimatedBuilder(
         animation: controller,
-        builder: (context, child) => Positioned(
-          left: offsetAnim.value.dx,
-          top: offsetAnim.value.dy,
-          width: _thumbSize,
-          height: _thumbSize,
-          child: Transform.scale(scale: scaleAnim.value, child: child),
-        ),
+        builder: (context, child) {
+          final rect = rectAnim.value!;
+          return Positioned(
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            child: child!,
+          );
+        },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.file(File(image.path), fit: BoxFit.cover),
@@ -207,30 +342,96 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
         ),
       ),
       body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(child: _buildPreview()),
+                Container(
+                  color: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.camera_alt,
+                        label: "Capture",
+                        onTap: _controller == null || _capturing
+                            ? null
+                            : _capture,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.check_circle,
+                        label: "Generate PDF",
+                        color: AppColors.primary,
+                        onTap: _capturing ? null : _finish,
+                      ),
+                    ],
+                  ),
+                ),
+                _buildThumbnailRow(),
+              ],
+            ),
+            if (_pendingImage != null) _buildReviewOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewOverlay() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black,
         child: Column(
           children: [
-            Expanded(child: _buildPreview()),
-            Container(
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildActionButton(
-                    icon: Icons.camera_alt,
-                    label: "Capture",
-                    onTap: _controller == null || _capturing ? null : _capture,
-                  ),
-                  _buildActionButton(
-                    icon: Icons.check_circle,
-                    label: "Generate PDF",
-                    color: AppColors.primary,
-                    onTap: _capturing ? null : _finish,
-                  ),
-                ],
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                onPressed: _cropBusy ? null : _discardPendingImage,
+                icon: const Icon(Icons.close, color: Colors.white),
               ),
             ),
-            _buildThumbnailRow(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: _cropSourceBytes == null
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : KeyedSubtree(
+                          key: _pendingImageKey,
+                          child: Crop(
+                            controller: _cropController,
+                            image: _cropSourceBytes!,
+                            // Crop selection starts covering the whole photo.
+                            initialRectBuilder: InitialRectBuilder.withBuilder(
+                              (viewportRect, imageRect) => imageRect,
+                            ),
+                            onCropped: _onCropResult,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 16,
+              ),
+              child: Center(
+                child: _buildActionButton(
+                  icon: Icons.check_circle,
+                  label: "Done",
+                  color: AppColors.primary,
+                  onTap: _cropSourceBytes == null || _cropBusy
+                      ? null
+                      : _cropController.crop,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -326,7 +527,12 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
         return Center(
           child: AspectRatio(
             aspectRatio: 1 / controller.value.aspectRatio,
-            child: CameraPreview(controller),
+            child: GestureDetector(
+              key: _previewKey,
+              behavior: HitTestBehavior.opaque,
+              onTapUp: _onFocusTap,
+              child: CameraPreview(controller),
+            ),
           ),
         );
       },

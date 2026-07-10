@@ -61,8 +61,10 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
   ConsumerState<DaakDetailsScreen> createState() => _DaakDetailsScreenState();
 }
 
-class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
+class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final ScrollController scrollController = ScrollController();
   final TextEditingController remarksController = TextEditingController();
   List<DepartmentUserModel> usersForChat = [];
   String _speechBaseText = '';
@@ -72,6 +74,8 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   DepartmentUserModel? forwardTo;
   final TextEditingController forwardToController = TextEditingController();
+  final FocusNode forwardToFocusNode = FocusNode();
+  final GlobalKey forwardToFieldKey = GlobalKey();
   DaakAction selectedAction = DaakAction.forward;
 
   Future<void> fetchDetails() async {
@@ -100,21 +104,52 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         daakDetails = widget.daakDetailsInfo.daak;
       });
       fetchDetails();
     });
+    forwardToFocusNode.addListener(_onSearchFieldFocusChanged);
 
     super.initState();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    forwardToFocusNode.removeListener(_onSearchFieldFocusChanged);
+    forwardToFocusNode.dispose();
+    scrollController.dispose();
     ref.read(speechToTextController.notifier).stopListening();
     remarksController.dispose();
     super.dispose();
+  }
+
+  // Nudges the focused search field up just enough to clear the keyboard,
+  // leaving room below it for its suggestions list, without scrolling all
+  // the way down the (much longer) rest of the screen.
+  void _onSearchFieldFocusChanged() {
+    if (forwardToFocusNode.hasFocus) _scrollFieldIntoView();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (forwardToFocusNode.hasFocus) _scrollFieldIntoView();
+  }
+
+  void _scrollFieldIntoView() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fieldContext = forwardToFieldKey.currentContext;
+      if (fieldContext == null || !fieldContext.mounted) return;
+      Scrollable.ensureVisible(
+        fieldContext,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -124,446 +159,461 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen> {
     final bool showOtherAction = meta?.activeUserDesg?.role == 'deo';
     final theme = Theme.of(context);
     final appColors = context.appColors;
-    return Scaffold(
-      appBar: widget.showAppBar
-          ? AppBar(
-              title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
-              elevation: 0,
-              scrolledUnderElevation: 0,
-            )
-          : null,
-      body: RefreshIndicator(
-        onRefresh: fetchDetails,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Inline PDF viewer
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
-                child: PdfViewer(
-                  url: daakDetails?.incomingScanUrl,
-                  title: daakDetails?.subject ?? "Daak PDF",
-                  fullScreen: false,
-                ),
-              ),
-
-              // Action section — no heading
-              Card(
-                margin: const EdgeInsets.all(0),
-                elevation: 3,
-                shadowColor: appColors.shadow,
-                color: theme.cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 4.0,
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: widget.showAppBar
+            ? AppBar(
+                title: Text('${widget.daakDetailsInfo.daak.diaryNo}'),
+                elevation: 0,
+                scrolledUnderElevation: 0,
+              )
+            : null,
+        body: RefreshIndicator(
+          onRefresh: fetchDetails,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Inline PDF viewer
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: PdfViewer(
+                    url: daakDetails?.incomingScanUrl,
+                    title: daakDetails?.subject ?? "Daak PDF",
+                    fullScreen: false,
                   ),
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        if (showOtherAction)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: DaakAction.values.map((action) {
-                              final isSelected = selectedAction == action;
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() => selectedAction = action);
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInSine,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? appColors.primaryDark.withValues(
-                                            alpha: 0.2,
-                                          )
-                                        : appColors.surfaceMuted,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
+                ),
+
+                // Action section — no heading
+                Card(
+                  margin: const EdgeInsets.all(0),
+                  elevation: 3,
+                  shadowColor: appColors.shadow,
+                  color: theme.cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                      vertical: 4.0,
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          if (showOtherAction)
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: DaakAction.values.map((action) {
+                                final isSelected = selectedAction == action;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() => selectedAction = action);
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInSine,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? appColors.primaryDark.withValues(
+                                              alpha: 0.2,
+                                            )
+                                          : appColors.surfaceMuted,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? appColors.primaryDark
+                                            : appColors.border,
+                                      ),
+                                    ),
+                                    child: AppText.bodySmall(
+                                      action.label,
                                       color: isSelected
                                           ? appColors.primaryDark
-                                          : appColors.border,
+                                          : appColors.textPrimary,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
                                     ),
                                   ),
-                                  child: AppText.bodySmall(
-                                    action.label,
-                                    color: isSelected
-                                        ? appColors.primaryDark
-                                        : appColors.textPrimary,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        const SizedBox(height: 6),
-                        AppText.titleMedium(
-                          selectedAction == DaakAction.forward
-                              ? 'Forward Letter'
-                              : selectedAction == DaakAction.markNfa
-                              ? "Mark as NFA"
-                              : selectedAction == DaakAction.disposeOff
-                              ? "Dispose Off Letter"
-                              : "",
-                          fontWeight: FontWeight.w600,
-                          color: appColors.textPrimary,
-                        ),
-                        const SizedBox(height: 4),
-                        if (selectedAction == DaakAction.forward) ...[
-                          SearchDropDownField<DepartmentUserModel>(
-                            suggestionsCallback: (pattern) {
-                              return usersForChat
-                                  .where(
-                                    (user) => (user.userTitle ?? '')
-                                        .toLowerCase()
-                                        .contains(pattern.toLowerCase()),
-                                  )
-                                  .toList();
-                            },
-                            onSelected: (item) {
-                              forwardTo = item;
-                              forwardToController.text = item.userTitle ?? '';
-                              setState(() {});
-                            },
-                            labelText: "Forward this file to",
-                            hintText: "Forward To",
-                            itemBuilder: (context, item) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AppText.titleMedium(item.userTitle ?? ''),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow[400],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.yellow[600]!.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                      child: AppText.labelSmall(
-                                        item.designation ?? '',
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            validator: (value) {
-                              if (forwardTo == null) {
-                                return 'Forward to user is required';
-                              }
-                              return null;
-                            },
-                            value: forwardTo,
-                            controller: forwardToController,
-                            suffixIcon:
-                                (forwardTo != null &&
-                                    (forwardTo!.designation ?? '').isNotEmpty)
-                                ? Container(
-                                    width: 120,
-                                    padding: const EdgeInsets.only(
-                                      left: 8,
-                                      right: 8,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 1,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.yellow[400],
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.yellow[600]!
-                                                  .withValues(alpha: 0.3),
-                                              width: 0.5,
-                                            ),
-                                          ),
-                                          child: AppText.labelSmall(
-                                            forwardTo!.designation ?? '',
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-
-                        AppTextField(
-                          controller: remarksController,
-                          labelText: "Remarks",
-                          hintText: selectedAction == DaakAction.forward
-                              ? 'Optional forwarding remarks'
-                              : selectedAction == DaakAction.markNfa
-                              ? "Optional closing remarks"
-                              : selectedAction == DaakAction.disposeOff
-                              ? "Optional disposal remarks"
-                              : "Optional Remarks",
-                          maxLines: 3,
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              final notifier = ref.read(
-                                speechToTextController.notifier,
-                              );
-                              if (sttState.isListening) {
-                                notifier.stopListening();
-                              } else {
-                                _speechBaseText = remarksController.text.trim();
-                                notifier.startListening(
-                                  onWordsRecognized: (words) {
-                                    if (!mounted) return;
-                                    final prefix = _speechBaseText.isEmpty
-                                        ? ''
-                                        : '$_speechBaseText ';
-                                    remarksController.text = '$prefix$words';
-                                    remarksController.selection =
-                                        TextSelection.collapsed(
-                                          offset: remarksController.text.length,
-                                        );
-                                  },
-                                  onError: (message) {
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(message),
-                                        backgroundColor: Colors.red[700],
-                                      ),
-                                    );
-                                  },
                                 );
-                              }
-                            },
-                            icon: Icon(
-                              sttState.isListening ? Icons.mic : Icons.mic_none,
-                              color: sttState.isListening
-                                  ? Colors.red
-                                  : AppColors.secondary,
+                              }).toList(),
+                            ),
+                          const SizedBox(height: 6),
+                          AppText.titleMedium(
+                            selectedAction == DaakAction.forward
+                                ? 'Forward Letter'
+                                : selectedAction == DaakAction.markNfa
+                                ? "Mark as NFA"
+                                : selectedAction == DaakAction.disposeOff
+                                ? "Dispose Off Letter"
+                                : "",
+                            fontWeight: FontWeight.w600,
+                            color: appColors.textPrimary,
+                          ),
+                          const SizedBox(height: 4),
+                          if (selectedAction == DaakAction.forward) ...[
+                            SearchDropDownField<DepartmentUserModel>(
+                              key: forwardToFieldKey,
+                              focusNode: forwardToFocusNode,
+                              suggestionsCallback: (pattern) {
+                                return usersForChat
+                                    .where(
+                                      (user) => (user.userTitle ?? '')
+                                          .toLowerCase()
+                                          .contains(pattern.toLowerCase()),
+                                    )
+                                    .toList();
+                              },
+                              onSelected: (item) {
+                                forwardTo = item;
+                                forwardToController.text = item.userTitle ?? '';
+                                setState(() {});
+                              },
+                              labelText: "Forward this file to",
+                              hintText: "Forward To",
+                              itemBuilder: (context, item) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.titleMedium(item.userTitle ?? ''),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.yellow[400],
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.yellow[600]!
+                                                .withValues(alpha: 0.3),
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: AppText.labelSmall(
+                                          item.designation ?? '',
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              validator: (value) {
+                                if (forwardTo == null) {
+                                  return 'Forward to user is required';
+                                }
+                                return null;
+                              },
+                              value: forwardTo,
+                              controller: forwardToController,
+                              suffixIcon:
+                                  (forwardTo != null &&
+                                      (forwardTo!.designation ?? '').isNotEmpty)
+                                  ? Container(
+                                      width: 120,
+                                      padding: const EdgeInsets.only(
+                                        left: 8,
+                                        right: 8,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.yellow[400],
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: Colors.yellow[600]!
+                                                    .withValues(alpha: 0.3),
+                                                width: 0.5,
+                                              ),
+                                            ),
+                                            child: AppText.labelSmall(
+                                              forwardTo!.designation ?? '',
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+
+                          AppTextField(
+                            controller: remarksController,
+                            labelText: "Remarks",
+                            hintText: selectedAction == DaakAction.forward
+                                ? 'Optional forwarding remarks'
+                                : selectedAction == DaakAction.markNfa
+                                ? "Optional closing remarks"
+                                : selectedAction == DaakAction.disposeOff
+                                ? "Optional disposal remarks"
+                                : "Optional Remarks",
+                            maxLines: 3,
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                final notifier = ref.read(
+                                  speechToTextController.notifier,
+                                );
+                                if (sttState.isListening) {
+                                  notifier.stopListening();
+                                } else {
+                                  _speechBaseText = remarksController.text
+                                      .trim();
+                                  notifier.startListening(
+                                    onWordsRecognized: (words) {
+                                      if (!mounted) return;
+                                      final prefix = _speechBaseText.isEmpty
+                                          ? ''
+                                          : '$_speechBaseText ';
+                                      remarksController.text = '$prefix$words';
+                                      remarksController
+                                          .selection = TextSelection.collapsed(
+                                        offset: remarksController.text.length,
+                                      );
+                                    },
+                                    onError: (message) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(message),
+                                          backgroundColor: Colors.red[700],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              icon: Icon(
+                                sttState.isListening
+                                    ? Icons.mic
+                                    : Icons.mic_none,
+                                color: sttState.isListening
+                                    ? Colors.red
+                                    : AppColors.secondary,
+                              ),
                             ),
                           ),
-                        ),
-                        if (selectedAction == DaakAction.disposeOff) ...[
-                          const SizedBox(height: 12),
+                          if (selectedAction == DaakAction.disposeOff) ...[
+                            const SizedBox(height: 12),
+                            attachmentCard(
+                              title: "Issued Letter (Correspondence)",
+                              attachment: disposeOffLetter,
+                              onAttachmentChanged: (file) {
+                                setState(() {
+                                  disposeOffLetter = file;
+                                });
+                              },
+                              onAttachmentRemoved: () {
+                                setState(() {
+                                  disposeOffLetter = null;
+                                });
+                              },
+                            ),
+                            AppText.labelSmall(
+                              "This is optional",
+                              color: appColors.textSecondary,
+                            ),
+                          ],
+                          const SizedBox(height: 8),
                           attachmentCard(
-                            title: "Issued Letter (Correspondence)",
-                            attachment: disposeOffLetter,
+                            title: "Attachment",
+                            attachment: attachment,
                             onAttachmentChanged: (file) {
                               setState(() {
-                                disposeOffLetter = file;
+                                attachment = file;
                               });
                             },
                             onAttachmentRemoved: () {
                               setState(() {
-                                disposeOffLetter = null;
+                                attachment = null;
                               });
                             },
                           ),
                           AppText.labelSmall(
-                            "This is optional",
+                            "pdf, docx, jpg, jpeg, png. Max size: 10MB",
                             color: appColors.textSecondary,
                           ),
+                          const SizedBox(height: 6),
+                          selectedAction == DaakAction.forward
+                              ? actionButton(
+                                  text: "Forward",
+                                  onPressed: () async {
+                                    ref
+                                        .read(speechToTextController.notifier)
+                                        .stopListening();
+                                    if (formKey.currentState?.validate() !=
+                                        true) {
+                                      return;
+                                    }
+                                    if (forwardTo == null) {
+                                      Toast.error(
+                                        message: "Forward to user is required",
+                                      );
+                                      return;
+                                    }
+                                    await ref
+                                        .read(daakController.notifier)
+                                        .forwardDaak(
+                                          daakId: widget.daakId,
+                                          fwdToDesId:
+                                              forwardTo?.userDesignationId,
+                                          remarks:
+                                              remarksController.text
+                                                  .trim()
+                                                  .isEmpty
+                                              ? null
+                                              : remarksController.text.trim(),
+                                          supportingAttachment: attachment,
+                                          onSuccess: widget.onSuccess,
+                                        );
+                                  },
+                                )
+                              : selectedAction == DaakAction.markNfa
+                              ? actionButton(
+                                  text: "NFA / Archive",
+                                  onPressed: () async {
+                                    ref
+                                        .read(speechToTextController.notifier)
+                                        .stopListening();
+
+                                    await ref
+                                        .read(daakController.notifier)
+                                        .markNFA(
+                                          daakId: widget.daakId,
+                                          remarks:
+                                              remarksController.text
+                                                  .trim()
+                                                  .isEmpty
+                                              ? null
+                                              : remarksController.text.trim(),
+                                          supportingAttachment: attachment,
+                                          onSuccess: widget.onSuccess,
+                                        );
+                                  },
+                                )
+                              : selectedAction == DaakAction.disposeOff
+                              ? actionButton(
+                                  text: "Dispose Off",
+                                  color: AppColors.error,
+                                  onPressed: () async {
+                                    ref
+                                        .read(speechToTextController.notifier)
+                                        .stopListening();
+
+                                    await ref
+                                        .read(daakController.notifier)
+                                        .disposeOff(
+                                          daakId: widget.daakId,
+                                          remarks:
+                                              remarksController.text
+                                                  .trim()
+                                                  .isEmpty
+                                              ? null
+                                              : remarksController.text.trim(),
+                                          supportingAttachment: attachment,
+                                          issuedLetter: disposeOffLetter,
+                                          onSuccess: widget.onSuccess,
+                                        );
+                                  },
+                                )
+                              : const SizedBox.shrink(),
+                          const SizedBox(height: 4),
                         ],
-                        const SizedBox(height: 8),
-                        attachmentCard(
-                          title: "Attachment",
-                          attachment: attachment,
-                          onAttachmentChanged: (file) {
-                            setState(() {
-                              attachment = file;
-                            });
-                          },
-                          onAttachmentRemoved: () {
-                            setState(() {
-                              attachment = null;
-                            });
-                          },
-                        ),
-                        AppText.labelSmall(
-                          "pdf, docx, jpg, jpeg, png. Max size: 10MB",
-                          color: appColors.textSecondary,
-                        ),
-                        const SizedBox(height: 6),
-                        selectedAction == DaakAction.forward
-                            ? actionButton(
-                                text: "Forward",
-                                onPressed: () async {
-                                  ref
-                                      .read(speechToTextController.notifier)
-                                      .stopListening();
-                                  if (formKey.currentState?.validate() !=
-                                      true) {
-                                    return;
-                                  }
-                                  if (forwardTo == null) {
-                                    Toast.error(
-                                      message: "Forward to user is required",
-                                    );
-                                    return;
-                                  }
-                                  await ref
-                                      .read(daakController.notifier)
-                                      .forwardDaak(
-                                        daakId: widget.daakId,
-                                        fwdToDesId:
-                                            forwardTo?.userDesignationId,
-                                        remarks:
-                                            remarksController.text
-                                                .trim()
-                                                .isEmpty
-                                            ? null
-                                            : remarksController.text.trim(),
-                                        supportingAttachment: attachment,
-                                        onSuccess: widget.onSuccess,
-                                      );
-                                },
-                              )
-                            : selectedAction == DaakAction.markNfa
-                            ? actionButton(
-                                text: "NFA / Archive",
-                                onPressed: () async {
-                                  ref
-                                      .read(speechToTextController.notifier)
-                                      .stopListening();
-
-                                  await ref
-                                      .read(daakController.notifier)
-                                      .markNFA(
-                                        daakId: widget.daakId,
-                                        remarks:
-                                            remarksController.text
-                                                .trim()
-                                                .isEmpty
-                                            ? null
-                                            : remarksController.text.trim(),
-                                        supportingAttachment: attachment,
-                                        onSuccess: widget.onSuccess,
-                                      );
-                                },
-                              )
-                            : selectedAction == DaakAction.disposeOff
-                            ? actionButton(
-                                text: "Dispose Off",
-                                color: AppColors.error,
-                                onPressed: () async {
-                                  ref
-                                      .read(speechToTextController.notifier)
-                                      .stopListening();
-
-                                  await ref
-                                      .read(daakController.notifier)
-                                      .disposeOff(
-                                        daakId: widget.daakId,
-                                        remarks:
-                                            remarksController.text
-                                                .trim()
-                                                .isEmpty
-                                            ? null
-                                            : remarksController.text.trim(),
-                                        supportingAttachment: attachment,
-                                        issuedLetter: disposeOffLetter,
-                                        onSuccess: widget.onSuccess,
-                                      );
-                                },
-                              )
-                            : const SizedBox.shrink(),
-                        const SizedBox(height: 4),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Previous Correspondences
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText.headlineSmall(
-                      'Previous Correspondences',
-                      fontWeight: FontWeight.w600,
-                      color: appColors.secondaryLight,
-                    ),
-                    const SizedBox(height: 4),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 300),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: daakDetails?.movements?.length ?? 0,
-                        itemBuilder: (context, index) => DaakCorrespondenceCard(
-                          movement: daakDetails?.movements?[index],
+                // Previous Correspondences
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText.headlineSmall(
+                        'Previous Correspondences',
+                        fontWeight: FontWeight.w600,
+                        color: appColors.secondaryLight,
+                      ),
+                      const SizedBox(height: 4),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 300),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: daakDetails?.movements?.length ?? 0,
+                          itemBuilder: (context, index) =>
+                              DaakCorrespondenceCard(
+                                movement: daakDetails?.movements?[index],
+                              ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Attachments
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText.headlineSmall(
-                      'Attachments',
-                      fontWeight: FontWeight.w600,
-                      color: appColors.secondaryLight,
-                    ),
-                    const SizedBox(height: 4),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 300),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: daakDetails?.attachments?.length ?? 0,
-                        itemBuilder: (context, index) => DaakAttachmentCard(
-                          attachment: daakDetails?.attachments?[index],
+                // Attachments
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText.headlineSmall(
+                        'Attachments',
+                        fontWeight: FontWeight.w600,
+                        color: appColors.secondaryLight,
+                      ),
+                      const SizedBox(height: 4),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 300),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: daakDetails?.attachments?.length ?? 0,
+                          itemBuilder: (context, index) => DaakAttachmentCard(
+                            attachment: daakDetails?.attachments?[index],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
