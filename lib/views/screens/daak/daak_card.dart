@@ -200,6 +200,7 @@ class DaakCard extends StatelessWidget {
                                     PdfViewer(
                                       url: daak.incomingScanUrl,
                                       fullScreen: false,
+                                      showPageNumber: false,
                                     ),
                                     if (!noDetails)
                                       Align(

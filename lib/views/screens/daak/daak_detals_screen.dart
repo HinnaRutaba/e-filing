@@ -4,11 +4,11 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/department/department_user_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
-import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/attachment_picker_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
@@ -63,6 +63,13 @@ class DaakDetailsScreen extends ConsumerStatefulWidget {
 
 class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
     with WidgetsBindingObserver {
+  static const List<String> quickReplies = [
+    'Putup on File',
+    'NFA',
+    'For Information',
+    'Please Discuss',
+  ];
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final ScrollController scrollController = ScrollController();
   final TextEditingController remarksController = TextEditingController();
@@ -448,6 +455,43 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
                               ),
                             ),
                           ),
+
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: quickReplies.map((reply) {
+                              return ActionChip(
+                                label: AppText.labelSmall(
+                                  reply,
+                                  color: appColors.textPrimary,
+                                  fontSize: 11,
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 0,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                shape: StadiumBorder(
+                                  side: BorderSide(color: appColors.border),
+                                ),
+                                backgroundColor: appColors.surfaceMuted,
+                                onPressed: () {
+                                  remarksController.text = reply;
+                                  remarksController.selection =
+                                      TextSelection.collapsed(
+                                        offset: remarksController.text.length,
+                                      );
+                                },
+                              );
+                            }).toList(),
+                          ),
+
                           if (selectedAction == DaakAction.disposeOff) ...[
                             const SizedBox(height: 12),
                             attachmentCard(
@@ -646,13 +690,6 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
     required XFile? attachment,
     required Function(XFile? file) onAttachmentChanged,
     required Function() onAttachmentRemoved,
-    List<String> allowedExtensions = const [
-      'pdf',
-      'docx',
-      'jpg',
-      'jpeg',
-      'png',
-    ],
   }) {
     final appColors = context.appColors;
     return Column(
@@ -667,11 +704,12 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
         const SizedBox(height: 4),
         InkWell(
           onTap: () async {
-            final files = await FilePickerService().pickFiles(
-              allowedExtensions: allowedExtensions,
-            );
-            attachment = files.isNotEmpty ? files.first : null;
-            onAttachmentChanged(attachment);
+            FocusScope.of(context).unfocus();
+            final file = await showAttachmentPickerSheet(context);
+            if (file != null) {
+              attachment = file;
+              onAttachmentChanged(attachment);
+            }
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),

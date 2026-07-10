@@ -202,10 +202,9 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
   Future<void> _onCropResult(CropResult result) async {
     if (result is! CropSuccess) {
       Toast.error(message: "Could not crop the image.");
+      if (mounted) setState(() => _cropBusy = false);
       return;
     }
-    if (_cropBusy) return;
-    setState(() => _cropBusy = true);
 
     final box =
         _pendingImageKey.currentContext?.findRenderObject() as RenderBox?;
@@ -237,16 +236,18 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
     await _flyThumbnailToRow(XFile(file.path), startRect: startRect);
   }
 
-  void _discardPendingImage() {
-    setState(() {
-      _pendingImage = null;
-      _cropSourceBytes = null;
-    });
+  void _confirmCrop() {
+    if (_cropSourceBytes == null || _cropBusy) return;
+    setState(() => _cropBusy = true);
+    _cropController.crop();
   }
 
   /// Animates a copy of the captured photo flying from [startRect] to its
   /// resting slot in the thumbnail row, then reveals it there.
-  Future<void> _flyThumbnailToRow(XFile image, {required Rect startRect}) async {
+  Future<void> _flyThumbnailToRow(
+    XFile image, {
+    required Rect startRect,
+  }) async {
     final overlayState = Overlay.of(context);
 
     var endRect = startRect;
@@ -265,9 +266,10 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
       vsync: this,
       duration: const Duration(milliseconds: 450),
     );
-    final rectAnim = RectTween(begin: startRect, end: endRect).animate(
-      CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-    );
+    final rectAnim = RectTween(
+      begin: startRect,
+      end: endRect,
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
 
     late final OverlayEntry entry;
     entry = OverlayEntry(
@@ -338,7 +340,7 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
         title: const Text("Take Photo"),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close, color: Colors.white),
         ),
       ),
       body: SafeArea(
@@ -391,7 +393,7 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
             Align(
               alignment: Alignment.topLeft,
               child: IconButton(
-                onPressed: _cropBusy ? null : _discardPendingImage,
+                onPressed: _cropBusy ? null : () => Navigator.pop(context),
                 icon: const Icon(Icons.close, color: Colors.white),
               ),
             ),
@@ -417,18 +419,19 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Center(
                 child: _buildActionButton(
                   icon: Icons.check_circle,
                   label: "Done",
                   color: AppColors.primary,
-                  onTap: _cropSourceBytes == null || _cropBusy
-                      ? null
-                      : _cropController.crop,
+                  loading: _cropBusy,
+                  // Keeping the same button size/shape whether idle or
+                  // busy matters here: swapping to a differently-sized
+                  // widget would resize the Expanded crop area above,
+                  // which makes crop_your_image reset its crop rect back
+                  // to the whole image mid-crop.
+                  onTap: _cropSourceBytes == null ? null : _confirmCrop,
                 ),
               ),
             ),
@@ -544,17 +547,32 @@ class _MultiPhotoCaptureScreenState extends State<_MultiPhotoCaptureScreen>
     required String label,
     required VoidCallback? onTap,
     Color color = Colors.white,
+    bool loading = false,
   }) {
     final effectiveColor = onTap == null ? Colors.grey : color;
     return InkWell(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       borderRadius: BorderRadius.circular(40),
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: effectiveColor, size: 40),
+            // Same footprint as the Icon it replaces (size 40) so toggling
+            // `loading` never resizes surrounding layout.
+            loading
+                ? SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: CircularProgressIndicator(
+                        color: effectiveColor,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                  )
+                : Icon(icon, color: effectiveColor, size: 40),
             const SizedBox(height: 4),
             Text(label, style: TextStyle(color: effectiveColor, fontSize: 12)),
           ],

@@ -10,6 +10,7 @@ class PdfViewer extends StatefulWidget {
   final String? title;
   final List<Widget>? actions;
   final bool fullScreen;
+  final bool showPageNumber;
 
   const PdfViewer({
     super.key,
@@ -17,6 +18,7 @@ class PdfViewer extends StatefulWidget {
     this.title,
     this.actions,
     this.fullScreen = true,
+    this.showPageNumber = true,
   });
 
   @override
@@ -25,8 +27,12 @@ class PdfViewer extends StatefulWidget {
 
 class _PdfViewerState extends State<PdfViewer> {
   final PdfViewerController pdfViewerController = PdfViewerController();
+  final pdfrx.PdfViewerController _pdfrxController =
+      pdfrx.PdfViewerController();
   String? _errorMessage;
   Map<String, String>? _headers;
+  int? _currentPage;
+  int? _totalPages;
 
   @override
   void initState() {
@@ -97,21 +103,53 @@ class _PdfViewerState extends State<PdfViewer> {
                         },
                   ),
           )
-        : pdfrx.PdfViewer.uri(
-            Uri.parse(widget.url ?? ""),
-            params: pdfrx.PdfViewerParams(
-              errorBannerBuilder: (context, error, stackTrace, child) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SelectableText(
-                      error.toString(),
-                      style: const TextStyle(color: Colors.red),
+        : Stack(
+            children: [
+              pdfrx.PdfViewer.uri(
+                Uri.parse(widget.url ?? ""),
+                controller: _pdfrxController,
+                params: pdfrx.PdfViewerParams(
+                  errorBannerBuilder: (context, error, stackTrace, child) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SelectableText(
+                          error.toString(),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    );
+                  },
+                  onViewerReady: (document, controller) {
+                    if (mounted) {
+                      setState(() => _totalPages = document.pages.length);
+                    }
+                  },
+                  onPageChanged: (pageNumber) {
+                    if (mounted) setState(() => _currentPage = pageNumber);
+                  },
+                ),
+              ),
+              if (widget.showPageNumber && _currentPage != null && _totalPages != null)
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$_currentPage/$_totalPages',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+            ],
           );
   }
 }

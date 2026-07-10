@@ -125,7 +125,6 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       icon: Icons.lock_reset,
       routeName: Routes.changePassword,
     ),
-    
   ];
 
   @override
