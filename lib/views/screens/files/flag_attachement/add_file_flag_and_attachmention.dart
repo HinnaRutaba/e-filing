@@ -5,7 +5,7 @@ import 'package:efiling_balochistan/models/attachment_model.dart';
 import 'package:efiling_balochistan/models/flag_model.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/attachment_picker_sheet.dart';
-import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,7 +38,21 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
 
+  final TextEditingController flagSearchController = TextEditingController();
+
   bool _isPickingAttachment = false;
+
+  @override
+  void initState() {
+    super.initState();
+    flagSearchController.text = m.flagType?.title ?? '';
+  }
+
+  @override
+  void dispose() {
+    flagSearchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickAttachment() async {
     if (_isPickingAttachment) return;
@@ -68,32 +82,44 @@ class _AddFlagAndAttachmentState extends ConsumerState<AddFlagAndAttachment> {
                 // Flag Type Dropdown - Expanded
                 Flexible(
                   flex: 3,
-                  child: AppDropDownField<FlagModel>(
-                    items: m.usedFlags == null
-                        ? state.flags
-                        : state.flags
-                              .where(
-                                (e) => !m.usedFlags!.any(
-                                  (f) => f.id != null && f.id == e.id,
-                                ),
-                              )
-                              .toList(),
-                    value: m.flagType,
+                  child: SearchDropDownField<FlagModel>(
+                    controller: flagSearchController,
                     enabled: !widget.isReadOnly,
-                    onChanged: widget.isReadOnly
-                        ? null
-                        : (item) {
-                            setState(() {
-                              m.flagType = item;
-                            });
-                          },
                     labelText: "Flag Type",
                     hintText: "Select flag type",
                     prefix: state.loadingFlag ? fieldLoader : null,
-                    padding: const EdgeInsets.fromLTRB(-7, 0, 0, 0),
-                    itemBuilder: (item) {
-                      return AppText.titleMedium(item?.title ?? '');
+                    suggestionsCallback: (pattern) {
+                      final available = m.usedFlags == null
+                          ? state.flags
+                          : state.flags
+                                .where(
+                                  (e) => !m.usedFlags!.any(
+                                    (f) => f.id != null && f.id == e.id,
+                                  ),
+                                )
+                                .toList();
+                      final q = pattern.toLowerCase();
+                      return available
+                          .where(
+                            (e) => (e.title ?? '').toLowerCase().contains(q),
+                          )
+                          .toList();
                     },
+                    itemBuilder: (context, item) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: AppText.titleMedium(item.title ?? ''),
+                    ),
+                    onSelected: widget.isReadOnly
+                        ? (item) {}
+                        : (item) {
+                            setState(() {
+                              m.flagType = item;
+                              flagSearchController.text = item.title ?? '';
+                            });
+                          },
                   ),
                 ),
 

@@ -22,6 +22,7 @@ class AppDropDownField<T> extends StatelessWidget {
   final double? buttonHeight;
   final double? buttonWidth;
   final T? value;
+  final void Function(bool isOpen)? onMenuStateChange;
 
   const AppDropDownField({
     super.key,
@@ -43,6 +44,7 @@ class AppDropDownField<T> extends StatelessWidget {
     this.buttonHeight,
     this.buttonWidth,
     this.value,
+    this.onMenuStateChange,
   });
 
   @override
@@ -87,10 +89,7 @@ class AppDropDownField<T> extends StatelessWidget {
             ),
           ),
           iconStyleData: IconStyleData(
-            icon: Icon(
-              Icons.arrow_drop_down,
-              color: appColors.textSecondary,
-            ),
+            icon: Icon(Icons.arrow_drop_down, color: appColors.textSecondary),
           ),
           hint: Text(
             hintText,
@@ -125,6 +124,7 @@ class AppDropDownField<T> extends StatelessWidget {
             return DropdownMenuItem<T>(value: item, child: itemBuilder(item));
           }).toList(),
           onChanged: enabled ? onChanged : null,
+          onMenuStateChange: onMenuStateChange,
         ),
       ],
     );

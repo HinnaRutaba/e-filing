@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 class SearchDropDownField<T> extends StatelessWidget {
   final T? value;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final SuggestionsCallback<T> suggestionsCallback;
   final void Function(T suggestion) onSelected;
   final Widget Function(BuildContext context, T value) itemBuilder;
@@ -20,6 +21,7 @@ class SearchDropDownField<T> extends StatelessWidget {
   final Color? fillColor;
   final bool isMandatory;
   final bool enforceTypeLimit;
+  final LayoutArchitecture? layoutArchitecture;
 
   const SearchDropDownField({
     super.key,
@@ -38,7 +40,9 @@ class SearchDropDownField<T> extends StatelessWidget {
     this.isMandatory = false,
     this.value,
     this.controller,
+    this.focusNode,
     this.enforceTypeLimit = false,
+    this.layoutArchitecture,
   });
 
   @override
@@ -65,25 +69,22 @@ class SearchDropDownField<T> extends StatelessWidget {
                 AppText.headlineSmall(' *', color: theme.colorScheme.error),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
         ],
-        DropDownSearchField<T>(
+        DropDownSearchFormField<T>(
           textFieldConfiguration: TextFieldConfiguration(
             controller: controller,
+            focusNode: focusNode,
             autofocus: false,
-            style: DefaultTextStyle.of(context).style.copyWith(
-              fontSize: 16,
-              color: appColors.textPrimary,
-            ),
+            style: DefaultTextStyle.of(
+              context,
+            ).style.copyWith(fontSize: 16, color: appColors.textPrimary),
             decoration: InputDecoration(
               enabled: enabled,
               hintText: hintText,
               suffixIcon:
                   suffixIcon ??
-                  Icon(
-                    Icons.arrow_drop_down,
-                    color: appColors.textSecondary,
-                  ),
+                  Icon(Icons.arrow_drop_down, color: appColors.textSecondary),
               border: border,
               fillColor: fillColor,
               filled: true,
@@ -99,10 +100,17 @@ class SearchDropDownField<T> extends StatelessWidget {
               ),
             ),
           ),
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           displayAllSuggestionWhenTap: true,
+          // Package defaults to always opening downward; without this the
+          // suggestions list stays below the field even when the keyboard
+          // covers that space, instead of flipping to open upward.
+          autoFlipDirection: true,
           suggestionsCallback: suggestionsCallback,
           itemBuilder: itemBuilder,
           onSuggestionSelected: onSelected,
+          layoutArchitecture: layoutArchitecture,
           suggestionsBoxDecoration: SuggestionsBoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: theme.cardColor,

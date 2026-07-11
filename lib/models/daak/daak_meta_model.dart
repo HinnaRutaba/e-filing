@@ -24,7 +24,7 @@ enum DaakStatus {
   inProgress1("In Progress", 1, Colors.blue),
   inProgress2("In Progress", 2, Colors.blue),
   inProgress3("In Progress", 3, Colors.blue),
-  forwarded("Forwarded", 4, Colors.orange),
+  inProgress4("In Progress", 4, Colors.blue),
   nfa("NFA", 5, AppColors.textSecondary),
   filePutup("In Progress (File Putup)", 6, AppColors.secondary),
   disposedOff("Disposed Off", 7, Colors.red);

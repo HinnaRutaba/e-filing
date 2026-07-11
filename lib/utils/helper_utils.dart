@@ -53,6 +53,10 @@ class HelperUtils {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
   }
 
+  static bool isKeyboardOpen(BuildContext context) {
+    return MediaQuery.viewInsetsOf(context).bottom > 0;
+  }
+
   static String firstTwoLetters(String str) {
     if (str.isEmpty) return '';
 

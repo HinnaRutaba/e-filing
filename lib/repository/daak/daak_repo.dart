@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_interface.dart';
@@ -346,6 +348,49 @@ class DaakRepo extends DaakInterface {
 
       await dioClient.post(
         url: daakNFAUrl(daakId),
+        options: await options(authRequired: true),
+        formData: formData,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DaakDepartmentsModel> fetchCreateFormMeta(int desId) async {
+    try {
+      Map<String, dynamic> data = await dioClient.get(
+        url: getDepertmentsUrl(desId),
+        options: await options(authRequired: true),
+      );
+
+      return DaakDepartmentsModel.fromJson(data['data']);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> scanDaak(CreateDaakModel model) async {
+    try {
+      if (model.incomingScan == null) {
+        throw Exception("Scanned letter is required");
+      }
+
+      final FormData formData = FormData.fromMap(model.toJson());
+
+      formData.files.add(
+        MapEntry(
+          CreateDaakSchema.incomingScan,
+          await MultipartFile.fromFile(
+            model.incomingScan!.path,
+            filename: model.incomingScan!.name,
+          ),
+        ),
+      );
+
+      await dioClient.post(
+        url: scanDaakUrl,
         options: await options(authRequired: true),
         formData: formData,
       );

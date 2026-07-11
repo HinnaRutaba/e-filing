@@ -291,6 +291,57 @@ class FileAttachmentModel {
   String? get attachmentFlag =>
       flagAttach == null ? null : "${NetworkBase.base}/$flagAttach";
 
+  /// Extracts just the file name from a stored path like
+  /// `public/upload/filename.docx`.
+  String? get cleanName => flagAttach?.split('/').last;
+
+  String? get _extension {
+    final name = cleanName;
+    if (name == null || !name.contains('.')) return null;
+    return name.split('.').last.toLowerCase();
+  }
+
+  /// Broad category of the attachment, derived from its extension.
+  String get fileType {
+    switch (_extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+      case 'bmp':
+      case 'svg':
+      case 'heic':
+        return 'image';
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+      case 'webm':
+      case 'flv':
+        return 'video';
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'm4a':
+      case 'aac':
+        return 'audio';
+      case 'pdf':
+        return 'pdf';
+      case 'doc':
+      case 'docx':
+        return 'word';
+      case 'xls':
+      case 'xlsx':
+        return 'excel';
+      case 'ppt':
+      case 'pptx':
+        return 'powerpoint';
+      default:
+        return 'other';
+    }
+  }
+
   factory FileAttachmentModel.fromJson(Map<String, dynamic> json) {
     return FileAttachmentModel(
       flagAttach: json[FileAttachmentSchema.flagAttach] as String?,

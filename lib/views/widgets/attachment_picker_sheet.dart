@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/views/widgets/multi_photo_capture_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -79,7 +80,8 @@ Future<XFile?> showAttachmentPickerSheet(BuildContext context) async {
     return files.isNotEmpty ? files.first : null;
   }
 
-  final images = await filePicker.imagePick(ImageSource.camera);
-  if (images.isEmpty) return null;
-  return filePicker.imageToPdf(images.first);
+  if (!context.mounted) return null;
+  final images = await showMultiPhotoCaptureScreen(context);
+  if (images == null || images.isEmpty) return null;
+  return filePicker.imagesToPdf(images);
 }

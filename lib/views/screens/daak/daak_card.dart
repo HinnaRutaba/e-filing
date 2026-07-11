@@ -32,7 +32,9 @@ class DaakCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: appColors.secondaryLight.withValues(alpha: isDark ? 0.25 : 0.18),
+          color: appColors.secondaryLight.withValues(
+            alpha: isDark ? 0.25 : 0.18,
+          ),
           width: 0.8,
         ),
         boxShadow: [
@@ -103,11 +105,7 @@ class DaakCard extends StatelessWidget {
                     Builder(
                       builder: (context) {
                         final pillBg = isDark
-                            ? Color.lerp(
-                                    statusColor,
-                                    appColors.accent,
-                                    0.75,
-                                  ) ??
+                            ? Color.lerp(statusColor, appColors.accent, 0.75) ??
                                   statusColor
                             : theme.cardColor;
                         final pillFg = isDark
@@ -129,11 +127,7 @@ class DaakCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.tag_rounded,
-                                size: 12,
-                                color: pillFg,
-                              ),
+                              Icon(Icons.tag_rounded, size: 12, color: pillFg),
                               const SizedBox(width: 4),
                               Text(
                                 "${daak.diaryNo}",
@@ -206,6 +200,7 @@ class DaakCard extends StatelessWidget {
                                     PdfViewer(
                                       url: daak.incomingScanUrl,
                                       fullScreen: false,
+                                      showPageNumber: false,
                                     ),
                                     if (!noDetails)
                                       Align(
@@ -296,7 +291,7 @@ class DaakCard extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         );
-                        return daak.status == DaakStatus.forwarded
+                        return daak.status == DaakStatus.inProgress4
                             ? RichText(
                                 text: TextSpan(
                                   children: [
@@ -315,13 +310,13 @@ class DaakCard extends StatelessWidget {
                                     ),
                                     TextSpan(text: ' on ', style: labelStyle),
                                     TextSpan(
-                                      text: DateTimeHelper
-                                          .dateFormatddMMYYWithTime(
-                                        daak
-                                            .forwardDetails
-                                            ?.lastForward
-                                            ?.forwardedAt,
-                                      ),
+                                      text:
+                                          DateTimeHelper.dateFormatddMMYYWithTime(
+                                            daak
+                                                .forwardDetails
+                                                ?.lastForward
+                                                ?.forwardedAt,
+                                          ),
                                       style: valueStyle,
                                     ),
                                   ],
@@ -340,10 +335,10 @@ class DaakCard extends StatelessWidget {
                                     ),
                                     TextSpan(text: ' on ', style: labelStyle),
                                     TextSpan(
-                                      text: DateTimeHelper
-                                          .dateFormatddMMYYWithTime(
-                                        daak.receivedAt,
-                                      ),
+                                      text:
+                                          DateTimeHelper.dateFormatddMMYYWithTime(
+                                            daak.receivedAt,
+                                          ),
                                       style: valueStyle,
                                     ),
                                   ],

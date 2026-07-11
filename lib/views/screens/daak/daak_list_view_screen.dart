@@ -1,6 +1,7 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
+import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/typing_detector.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
@@ -26,7 +27,8 @@ class DaakListViewScreen extends ConsumerStatefulWidget {
   ConsumerState<DaakListViewScreen> createState() => _DaakListViewScreenState();
 }
 
-class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
+class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
+    with RouteAware {
   final TextEditingController _searchController = TextEditingController();
   final TypingDetector _typingDetector = TypingDetector(milliseconds: 500);
 
@@ -39,9 +41,31 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Reload only if something actually changed while we were away (e.g.
+  // after forwarding, marking NFA, or disposing off a daak from the details
+  // screen or Daak Desk), so the list reflects the change even if it drops
+  // to zero items. A plain back navigation with no action taken should not
+  // trigger a refetch/loading flicker.
+  @override
+  void didPopNext() {
+    if (ref.read(daakController.notifier).consumePendingListRefresh()) {
+      ref.read(daakController.notifier).loadData(isInitailLoad: true);
+    }
   }
 
   @override

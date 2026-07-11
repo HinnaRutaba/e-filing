@@ -18,7 +18,7 @@ import 'package:efiling_balochistan/views/screens/files/preview_file.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
-import 'package:efiling_balochistan/views/widgets/text_fields/app_drop_down_field.dart';
+import 'package:efiling_balochistan/views/widgets/text_fields/search_drop_down_field.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +40,12 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
   final TextEditingController partFileNo = TextEditingController();
   final TextEditingController fileMovementNo = TextEditingController();
   final TextEditingController subject = TextEditingController();
+  final TextEditingController fileTypeSearchController =
+      TextEditingController();
+  final TextEditingController tagSearchController = TextEditingController();
+  final TextEditingController sectionSearchController = TextEditingController();
+  final TextEditingController forwardToSearchController =
+      TextEditingController();
 
   final HtmlEditorController quillEditorController = HtmlEditorController();
   bool showHtmlEditor = true;
@@ -120,21 +126,35 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: AppDropDownField<FileTypeModel>(
-                          items: fileTypes,
-                          onChanged: (item) {
-                            setState(() {
-                              selectedFileType = item;
-                            });
-                          },
+                        child: SearchDropDownField<FileTypeModel>(
+                          controller: fileTypeSearchController,
                           labelText: "File Type",
                           hintText: "Select file type",
                           prefix: state.loadingNewFileData ? fieldLoader : null,
-                          itemBuilder: (item) {
-                            return AppText.titleMedium(item?.title ?? '');
+                          suggestionsCallback: (pattern) {
+                            final q = pattern.toLowerCase();
+                            return fileTypes
+                                .where(
+                                  (e) =>
+                                      (e.title ?? '').toLowerCase().contains(q),
+                                )
+                                .toList();
                           },
-                          validator: (item) {
-                            if (selectedFileType == null || item == null) {
+                          itemBuilder: (context, item) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: AppText.titleMedium(item.title ?? ''),
+                          ),
+                          onSelected: (item) {
+                            setState(() {
+                              selectedFileType = item;
+                              fileTypeSearchController.text = item.title ?? '';
+                            });
+                          },
+                          validator: (_) {
+                            if (selectedFileType == null) {
                               return 'Please select a file type';
                             }
                             return null;
@@ -143,21 +163,35 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: AppDropDownField<TagModel>(
-                          items: tags,
-                          onChanged: (item) {
-                            setState(() {
-                              selectedTag = item;
-                            });
-                          },
+                        child: SearchDropDownField<TagModel>(
+                          controller: tagSearchController,
                           labelText: "Tag",
                           hintText: "Select tag",
-                          itemBuilder: (item) {
-                            return AppText.titleMedium(item?.title ?? '');
-                          },
                           prefix: state.loadingNewFileData ? fieldLoader : null,
-                          validator: (item) {
-                            if (selectedTag == null || item == null) {
+                          suggestionsCallback: (pattern) {
+                            final q = pattern.toLowerCase();
+                            return tags
+                                .where(
+                                  (e) =>
+                                      (e.title ?? '').toLowerCase().contains(q),
+                                )
+                                .toList();
+                          },
+                          itemBuilder: (context, item) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: AppText.titleMedium(item.title ?? ''),
+                          ),
+                          onSelected: (item) {
+                            setState(() {
+                              selectedTag = item;
+                              tagSearchController.text = item.title ?? '';
+                            });
+                          },
+                          validator: (_) {
+                            if (selectedTag == null) {
                               return 'Please select a tag';
                             }
                             return null;
@@ -294,77 +328,149 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                     children: [
                       header(Icons.work_history_outlined, "Section"),
                       const SizedBox(height: 16),
-                      AppDropDownField<SectionModel>(
-                        items: state.sections,
-                        onChanged: (item) async {
+                      SearchDropDownField<SectionModel>(
+                        controller: sectionSearchController,
+                        labelText: "Section",
+                        hintText: "Select Section",
+                        prefix: state.loadingSections ? fieldLoader : null,
+                        suggestionsCallback: (pattern) {
+                          final q = pattern.toLowerCase();
+                          return state.sections
+                              .where(
+                                (e) =>
+                                    (e.title ?? '').toLowerCase().contains(q),
+                              )
+                              .toList();
+                        },
+                        itemBuilder: (context, item) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: AppText.titleMedium(item.title ?? ''),
+                        ),
+                        onSelected: (item) async {
                           setState(() {
                             selectedSection = item;
+                            sectionSearchController.text = item.title ?? '';
                           });
                           forwardToList = await ref
                               .read(filesController.notifier)
-                              .getForwardTo(item?.id);
+                              .getForwardTo(item.id);
                           setState(() {
                             if (forwardToList != null &&
                                 forwardToList?.length == 1) {
                               forwardTo = forwardToList?.first;
+                              forwardToSearchController.text =
+                                  forwardTo?.userTitle ?? '';
                             }
                           });
                         },
-                        labelText: "Section",
-                        hintText: "Select Section",
-                        prefix: state.loadingSections ? fieldLoader : null,
-                        itemBuilder: (item) {
-                          return AppText.titleMedium(item?.title ?? '');
-                        },
-                        validator: (item) {
-                          if (selectedSection == null || item == null) {
+                        validator: (_) {
+                          if (selectedSection == null) {
                             return 'Please select a value';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 12),
-                      AppDropDownField<ForwardToModel>(
-                        items: forwardToList ?? [],
-                        onChanged: (item) async {
-                          setState(() {
-                            forwardTo = item;
-                          });
-                        },
+                      SearchDropDownField<ForwardToModel>(
+                        controller: forwardToSearchController,
                         labelText: "Forward this file to",
                         hintText: "Forward To",
-                        buttonHeight: 40,
                         prefix: state.loadingSections ? fieldLoader : null,
-                        itemBuilder: (item) {
-                          return Column(
+                        suggestionsCallback: (pattern) {
+                          final q = pattern.toLowerCase();
+                          return (forwardToList ?? [])
+                              .where(
+                                (e) => (e.userTitle ?? '')
+                                    .toLowerCase()
+                                    .contains(q),
+                              )
+                              .toList();
+                        },
+                        itemBuilder: (context, item) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              AppText.titleSmall(item?.userTitle ?? ''),
-                              AppText.labelLarge(item?.designationTitle ?? ''),
-                            ],
-                          );
-                        },
-                        selectedItemBuilder: (ctx) {
-                          return forwardToList?.map((item) {
-                                return SizedBox(
-                                  height: 48, // 👈 adjust so both lines fit
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      AppText.titleSmall(item.userTitle ?? ''),
-                                      AppText.labelLarge(
-                                        item.designationTitle ?? '',
-                                      ),
-                                    ],
+                              AppText.titleSmall(item.userTitle ?? ''),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow[400],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.yellow[600]!.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    width: 0.5,
                                   ),
-                                );
-                              }).toList() ??
-                              [];
+                                ),
+                                child: AppText.labelSmall(
+                                  item.designationTitle ?? '',
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        onSelected: (item) {
+                          setState(() {
+                            forwardTo = item;
+                            forwardToSearchController.text =
+                                item.userTitle ?? '';
+                          });
                         },
-                        validator: (item) {
-                          if (forwardTo == null || item == null) {
+                        suffixIcon:
+                            (forwardTo != null &&
+                                (forwardTo!.designationTitle ?? '').isNotEmpty)
+                            ? Container(
+                                width: 120,
+                                padding: const EdgeInsets.only(
+                                  left: 8,
+                                  right: 8,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.yellow[400],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.yellow[600]!.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      child: AppText.labelSmall(
+                                        forwardTo!.designationTitle ?? '',
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        validator: (_) {
+                          if (forwardTo == null) {
                             return 'Please select a value';
                           }
                           return null;
@@ -555,7 +661,9 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: HelperUtils.isKeyboardOpen(context) ? 240 : 24,
+                  ),
                 ],
               ),
             ),

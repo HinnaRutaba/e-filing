@@ -26,17 +26,9 @@ import 'package:uuid/uuid.dart';
 class FilePickerService {
   final picker = ImagePicker();
 
-  static const List<String> imageExt = [
-    'jpg',
-    'jpeg',
-    'png',
-  ];
+  static const List<String> imageExt = ['jpg', 'jpeg', 'png'];
 
-  static const List<String> videoExt = [
-    'mp4',
-    'avi',
-    'mov',
-  ];
+  static const List<String> videoExt = ['mp4', 'avi', 'mov'];
 
   static const List<String> allowedExtensions = [
     'mp3',
@@ -69,7 +61,7 @@ class FilePickerService {
     'ppt',
     'pptx',
     'txt',
-    'csv'
+    'csv',
   ];
 
   Future<bool> checkPermission(Permission perm) async {
@@ -97,14 +89,17 @@ class FilePickerService {
   //   return false;
   // }
 
-  Future<List<XFile>> imagePick(ImageSource source,
-      {bool isMultiImage = false}) async {
+  Future<List<XFile>> imagePick(
+    ImageSource source, {
+    bool isMultiImage = false,
+  }) async {
     List<XFile> images = [];
     final ImagePicker picker = ImagePicker();
     if (isMultiImage) {
       try {
-        List<XFile>? pickedFiles =
-            await picker.pickMultiImage(imageQuality: 35);
+        List<XFile>? pickedFiles = await picker.pickMultiImage(
+          imageQuality: 35,
+        );
         if (pickedFiles.isNotEmpty) {
           images.addAll(pickedFiles);
         }
@@ -127,9 +122,10 @@ class FilePickerService {
     return images;
   }
 
-  Future<List<XFile>> pickFiles(
-      {List<String> allowedExtensions = const ['pdf'],
-      bool allowMultiple = false}) async {
+  Future<List<XFile>> pickFiles({
+    List<String> allowedExtensions = const ['pdf'],
+    bool allowMultiple = false,
+  }) async {
     List<XFile> picked = [];
     try {
       EasyLoading.show(status: "Selecting files...");
@@ -206,7 +202,8 @@ class FilePickerService {
 
       if (validFiles.length != files.length) {
         Toast.error(
-            message: "Some files exceeded the 60MB limit and were not added.");
+          message: "Some files exceeded the 60MB limit and were not added.",
+        );
       }
 
       await Future.delayed(const Duration(milliseconds: 200));
@@ -236,34 +233,58 @@ class FilePickerService {
     return null;
   }
 
-  Future<XFile?> imageToPdf(XFile image) async {
+  Future<XFile?> imageToPdf(
+    XFile image, {
+    int maxSizeBytes = 10 * 1024 * 1024,
+  }) => imagesToPdf([image], maxSizeBytes: maxSizeBytes);
+
+  /// Builds a single PDF with one page per image, each page sized to match
+  /// that image's dimensions. Returns null and shows an error toast if the
+  /// resulting PDF exceeds [maxSizeBytes] (default 10MB).
+  Future<XFile?> imagesToPdf(
+    List<XFile> images, {
+    int maxSizeBytes = 10 * 1024 * 1024,
+  }) async {
+    if (images.isEmpty) return null;
     try {
-      final bytes = await image.readAsBytes();
-      final decoded = img.decodeImage(bytes);
-      if (decoded == null) return null;
-
-      final pdfImage = pw.MemoryImage(bytes);
-      final pageFormat = PdfPageFormat(
-        decoded.width.toDouble(),
-        decoded.height.toDouble(),
-      );
-
       final doc = pw.Document();
-      doc.addPage(
-        pw.Page(
-          pageFormat: pageFormat,
-          margin: pw.EdgeInsets.zero,
-          build: (context) => pw.Image(pdfImage, fit: pw.BoxFit.fill),
-        ),
-      );
+
+      for (final image in images) {
+        final bytes = await image.readAsBytes();
+        final decoded = img.decodeImage(bytes);
+        if (decoded == null) continue;
+
+        final pdfImage = pw.MemoryImage(bytes);
+        final pageFormat = PdfPageFormat(
+          decoded.width.toDouble(),
+          decoded.height.toDouble(),
+        );
+
+        doc.addPage(
+          pw.Page(
+            pageFormat: pageFormat,
+            margin: pw.EdgeInsets.zero,
+            build: (context) => pw.Image(pdfImage, fit: pw.BoxFit.fill),
+          ),
+        );
+      }
+
+      final pdfBytes = await doc.save();
+      if (pdfBytes.length > maxSizeBytes) {
+        Toast.error(
+          message:
+              "Scanned PDF exceeds the ${bytesToMB(maxSizeBytes).toStringAsFixed(0)}MB limit.",
+        );
+        return null;
+      }
 
       final tempDir = await getTemporaryDirectory();
       final fileName = '${const Uuid().v4()}.pdf';
       final outFile = File(p.join(tempDir.path, fileName));
-      await outFile.writeAsBytes(await doc.save());
+      await outFile.writeAsBytes(pdfBytes);
       return XFile(outFile.path, name: fileName);
     } catch (e, s) {
-      print('Error converting image to PDF: $e\n$s');
+      print('Error converting images to PDF: $e\n$s');
       return null;
     }
   }
@@ -279,7 +300,10 @@ class FilePickerService {
   }
 
   Future<void> downloadFile(
-      BuildContext context, fileUrl, String fileName) async {
+    BuildContext context,
+    fileUrl,
+    String fileName,
+  ) async {
     try {
       // For Android 10+ (API 29+), storage permission is not needed for app-specific directories
       // or the Downloads folder. Only request permission for older Android versions.
@@ -299,7 +323,8 @@ class FilePickerService {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
-                        'Storage permission is required to download files'),
+                      'Storage permission is required to download files',
+                    ),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -311,7 +336,8 @@ class FilePickerService {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text(
-                      'Storage permission is permanently denied. Please enable it in app settings.'),
+                    'Storage permission is permanently denied. Please enable it in app settings.',
+                  ),
                   backgroundColor: Colors.red,
                   action: SnackBarAction(
                     label: 'Settings',
@@ -351,7 +377,6 @@ class FilePickerService {
 
       // Prepare file path
       final filePath = '${eFilingDir.path}/$fileName';
-  
 
       // Show downloading snackbar
       if (context.mounted) {
@@ -373,17 +398,15 @@ class FilePickerService {
             content: Text('Downloaded $fileName to E-Filing folder'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
-              label: 'Open Folder',
+              label: 'Open File',
               textColor: Colors.white,
               onPressed: () async {
-                final folderPath = File(filePath).parent.path;
-                final result = await OpenFile.open(folderPath);
+                final result = await OpenFile.open(filePath);
                 if (result.type != ResultType.done) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content:
-                            Text('Could not open folder: ${result.message}'),
+                        content: Text('Could not open file: ${result.message}'),
                         backgroundColor: Colors.orange,
                       ),
                     );

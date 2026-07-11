@@ -8,6 +8,7 @@ import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_approval_desk.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
+import 'package:efiling_balochistan/views/screens/daak/scan_daak_screen.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_shell.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/action_required_files_screen.dart';
@@ -258,6 +259,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const DaakListViewScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.scanDaak,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const ScanDaakScreen(),
       ),
     ),
     GoRoute(

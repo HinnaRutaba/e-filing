@@ -2,8 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
@@ -73,6 +76,19 @@ class DaakController extends BaseControllerState<DaakState> {
   DaakController(super.state, super.ref);
 
   DaakRepo get repo => ref.read(daakRepo);
+
+  // Set whenever an action (forward/NFA/dispose) mutates data, so the list
+  // screen's RouteAware callback can refresh only when something actually
+  // changed instead of on every plain back navigation.
+  bool _pendingListRefresh = false;
+
+  void markDataChanged() => _pendingListRefresh = true;
+
+  bool consumePendingListRefresh() {
+    final pending = _pendingListRefresh;
+    _pendingListRefresh = false;
+    return pending;
+  }
 
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
@@ -182,13 +198,18 @@ class DaakController extends BaseControllerState<DaakState> {
     try {
       int? desId = ref.read(authController).currentDesignation?.userDesgId;
       DaakModel? daak;
-      if (status == DaakStatus.inProgress1 ||
-          status == DaakStatus.inProgress2 ||
-          status == DaakStatus.inProgress3) {
-        daak = await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
-      } else if (status == DaakStatus.forwarded) {
+      if (status == DaakStatus.inProgress4 &&
+          state.selectedFilter == DaakViewFilter.forwarded) {
         daak = await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);
+      } else if (status == DaakStatus.inProgress1 ||
+          status == DaakStatus.inProgress2 ||
+          status == DaakStatus.inProgress3 ||
+          status == DaakStatus.inProgress4) {
+        daak = await repo.fetchDaakInboxShow(daakId: daakId, desId: desId);
       }
+      // else if (status == DaakStatus.inProgress4) {
+      //   daak = await repo.fetchDaakFwdShow(daakId: daakId, desId: desId);
+      // }
       return daak;
     } catch (e) {
       Toast.error(message: handleException(e));
@@ -246,6 +267,8 @@ class DaakController extends BaseControllerState<DaakState> {
         supportingAttachment: supportingAttachment,
       );
       Toast.success(message: "Daak forwarded successfully");
+      markDataChanged();
+      await setViewFilter(DaakViewFilter.inbox);
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();
@@ -277,6 +300,7 @@ class DaakController extends BaseControllerState<DaakState> {
         issuedLetter: issuedLetter,
       );
       Toast.success(message: "Daak disposed off successfully");
+      markDataChanged();
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();
@@ -306,11 +330,45 @@ class DaakController extends BaseControllerState<DaakState> {
         supportingAttachment: supportingAttachment,
       );
       Toast.success(message: "Daak marked as NFA successfully");
+      markDataChanged();
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();
       } else {
         RouteHelper.pop(DaakViewFilter.nfa);
+      }
+    } catch (e, s) {
+      log("ERRR_____${e}______$s");
+      EasyLoading.dismiss();
+      Toast.error(message: handleException(e));
+    }
+  }
+
+  Future<DaakDepartmentsModel?> fetchCreateFormMeta() async {
+    try {
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      if (desId == null) return null;
+      return await repo.fetchCreateFormMeta(desId);
+    } catch (e) {
+      Toast.error(message: handleException(e));
+      return null;
+    }
+  }
+
+  Future<void> scanDaak({
+    required CreateDaakModel model,
+    VoidCallback? onSuccess,
+  }) async {
+    try {
+      EasyLoading.show();
+      int? desId = ref.read(authController).currentDesignation?.userDesgId;
+      await repo.scanDaak(model.copyWith(userDesgId: desId));
+      Toast.success(message: "Daak scanned successfully");
+      EasyLoading.dismiss();
+      if (onSuccess != null) {
+        onSuccess();
+      } else {
+        RouteHelper.navigateTo(Routes.daak);
       }
     } catch (e, s) {
       log("ERRR_____${e}______$s");
