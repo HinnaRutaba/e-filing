@@ -50,11 +50,15 @@ class FileDetailsScreen extends ConsumerStatefulWidget {
   ConsumerState<FileDetailsScreen> createState() => _FileDetailsScreenState();
 }
 
-class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
+class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final ScrollController scrollController = ScrollController();
   final GlobalKey remarksKey = GlobalKey();
+  final GlobalKey sectionDropdownKey = GlobalKey();
   final GlobalKey forwardDropdownKey = GlobalKey();
+  final FocusNode sectionFocusNode = FocusNode();
+  final FocusNode forwardToFocusNode = FocusNode();
   final TextEditingController sectionSearchController = TextEditingController();
   final TextEditingController forwardToSearchController =
       TextEditingController();
@@ -128,6 +132,31 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
     }
   }
 
+  void _onSectionFocusChanged() {
+    if (sectionFocusNode.hasFocus) _scrollFieldIntoView(sectionDropdownKey);
+  }
+
+  void _onForwardToFocusChanged() {
+    if (forwardToFocusNode.hasFocus) _scrollFieldIntoView(forwardDropdownKey);
+  }
+
+  // Keeps a focused field visible above the keyboard. Also re-run from
+  // didChangeMetrics since focus and the keyboard's viewInsets update
+  // aren't synchronous — the keyboard is often still animating in when
+  // the field first gains focus.
+  void _scrollFieldIntoView(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fieldContext = key.currentContext;
+      if (fieldContext == null || !fieldContext.mounted) return;
+      Scrollable.ensureVisible(
+        fieldContext,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   initAttachment() {
     attachments = [FlagAndAttachmentModel()];
   }
@@ -166,10 +195,31 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
   @override
   void initState() {
     AIAgent().resetMessages();
+    WidgetsBinding.instance.addObserver(this);
+    sectionFocusNode.addListener(_onSectionFocusChanged);
+    forwardToFocusNode.addListener(_onForwardToFocusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       fetchData();
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    sectionFocusNode.removeListener(_onSectionFocusChanged);
+    forwardToFocusNode.removeListener(_onForwardToFocusChanged);
+    sectionFocusNode.dispose();
+    forwardToFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (sectionFocusNode.hasFocus) _scrollFieldIntoView(sectionDropdownKey);
+    if (forwardToFocusNode.hasFocus) {
+      _scrollFieldIntoView(forwardDropdownKey);
+    }
   }
 
   @override
@@ -287,530 +337,623 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                         ),
                       ),
                     ],
-                    mainContent: SingleChildScrollView(
-                      controller: scrollController,
-                      physics: const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics(),
-                      ),
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      padding: const EdgeInsets.all(16),
-                      child: Form(
-                        key: formKey,
-                        child: Column(
-                          children: [
-                            header(Icons.text_snippet_outlined, "File"),
-                            const SizedBox(height: 16),
-                            PreviewFile(content: details?.content),
-                            const SizedBox(height: 24),
-                            if (!viewOnly)
-                              Column(
-                                key: remarksKey,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  header(
-                                    Icons.short_text_outlined,
-                                    "Add Remarks",
+                    mainContent: LayoutBuilder(
+                      builder: (context, viewportConstraints) {
+                        return SingleChildScrollView(
+                          controller: scrollController,
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: const EdgeInsets.all(16),
+                          child: Form(
+                            key: formKey,
+                            child: Column(
+                              children: [
+                                header(Icons.text_snippet_outlined, "File"),
+                                const SizedBox(height: 16),
+                                PreviewFile(content: details?.content),
+                                const SizedBox(height: 24),
+                                if (!viewOnly)
+                                  Column(
+                                    key: remarksKey,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      header(
+                                        Icons.short_text_outlined,
+                                        "Add Remarks",
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: AppColors.secondaryLight
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            color: AppColors.white,
+                                          ),
+                                          child: showHtmlEditor
+                                              ? HtmlEditor(
+                                                  controller:
+                                                      quillEditorController,
+                                                  initialHtml: '',
+                                                  hint: "...",
+                                                  height: 270,
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          if (details?.content != null)
+                                            AppOutlineButton(
+                                              onPressed: () {
+                                                RouteHelper.push(
+                                                  Routes.fileChat(
+                                                    details!
+                                                        .content
+                                                        .first
+                                                        .fileId,
+                                                  ),
+                                                  extra: details,
+                                                );
+                                              },
+                                              text: "Start Chat",
+                                              icon: Icons.chat,
+                                              color: AppColors.primaryDark,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                            ),
+                                          const SizedBox(width: 12),
+                                          AppOutlineButton(
+                                            onPressed: () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                constraints: BoxConstraints(
+                                                  maxHeight:
+                                                      MediaQuery.sizeOf(
+                                                        context,
+                                                      ).height *
+                                                      0.9,
+                                                ),
+                                                showDragHandle: false,
+                                                isScrollControlled: true,
+                                                backgroundColor:
+                                                    AppColors.background,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                            topLeft:
+                                                                Radius.circular(
+                                                                  16,
+                                                                ),
+                                                            topRight:
+                                                                Radius.circular(
+                                                                  16,
+                                                                ),
+                                                          ),
+                                                    ),
+                                                builder: (BuildContext context) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.fromLTRB(
+                                                          8,
+                                                          8,
+                                                          8,
+                                                          0,
+                                                        ),
+                                                    child: AIAgentChatScreen(
+                                                      file: details,
+                                                      suggestResponse: true,
+                                                    ),
+                                                  );
+                                                },
+                                              ).then((text) {
+                                                if (text != null) {
+                                                  quillEditorController.setText(
+                                                    text,
+                                                  );
+                                                  scrollToRemarks();
+                                                }
+                                              });
+                                            },
+                                            text: "Draft with AI",
+                                            icon: Icons.drafts_rounded,
+                                            color: AppColors.secondary,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Divider(color: Colors.grey),
+                                      //const SizedBox(height: 12),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
+                                // if (details?.attachments != null &&
+                                //     details!.attachments.isNotEmpty)
+                                //   ReadOnlyFlagAttachmentList(
+                                //     header: header(Icons.flag_outlined, "Flags"),
+                                //     data: details!.attachments,
+                                //   ),
+                                if (!viewOnly)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 24),
+                                      if (widget.fileType ==
+                                          FileType.actionRequired) ...[
+                                        header(Icons.pending_actions, "Action"),
+                                        const SizedBox(height: 16),
+                                        AppText.bodyMedium(
+                                          "Archive File with actions below or Forward to another user if necessary",
+                                        ),
+                                        const SizedBox(height: 8),
+                                        SelectionChips<FileAction>(
+                                          chipColor: AppColors.secondaryDark,
+                                          menu: FileAction.values
+                                              .map(
+                                                (e) => SelectionChipMenuItem(
+                                                  label: e.label,
+                                                  value: e,
+                                                ),
+                                              )
+                                              .toList(),
+                                          initialSelected: FileAction.values
+                                              .indexOf(actionNotifier.value),
+                                          onSelected: (index, FileAction val) async {
+                                            // Show loading
+                                            isLoadingFlagsNotifier.value = true;
+
+                                            try {
+                                              final controller = ref.read(
+                                                filesController.notifier,
+                                              );
+                                              final newFlags = await controller
+                                                  .getFlags(
+                                                    onlyFinal:
+                                                        val !=
+                                                        FileAction.forward,
+                                                  );
+
+                                              // Update notifiers
+                                              actionNotifier.value = val;
+                                              allFlags = newFlags;
+
+                                              // Reset attachments; dropdown options
+                                              // are recomputed per row on build.
+                                              setState(() {
+                                                attachments = [
+                                                  FlagAndAttachmentModel(),
+                                                ];
+                                              });
+                                              scrollToForwardDropdown();
+                                            } catch (e) {
+                                              Toast.error(
+                                                message: "Failed to load flags",
+                                              );
+                                            } finally {
+                                              isLoadingFlagsNotifier.value =
+                                                  false;
+                                            }
+                                          },
+                                        ),
+                                        const SizedBox(height: 16),
+                                      ],
+                                      if (widget.fileType == FileType.pending ||
+                                          (widget.fileType ==
+                                                  FileType.actionRequired &&
+                                              actionNotifier.value ==
+                                                  FileAction.forward) ||
+                                          (widget.fileType ==
+                                                  FileType.archived &&
+                                              reOpenedFile)) ...[
+                                        Builder(
+                                          builder: (context) {
+                                            final sectionDropdown =
+                                                SearchDropDownField<
+                                                  SectionModel
+                                                >(
+                                                  key: sectionDropdownKey,
+                                                  focusNode: sectionFocusNode,
+                                                  controller:
+                                                      sectionSearchController,
+                                                  labelText: "Section",
+                                                  hintText: "Select Section",
+                                                  prefix: state.loadingSections
+                                                      ? fieldLoader
+                                                      : null,
+                                                  suggestionsCallback: (pattern) {
+                                                    final q = pattern
+                                                        .toLowerCase();
+                                                    return state.sections
+                                                        .where(
+                                                          (e) => (e.title ?? '')
+                                                              .toLowerCase()
+                                                              .contains(q),
+                                                        )
+                                                        .toList();
+                                                  },
+                                                  itemBuilder:
+                                                      (
+                                                        context,
+                                                        item,
+                                                      ) => Padding(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 12,
+                                                              vertical: 10,
+                                                            ),
+                                                        child:
+                                                            AppText.titleMedium(
+                                                              item.title ?? '',
+                                                            ),
+                                                      ),
+                                                  onSelected: (item) async {
+                                                    setState(() {
+                                                      selectedSection = item;
+                                                      sectionSearchController
+                                                              .text =
+                                                          item.title ?? '';
+                                                    });
+                                                    forwardToList =
+                                                        await controller
+                                                            .getForwardTo(
+                                                              item.id,
+                                                            );
+                                                    setState(() {
+                                                      if (forwardToList !=
+                                                              null &&
+                                                          forwardToList
+                                                                  ?.length ==
+                                                              1) {
+                                                        forwardTo =
+                                                            forwardToList
+                                                                ?.first;
+                                                        forwardToSearchController
+                                                                .text =
+                                                            forwardTo
+                                                                ?.userTitle ??
+                                                            '';
+                                                      }
+                                                    });
+                                                  },
+                                                  validator: (_) {
+                                                    if (selectedSection ==
+                                                        null) {
+                                                      return 'Please select a value';
+                                                    }
+                                                    return null;
+                                                  },
+                                                );
+                                            final forwardDropdown = GestureDetector(
+                                              behavior:
+                                                  HitTestBehavior.translucent,
+
+                                              child: SearchDropDownField<ForwardToModel>(
+                                                key: forwardDropdownKey,
+                                                focusNode: forwardToFocusNode,
+                                                controller:
+                                                    forwardToSearchController,
+                                                labelText:
+                                                    "Forward this file to",
+                                                hintText: "Forward To",
+                                                prefix: state.loadingSections
+                                                    ? fieldLoader
+                                                    : null,
+                                                suggestionsCallback: (pattern) {
+                                                  final q = pattern
+                                                      .toLowerCase();
+                                                  return (forwardToList ?? [])
+                                                      .where(
+                                                        (e) =>
+                                                            (e.userTitle ?? '')
+                                                                .toLowerCase()
+                                                                .contains(q),
+                                                      )
+                                                      .toList();
+                                                },
+                                                itemBuilder: (context, item) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 10,
+                                                      ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      AppText.titleMedium(
+                                                        item.userTitle ?? '',
+                                                      ),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 6,
+                                                              vertical: 1,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors
+                                                              .yellow[400],
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: Colors
+                                                                .yellow[600]!
+                                                                .withValues(
+                                                                  alpha: 0.3,
+                                                                ),
+                                                            width: 0.5,
+                                                          ),
+                                                        ),
+                                                        child: AppText.labelSmall(
+                                                          item.designationTitle ??
+                                                              '',
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                onSelected: (item) {
+                                                  setState(() {
+                                                    forwardTo = item;
+                                                    forwardToSearchController
+                                                            .text =
+                                                        item.userTitle ?? '';
+                                                  });
+                                                },
+                                                suffixIcon:
+                                                    (forwardTo != null &&
+                                                        (forwardTo!.designationTitle ??
+                                                                '')
+                                                            .isNotEmpty)
+                                                    ? Container(
+                                                        width: 120,
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              left: 8,
+                                                              right: 8,
+                                                            ),
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        6,
+                                                                    vertical: 1,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color: Colors
+                                                                    .yellow[400],
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      8,
+                                                                    ),
+                                                                border: Border.all(
+                                                                  color: Colors
+                                                                      .yellow[600]!
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.3,
+                                                                      ),
+                                                                  width: 0.5,
+                                                                ),
+                                                              ),
+                                                              child: AppText.labelSmall(
+                                                                forwardTo!
+                                                                        .designationTitle ??
+                                                                    '',
+                                                                color: Colors
+                                                                    .black,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                fontSize: 10,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      )
+                                                    : null,
+                                                validator: (_) {
+                                                  if (forwardTo == null) {
+                                                    return 'Please select a value';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                            );
+
+                                            return Column(
+                                              children: [
+                                                header(
+                                                  Icons.work_history_outlined,
+                                                  "Forward to",
+                                                ),
+                                                const SizedBox(height: 16),
+                                                if (context.isMobile) ...[
+                                                  sectionDropdown,
+                                                  const SizedBox(height: 12),
+                                                  forwardDropdown,
+                                                ] else
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: sectionDropdown,
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: forwardDropdown,
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                      const SizedBox(height: 8),
+                                      const Divider(color: Colors.grey),
+                                      const SizedBox(height: 8),
+                                      header(
+                                        Icons.attach_file,
+                                        "Flag and Attachment",
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ListView.separated(
+                                        itemCount: attachments.length,
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        separatorBuilder: (_, i) => Divider(
+                                          height: 40,
                                           color: AppColors.secondaryLight
                                               .withValues(alpha: 0.5),
                                         ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: AppColors.white,
+                                        itemBuilder: (ctx, i) {
+                                          final model = attachments[i];
+                                          model.usedFlags = [
+                                            ...flagsUsed,
+                                            ...attachments
+                                                .where((e) => e != model)
+                                                .map((e) => e.flagType)
+                                                .whereType<FlagModel>(),
+                                          ];
+                                          return AddFlagAndAttachment(
+                                            key: ValueKey(model),
+                                            model: model,
+                                            onDelete: i == 0
+                                                ? null
+                                                : () {
+                                                    setState(
+                                                      () => attachments
+                                                          .removeAt(i),
+                                                    );
+                                                  },
+                                          );
+                                        },
                                       ),
-                                      child: showHtmlEditor
-                                          ? HtmlEditor(
-                                              controller: quillEditorController,
-                                              initialHtml: '',
-                                              hint: "...",
-                                              height: 270,
-                                            )
-                                          : const SizedBox.shrink(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      if (details?.content != null)
-                                        AppOutlineButton(
+                                      const SizedBox(height: 12),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: AppOutlineButton(
                                           onPressed: () {
-                                            RouteHelper.push(
-                                              Routes.fileChat(
-                                                details!.content.first.fileId,
-                                              ),
-                                              extra: details,
-                                            );
+                                            setState(() {
+                                              attachments.add(
+                                                FlagAndAttachmentModel(),
+                                              );
+                                            });
                                           },
-                                          text: "Start Chat",
-                                          icon: Icons.chat,
-                                          color: AppColors.primaryDark,
+                                          text: "Add More",
+                                          color: AppColors.secondary,
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 16,
                                             vertical: 12,
                                           ),
                                         ),
-                                      const SizedBox(width: 12),
-                                      AppOutlineButton(
-                                        onPressed: () {
-                                          showModalBottomSheet(
-                                            context: context,
-                                            constraints: BoxConstraints(
-                                              maxHeight:
-                                                  MediaQuery.sizeOf(
-                                                    context,
-                                                  ).height *
-                                                  0.9,
-                                            ),
-                                            showDragHandle: false,
-                                            isScrollControlled: true,
-                                            backgroundColor:
-                                                AppColors.background,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(16),
-                                                topRight: Radius.circular(16),
-                                              ),
-                                            ),
-                                            builder: (BuildContext context) {
-                                              return Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                      8,
-                                                      8,
-                                                      8,
-                                                      0,
-                                                    ),
-                                                child: AIAgentChatScreen(
-                                                  file: details,
-                                                  suggestResponse: true,
-                                                ),
-                                              );
-                                            },
-                                          ).then((text) {
-                                            if (text != null) {
-                                              quillEditorController.setText(
-                                                text,
-                                              );
-                                              scrollToRemarks();
-                                            }
-                                          });
-                                        },
-                                        text: "Draft with AI",
-                                        icon: Icons.drafts_rounded,
-                                        color: AppColors.secondary,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 12,
-                                        ),
                                       ),
+                                      const SizedBox(height: 24),
+                                      // Align(
+                                      //   alignment: Alignment.centerLeft,
+                                      //   child: Column(
+                                      //     crossAxisAlignment:
+                                      //         CrossAxisAlignment.start,
+                                      //     children: [
+                                      //       AppText.titleLarge(
+                                      //         "Your File Movement Number is:",
+                                      //         color: AppColors.secondaryDark,
+                                      //       ),
+                                      //       AppText.bodyMedium(
+                                      //           autoGeneratedFileNumber),
+                                      //     ],
+                                      //   ),
+                                      // ),
+                                      // const SizedBox(height: 24),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
-                                  const Divider(color: Colors.grey),
-                                  //const SizedBox(height: 12),
-                                ],
-                              ),
-                            // if (details?.attachments != null &&
-                            //     details!.attachments.isNotEmpty)
-                            //   ReadOnlyFlagAttachmentList(
-                            //     header: header(Icons.flag_outlined, "Flags"),
-                            //     data: details!.attachments,
-                            //   ),
-                            if (!viewOnly)
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 24),
-                                  if (widget.fileType ==
-                                      FileType.actionRequired) ...[
-                                    header(Icons.pending_actions, "Action"),
-                                    const SizedBox(height: 16),
-                                    AppText.bodyMedium(
-                                      "Archive File with actions below or Forward to another user if necessary",
-                                    ),
-                                    const SizedBox(height: 8),
-                                    SelectionChips<FileAction>(
-                                      chipColor: AppColors.secondaryDark,
-                                      menu: FileAction.values
-                                          .map(
-                                            (e) => SelectionChipMenuItem(
-                                              label: e.label,
-                                              value: e,
-                                            ),
-                                          )
-                                          .toList(),
-                                      initialSelected: FileAction.values
-                                          .indexOf(actionNotifier.value),
-                                      onSelected: (index, FileAction val) async {
-                                        // Show loading
-                                        isLoadingFlagsNotifier.value = true;
+                                AppSolidButton(
+                                  onPressed: () async {
+                                    FocusScope.of(context).unfocus();
+                                    FocusManager.instance.primaryFocus
+                                        ?.unfocus();
 
-                                        try {
-                                          final controller = ref.read(
-                                            filesController.notifier,
-                                          );
-                                          final newFlags = await controller
-                                              .getFlags(
-                                                onlyFinal:
-                                                    val != FileAction.forward,
-                                              );
-
-                                          // Update notifiers
-                                          actionNotifier.value = val;
-                                          allFlags = newFlags;
-
-                                          // Reset attachments; dropdown options
-                                          // are recomputed per row on build.
-                                          setState(() {
-                                            attachments = [
-                                              FlagAndAttachmentModel(),
-                                            ];
-                                          });
-                                          scrollToForwardDropdown();
-                                        } catch (e) {
+                                    if (widget.fileType == FileType.archived) {
+                                      if (!reOpenedFile) {
+                                        reOpenedFile = true;
+                                        fetchData();
+                                      } else {
+                                        if (!formKey.currentState!.validate())
+                                          return;
+                                        if (!allAttachmentsValid) {
                                           Toast.error(
-                                            message: "Failed to load flags",
+                                            message:
+                                                "One or more flags are missing attachments. Add a file and then try again",
                                           );
-                                        } finally {
-                                          isLoadingFlagsNotifier.value = false;
+                                          return;
                                         }
-                                      },
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                  if (widget.fileType == FileType.pending ||
-                                      (widget.fileType ==
-                                              FileType.actionRequired &&
-                                          actionNotifier.value ==
-                                              FileAction.forward) ||
-                                      (widget.fileType == FileType.archived &&
-                                          reOpenedFile)) ...[
-                                    Builder(
-                                      builder: (context) {
-                                        final sectionDropdown =
-                                            SearchDropDownField<SectionModel>(
-                                              controller:
-                                                  sectionSearchController,
-                                              labelText: "Section",
-                                              hintText: "Select Section",
-                                              prefix: state.loadingSections
-                                                  ? fieldLoader
-                                                  : null,
-                                              suggestionsCallback: (pattern) {
-                                                final q = pattern.toLowerCase();
-                                                return state.sections
-                                                    .where(
-                                                      (e) => (e.title ?? '')
-                                                          .toLowerCase()
-                                                          .contains(q),
-                                                    )
-                                                    .toList();
-                                              },
-                                              itemBuilder: (context, item) =>
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 10,
-                                                        ),
-                                                    child: AppText.titleMedium(
-                                                      item.title ?? '',
-                                                    ),
-                                                  ),
-                                              onSelected: (item) async {
-                                                setState(() {
-                                                  selectedSection = item;
-                                                  sectionSearchController.text =
-                                                      item.title ?? '';
-                                                });
-                                                forwardToList = await controller
-                                                    .getForwardTo(item.id);
-                                                setState(() {
-                                                  if (forwardToList != null &&
-                                                      forwardToList?.length ==
-                                                          1) {
-                                                    forwardTo =
-                                                        forwardToList?.first;
-                                                    forwardToSearchController
-                                                            .text =
-                                                        forwardTo?.userTitle ??
-                                                        '';
-                                                  }
-                                                });
-                                              },
-                                              validator: (_) {
-                                                if (selectedSection == null) {
-                                                  return 'Please select a value';
-                                                }
-                                                return null;
-                                              },
-                                            );
-                                        final forwardDropdown = GestureDetector(
-                                          behavior: HitTestBehavior.translucent,
-
-                                          child: SearchDropDownField<ForwardToModel>(
-                                            key: forwardDropdownKey,
-                                            controller:
-                                                forwardToSearchController,
-                                            labelText: "Forward this file to",
-                                            hintText: "Forward To",
-                                            prefix: state.loadingSections
-                                                ? fieldLoader
-                                                : null,
-                                            suggestionsCallback: (pattern) {
-                                              final q = pattern.toLowerCase();
-                                              return (forwardToList ?? [])
-                                                  .where(
-                                                    (e) => (e.userTitle ?? '')
-                                                        .toLowerCase()
-                                                        .contains(q),
-                                                  )
-                                                  .toList();
-                                            },
-                                            itemBuilder: (context, item) => Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 10,
-                                                  ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  AppText.titleMedium(
-                                                    item.userTitle ?? '',
-                                                  ),
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 6,
-                                                          vertical: 1,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.yellow[400],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
-                                                      border: Border.all(
-                                                        color: Colors
-                                                            .yellow[600]!
-                                                            .withValues(
-                                                              alpha: 0.3,
-                                                            ),
-                                                        width: 0.5,
-                                                      ),
-                                                    ),
-                                                    child: AppText.labelSmall(
-                                                      item.designationTitle ??
-                                                          '',
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 10,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            onSelected: (item) {
-                                              setState(() {
-                                                forwardTo = item;
-                                                forwardToSearchController.text =
-                                                    item.userTitle ?? '';
-                                              });
-                                            },
-                                            suffixIcon:
-                                                (forwardTo != null &&
-                                                    (forwardTo!.designationTitle ??
-                                                            '')
-                                                        .isNotEmpty)
-                                                ? Container(
-                                                    width: 120,
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          left: 8,
-                                                          right: 8,
-                                                        ),
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 6,
-                                                                vertical: 1,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors
-                                                                .yellow[400],
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                            border: Border.all(
-                                                              color: Colors
-                                                                  .yellow[600]!
-                                                                  .withValues(
-                                                                    alpha: 0.3,
-                                                                  ),
-                                                              width: 0.5,
-                                                            ),
-                                                          ),
-                                                          child: AppText.labelSmall(
-                                                            forwardTo!
-                                                                    .designationTitle ??
-                                                                '',
-                                                            color: Colors.black,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            fontSize: 10,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : null,
-                                            validator: (_) {
-                                              if (forwardTo == null) {
-                                                return 'Please select a value';
-                                              }
-                                              return null;
-                                            },
-                                          ),
-                                        );
-
-                                        return Column(
-                                          children: [
-                                            header(
-                                              Icons.work_history_outlined,
-                                              "Forward to",
-                                            ),
-                                            const SizedBox(height: 16),
-                                            if (context.isMobile) ...[
-                                              sectionDropdown,
-                                              const SizedBox(height: 12),
-                                              forwardDropdown,
-                                            ] else
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Expanded(
-                                                    child: sectionDropdown,
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Expanded(
-                                                    child: forwardDropdown,
-                                                  ),
-                                                ],
-                                              ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                  const SizedBox(height: 8),
-                                  const Divider(color: Colors.grey),
-                                  const SizedBox(height: 8),
-                                  header(
-                                    Icons.attach_file,
-                                    "Flag and Attachment",
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ListView.separated(
-                                    itemCount: attachments.length,
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    separatorBuilder: (_, i) => Divider(
-                                      height: 40,
-                                      color: AppColors.secondaryLight
-                                          .withValues(alpha: 0.5),
-                                    ),
-                                    itemBuilder: (ctx, i) {
-                                      final model = attachments[i];
-                                      model.usedFlags = [
-                                        ...flagsUsed,
-                                        ...attachments
-                                            .where((e) => e != model)
-                                            .map((e) => e.flagType)
-                                            .whereType<FlagModel>(),
-                                      ];
-                                      return AddFlagAndAttachment(
-                                        key: ValueKey(model),
-                                        model: model,
-                                        onDelete: i == 0
-                                            ? null
-                                            : () {
-                                                setState(
-                                                  () => attachments.removeAt(i),
-                                                );
-                                              },
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: AppOutlineButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          attachments.add(
-                                            FlagAndAttachmentModel(),
+                                        String text =
+                                            await quillEditorController
+                                                .getText();
+                                        if (text.trim().isEmpty) {
+                                          Toast.show(
+                                            message:
+                                                "Add remarks before you submit",
                                           );
-                                        });
-                                      },
-                                      text: "Add More",
-                                      color: AppColors.secondary,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  // Align(
-                                  //   alignment: Alignment.centerLeft,
-                                  //   child: Column(
-                                  //     crossAxisAlignment:
-                                  //         CrossAxisAlignment.start,
-                                  //     children: [
-                                  //       AppText.titleLarge(
-                                  //         "Your File Movement Number is:",
-                                  //         color: AppColors.secondaryDark,
-                                  //       ),
-                                  //       AppText.bodyMedium(
-                                  //           autoGeneratedFileNumber),
-                                  //     ],
-                                  //   ),
-                                  // ),
-                                  // const SizedBox(height: 24),
-                                ],
-                              ),
-                            AppSolidButton(
-                              onPressed: () async {
-                                FocusScope.of(context).unfocus();
-                                FocusManager.instance.primaryFocus?.unfocus();
+                                          return;
+                                        }
+                                        String spacedText = text;
+                                        controller.reopenFile(
+                                          fileId:
+                                              details!.content.first.fileId!,
+                                          content: spacedText,
+                                          forwardTo: forwardTo?.userDesgId,
+                                          sectionId: selectedSection?.id,
+                                          flags: attachments,
+                                        );
+                                      }
+                                      return;
+                                    }
 
-                                if (widget.fileType == FileType.archived) {
-                                  if (!reOpenedFile) {
-                                    reOpenedFile = true;
-                                    fetchData();
-                                  } else {
+                                    if (viewOnly) {
+                                      RouteHelper.pop();
+                                      return;
+                                    }
+
                                     if (!formKey.currentState!.validate())
                                       return;
                                     if (!allAttachmentsValid) {
@@ -820,6 +963,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       );
                                       return;
                                     }
+
                                     String text = await quillEditorController
                                         .getText();
                                     if (text.trim().isEmpty) {
@@ -829,116 +973,88 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen> {
                                       );
                                       return;
                                     }
+
                                     String spacedText = text;
-                                    controller.reopenFile(
-                                      fileId: details!.content.first.fileId!,
-                                      content: spacedText,
-                                      forwardTo: forwardTo?.userDesgId,
-                                      sectionId: selectedSection?.id,
-                                      flags: attachments,
-                                    );
-                                  }
-                                  return;
-                                }
 
-                                if (viewOnly) {
-                                  RouteHelper.pop();
-                                  return;
-                                }
+                                    bool submissionSuccess = false;
 
-                                if (!formKey.currentState!.validate()) return;
-                                if (!allAttachmentsValid) {
-                                  Toast.error(
-                                    message:
-                                        "One or more flags are missing attachments. Add a file and then try again",
-                                  );
-                                  return;
-                                }
+                                    if (widget.fileType == FileType.pending) {
+                                      try {
+                                        await controller.sendPendingFileRemarks(
+                                          fileId:
+                                              details!.content.first.fileId!,
+                                          content: spacedText,
+                                          forwardTo: forwardTo!.userDesgId!,
+                                          fileMovNo: autoGeneratedFileNumber,
+                                          lastTrackId:
+                                              details!.content.last.trackId!,
+                                          flags: attachments,
+                                        );
+                                        submissionSuccess = true;
+                                      } catch (e) {
+                                        submissionSuccess = false;
 
-                                String text = await quillEditorController
-                                    .getText();
-                                if (text.trim().isEmpty) {
-                                  Toast.show(
-                                    message: "Add remarks before you submit",
-                                  );
-                                  return;
-                                }
-
-                                String spacedText = text;
-
-                                bool submissionSuccess = false;
-
-                                if (widget.fileType == FileType.pending) {
-                                  try {
-                                    await controller.sendPendingFileRemarks(
-                                      fileId: details!.content.first.fileId!,
-                                      content: spacedText,
-                                      forwardTo: forwardTo!.userDesgId!,
-                                      fileMovNo: autoGeneratedFileNumber,
-                                      lastTrackId:
-                                          details!.content.last.trackId!,
-                                      flags: attachments,
-                                    );
-                                    submissionSuccess = true;
-                                  } catch (e) {
-                                    submissionSuccess = false;
-
-                                    Toast.error(
-                                      message: "Failed to submit file",
-                                    );
-                                  }
-                                } else if (widget.fileType ==
-                                    FileType.actionRequired) {
-                                  try {
-                                    await controller.submitFile(
-                                      fileId: details!.content.first.fileId!,
-                                      content: spacedText,
-                                      forwardTo: forwardTo?.userDesgId,
-                                      fileMovNo: autoGeneratedFileNumber,
-                                      action: actionNotifier.value,
-                                      flags: attachments,
-                                    );
-                                    submissionSuccess = true;
-                                  } catch (e) {
-                                    submissionSuccess = false;
-                                  }
-                                }
-
-                                if (submissionSuccess && mounted) {
-                                  try {
-                                    final dashboardNotifier = ref.read(
-                                      dashboardController.notifier,
-                                    );
-
-                                    await dashboardNotifier.initData();
-                                    await dashboardNotifier.fetchPendingFiles();
-
-                                    if (mounted) {
-                                      RouteHelper.pop();
+                                        Toast.error(
+                                          message: "Failed to submit file",
+                                        );
+                                      }
+                                    } else if (widget.fileType ==
+                                        FileType.actionRequired) {
+                                      try {
+                                        await controller.submitFile(
+                                          fileId:
+                                              details!.content.first.fileId!,
+                                          content: spacedText,
+                                          forwardTo: forwardTo?.userDesgId,
+                                          fileMovNo: autoGeneratedFileNumber,
+                                          action: actionNotifier.value,
+                                          flags: attachments,
+                                        );
+                                        submissionSuccess = true;
+                                      } catch (e) {
+                                        submissionSuccess = false;
+                                      }
                                     }
-                                  } catch (e) {
-                                    if (mounted) {
-                                      RouteHelper.pop();
+
+                                    if (submissionSuccess && mounted) {
+                                      try {
+                                        final dashboardNotifier = ref.read(
+                                          dashboardController.notifier,
+                                        );
+
+                                        await dashboardNotifier.initData();
+                                        await dashboardNotifier
+                                            .fetchPendingFiles();
+
+                                        if (mounted) {
+                                          RouteHelper.pop();
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          RouteHelper.pop();
+                                        }
+                                      }
                                     }
-                                  }
-                                }
-                              },
-                              text: isUnopenedArchived
-                                  ? "Reopen"
-                                  : viewOnly
-                                  ? "Close"
-                                  : "Send File",
-                              backgroundColor: AppColors.primary,
-                              width: double.infinity,
+                                  },
+                                  text: isUnopenedArchived
+                                      ? "Reopen"
+                                      : viewOnly
+                                      ? "Close"
+                                      : "Send File",
+                                  backgroundColor: AppColors.primary,
+                                  width: double.infinity,
+                                ),
+
+                                SizedBox(
+                                  height: HelperUtils.isKeyboardOpen(context)
+                                      ? 180
+                                      : 24,
+                                ),
+                              ],
                             ),
-                            SizedBox(
-                              height: HelperUtils.isKeyboardOpen(context)
-                                  ? 240
-                                  : 24,
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

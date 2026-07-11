@@ -103,6 +103,10 @@ class SearchDropDownField<T> extends StatelessWidget {
           validator: validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           displayAllSuggestionWhenTap: true,
+          // Package defaults to always opening downward; without this the
+          // suggestions list stays below the field even when the keyboard
+          // covers that space, instead of flipping to open upward.
+          autoFlipDirection: true,
           suggestionsCallback: suggestionsCallback,
           itemBuilder: itemBuilder,
           onSuggestionSelected: onSelected,

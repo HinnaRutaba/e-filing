@@ -226,7 +226,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
                 // Action section — no heading
                 if (!isForwarded)
                   Card(
-                    margin: const EdgeInsets.all(0),
+                    margin: const EdgeInsets.fromLTRB(4, 4, 4, 0),
                     elevation: 3,
                     shadowColor: appColors.shadow,
                     color: theme.cardColor,

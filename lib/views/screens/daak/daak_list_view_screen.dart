@@ -56,12 +56,16 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
     super.dispose();
   }
 
-  // Reload whenever we're navigated back to (e.g. after forwarding, marking
-  // NFA, or disposing off a daak from the details screen or Daak Desk), so
-  // the list reflects the change even if it drops to zero items.
+  // Reload only if something actually changed while we were away (e.g.
+  // after forwarding, marking NFA, or disposing off a daak from the details
+  // screen or Daak Desk), so the list reflects the change even if it drops
+  // to zero items. A plain back navigation with no action taken should not
+  // trigger a refetch/loading flicker.
   @override
   void didPopNext() {
-    ref.read(daakController.notifier).loadData(isInitailLoad: true);
+    if (ref.read(daakController.notifier).consumePendingListRefresh()) {
+      ref.read(daakController.notifier).loadData(isInitailLoad: true);
+    }
   }
 
   @override

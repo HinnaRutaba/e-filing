@@ -77,6 +77,19 @@ class DaakController extends BaseControllerState<DaakState> {
 
   DaakRepo get repo => ref.read(daakRepo);
 
+  // Set whenever an action (forward/NFA/dispose) mutates data, so the list
+  // screen's RouteAware callback can refresh only when something actually
+  // changed instead of on every plain back navigation.
+  bool _pendingListRefresh = false;
+
+  void markDataChanged() => _pendingListRefresh = true;
+
+  bool consumePendingListRefresh() {
+    final pending = _pendingListRefresh;
+    _pendingListRefresh = false;
+    return pending;
+  }
+
   Future<void> loadData({bool isInitailLoad = false}) async {
     if (isInitailLoad) state = state.copyWith(isLoading: true);
     int? desId = ref.read(authController).currentDesignation?.userDesgId;
@@ -254,6 +267,7 @@ class DaakController extends BaseControllerState<DaakState> {
         supportingAttachment: supportingAttachment,
       );
       Toast.success(message: "Daak forwarded successfully");
+      markDataChanged();
       await setViewFilter(DaakViewFilter.inbox);
       EasyLoading.dismiss();
       if (onSuccess != null) {
@@ -286,6 +300,7 @@ class DaakController extends BaseControllerState<DaakState> {
         issuedLetter: issuedLetter,
       );
       Toast.success(message: "Daak disposed off successfully");
+      markDataChanged();
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();
@@ -315,6 +330,7 @@ class DaakController extends BaseControllerState<DaakState> {
         supportingAttachment: supportingAttachment,
       );
       Toast.success(message: "Daak marked as NFA successfully");
+      markDataChanged();
       EasyLoading.dismiss();
       if (onSuccess != null) {
         onSuccess();
