@@ -47,6 +47,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   bool _internalExpanded = false;
   final ScrollController _scrollController = ScrollController();
 
+  /// User-toggled expansion state for menu groups (e.g. Daak, File).
+  /// If a title is absent, expansion falls back to whether one of its
+  /// children is the currently active route.
+  final Map<String, bool> _groupExpansionOverride = {};
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -76,49 +81,61 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     ),
     DrawerMenu(title: "Chats", icon: Icons.chat, routeName: Routes.chats),
     DrawerMenu(
-      title: "Daak Letters",
+      title: "Daak",
       icon: Icons.mark_email_unread_outlined,
-      routeName: Routes.daak,
+      children: [
+        DrawerMenu(
+          title: "Daak Letters",
+          icon: Icons.mark_email_unread_outlined,
+          routeName: Routes.daak,
+        ),
+        DrawerMenu(
+          title: "Scan Daak",
+          icon: Icons.document_scanner_outlined,
+          routeName: Routes.scanDaak,
+        ),
+      ],
     ),
     DrawerMenu(
-      title: "Scan Daak",
-      icon: Icons.document_scanner_outlined,
-      routeName: Routes.scanDaak,
-    ),
-    DrawerMenu(
-      title: "Pending Files",
-      icon: Icons.event_repeat_rounded,
-      routeName: Routes.pendingFiles,
-    ),
-    DrawerMenu(
-      title: "Action Required",
-      icon: Icons.file_open,
-      routeName: Routes.actionRequiredFiles,
-    ),
-    DrawerMenu(
-      title: "Forwarded Files",
-      icon: Icons.send_time_extension_rounded,
-      routeName: Routes.forwarded,
-    ),
-    // DrawerMenu(
-    //   title: "Summaries",
-    //   icon: Icons.summarize_outlined,
-    //   routeName: Routes.summaries,
-    // ),
-    DrawerMenu(
-      title: "Create New File",
-      icon: Icons.add_link,
-      routeName: Routes.createFile,
-    ),
-    DrawerMenu(
-      title: "My Files",
-      icon: Icons.receipt_long,
-      routeName: Routes.myFiles,
-    ),
-    DrawerMenu(
-      title: "Archived",
-      icon: Icons.archive_sharp,
-      routeName: Routes.archived,
+      title: "File",
+      icon: Icons.folder_outlined,
+      children: [
+        DrawerMenu(
+          title: "Create New File",
+          icon: Icons.add_link,
+          routeName: Routes.createFile,
+        ),
+        DrawerMenu(
+          title: "My Files",
+          icon: Icons.receipt_long,
+          routeName: Routes.myFiles,
+        ),
+        DrawerMenu(
+          title: "Pending Files",
+          icon: Icons.event_repeat_rounded,
+          routeName: Routes.pendingFiles,
+        ),
+        DrawerMenu(
+          title: "Action Required",
+          icon: Icons.file_open,
+          routeName: Routes.actionRequiredFiles,
+        ),
+        DrawerMenu(
+          title: "Forwarded Files",
+          icon: Icons.send_time_extension_rounded,
+          routeName: Routes.forwarded,
+        ),
+        DrawerMenu(
+          title: "Archived",
+          icon: Icons.archive_sharp,
+          routeName: Routes.archived,
+        ),
+        // DrawerMenu(
+        //   title: "Summaries",
+        //   icon: Icons.summarize_outlined,
+        //   routeName: Routes.summaries,
+        // ),
+      ],
     ),
     DrawerMenu(
       title: "Change Password",
@@ -194,7 +211,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                   child: Column(
                     children: [
                       ...menus.map(
-                        (m) => _buildMenuItem(m, chatService, currentUser),
+                        (m) => _buildMenuEntry(m, chatService, currentUser),
                       ),
                       if (_effectiveExpanded) _buildPoweredBy(),
                     ],
@@ -256,6 +273,97 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
           .watch(summariesController.notifier)
           .mainTabCount(SummaryMainTab.actionRequired) ??
       0;
+
+  bool _isGroupExpanded(DrawerMenu menu) =>
+      _groupExpansionOverride[menu.title] ?? true;
+
+  Widget _buildMenuEntry(
+    DrawerMenu menu,
+    ChatService chatService,
+    UserModel currentUser,
+  ) {
+    if (menu.children != null && menu.children!.isNotEmpty) {
+      return _buildGroupMenu(menu, chatService, currentUser);
+    }
+    return _buildMenuItem(menu, chatService, currentUser);
+  }
+
+  Widget _buildGroupMenu(
+    DrawerMenu menu,
+    ChatService chatService,
+    UserModel currentUser,
+  ) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final bool expanded = _isGroupExpanded(menu);
+    final Color fgColor = isDark
+        ? appColors.secondaryLight
+        : appColors.secondaryDark;
+
+    void onTap() {
+      if (!_effectiveExpanded) _toggle();
+      setState(() => _groupExpansionOverride[menu.title] = !expanded);
+    }
+
+    if (!_effectiveExpanded) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Tooltip(
+          message: menu.title,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: Icon(menu.icon, color: fgColor, size: 22)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.only(right: 24),
+          child: ListTile(
+            visualDensity: VisualDensity.compact,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            leading: Icon(menu.icon, color: fgColor, size: 20),
+            horizontalTitleGap: 12,
+            title: AppText.titleMedium(menu.title, color: fgColor),
+            trailing: AnimatedRotation(
+              turns: expanded ? 0.5 : 0,
+              duration: _animDuration,
+              child: Icon(Icons.expand_more, color: fgColor, size: 20),
+            ),
+            onTap: onTap,
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: _animDuration,
+          crossFadeState: expanded
+              ? CrossFadeState.showFirst
+              : CrossFadeState.showSecond,
+          firstChild: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Column(
+              children: menu.children!
+                  .map((c) => _buildMenuItem(c, chatService, currentUser))
+                  .toList(),
+            ),
+          ),
+          secondChild: const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
 
   Widget _buildMenuItem(
     DrawerMenu menu,
@@ -489,12 +597,14 @@ class DrawerMenu {
   final VoidCallback? onTap;
   final String? routeName;
   final Widget? titleWidget;
+  final List<DrawerMenu>? children;
 
   DrawerMenu({
     required this.title,
     required this.icon,
     this.onTap,
     this.titleWidget,
-    required this.routeName,
+    this.routeName,
+    this.children,
   });
 }
