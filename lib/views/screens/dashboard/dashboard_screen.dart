@@ -62,7 +62,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     try {
       ref.read(summariesController.notifier).fetchSummariesStats();
       await ref.read(dashboardController.notifier).initData();
-      await _showDaakAchievementDialogIfNeeded();
+      // await _showDaakAchievementDialogIfNeeded();
     } catch (error) {}
   }
 
