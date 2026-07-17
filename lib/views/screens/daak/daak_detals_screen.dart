@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/models/department/department_user_model.dart
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
+import 'package:efiling_balochistan/utils/scroll_helper.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_attachment_card.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_correspondence_card.dart';
 import 'package:efiling_balochistan/views/screens/pdf_viewer.dart';
@@ -142,8 +143,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
   }
 
   // Nudges the focused search field up just enough to clear the keyboard,
-  // leaving room below it for its suggestions list, without scrolling all
-  // the way down the (much longer) rest of the screen.
+  // without scrolling any further down the (much longer) rest of the screen.
   void _onSearchFieldFocusChanged() {
     if (forwardToFocusNode.hasFocus) _scrollFieldIntoView();
   }
@@ -157,12 +157,7 @@ class _DaakDetailsScreenState extends ConsumerState<DaakDetailsScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final fieldContext = forwardToFieldKey.currentContext;
       if (fieldContext == null || !fieldContext.mounted) return;
-      Scrollable.ensureVisible(
-        fieldContext,
-        alignment: 0.2,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+      ensureFieldVisible(fieldContext);
     });
   }
 

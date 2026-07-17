@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/department/department_model.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:efiling_balochistan/utils/scroll_helper.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -97,30 +98,25 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen>
     super.dispose();
   }
 
-  // Keeps a focused search field scrolled above the keyboard: these fields
-  // can sit low in the form, so their suggestions list can otherwise end up
-  // hidden behind the keyboard once it opens.
-  void _onSearchFieldFocusChanged() {
-    if (departmentFocusNode.hasFocus || fwdToFocusNode.hasFocus) {
-      _scrollToBottom();
-    }
-  }
+  // Keeps a focused search field clear of the keyboard: these fields can sit
+  // low in the form, so they can otherwise end up hidden behind the keyboard
+  // once it opens.
+  void _onSearchFieldFocusChanged() => _scrollFocusedFieldIntoView();
 
   @override
-  void didChangeMetrics() {
-    if (departmentFocusNode.hasFocus || fwdToFocusNode.hasFocus) {
-      _scrollToBottom();
-    }
-  }
+  void didChangeMetrics() => _scrollFocusedFieldIntoView();
 
-  void _scrollToBottom() {
+  void _scrollFocusedFieldIntoView() {
+    final focusNode = departmentFocusNode.hasFocus
+        ? departmentFocusNode
+        : fwdToFocusNode.hasFocus
+        ? fwdToFocusNode
+        : null;
+    if (focusNode == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
-      scrollController.animateTo(
-        scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+      final fieldContext = focusNode.context;
+      if (fieldContext == null || !fieldContext.mounted) return;
+      ensureFieldVisible(fieldContext);
     });
   }
 
@@ -129,6 +125,9 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen>
     final appColors = context.appColors;
     return GestureDetector(
       onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      onPanStart: (_) {
         FocusScope.of(context).unfocus();
       },
       child: GradientScaffold(
@@ -141,15 +140,11 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen>
               : SafeArea(
                   child: SingleChildScrollView(
                     controller: scrollController,
-                    // Extra bottom space so fields near the end of the form
-                    // (like "Forward To") can still be scrolled clear of the
-                    // keyboard once it's open.
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      16,
-                      16,
-                      16 + MediaQuery.of(context).viewInsets.bottom,
-                    ),
+                    // No keyboard inset here: the Scaffold already shrinks this
+                    // viewport when the keyboard opens, so adding viewInsets on
+                    // top of that leaves a keyboard-sized blank gap at the end
+                    // of the form.
+                    padding: const EdgeInsets.all(16),
                     child: Form(
                       key: formKey,
                       child: Column(
@@ -502,7 +497,7 @@ class _ScanDaakScreenState extends ConsumerState<ScanDaakScreen>
                           ),
                           SizedBox(
                             height: HelperUtils.isKeyboardOpen(context)
-                                ? 120
+                                ? 40
                                 : 16,
                           ),
                         ],

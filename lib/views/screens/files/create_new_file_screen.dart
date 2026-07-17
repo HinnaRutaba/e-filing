@@ -108,563 +108,568 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(filesController);
-    return GradientScaffold(
-      child: BaseScreen(
-        bgColor: Colors.transparent,
-        isdash: false,
-        title: "Create New File",
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: formKey,
-              child: Column(
-                children: [
-                  header(Icons.text_snippet_outlined, "File Details"),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: SearchDropDownField<FileTypeModel>(
-                          controller: fileTypeSearchController,
-                          labelText: "File Type",
-                          hintText: "Select file type",
-                          prefix: state.loadingNewFileData ? fieldLoader : null,
-                          suggestionsCallback: (pattern) {
-                            final q = pattern.toLowerCase();
-                            return fileTypes
-                                .where(
-                                  (e) =>
-                                      (e.title ?? '').toLowerCase().contains(q),
-                                )
-                                .toList();
-                          },
-                          itemBuilder: (context, item) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            child: AppText.titleMedium(item.title ?? ''),
-                          ),
-                          onSelected: (item) {
-                            setState(() {
-                              selectedFileType = item;
-                              fileTypeSearchController.text = item.title ?? '';
-                            });
-                          },
-                          validator: (_) {
-                            if (selectedFileType == null) {
-                              return 'Please select a file type';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SearchDropDownField<TagModel>(
-                          controller: tagSearchController,
-                          labelText: "Tag",
-                          hintText: "Select tag",
-                          prefix: state.loadingNewFileData ? fieldLoader : null,
-                          suggestionsCallback: (pattern) {
-                            final q = pattern.toLowerCase();
-                            return tags
-                                .where(
-                                  (e) =>
-                                      (e.title ?? '').toLowerCase().contains(q),
-                                )
-                                .toList();
-                          },
-                          itemBuilder: (context, item) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            child: AppText.titleMedium(item.title ?? ''),
-                          ),
-                          onSelected: (item) {
-                            setState(() {
-                              selectedTag = item;
-                              tagSearchController.text = item.title ?? '';
-                            });
-                          },
-                          validator: (_) {
-                            if (selectedTag == null) {
-                              return 'Please select a tag';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: AppTextField(
-                          controller: fileNo,
-                          labelText: "File No",
-                          hintText: "Enter file number",
-                          validator: Validators.notEmptyValidator,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AppTextField(
-                          controller: partFileNo,
-                          labelText: "Part File No",
-                          hintText: "Enter if any",
-                          //validator: Validators.notEmptyValidator,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: subject,
-                    labelText: "File Subject",
-                    hintText: "Enter subject",
-                    validator: Validators.notEmptyValidator,
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: GradientScaffold(
+        child: BaseScreen(
+          bgColor: Colors.transparent,
+          isdash: false,
+          title: "Create New File",
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    header(Icons.text_snippet_outlined, "File Details"),
+                    const SizedBox(height: 16),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AppText.titleLarge(
-                          "Autogenerated File Number is:",
-                          color: AppColors.secondaryDark,
+                        Expanded(
+                          child: SearchDropDownField<FileTypeModel>(
+                            controller: fileTypeSearchController,
+                            labelText: "File Type",
+                            hintText: "Select file type",
+                            prefix: state.loadingNewFileData ? fieldLoader : null,
+                            suggestionsCallback: (pattern) {
+                              final q = pattern.toLowerCase();
+                              return fileTypes
+                                  .where(
+                                    (e) =>
+                                        (e.title ?? '').toLowerCase().contains(q),
+                                  )
+                                  .toList();
+                            },
+                            itemBuilder: (context, item) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: AppText.titleMedium(item.title ?? ''),
+                            ),
+                            onSelected: (item) {
+                              setState(() {
+                                selectedFileType = item;
+                                fileTypeSearchController.text = item.title ?? '';
+                              });
+                            },
+                            validator: (_) {
+                              if (selectedFileType == null) {
+                                return 'Please select a file type';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        AppText.bodyMedium(autoGeneratedFileNumber),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SearchDropDownField<TagModel>(
+                            controller: tagSearchController,
+                            labelText: "Tag",
+                            hintText: "Select tag",
+                            prefix: state.loadingNewFileData ? fieldLoader : null,
+                            suggestionsCallback: (pattern) {
+                              final q = pattern.toLowerCase();
+                              return tags
+                                  .where(
+                                    (e) =>
+                                        (e.title ?? '').toLowerCase().contains(q),
+                                  )
+                                  .toList();
+                            },
+                            itemBuilder: (context, item) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: AppText.titleMedium(item.title ?? ''),
+                            ),
+                            onSelected: (item) {
+                              setState(() {
+                                selectedTag = item;
+                                tagSearchController.text = item.title ?? '';
+                              });
+                            },
+                            validator: (_) {
+                              if (selectedTag == null) {
+                                return 'Please select a tag';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  header(Icons.description_outlined, "File Description"),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppColors.secondaryLight.withOpacity(0.5),
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        color: AppColors.white,
-                      ),
-                      child: showHtmlEditor
-                          ? HtmlEditor(
-                              controller: quillEditorController,
-                              initialHtml: '',
-                              hint: "...",
-                              height: 270,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // AppOutlineButton(
-                      //   onPressed: () {
-                      //     RouteHelper.push(Routes.fileChat(0));
-                      //   },
-                      //   text: "Start Discussion",
-                      //   icon: Icons.chat,
-                      //   color: AppColors.primaryDark,
-                      //   textSize: 16,
-                      //   padding: const EdgeInsets.symmetric(
-                      //       horizontal: 16, vertical: 12),
-                      // ),
-                      // const SizedBox(width: 12),
-                      AppOutlineButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.sizeOf(context).height * 0.9,
-                            ),
-                            showDragHandle: false,
-                            isScrollControlled: true,
-                            backgroundColor: AppColors.background,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                              ),
-                            ),
-                            builder: (BuildContext context) {
-                              return const Padding(
-                                padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
-                                child: AIAgentChatScreen(generateNew: true),
-                              );
-                            },
-                          ).then((text) {
-                            if (text != null) {
-                              quillEditorController.setText(text);
-                            }
-                          });
-                        },
-                        text: "Draft with AI",
-                        icon: Icons.drafts_rounded,
-                        color: AppColors.secondary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Column(
-                    children: [
-                      header(Icons.work_history_outlined, "Section"),
-                      const SizedBox(height: 16),
-                      SearchDropDownField<SectionModel>(
-                        controller: sectionSearchController,
-                        labelText: "Section",
-                        hintText: "Select Section",
-                        prefix: state.loadingSections ? fieldLoader : null,
-                        suggestionsCallback: (pattern) {
-                          final q = pattern.toLowerCase();
-                          return state.sections
-                              .where(
-                                (e) =>
-                                    (e.title ?? '').toLowerCase().contains(q),
-                              )
-                              .toList();
-                        },
-                        itemBuilder: (context, item) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          child: AppText.titleMedium(item.title ?? ''),
-                        ),
-                        onSelected: (item) async {
-                          setState(() {
-                            selectedSection = item;
-                            sectionSearchController.text = item.title ?? '';
-                          });
-                          forwardToList = await ref
-                              .read(filesController.notifier)
-                              .getForwardTo(item.id);
-                          setState(() {
-                            if (forwardToList != null &&
-                                forwardToList?.length == 1) {
-                              forwardTo = forwardToList?.first;
-                              forwardToSearchController.text =
-                                  forwardTo?.userTitle ?? '';
-                            }
-                          });
-                        },
-                        validator: (_) {
-                          if (selectedSection == null) {
-                            return 'Please select a value';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      SearchDropDownField<ForwardToModel>(
-                        controller: forwardToSearchController,
-                        labelText: "Forward this file to",
-                        hintText: "Forward To",
-                        prefix: state.loadingSections ? fieldLoader : null,
-                        suggestionsCallback: (pattern) {
-                          final q = pattern.toLowerCase();
-                          return (forwardToList ?? [])
-                              .where(
-                                (e) => (e.userTitle ?? '')
-                                    .toLowerCase()
-                                    .contains(q),
-                              )
-                              .toList();
-                        },
-                        itemBuilder: (context, item) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppText.titleSmall(item.userTitle ?? ''),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.yellow[400],
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.yellow[600]!.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: AppText.labelSmall(
-                                  item.designationTitle ?? '',
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        onSelected: (item) {
-                          setState(() {
-                            forwardTo = item;
-                            forwardToSearchController.text =
-                                item.userTitle ?? '';
-                          });
-                        },
-                        suffixIcon:
-                            (forwardTo != null &&
-                                (forwardTo!.designationTitle ?? '').isNotEmpty)
-                            ? Container(
-                                width: 120,
-                                padding: const EdgeInsets.only(
-                                  left: 8,
-                                  right: 8,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow[400],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.yellow[600]!.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                      child: AppText.labelSmall(
-                                        forwardTo!.designationTitle ?? '',
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : null,
-                        validator: (_) {
-                          if (forwardTo == null) {
-                            return 'Please select a value';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  header(Icons.flag_outlined, "Flag & Attachment"),
-                  const SizedBox(height: 16),
-                  ListView.separated(
-                    itemCount: attachments.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    separatorBuilder: (_, i) => Divider(
-                      height: 40,
-                      color: AppColors.secondaryLight.withValues(alpha: .5),
-                    ),
-                    itemBuilder: (ctx, i) {
-                      final model = attachments[i];
-                      return AddFlagAndAttachment(
-                        key: ValueKey(model),
-                        model: model,
-                        onDelete: () {
-                          setState(() => attachments.removeAt(i));
-                        },
-                        onAdd: addAttachement,
-                      );
-                    },
-                  ),
-
-                  if (attachments.isEmpty)
+                    const SizedBox(height: 12),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        InkWell(
-                          onTap: addAttachement,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.primaryDark),
-                            ),
-                            padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  color: AppColors.primaryDark,
-                                  size: 20,
+                        Expanded(
+                          child: AppTextField(
+                            controller: fileNo,
+                            labelText: "File No",
+                            hintText: "Enter file number",
+                            validator: Validators.notEmptyValidator,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppTextField(
+                            controller: partFileNo,
+                            labelText: "Part File No",
+                            hintText: "Enter if any",
+                            //validator: Validators.notEmptyValidator,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: subject,
+                      labelText: "File Subject",
+                      hintText: "Enter subject",
+                      validator: Validators.notEmptyValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText.titleLarge(
+                            "Autogenerated File Number is:",
+                            color: AppColors.secondaryDark,
+                          ),
+                          AppText.bodyMedium(autoGeneratedFileNumber),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    header(Icons.description_outlined, "File Description"),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: AppColors.secondaryLight.withOpacity(0.5),
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.white,
+                        ),
+                        child: showHtmlEditor
+                            ? HtmlEditor(
+                                controller: quillEditorController,
+                                initialHtml: '',
+                                hint: "...",
+                                height: 270,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // AppOutlineButton(
+                        //   onPressed: () {
+                        //     RouteHelper.push(Routes.fileChat(0));
+                        //   },
+                        //   text: "Start Discussion",
+                        //   icon: Icons.chat,
+                        //   color: AppColors.primaryDark,
+                        //   textSize: 16,
+                        //   padding: const EdgeInsets.symmetric(
+                        //       horizontal: 16, vertical: 12),
+                        // ),
+                        // const SizedBox(width: 12),
+                        AppOutlineButton(
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.sizeOf(context).height * 0.9,
+                              ),
+                              showDragHandle: false,
+                              isScrollControlled: true,
+                              backgroundColor: AppColors.background,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
                                 ),
-                                const SizedBox(width: 4),
-                                AppText.bodySmall(
-                                  "Add More",
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
+                              ),
+                              builder: (BuildContext context) {
+                                return const Padding(
+                                  padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                  child: AIAgentChatScreen(generateNew: true),
+                                );
+                              },
+                            ).then((text) {
+                              if (text != null) {
+                                quillEditorController.setText(text);
+                              }
+                            });
+                          },
+                          text: "Draft with AI",
+                          icon: Icons.drafts_rounded,
+                          color: AppColors.secondary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Column(
+                      children: [
+                        header(Icons.work_history_outlined, "Section"),
+                        const SizedBox(height: 16),
+                        SearchDropDownField<SectionModel>(
+                          controller: sectionSearchController,
+                          labelText: "Section",
+                          hintText: "Select Section",
+                          prefix: state.loadingSections ? fieldLoader : null,
+                          suggestionsCallback: (pattern) {
+                            final q = pattern.toLowerCase();
+                            return state.sections
+                                .where(
+                                  (e) =>
+                                      (e.title ?? '').toLowerCase().contains(q),
+                                )
+                                .toList();
+                          },
+                          itemBuilder: (context, item) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: AppText.titleMedium(item.title ?? ''),
+                          ),
+                          onSelected: (item) async {
+                            setState(() {
+                              selectedSection = item;
+                              sectionSearchController.text = item.title ?? '';
+                            });
+                            forwardToList = await ref
+                                .read(filesController.notifier)
+                                .getForwardTo(item.id);
+                            setState(() {
+                              if (forwardToList != null &&
+                                  forwardToList?.length == 1) {
+                                forwardTo = forwardToList?.first;
+                                forwardToSearchController.text =
+                                    forwardTo?.userTitle ?? '';
+                              }
+                            });
+                          },
+                          validator: (_) {
+                            if (selectedSection == null) {
+                              return 'Please select a value';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        SearchDropDownField<ForwardToModel>(
+                          controller: forwardToSearchController,
+                          labelText: "Forward this file to",
+                          hintText: "Forward To",
+                          prefix: state.loadingSections ? fieldLoader : null,
+                          suggestionsCallback: (pattern) {
+                            final q = pattern.toLowerCase();
+                            return (forwardToList ?? [])
+                                .where(
+                                  (e) => (e.userTitle ?? '')
+                                      .toLowerCase()
+                                      .contains(q),
+                                )
+                                .toList();
+                          },
+                          itemBuilder: (context, item) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText.titleSmall(item.userTitle ?? ''),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.yellow[400],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.yellow[600]!.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: AppText.labelSmall(
+                                    item.designationTitle ?? '',
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 10,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
+                          onSelected: (item) {
+                            setState(() {
+                              forwardTo = item;
+                              forwardToSearchController.text =
+                                  item.userTitle ?? '';
+                            });
+                          },
+                          suffixIcon:
+                              (forwardTo != null &&
+                                  (forwardTo!.designationTitle ?? '').isNotEmpty)
+                              ? Container(
+                                  width: 120,
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.yellow[400],
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: Colors.yellow[600]!.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: AppText.labelSmall(
+                                          forwardTo!.designationTitle ?? '',
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : null,
+                          validator: (_) {
+                            if (forwardTo == null) {
+                              return 'Please select a value';
+                            }
+                            return null;
+                          },
                         ),
                       ],
                     ),
-
-                  const SizedBox(height: 40),
-                  Row(
-                    children: [
-                      AppSolidButton(
-                        onPressed: () async {
-                          HelperUtils.hideKeyboard(context);
-                          final String desc = await quillEditorController
-                              .getText();
-                          final user = ref.read(authController);
-                          if (!context.mounted) return;
-                          showModalBottomSheet(
-                            context: context,
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.sizeOf(context).height * 0.9,
-                            ),
-                            showDragHandle: false,
-                            isScrollControlled: true,
-                            backgroundColor: AppColors.background,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
+                    const SizedBox(height: 16),
+                    header(Icons.flag_outlined, "Flag & Attachment"),
+                    const SizedBox(height: 16),
+                    ListView.separated(
+                      itemCount: attachments.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      separatorBuilder: (_, i) => Divider(
+                        height: 40,
+                        color: AppColors.secondaryLight.withValues(alpha: .5),
+                      ),
+                      itemBuilder: (ctx, i) {
+                        final model = attachments[i];
+                        return AddFlagAndAttachment(
+                          key: ValueKey(model),
+                          model: model,
+                          onDelete: () {
+                            setState(() => attachments.removeAt(i));
+                          },
+                          onAdd: addAttachement,
+                        );
+                      },
+                    ),
+      
+                    if (attachments.isEmpty)
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: addAttachement,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.primaryDark),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Icon(
+                                    Icons.add,
+                                    color: AppColors.primaryDark,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  AppText.bodySmall(
+                                    "Add More",
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ],
                               ),
                             ),
-                            builder: (BuildContext context) {
-                              return SingleChildScrollView(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: AppText.headlineSmall(
-                                            "File Preview",
-                                          ),
-                                        ),
-                                        IconButton(
-                                          onPressed: () {
-                                            RouteHelper.pop();
-                                          },
-                                          icon: const Icon(
-                                            Icons.close,
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    PreviewFile(
-                                      content: [
-                                        FileContentModel(
-                                          subject: subject.text,
-                                          fileType:
-                                              selectedFileType?.title ?? '',
-                                          barcode: autoGeneratedFileNumber,
-                                          content: desc,
-                                          fileMovNo: autoGeneratedFileNumber,
-                                          sender: user.userTitle,
-                                          designation: user
-                                              .currentDesignation
-                                              ?.designation,
-                                          signature: user.sign,
-                                          sendingDate: DateTime.now(),
-                                          receiver: forwardTo?.userTitle,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    AppOutlineButton(
-                                      onPressed: () {
-                                        RouteHelper.pop();
-                                      },
-                                      text: "Close",
-                                      color: AppColors.primaryDark,
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                    ),
-                                  ],
+                          ),
+                        ],
+                      ),
+      
+                    const SizedBox(height: 40),
+                    Row(
+                      children: [
+                        AppSolidButton(
+                          onPressed: () async {
+                            HelperUtils.hideKeyboard(context);
+                            final String desc = await quillEditorController
+                                .getText();
+                            final user = ref.read(authController);
+                            if (!context.mounted) return;
+                            showModalBottomSheet(
+                              context: context,
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.sizeOf(context).height * 0.9,
+                              ),
+                              showDragHandle: false,
+                              isScrollControlled: true,
+                              backgroundColor: AppColors.background,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
                                 ),
+                              ),
+                              builder: (BuildContext context) {
+                                return SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: AppText.headlineSmall(
+                                              "File Preview",
+                                            ),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
+                                              RouteHelper.pop();
+                                            },
+                                            icon: const Icon(
+                                              Icons.close,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      PreviewFile(
+                                        content: [
+                                          FileContentModel(
+                                            subject: subject.text,
+                                            fileType:
+                                                selectedFileType?.title ?? '',
+                                            barcode: autoGeneratedFileNumber,
+                                            content: desc,
+                                            fileMovNo: autoGeneratedFileNumber,
+                                            sender: user.userTitle,
+                                            designation: user
+                                                .currentDesignation
+                                                ?.designation,
+                                            signature: user.sign,
+                                            sendingDate: DateTime.now(),
+                                            receiver: forwardTo?.userTitle,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      AppOutlineButton(
+                                        onPressed: () {
+                                          RouteHelper.pop();
+                                        },
+                                        text: "Close",
+                                        color: AppColors.primaryDark,
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          text: "Preview",
+                        ),
+                        const SizedBox(width: 16),
+                        AppSolidButton(
+                          onPressed: () async {
+                            HelperUtils.hideKeyboard(context);
+                            if (!formKey.currentState!.validate()) return;
+                            String text = await quillEditorController.getText();
+                            if (text.trim().isEmpty) {
+                              Toast.show(
+                                message: "Add remarks before you submit",
                               );
-                            },
-                          );
-                        },
-                        text: "Preview",
-                      ),
-                      const SizedBox(width: 16),
-                      AppSolidButton(
-                        onPressed: () async {
-                          HelperUtils.hideKeyboard(context);
-                          if (!formKey.currentState!.validate()) return;
-                          String text = await quillEditorController.getText();
-                          if (text.trim().isEmpty) {
-                            Toast.show(
-                              message: "Add remarks before you submit",
+                              return;
+                            }
+                            if (!allAttachmentsValid) {
+                              Toast.error(
+                                message:
+                                    "One or more flags are missing attachments. Add a file and then try again",
+                              );
+                              return;
+                            }
+                            final controller = ref.read(filesController.notifier);
+                            controller.createFile(
+                              subject: subject.text,
+                              fileType: selectedFileType?.id,
+                              content: text,
+                              forwardTo: forwardTo?.userDesgId,
+                              fileMovNumber: autoGeneratedFileNumber,
+                              fileNo: fileNo.text,
+                              partFileNumber: partFileNo.text,
+                              tagId: selectedTag?.id,
+                              flags: attachments,
                             );
-                            return;
-                          }
-                          if (!allAttachmentsValid) {
-                            Toast.error(
-                              message:
-                                  "One or more flags are missing attachments. Add a file and then try again",
-                            );
-                            return;
-                          }
-                          final controller = ref.read(filesController.notifier);
-                          controller.createFile(
-                            subject: subject.text,
-                            fileType: selectedFileType?.id,
-                            content: text,
-                            forwardTo: forwardTo?.userDesgId,
-                            fileMovNumber: autoGeneratedFileNumber,
-                            fileNo: fileNo.text,
-                            partFileNumber: partFileNo.text,
-                            tagId: selectedTag?.id,
-                            flags: attachments,
-                          );
-
-                          //RouteHelper.navigateTo(Routes.dashboard);
-                        },
-                        text: "Submit",
-                        backgroundColor: AppColors.secondary,
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: HelperUtils.isKeyboardOpen(context) ? 240 : 24,
-                  ),
-                ],
+      
+                            //RouteHelper.navigateTo(Routes.dashboard);
+                          },
+                          text: "Submit",
+                          backgroundColor: AppColors.secondary,
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: HelperUtils.isKeyboardOpen(context) ? 240 : 24,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

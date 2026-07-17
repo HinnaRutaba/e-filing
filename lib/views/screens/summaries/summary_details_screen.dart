@@ -486,225 +486,236 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
     final details = ctrlState.details;
     final isLoading = ctrlState.isLoadingDetails && details == null;
 
-    return KeyboardDetection(
-      controller: _keyboardCtrl,
-      child: GradientScaffold(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: KeyboardDetection(
+        controller: _keyboardCtrl,
+        child: GradientScaffold(
+          child: Scaffold(
             backgroundColor: Colors.transparent,
-            title: context.isMobile
-                ? AppText.headlineSmall("Summary Details")
-                : RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: context.appColors.textPrimary,
-                        fontWeight: FontWeight.w800,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              title: context.isMobile
+                  ? AppText.headlineSmall("Summary Details")
+                  : RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: context.appColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Summary Details'),
+                          if (details?.summary?.summaryNo != null)
+                            TextSpan(
+                              text: " (${details?.summary?.summaryNo})",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
+              actions: [
+                if (details != null) ...[
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final loading = ref.watch(
+                        summariesController.select((s) => s.gettingPrintUrl),
+                      );
+                      return loading
+                          ? const SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : AppOutlineButton(
+                              onPressed: _onPrint,
+                              text: 'Print Summary',
+                              icon: Icons.print_outlined,
+                              color: AppColors.primaryDark,
+                              width: 160,
+                            );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
+              ],
+            ),
+
+            body: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : (!ctrlState.isLoadingDetails && details == null)
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const TextSpan(text: 'Summary Details'),
-                        if (details?.summary?.summaryNo != null)
-                          TextSpan(
-                            text: " (${details?.summary?.summaryNo})",
-                            style: const TextStyle(fontWeight: FontWeight.w300),
-                          ),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 72,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        AppText.headlineSmall("Access Restricted"),
+                        const SizedBox(height: 8),
+                        AppText.bodyMedium(
+                          'You do not have access to this summary',
+                        ),
                       ],
                     ),
-                  ),
-            actions: [
-              if (details != null) ...[
-                Consumer(
-                  builder: (context, ref, _) {
-                    final loading = ref.watch(
-                      summariesController.select((s) => s.gettingPrintUrl),
-                    );
-                    return loading
-                        ? const SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : AppOutlineButton(
-                            onPressed: _onPrint,
-                            text: 'Print Summary',
-                            icon: Icons.print_outlined,
-                            color: AppColors.primaryDark,
-                            width: 160,
-                          );
-                  },
-                ),
-                const SizedBox(width: 12),
-              ],
-            ],
-          ),
-
-          body: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : (!ctrlState.isLoadingDetails && details == null)
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.lock_outline_rounded,
-                        size: 72,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(height: 16),
-                      AppText.headlineSmall("Access Restricted"),
-                      const SizedBox(height: 8),
-                      AppText.bodyMedium(
-                        'You do not have access to this summary',
-                      ),
-                    ],
-                  ),
-                )
-              : Builder(
-                  builder: (context) {
-                    final showPanel = _showRemarksPanel(details);
-                    final isLocked = _remarksPanelCtrl.isLocked && showPanel;
-                    final tags = [
-                      _buildAttachmentsTag(details),
-                      _buildBriefsTag(details),
-                      if (isPsToCm || isCM || isDeoInCmSecretariat)
-                        _buildVoiceNotesTag(),
-                    ];
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              StickyTagDrawer(
-                                panelWidth:
-                                    MediaQuery.sizeOf(context).width * 0.85,
-                                tagsAlignment: const Alignment(0.0, -0.5),
-                                mainContent: RefreshIndicator(
-                                  onRefresh: _loadDetails,
-                                  child: Scrollbar(
-                                    controller: _mainScrollController,
-                                    thickness: 16,
-                                    radius: const Radius.circular(8),
-                                    trackVisibility: true,
-                                    thumbVisibility: true,
-                                    interactive: true,
-                                    child: SingleChildScrollView(
+                  )
+                : Builder(
+                    builder: (context) {
+                      final showPanel = _showRemarksPanel(details);
+                      final isLocked = _remarksPanelCtrl.isLocked && showPanel;
+                      final tags = [
+                        _buildAttachmentsTag(details),
+                        _buildBriefsTag(details),
+                        if (isPsToCm || isCM || isDeoInCmSecretariat)
+                          _buildVoiceNotesTag(),
+                      ];
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                StickyTagDrawer(
+                                  panelWidth:
+                                      MediaQuery.sizeOf(context).width * 0.85,
+                                  tagsAlignment: const Alignment(0.0, -0.5),
+                                  mainContent: RefreshIndicator(
+                                    onRefresh: _loadDetails,
+                                    child: Scrollbar(
                                       controller: _mainScrollController,
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(),
-                                      padding: const EdgeInsets.all(24),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _documentCard(),
-                                          if (showPanel && !isLocked)
-                                            _buildRemarksPanel(details),
-                                          const SizedBox(height: 16),
-                                          _sidebar(),
-                                        ],
+                                      thickness: 16,
+                                      radius: const Radius.circular(8),
+                                      trackVisibility: true,
+                                      thumbVisibility: true,
+                                      interactive: true,
+                                      child: SingleChildScrollView(
+                                        controller: _mainScrollController,
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(),
+                                        padding: const EdgeInsets.all(24),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            _documentCard(),
+                                            if (showPanel && !isLocked)
+                                              _buildRemarksPanel(details),
+                                            const SizedBox(height: 16),
+                                            _sidebar(),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
+                                  tags: tags,
                                 ),
-                                tags: tags,
-                              ),
-                              if (_selectedAction != null)
-                                GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () =>
-                                      setState(() => _selectedAction = null),
-                                ),
-                              Positioned(
-                                right: 8,
-                                top: 72,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _mainScrollButton(
-                                      icon: Icons.keyboard_arrow_up_rounded,
-                                      onTap: () =>
-                                          _mainScrollController.animateTo(
-                                            0,
-                                            duration: const Duration(
-                                              milliseconds: 350,
-                                            ),
-                                            curve: Curves.easeOutCubic,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _mainScrollButton(
-                                      icon: Icons.keyboard_arrow_down_rounded,
-                                      onTap: () =>
-                                          _mainScrollController.animateTo(
-                                            _mainScrollController
-                                                .position
-                                                .maxScrollExtent,
-                                            duration: const Duration(
-                                              milliseconds: 350,
-                                            ),
-                                            curve: Curves.easeOutCubic,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (showPanel && isLocked)
-                          Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).scaffoldBackgroundColor,
-                                  border: Border(
-                                    top: BorderSide(
-                                      color: AppColors.secondaryLight
-                                          .withValues(alpha: 0.35),
-                                    ),
+                                if (_selectedAction != null)
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () =>
+                                        setState(() => _selectedAction = null),
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.secondaryDark.withValues(
-                                        alpha: 0.15,
+                                Positioned(
+                                  right: 8,
+                                  top: 72,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _mainScrollButton(
+                                        icon: Icons.keyboard_arrow_up_rounded,
+                                        onTap: () =>
+                                            _mainScrollController.animateTo(
+                                              0,
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeOutCubic,
+                                            ),
                                       ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, -2),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 16),
+                                      _mainScrollButton(
+                                        icon: Icons.keyboard_arrow_down_rounded,
+                                        onTap: () =>
+                                            _mainScrollController.animateTo(
+                                              _mainScrollController
+                                                  .position
+                                                  .maxScrollExtent,
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeOutCubic,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: _buildRemarksPanel(details),
-                              )
-                              .animate()
-                              .slideY(
-                                begin: 1.0,
-                                end: 0.0,
-                                duration: 320.ms,
-                                curve: Curves.easeOutCubic,
-                              )
-                              .fadeIn(duration: 220.ms, curve: Curves.easeOut),
-                        if (_selectedAction != null)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  (MediaQuery.of(context).size.height -
-                                      MediaQuery.of(
-                                        context,
-                                      ).viewInsets.bottom) *
-                                  0.60,
+                              ],
                             ),
-                            child: _actionBar(),
-                          )
-                        else
-                          _actionBar(),
-                      ],
-                    );
-                  },
-                ),
+                          ),
+                          if (showPanel && isLocked)
+                            Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).scaffoldBackgroundColor,
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: AppColors.secondaryLight
+                                            .withValues(alpha: 0.35),
+                                      ),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.secondaryDark
+                                            .withValues(alpha: 0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, -2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: _buildRemarksPanel(details),
+                                )
+                                .animate()
+                                .slideY(
+                                  begin: 1.0,
+                                  end: 0.0,
+                                  duration: 320.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .fadeIn(
+                                  duration: 220.ms,
+                                  curve: Curves.easeOut,
+                                ),
+                          if (_selectedAction != null)
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    (MediaQuery.of(context).size.height -
+                                        MediaQuery.of(
+                                          context,
+                                        ).viewInsets.bottom) *
+                                    0.60,
+                              ),
+                              child: _actionBar(),
+                            )
+                          else
+                            _actionBar(),
+                        ],
+                      );
+                    },
+                  ),
+          ),
         ),
       ),
     );

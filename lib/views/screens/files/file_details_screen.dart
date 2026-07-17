@@ -9,6 +9,7 @@ import 'package:efiling_balochistan/models/section_schema.dart';
 import 'package:efiling_balochistan/services/ai_agent.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
+import 'package:efiling_balochistan/utils/scroll_helper.dart';
 import 'package:efiling_balochistan/views/screens/chats/ai_agent_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
 import 'package:efiling_balochistan/views/screens/files/flag_attachement/add_file_flag_and_attachmention.dart';
@@ -124,11 +125,7 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen>
     FocusManager.instance.primaryFocus?.unfocus();
     final context = forwardDropdownKey.currentContext;
     if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        alignment: 0.5,
-        duration: Duration.zero,
-      );
+      ensureFieldVisible(context, duration: Duration.zero);
     }
   }
 
@@ -148,11 +145,11 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final fieldContext = key.currentContext;
       if (fieldContext == null || !fieldContext.mounted) return;
-      Scrollable.ensureVisible(
+      ensureFieldVisible(
         fieldContext,
-        alignment: 0.2,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
+        // This Scaffold sets resizeToAvoidBottomInset: false, so the viewport
+        // runs on behind the keyboard and has to be told about it.
+        bottomInset: MediaQuery.of(fieldContext).viewInsets.bottom,
       );
     });
   }
@@ -228,6 +225,9 @@ class _FileDetailsScreenState extends ConsumerState<FileDetailsScreen>
     final controller = ref.read(filesController.notifier);
     return GestureDetector(
       onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      onPanStart: (_) {
         FocusScope.of(context).unfocus();
       },
       child: RefreshIndicator(

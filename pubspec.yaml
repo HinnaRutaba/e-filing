@@ -17,7 +17,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 
-version: 2.13.54+73
+version: 2.14.56+76
 
 environment:
   sdk: ^3.9.0
@@ -55,7 +55,10 @@ dependencies:
   toastification: 2.3.0
   connectivity_plus: 6.1.1
   flutter_animate: 4.5.2
-  drop_down_search_field: 1.0.4
+  # 1.2.2+ fixes the suggestions overlay hit-testing: before it, a box that
+  # flipped upwards was only moved visually, so taps on it fell through to
+  # whatever was painted underneath.
+  drop_down_search_field: 1.3.0+1
   card_loading: 0.3.2
   flutter_easyloading: 3.0.5
   cached_network_image: 3.4.1
