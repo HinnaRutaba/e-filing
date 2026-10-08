@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/config/network/api_client.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
@@ -15,9 +13,8 @@ enum RequestType {
 
 abstract class NetworkBase {
   final DioClient dioClient = DioClient(Dio());
-  static const String base =
-      'https://efiling.balochistan.gob.pk';
-     // 'https://test-efiling.balochistan.gob.pk';
+  static const String base = 'https://efiling.balochistan.gob.pk';
+  // 'https://test-efiling.balochistan.gob.pk';
   final String baseUrl = '$base/api/';
 
   Map<String, dynamic> get headers => {"Accept": "application/json"};
@@ -55,7 +52,6 @@ abstract class NetworkBase {
     );
     if (authRequired) {
       TokenModel? token = await LocalStorageController().getToken();
-      log("TOKEN______${token?.token}");
       if (token != null) {
         options.headers!["Authorization"] = "Bearer ${token.token}";
       }

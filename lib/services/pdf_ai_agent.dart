@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:efiling_balochistan/constants/keys.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:openai_dart/src/models/assistants/assistants.dart';
 import 'package:openai_dart/src/models/runs/runs.dart';
@@ -113,22 +113,18 @@ class PDFAIAgent {
       if (savedAssistantId != null) {
         // Reuse existing assistant for this PDF
         _activeAssistantId = savedAssistantId;
-        log('PDFAIAgent: reusing assistant $savedAssistantId for fileId $fileId');
       } else {
         // First time for this PDF — upload and create everything
-        log('PDFAIAgent: creating new assistant for fileId $fileId');
 
         final file = await _client.files.upload(
           bytes: pdfBytes,
           filename: filename,
           purpose: FilePurpose.assistants,
         );
-        log('PDF uploaded: ${file.id}');
 
         final vs = await _client.beta.vectorStores.create(
           CreateVectorStoreRequest(name: '$filename-$fileId'),
         );
-        log('Vector store created: ${vs.id}');
 
         await _client.beta.vectorStores.files.create(
           vs.id,
@@ -136,7 +132,6 @@ class PDFAIAgent {
         );
 
         await _pollUntilIndexed(vs.id, file.id);
-        log('File indexed in vector store');
 
         final assistant = await _client.beta.assistants.create(
           CreateAssistantRequest(
@@ -152,7 +147,6 @@ class PDFAIAgent {
           ),
         );
         _activeAssistantId = assistant.id;
-        log('Assistant created: ${assistant.id}');
 
         // Persist IDs so future calls for this fileId skip the upload
         await prefs.setString(_keyAssistantId(fileId), assistant.id);
@@ -165,11 +159,10 @@ class PDFAIAgent {
       _threadId = thread.id;
       _activeFileId = fileId;
       _isReady = true;
-      log('Thread created: ${thread.id}');
 
       return true;
     } catch (e, s) {
-      log('PDFAIAgent setup error: $e\n$s');
+      AppLogger.error(e, s, 'PDFAIAgent setup error');
       return false;
     }
   }
@@ -221,7 +214,7 @@ class PDFAIAgent {
         yield 'Unable to generate a response right now';
       }
     } catch (e, s) {
-      log('PDFAIAgent sendMessage error: $e\n$s');
+      AppLogger.error(e, s, 'PDFAIAgent sendMessage error');
       _updateLast('Unable to generate a response right now');
       yield 'Unable to generate a response right now';
     }
@@ -253,25 +246,22 @@ class PDFAIAgent {
 
       if (assistantId != null) {
         await _client.beta.assistants.delete(assistantId);
-        log('Assistant deleted: $assistantId');
       }
       if (vectorStoreId != null && openAiFileId != null) {
         await _client.beta.vectorStores.files.delete(vectorStoreId, openAiFileId);
       }
       if (vectorStoreId != null) {
         await _client.beta.vectorStores.delete(vectorStoreId);
-        log('Vector store deleted: $vectorStoreId');
       }
       if (openAiFileId != null) {
         await _client.files.delete(openAiFileId);
-        log('File deleted: $openAiFileId');
       }
 
       await prefs.remove(_keyAssistantId(fileId));
       await prefs.remove(_keyVectorStoreId(fileId));
       await prefs.remove(_keyOpenAiFileId(fileId));
     } catch (e, s) {
-      log('PDFAIAgent deletePDF error: $e\n$s');
+      AppLogger.error(e, s, 'PDFAIAgent deletePDF error');
     }
   }
 

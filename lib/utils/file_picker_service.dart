@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 //import 'package:file_picker/file_picker.dart';
@@ -6,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -104,7 +104,7 @@ class FilePickerService {
           images.addAll(pickedFiles);
         }
       } catch (e) {
-        print('Error picking multiple images: $e');
+        AppLogger.error(e, null, 'Error picking multiple images');
       }
     } else {
       try {
@@ -169,7 +169,7 @@ class FilePickerService {
       }
     } catch (e, s) {
       EasyLoading.dismiss();
-      print("Error picking files: $e\n$s");
+      AppLogger.error(e, s, 'Error picking files');
     }
 
     return picked;
@@ -211,7 +211,7 @@ class FilePickerService {
       pickedFiles.addAll(validFiles);
     } catch (e, s) {
       EasyLoading.dismiss();
-      print("Error picking media: $e\n$s");
+      AppLogger.error(e, s, 'Error picking media');
     }
     return pickedFiles;
   }
@@ -284,7 +284,7 @@ class FilePickerService {
       await outFile.writeAsBytes(pdfBytes);
       return XFile(outFile.path, name: fileName);
     } catch (e, s) {
-      print('Error converting images to PDF: $e\n$s');
+      AppLogger.error(e, s, 'Error converting images to PDF');
       return null;
     }
   }
@@ -419,7 +419,7 @@ class FilePickerService {
         );
       }
     } catch (e, s) {
-      log('Download error: ${e}______$s');
+      AppLogger.error(e, s, 'Download error');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

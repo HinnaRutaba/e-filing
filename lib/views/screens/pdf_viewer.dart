@@ -130,7 +130,9 @@ class _PdfViewerState extends State<PdfViewer> {
                   },
                 ),
               ),
-              if (widget.showPageNumber && _currentPage != null && _totalPages != null)
+              if (widget.showPageNumber &&
+                  _currentPage != null &&
+                  _totalPages != null)
                 Positioned(
                   bottom: 12,
                   right: 12,

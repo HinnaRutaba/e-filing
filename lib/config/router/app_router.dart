@@ -308,7 +308,6 @@ class AppRouter {
     //   final authCtrl =
     //       ProviderScope.containerOf(context).read(authController.notifier);
     //   // DesignationModel? designationModel = await authCtrl.fetchDesignation();
-    //   // print("DEDD______${designationModel?.designation}");
     //   final bool isSignedIn = await authCtrl.isLoggedIn();
     //
     //   if (!isSignedIn) {

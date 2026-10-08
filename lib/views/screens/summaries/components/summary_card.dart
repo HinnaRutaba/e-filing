@@ -70,7 +70,6 @@ class SummaryCard extends ConsumerWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            debugPrint('Tapped summary ${item.id}');
             if (isReturnedToOriginator) {
               RouteHelper.push(Routes.createSummary, extra: item.id);
             } else {

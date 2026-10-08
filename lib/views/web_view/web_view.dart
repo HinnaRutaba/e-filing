@@ -1,7 +1,7 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -42,8 +42,10 @@ class _AdminWebViewState extends State<AdminWebView> {
           onPageStarted: (String url) {},
           onPageFinished: (String url) {},
           onHttpError: (HttpResponseError error) {
-            log(
-              "ERRR______${error.response?.statusCode}_____${error.response?.headers}",
+            AppLogger.error(
+              'HTTP ${error.response?.statusCode}',
+              null,
+              'WebView HTTP error ${error.response?.statusCode}: ${error.response?.headers}',
             );
           },
           onUrlChange: (url) {

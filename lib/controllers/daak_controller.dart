@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -11,6 +9,7 @@ import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -153,7 +152,7 @@ class DaakController extends BaseControllerState<DaakState> {
       state = state.copyWith(allDaak: daakList, filteredDaak: daakList);
       return daakList;
     } catch (e, s) {
-      log("ERRR________${e}______$s");
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return [];
     }
@@ -276,7 +275,7 @@ class DaakController extends BaseControllerState<DaakState> {
         RouteHelper.pop(DaakViewFilter.inbox);
       }
     } catch (e, s) {
-      log("ERRR_____${e}______$s");
+      AppLogger.error(e, s);
       EasyLoading.dismiss();
       Toast.error(message: handleException(e));
     }
@@ -308,7 +307,7 @@ class DaakController extends BaseControllerState<DaakState> {
         RouteHelper.pop(DaakViewFilter.nfa);
       }
     } catch (e, s) {
-      log("ERRR_____${e}______$s");
+      AppLogger.error(e, s);
       EasyLoading.dismiss();
       Toast.error(message: handleException(e));
     }
@@ -338,7 +337,7 @@ class DaakController extends BaseControllerState<DaakState> {
         RouteHelper.pop(DaakViewFilter.nfa);
       }
     } catch (e, s) {
-      log("ERRR_____${e}______$s");
+      AppLogger.error(e, s);
       EasyLoading.dismiss();
       Toast.error(message: handleException(e));
     }
@@ -371,7 +370,7 @@ class DaakController extends BaseControllerState<DaakState> {
         RouteHelper.navigateTo(Routes.daak);
       }
     } catch (e, s) {
-      log("ERRR_____${e}______$s");
+      AppLogger.error(e, s);
       EasyLoading.dismiss();
       Toast.error(message: handleException(e));
     }

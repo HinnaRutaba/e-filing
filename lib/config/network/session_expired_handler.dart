@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:efiling_balochistan/config/router/app_router.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -7,6 +5,7 @@ import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -71,7 +70,7 @@ class SessionExpiredHandler {
         );
       });
     } catch (e, s) {
-      log("SESSION HANDLE CATCH_____${e}_____$s");
+      AppLogger.error(e, s, 'SESSION HANDLE CATCH');
     }
   }
 }

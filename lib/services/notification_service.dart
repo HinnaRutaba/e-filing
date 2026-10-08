@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:efiling_balochistan/firebase_options.dart';
 import 'package:efiling_balochistan/repository/notifications/notification_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -117,7 +117,7 @@ class NotificationService {
         _navigateToScreenFromData(message.data);
       });
     } catch (e, s) {
-      log("Failed Init Notifications________${e}_______$s");
+      AppLogger.error(e, s, 'Failed Init Notifications');
     }
   }
 
@@ -125,13 +125,12 @@ class NotificationService {
     try {
       await FlutterNewBadger.removeBadge();
     } catch (e) {
-      log("Badge clear error: $e");
+      AppLogger.error(e, null, 'Badge clear error');
     }
   }
 
   Future<void> getToken() async {
     _fcmToken = await _firebaseMessaging.getToken();
-    log("FCM_________$_fcmToken");
   }
 
   void _showNotification(RemoteMessage message) async {
@@ -162,7 +161,7 @@ class NotificationService {
         payload: jsonEncode(message.data),
       );
     } catch (e) {
-      log("Show notification error: $e");
+      AppLogger.error(e, null, 'Show notification error');
     }
   }
 
@@ -178,7 +177,7 @@ class NotificationService {
     try {
       await notificationRepo.storeNotificationToken(desgId, _fcmToken);
     } catch (e, s) {
-      log("SAVE FCM ERR_______${e}_____$s");
+      AppLogger.error(e, s, 'SAVE FCM ERR');
     }
   }
 

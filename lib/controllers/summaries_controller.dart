@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -23,6 +22,7 @@ import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.da
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/repository/summaries/summaries_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -273,7 +273,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       final stats = await repo.fetchSummariesStats(desId: desId);
       state = state.copyWith(stats: stats);
     } catch (e) {
-      log('fetchSummariesStats error: $e');
+      AppLogger.error(e, null, 'fetchSummariesStats error');
     }
   }
 
@@ -286,7 +286,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       state = state.copyWith(meta: meta);
       return meta;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return null;
     }
@@ -336,7 +336,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       state = state.copyWith(allSummaries: list, filteredSummaries: list);
       return list;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return [];
     }
@@ -366,7 +366,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       state = state.copyWith(details: details, isLoadingDetails: false);
       return details;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       state = state.copyWith(isLoadingDetails: false);
       return null;
@@ -383,7 +383,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
         desId: desId,
       );
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return [];
     }
@@ -407,7 +407,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -432,7 +432,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -461,7 +461,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -478,7 +478,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('submitDraftRemarks error: $e\n$s');
+      AppLogger.error(e, s, 'submitDraftRemarks error');
       Toast.error(message: handleException(e));
       return false;
     }
@@ -501,7 +501,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
       return true;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -525,7 +525,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       RouteHelper.pop();
       return true;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -547,7 +547,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
 
       return true;
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -573,7 +573,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       if (previousDetails != null) {
         state = state.copyWith(details: previousDetails);
       }
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -584,7 +584,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       final desId = ref.read(authController).currentDesignation?.userDesgId;
       return await repo.searchDaaks(desId: desId, query: query);
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return [];
     }
@@ -595,7 +595,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       final desId = ref.read(authController).currentDesignation?.userDesgId;
       return await repo.searchFiles(desId: desId, query: query);
     } catch (e, s) {
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return [];
     }
@@ -665,7 +665,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -683,7 +683,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -716,7 +716,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('psToSectForwardPostCM error: $e\n$s');
+      AppLogger.error(e, s, 'psToSectForwardPostCM error');
       Toast.error(message: handleException(e));
       return false;
     }
@@ -734,7 +734,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -802,7 +802,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -867,7 +867,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return freshDesk;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return null;
     }
@@ -908,7 +908,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('ERRR________${e}______$s');
+      AppLogger.error(e, s);
       Toast.error(message: handleException(e));
       return false;
     }
@@ -940,7 +940,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       );
       return true;
     } catch (e, s) {
-      log('uploadVoiceNote error: $e\n$s');
+      AppLogger.error(e, s, 'uploadVoiceNote error');
       return false;
     }
   }
@@ -961,7 +961,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       if (visibility == null) return voiceNotes;
       return voiceNotes.where((note) => note.visibility == visibility).toList();
     } catch (e, s) {
-      log('listVoiceNotes error: $e\n$s');
+      AppLogger.error(e, s, 'listVoiceNotes error');
       return [];
     }
   }
@@ -981,7 +981,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       );
       return true;
     } catch (e, s) {
-      log('deleteVoiceNote error: $e\n$s');
+      AppLogger.error(e, s, 'deleteVoiceNote error');
       return false;
     }
   }
@@ -1011,7 +1011,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return true;
     } catch (e, s) {
       EasyLoading.dismiss();
-      log('forwardInternally error: $e\n$s');
+      AppLogger.error(e, s, 'forwardInternally error');
       Toast.error(message: handleException(e));
       return false;
     }
@@ -1030,7 +1030,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       return url;
     } catch (e, s) {
       state = state.copyWith(gettingPrintUrl: false);
-      log('getSummaryPrintPdf error: $e\n$s');
+      AppLogger.error(e, s, 'getSummaryPrintPdf error');
       Toast.error(message: handleException(e));
       return null;
     }
@@ -1042,7 +1042,7 @@ class SummariesController extends BaseControllerState<SummariesState> {
       if (desId == null) return [];
       return await repo.getSummariesDesk(desgId: desId);
     } catch (e, s) {
-      log('getSummariesDesk error: $e\n$s');
+      AppLogger.error(e, s, 'getSummariesDesk error');
       Toast.error(message: handleException(e));
       return [];
     }

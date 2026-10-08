@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/config/router/route_helper.dart';
@@ -25,6 +23,7 @@ import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/audio_player/audio_waved_player.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/file_viewer.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -197,7 +196,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         _initChatRoom();
       }
     } catch (e, s) {
-      print("Error getting chat room: $e \n $s");
+      AppLogger.error(e, s, 'Error getting chat room');
     }
   }
 
@@ -246,7 +245,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         _loading = false;
       });
     } catch (e, s) {
-      log("Error init chat room: $e \n $s");
+      AppLogger.error(e, s, 'Error init chat room');
     }
   }
 
@@ -263,7 +262,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
       }
       setState(() {});
     } catch (e) {
-      print("Error fetching file details: $e");
+      AppLogger.error(e, null, 'Error fetching file details');
     }
   }
 
@@ -1300,7 +1299,7 @@ class _FileChatScreenState extends ConsumerState<FileChatScreen> {
         color: AppColors.cardColor,
       ),
       onError: (error) {
-        print('Error occurred: $error.message');
+        AppLogger.error(error);
       },
     );
   }

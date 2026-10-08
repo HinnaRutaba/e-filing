@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
@@ -10,6 +8,7 @@ import 'package:efiling_balochistan/models/summaries/summary_voice_note_model.da
 import 'package:efiling_balochistan/models/summaries/voice_note_upload_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -353,7 +352,6 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
           const SizedBox(height: 10),
           Builder(
             builder: (context) {
-              log("URL______${note.streamUrl}");
               return WavedAudioPlayer(
                 source: ap.UrlSource(note.streamUrl, mimeType: 'audio/x-wav'),
                 headers: _authHeaders,
@@ -371,7 +369,7 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
                   color: appColors.textSecondary,
                 ),
                 onError: (e) {
-                  log("ERR VN_______${e}");
+                  AppLogger.error(e);
                 },
               );
             },

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:efiling_balochistan/constants/keys.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:openai_dart/openai_dart.dart';
 
 enum ChatRole { user, assistant }
@@ -140,7 +140,6 @@ Submitted for approval and further directions please.
       );
 
       final aiResponse = res.text ?? '';
-      log(aiResponse);
       _messageHistory.removeWhere(
         (m) => m.role == ChatRole.assistant && m.content == "Reading file...",
       );
@@ -154,7 +153,7 @@ Submitted for approval and further directions please.
       }
       _addMessage(ChatRole.assistant, aiResponse);
     } catch (e, s) {
-      log("AI AGENT ERROR____${e}_____$s");
+      AppLogger.error(e, s, 'AI AGENT ERROR');
       _messageHistory.removeWhere(
         (m) => m.role == ChatRole.assistant && m.content == "Thinking...",
       );
@@ -229,7 +228,7 @@ Submitted for approval and further directions please.
       );
       _addMessage(ChatRole.assistant, fullResponse);
     } catch (e, s) {
-      log("AI AGENT STREAM ERROR____${e}_____$s");
+      AppLogger.error(e, s, 'AI AGENT STREAM ERROR');
       _messageHistory.removeWhere(
         (m) => m.role == ChatRole.assistant && m.content == "Thinking...",
       );

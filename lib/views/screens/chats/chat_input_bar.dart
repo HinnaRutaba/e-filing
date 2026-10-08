@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/utils/file_picker_service.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:efiling_balochistan/views/widgets/file_viewer.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -81,7 +82,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
         userTitle: widget.userTitle,
       );
     } catch (e, s) {
-      print("Stop Recording Error_____${e}_____$s");
+      AppLogger.error(e, s, 'Stop Recording Error');
       setState(() {
         _isRecording = false;
         _stoppingRecording = false;

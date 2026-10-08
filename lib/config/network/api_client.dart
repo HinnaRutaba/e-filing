@@ -4,12 +4,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:efiling_balochistan/config/network/session_expired_handler.dart';
-import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 
 class DioClient {
   final Dio _dio;
-  static var logger = Logger();
 
   DioClient(this._dio) {
     _enable();
@@ -78,14 +76,14 @@ class DioClient {
           handler.next(response);
         },
         onError: (error, handler) async {
-          logger.d("-------URL---------");
-          logger.d(error.requestOptions.uri.toString());
-          logger.d("-------ERROR CODE---------");
-          logger.d(error.response?.statusCode ?? error.type.name);
-          logger.d("-------ERROR RESP---------");
-          logger.d(error.response?.data ?? "No response data");
-          logger.d("-------ERROR---------");
-          logger.d(error.message ?? "Unknown error");
+          AppLogger.error(
+            error,
+            error.stackTrace,
+            'ERROR ${error.requestOptions.method} ${error.requestOptions.uri}\n'
+            'code: ${error.response?.statusCode ?? error.type.name}\n'
+            'response: ${error.response?.data ?? "No response data"}\n'
+            'message: ${error.message ?? "Unknown error"}',
+          );
           if (error.response?.statusCode == 401) {
             SessionExpiredHandler.handleExpiration();
           }
@@ -122,6 +120,29 @@ class DioClient {
     );
   }
 
+  void _logRequest(
+    String method,
+    String url,
+    Map<String, dynamic>? headers, {
+    Map<String, dynamic>? query,
+    Object? body,
+  }) {
+    AppLogger.api(
+      'REQUEST $method $url\n'
+      'headers: $headers\n'
+      '${query != null ? 'query: $query\n' : ''}'
+      '${body != null ? 'body: $body' : ''}',
+    );
+  }
+
+  void _logResponse(Response response) {
+    AppLogger.api(
+      'RESPONSE ${response.requestOptions.method} ${response.requestOptions.uri}\n'
+      'status: ${response.statusCode}\n'
+      'data: ${response.data}',
+    );
+  }
+
   Future<dynamic> get({
     required String url,
     Map<String, dynamic>? queryParameters,
@@ -130,12 +151,7 @@ class DioClient {
   }) async {
     try {
       if (isShowLog) {
-        logger.d("-------URL---------");
-        logger.d(url);
-        logger.d("-------HEADER---------");
-        logger.d("${options.headers}");
-        logger.d("-------QUERY PARAMS---------");
-        logger.d("$queryParameters");
+        _logRequest('GET', url, options.headers, query: queryParameters);
       }
       Response response;
       response = await _dio.get(
@@ -144,8 +160,7 @@ class DioClient {
         options: options,
       );
       if (isShowLog) {
-        debugPrint("-------Response---------");
-        debugPrint(response.toString());
+        _logResponse(response);
       }
       return response.data;
     } catch (e) {
@@ -161,12 +176,7 @@ class DioClient {
   }) async {
     try {
       if (isShowLog) {
-        logger.d("-------URL---------");
-        logger.d(url);
-        logger.d("-------HEADER---------");
-        logger.d("${options?.headers}");
-        logger.d("-------Request---------");
-        logger.d(data.toString());
+        _logRequest('PATCH', url, options?.headers, body: data);
       }
       final Response response = await _dio.patch(
         url,
@@ -174,8 +184,7 @@ class DioClient {
         options: options,
       );
       if (isShowLog) {
-        logger.d("-------Response---------");
-        logger.d(response.toString());
+        _logResponse(response);
       }
       return response.data;
     } catch (e) {
@@ -196,12 +205,12 @@ class DioClient {
     }
     try {
       if (isShowLog) {
-        logger.d("-------URL---------");
-        logger.d(url);
-        logger.d("-------HEADER---------");
-        logger.d("${options.headers}");
-        logger.d("-------Request---------");
-        logger.d(data.toString());
+        _logRequest(
+          'POST',
+          url,
+          options.headers,
+          body: data ?? formData?.fields,
+        );
       }
       final Response response = await _dio.post(
         url,
@@ -210,8 +219,7 @@ class DioClient {
         onSendProgress: onSendProgress,
       );
       if (isShowLog) {
-        logger.d("-------Response---------");
-        logger.d(response.toString());
+        _logResponse(response);
       }
       return response.data;
     } catch (e) {
@@ -227,12 +235,7 @@ class DioClient {
   }) async {
     try {
       if (isShowLog) {
-        logger.d("-------URL---------");
-        logger.d(url);
-        logger.d("-------HEADER---------");
-        logger.d("${options.headers}");
-        logger.d("-------Request---------");
-        logger.d(data.toString());
+        _logRequest('PUT', url, options.headers, body: data);
       }
       final Response response = await _dio.put(
         url,
@@ -240,8 +243,7 @@ class DioClient {
         options: options,
       );
       if (isShowLog) {
-        logger.d("-------Response---------");
-        logger.d(response.toString());
+        _logResponse(response);
       }
       return response.data;
     } catch (e) {
@@ -257,12 +259,7 @@ class DioClient {
   }) async {
     try {
       if (isShowLog) {
-        logger.d("-------URL---------");
-        logger.d(url);
-        logger.d("-------HEADER---------");
-        logger.d("${options.headers}");
-        logger.d("-------Request---------");
-        logger.d(data.toString());
+        _logRequest('DELETE', url, options.headers, body: data);
       }
       final Response response = await _dio.delete(
         url,
@@ -270,8 +267,7 @@ class DioClient {
         options: options,
       );
       if (isShowLog) {
-        logger.d("-------Response---------");
-        logger.d(response.toString());
+        _logResponse(response);
       }
       return response.data;
     } catch (e) {

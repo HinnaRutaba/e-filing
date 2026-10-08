@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
@@ -2475,7 +2474,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         .read(summariesController.notifier)
         .getSummaryPrintPdf(summaryId: summaryId);
 
-    log("PRINT_________${url}");
 
     if (!mounted || url == null) return;
     Navigator.push(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +8,7 @@ import 'package:efiling_balochistan/models/chat/message_model.dart';
 import 'package:efiling_balochistan/models/department/department_user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_repo.dart';
 import 'package:efiling_balochistan/services/record_audio_service.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -104,7 +104,7 @@ class ChatService {
 
       return null; // No existing direct chat found
     } catch (e) {
-      log("Error checking for existing direct chat: $e");
+      AppLogger.error(e, null, 'Error checking for existing direct chat');
       return null;
     }
   }
@@ -843,7 +843,7 @@ class ChatService {
 
       await batch.commit();
     } catch (e, s) {
-      print("ERRRR______${e}______$s");
+      AppLogger.error(e, s);
     }
   }
 
@@ -928,7 +928,6 @@ class ChatService {
         },
       });
 
-      log("Voice message created with sending status, starting upload...");
 
       // Now upload file in the background
       ChatFileModel model = await chatRepo.saveChatFile(
@@ -936,7 +935,6 @@ class ChatService {
         fileName: fileName,
       );
 
-      log("Upload completed. FileUrl: ${model.fileUrl}");
 
       if (model.fileUrl != null) {
         // Update the message with uploaded URL
@@ -959,14 +957,16 @@ class ChatService {
             },
           });
 
-          log("Voice message uploaded successfully: ${model.fileUrl}");
         } catch (updateError, updateStack) {
-          log("Error updating voice message status: $updateError");
-          log("Stack trace: $updateStack");
+          AppLogger.error(
+            updateError,
+            updateStack,
+            'Error updating voice message status: $updateError',
+          );
         }
       } else {
         // Handle upload failure
-        log("Voice message upload failed - no URL returned");
+        AppLogger.error("Voice message upload failed - no URL returned");
         await docRef.update({
           'upload_status': 'failed',
           'local_files': [audioFile.path],
@@ -974,7 +974,7 @@ class ChatService {
         });
       }
     } catch (e, s) {
-      log("ERRR________${e}_______$s");
+      AppLogger.error(e, s);
       // Update message status to 'failed' on error
       try {
         await docRef.update({
@@ -1064,7 +1064,7 @@ class ChatService {
 
       // Check if any uploads failed
       if (attachmentUrls.length != attachments.length) {
-        log("Some attachments failed to upload");
+        AppLogger.error("Some attachments failed to upload");
         await docRef.update({
           'upload_status': 'failed',
           'local_files': localFilePaths,
@@ -1086,7 +1086,7 @@ class ChatService {
         'last_message': {...completedMsg.toJson(chat), 'upload_status': 'sent'},
       });
     } catch (e, s) {
-      log("ERRR________${e}_______$s");
+      AppLogger.error(e, s);
       // Update message status to 'failed' on error
       try {
         await docRef.update({
@@ -1128,7 +1128,7 @@ class ChatService {
 
     final doc = await docRef.get();
     if (!doc.exists) {
-      log("Message not found for retry: $messageId");
+      AppLogger.error("Message not found for retry: $messageId");
       return;
     }
 
@@ -1136,7 +1136,7 @@ class ChatService {
     final uploadStatus = data['upload_status'];
 
     if (uploadStatus != 'failed') {
-      log("Message is not in failed state: $uploadStatus");
+      AppLogger.error("Message is not in failed state: $uploadStatus");
       return;
     }
 
@@ -1150,7 +1150,7 @@ class ChatService {
         userId == null ||
         userDesignationId == null ||
         userTitle == null) {
-      log("Missing required data for retry");
+      AppLogger.error("Missing required data for retry");
       return;
     }
 
@@ -1182,10 +1182,9 @@ class ChatService {
             'last_message': {...updatedDoc.data()!, 'upload_status': 'sent'},
           });
 
-          log("Voice message retry successful: ${model.fileUrl}");
         } else {
           await docRef.update({'upload_status': 'failed'});
-          log("Voice message retry failed - no URL returned");
+          AppLogger.error("Voice message retry failed - no URL returned");
         }
       } else {
         // Retry attachment message
@@ -1210,7 +1209,9 @@ class ChatService {
 
         if (attachmentUrls.length != localFiles.length) {
           await docRef.update({'upload_status': 'failed'});
-          log("Attachment retry failed - some files couldn't be uploaded");
+          AppLogger.error(
+            "Attachment retry failed - some files couldn't be uploaded",
+          );
           return;
         }
 
@@ -1225,10 +1226,9 @@ class ChatService {
           'last_message': {...updatedDoc.data()!, 'upload_status': 'sent'},
         });
 
-        log("Attachment message retry successful");
       }
     } catch (e, s) {
-      log("Retry failed: $e\n$s");
+      AppLogger.error(e, s, 'Retry failed');
       await docRef.update({'upload_status': 'failed'});
     }
   }
@@ -1245,9 +1245,8 @@ class ChatService {
           .collection(messagesCollection)
           .doc(messageId)
           .delete();
-      log("Deleted failed message: $messageId");
     } catch (e, s) {
-      log("Failed to delete message: $e\n$s");
+      AppLogger.error(e, s, 'Failed to delete message');
     }
   }
 
