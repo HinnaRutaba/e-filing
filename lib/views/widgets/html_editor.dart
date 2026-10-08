@@ -25,13 +25,47 @@ class HtmlEditor extends StatefulWidget {
   State<HtmlEditor> createState() => _HtmlEditorState();
 }
 
-class _HtmlEditorState extends State<HtmlEditor> {
+class _HtmlEditorState extends State<HtmlEditor> with WidgetsBindingObserver {
   late final he.HtmlEditorController _controller;
+  bool _keyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? he.HtmlEditorController();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // The keyboard is often dismissed from the Flutter side (tap outside,
+  // scroll-to-dismiss, back button) while the editable inside the webview
+  // keeps its DOM/native focus. Tapping an already-focused editable doesn't
+  // raise the keyboard again, so the editor looks dead until something else
+  // takes focus. Drop the webview's focus whenever the keyboard goes away so
+  // the next tap is a fresh focus.
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final visible = View.of(context).viewInsets.bottom > 0;
+    final wasVisible = _keyboardVisible;
+    _keyboardVisible = visible;
+    if (wasVisible && !visible) _releaseEditorFocus();
+  }
+
+  void _releaseEditorFocus() {
+    final webview = _controller.editorController;
+    if (webview == null) return;
+    webview.evaluateJavascript(
+      source:
+          "document.activeElement && document.activeElement.blur();"
+          "document.querySelector('.note-editable')?.blur();",
+    );
+    webview.clearFocus();
   }
 
   @override

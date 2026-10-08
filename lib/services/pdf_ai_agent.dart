@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:efiling_balochistan/config/storage/local_storage.dart';
 import 'package:efiling_balochistan/constants/keys.dart';
 import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:openai_dart/openai_dart.dart';
@@ -7,7 +8,6 @@ import 'package:openai_dart/src/models/assistants/assistants.dart';
 import 'package:openai_dart/src/models/runs/runs.dart';
 import 'package:openai_dart/src/models/threads/threads.dart';
 import 'package:openai_dart/src/models/vector_stores/vector_stores.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 enum PdfChatRole { user, assistant }
 
@@ -27,7 +27,7 @@ class PdfAIMessage {
 ///
 /// Supports multiple PDFs — each identified by your backend [fileId].
 /// The assistant + vector store for each PDF are created once and persisted
-/// in SharedPreferences, shared by all users of the same API key.
+/// in secure storage, shared by all users of the same API key.
 /// Each user session gets its own thread (conversation stays separate).
 ///
 /// Lifecycle:
@@ -60,7 +60,7 @@ class PDFAIAgent {
   final _messageController = StreamController<List<PdfAIMessage>>.broadcast();
   Stream<List<PdfAIMessage>> get messagesStream => _messageController.stream;
 
-  // SharedPreferences key helpers — scoped per backend fileId
+  // Secure storage key helpers — scoped per backend fileId
   static String _keyAssistantId(int fileId) => 'pdf_agent_${fileId}_assistant_id';
   static String _keyVectorStoreId(int fileId) => 'pdf_agent_${fileId}_vector_store_id';
   static String _keyOpenAiFileId(int fileId) => 'pdf_agent_${fileId}_openai_file_id';
@@ -107,8 +107,8 @@ class PDFAIAgent {
         _notify();
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      final savedAssistantId = prefs.getString(_keyAssistantId(fileId));
+      final savedAssistantId =
+          await LocalStorage.get(_keyAssistantId(fileId)) as String?;
 
       if (savedAssistantId != null) {
         // Reuse existing assistant for this PDF
@@ -149,9 +149,9 @@ class PDFAIAgent {
         _activeAssistantId = assistant.id;
 
         // Persist IDs so future calls for this fileId skip the upload
-        await prefs.setString(_keyAssistantId(fileId), assistant.id);
-        await prefs.setString(_keyVectorStoreId(fileId), vs.id);
-        await prefs.setString(_keyOpenAiFileId(fileId), file.id);
+        await LocalStorage.save(_keyAssistantId(fileId), assistant.id);
+        await LocalStorage.save(_keyVectorStoreId(fileId), vs.id);
+        await LocalStorage.save(_keyOpenAiFileId(fileId), file.id);
       }
 
       // Always create a fresh thread per user session
@@ -232,17 +232,15 @@ class PDFAIAgent {
   }
 
   /// Permanently deletes the assistant, vector store, and file for a specific PDF.
-  /// Also removes its persisted IDs from SharedPreferences.
+  /// Also removes its persisted IDs from secure storage.
   /// Use only if you want to stop using a PDF and free up OpenAI storage.
   Future<void> deletePDF(int fileId) async {
     if (_activeFileId == fileId) resetSession();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final assistantId = prefs.getString(_keyAssistantId(fileId));
-      final vectorStoreId = prefs.getString(_keyVectorStoreId(fileId));
-      final openAiFileId = prefs.getString(_keyOpenAiFileId(fileId));
+      final assistantId = await LocalStorage.get(_keyAssistantId(fileId)) as String?;
+      final vectorStoreId = await LocalStorage.get(_keyVectorStoreId(fileId)) as String?;
+      final openAiFileId = await LocalStorage.get(_keyOpenAiFileId(fileId)) as String?;
 
       if (assistantId != null) {
         await _client.beta.assistants.delete(assistantId);
@@ -257,9 +255,9 @@ class PDFAIAgent {
         await _client.files.delete(openAiFileId);
       }
 
-      await prefs.remove(_keyAssistantId(fileId));
-      await prefs.remove(_keyVectorStoreId(fileId));
-      await prefs.remove(_keyOpenAiFileId(fileId));
+      await LocalStorage.remove(_keyAssistantId(fileId));
+      await LocalStorage.remove(_keyVectorStoreId(fileId));
+      await LocalStorage.remove(_keyOpenAiFileId(fileId));
     } catch (e, s) {
       AppLogger.error(e, s, 'PDFAIAgent deletePDF error');
     }

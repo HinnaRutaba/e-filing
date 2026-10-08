@@ -1,37 +1,38 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+/// Secure key-value storage. Values are JSON-encoded so that the original
+/// type (String, bool, int, double, List<String>) is preserved on read.
 class LocalStorage {
   LocalStorage._();
 
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+
   static Future<void> save(String key, Object value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (value is String) {
-      prefs.setString(key, value);
-    } else if (value is bool) {
-      prefs.setBool(key, value);
-    } else if (value is int) {
-      prefs.setInt(key, value);
-    } else if (value is double) {
-      prefs.setDouble(key, value);
-    } else if (value is List<String>) {
-      prefs.setStringList(key, value);
-    } else {
+    if (value is! String &&
+        value is! bool &&
+        value is! int &&
+        value is! double &&
+        value is! List<String>) {
       throw Exception('Type not supported');
     }
+    await _storage.write(key: key, value: jsonEncode(value));
   }
 
   static Future<Object?> get(String key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.get(key);
+    final raw = await _storage.read(key: key);
+    if (raw == null) return null;
+    final decoded = jsonDecode(raw);
+    if (decoded is List) return decoded.cast<String>();
+    return decoded;
   }
 
   static Future<void> remove(String key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove(key);
+    await _storage.delete(key: key);
   }
 
   static Future<void> clear() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.clear();
+    await _storage.deleteAll();
   }
 }
