@@ -1,5 +1,6 @@
 import 'package:efiling_balochistan/config/network/network_base.dart';
 import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
+import 'package:efiling_balochistan/models/secretary_dashboard_model.dart';
 import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 
 abstract class DashboardInterface extends NetworkBase {
@@ -9,7 +10,14 @@ abstract class DashboardInterface extends NetworkBase {
   String dashboardStatsUrl(int desgId) =>
       '${baseUrl}dashboard?userDesgID=$desgId';
 
+  String secretaryDashboardUrl(int desgId) =>
+      '${baseUrl}secretary/dashboard?userDesgID=$desgId';
+
   Future<CMDashboardModel> getCmDashboard({required int? userDesgId});
 
   Future<DashboardStatsModel> getDashboardStats({required int? userDesgId});
+
+  Future<SecretaryDashboardModel> getSecretaryDashboard({
+    required int? userDesgId,
+  });
 }

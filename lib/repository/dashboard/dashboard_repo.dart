@@ -1,4 +1,5 @@
 import 'package:efiling_balochistan/models/dashboard_stats_model.dart';
+import 'package:efiling_balochistan/models/secretary_dashboard_model.dart';
 import 'package:efiling_balochistan/models/summaries/cm_dashboard_model.dart';
 import 'package:efiling_balochistan/repository/dashboard/dashboard_interface.dart';
 
@@ -27,6 +28,24 @@ class DashboardRepo extends DashboardInterface {
       options: await options(authRequired: true),
     );
     return DashboardStatsModel.fromJson(
+      Map<String, dynamic>.from(data['data']),
+    );
+  }
+
+  @override
+  Future<SecretaryDashboardModel> getSecretaryDashboard({
+    required int? userDesgId,
+  }) async {
+    if (userDesgId == null) {
+      throw Exception(
+        'Designation ID is required to fetch secretary dashboard',
+      );
+    }
+    final Map<String, dynamic> data = await dioClient.get(
+      url: secretaryDashboardUrl(userDesgId),
+      options: await options(authRequired: true),
+    );
+    return SecretaryDashboardModel.fromJson(
       Map<String, dynamic>.from(data['data']),
     );
   }

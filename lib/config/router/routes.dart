@@ -7,6 +7,7 @@ class Routes {
   static const String selectDesignation = '/selectDesignation';
   static const String dashboard = '/dashboard';
   static const String cmDashboard = '/cmDashboard';
+  static const String secretaryDashboard = '/secretaryDashboard';
   static const String cmApprovalDesk = '/cmApprovalDesk';
   static const String secretaryApprovalDesk = '/secretaryApprovalDesk';
   static const String cmSummaries = '/cmSummaries';

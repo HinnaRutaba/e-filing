@@ -38,6 +38,9 @@ class AuthController extends BaseControllerState<UserModel> {
           await ref.read(daakController.notifier).fetchDaakMeta();
           if (model.user?.userDesgRole == ActiveUserDesgRole.cm) {
             RouteHelper.navigateTo(Routes.cmDashboard);
+          } else if (model.user?.userDesgRole ==
+              ActiveUserDesgRole.secretary) {
+            RouteHelper.navigateTo(Routes.secretaryDashboard);
           } else {
             RouteHelper.navigateTo(Routes.dashboard);
           }
