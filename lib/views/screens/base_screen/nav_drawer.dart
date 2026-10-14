@@ -4,6 +4,7 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
@@ -64,6 +65,17 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   }
 
   bool get _showToggle => !widget.alwaysExpanded;
+
+  /// Secretaries have their own landing dashboard.
+  String get _homeRoute =>
+      ref.read(authController).userDesgRole == ActiveUserDesgRole.secretary
+      ? Routes.secretaryDashboard
+      : Routes.dashboard;
+
+  /// The shared menu list points "Dashboard" at the standard route; swap in the
+  /// role's own home for that entry.
+  String? _resolveRoute(String? route) =>
+      route == Routes.dashboard ? _homeRoute : route;
 
   void _toggle() {
     if (widget.onToggle != null) {
@@ -254,7 +266,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             curve: Curves.easeOut,
             child: InkWell(
               onTap: () {
-                RouteHelper.navigateTo(Routes.dashboard);
+                RouteHelper.navigateTo(_homeRoute);
               },
               child: Image.asset(
                 AssetsConstants.logo,
@@ -373,7 +385,8 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final theme = Theme.of(context);
     final appColors = context.appColors;
     final bool isDark = theme.brightness == Brightness.dark;
-    final bool isSelected = menu.routeName == RouteHelper.currentLocation;
+    final bool isSelected =
+        _resolveRoute(menu.routeName) == RouteHelper.currentLocation;
     final Color fgColor = isSelected
         ? (isDark ? appColors.primaryLight : appColors.primaryDark)
         : (isDark ? appColors.secondaryLight : appColors.secondaryDark);
@@ -384,8 +397,9 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final bool isSummaries = menu.routeName == Routes.summaries;
 
     void onTap() {
-      if (menu.routeName != null) {
-        RouteHelper.navigateTo(menu.routeName!);
+      final route = _resolveRoute(menu.routeName);
+      if (route != null) {
+        RouteHelper.navigateTo(route);
       }
     }
 

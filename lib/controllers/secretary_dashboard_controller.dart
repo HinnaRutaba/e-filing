@@ -30,8 +30,10 @@ class SecretaryDashboardController
   Future<void> initData() async {
     state = state.copyWith(loading: true, error: null);
     try {
-      final userDesgId =
-          ref.read(authController).currentDesignation?.userDesgId;
+      final userDesgId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
       final result = await ref
           .read(dashboardRepo)
           .getSecretaryDashboard(userDesgId: userDesgId);
@@ -43,9 +45,10 @@ class SecretaryDashboardController
 }
 
 final secretaryDashboardController =
-    StateNotifierProvider<SecretaryDashboardController, SecretaryDashboardState>(
-      (ref) => SecretaryDashboardController(
-        const SecretaryDashboardState(),
-        ref,
-      ),
+    StateNotifierProvider<
+      SecretaryDashboardController,
+      SecretaryDashboardState
+    >(
+      (ref) =>
+          SecretaryDashboardController(const SecretaryDashboardState(), ref),
     );
