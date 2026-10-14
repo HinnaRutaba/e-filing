@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -12,6 +13,7 @@ import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:flutter/material.dart';
@@ -42,9 +44,14 @@ class _SecretaryDashboardScreenState
   /// and the header drops its secondary lines. Resets at the top.
   final ValueNotifier<bool> _compact = ValueNotifier<bool>(false);
 
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+    // The query outlives the screen (the provider isn't auto-disposed), so
+    // show it again in the field.
+    _searchController.text = ref.read(secretaryDashboardController).query;
     Future.microtask(
       () => ref.read(secretaryDashboardController.notifier).initData(),
     );
@@ -53,7 +60,16 @@ class _SecretaryDashboardScreenState
   @override
   void dispose() {
     _compact.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) =>
+      ref.read(secretaryDashboardController.notifier).setQuery(value);
+
+  void _clearSearch() {
+    _searchController.clear();
+    ref.read(secretaryDashboardController.notifier).clearQuery();
   }
 
   Future<void> _refresh() =>
@@ -81,54 +97,61 @@ class _SecretaryDashboardScreenState
     // already includes the app bar, which would count that space twice.
     final topInset = MediaQuery.of(context).padding.top;
 
-    return GradientScaffold(
-      child: BaseScreen(
-        bgColor: Colors.transparent,
-        showUserDetails: false,
-        isdash: true,
-        enableBackButton: false,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final gutter = width >= _tabletBreakpoint ? 16.0 : 10.0;
+    return GestureDetector(
+      onTap: () {
+        HelperUtils.hideKeyboard(context);
+      },
+      child: GradientScaffold(
+        child: BaseScreen(
+          bgColor: Colors.transparent,
+          showUserDetails: false,
+          isdash: true,
+          enableBackButton: false,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final gutter = width >= _tabletBreakpoint ? 16.0 : 10.0;
 
-            return NotificationListener<ScrollNotification>(
-              onNotification: _handleScroll,
-              child: Column(
-                children: [
-                  ValueListenableBuilder<bool>(
-                    valueListenable: _compact,
-                    builder: (context, compact, _) =>
-                        _buildTop(context, state, gutter, topInset, compact),
-                  ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: _maxContentWidth,
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                gutter,
-                                16,
-                                gutter,
-                                32,
+              return NotificationListener<ScrollNotification>(
+                onNotification: _handleScroll,
+                child: Column(
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _compact,
+                      builder: (context, compact, _) =>
+                          _buildTop(context, state, gutter, topInset, compact),
+                    ),
+                    // Outside the scroll view so it stays put while the list moves.
+                    if (state.data != null) _buildSearch(gutter),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _refresh,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: _maxContentWidth,
                               ),
-                              child: _buildBody(state, width),
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  gutter,
+                                  4,
+                                  gutter,
+                                  32,
+                                ),
+                                child: _buildBody(state, width),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -431,6 +454,22 @@ class _SecretaryDashboardScreenState
     );
   }
 
+  Widget _buildSearch(double gutter) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(gutter, 4, gutter, 7),
+          child: SecretarySearchBar(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            onClear: _clearSearch,
+          ),
+        ),
+      ),
+    );
+  }
+
   // --- body ------------------------------------------------------------------
 
   Widget _buildBody(SecretaryDashboardState state, double width) {
@@ -450,6 +489,12 @@ class _SecretaryDashboardScreenState
     final files = data.departmentFiles;
     final daak = data.departmentDaak;
     final charts = data.charts;
+
+    // Searching: the department-wide cards (overviews, workload) can't be
+    // narrowed to a user or section, so they are hidden; the user and section
+    // cards keep only the matching rows and disappear when nothing matches.
+    final filter = state.filter;
+    final searching = filter != null;
 
     // 2. Files and Daak overview cards.
     final colors = context.appColors;
@@ -542,44 +587,74 @@ class _SecretaryDashboardScreenState
     );
 
     // 3. Charts, one after the other.
+    final sections = filter?.sections ?? data.sectionStats;
     final chartPanels = [
-      SecretaryWorkloadPanel(kpis: kpis, delay: 150.ms),
-      SecretarySectionsPanel(sections: data.sectionStats, delay: 150.ms),
+      if (!searching) SecretaryWorkloadPanel(kpis: kpis, delay: 150.ms),
+      if (!searching || filter.sections.any((e) => (e.total ?? 0) > 0))
+        SecretarySectionsPanel(sections: sections, delay: 150.ms),
     ];
 
     // 4. Top lists.
+    final putup = filter?.topFilePutup ?? charts?.topFilePutup ?? const [];
+    final pending = filter?.topPending ?? charts?.topPending ?? const [];
+    final topForwarded =
+        filter?.topForwarded ?? charts?.topForwarded ?? const [];
     final lists = [
-      SecretaryTopUsersPanel(
-        title: 'Top File Put-up',
-        subtitle: 'Files created by user',
-        icon: Icons.upload_file_rounded,
-        color: viz.navy,
-        items: charts?.topFilePutup ?? const [],
-      ),
-      SecretaryTopUsersPanel(
-        title: 'Top Pending',
-        subtitle: 'Most files waiting',
-        icon: Icons.hourglass_bottom_rounded,
-        color: viz.amber,
-        items: charts?.topPending ?? const [],
-      ),
-      SecretaryTopUsersPanel(
-        title: 'Top Forwarded',
-        subtitle: 'Most files forwarded',
-        icon: Icons.forward_to_inbox_rounded,
-        color: viz.green,
-        items: charts?.topForwarded ?? const [],
-      ),
+      if (!searching || putup.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('putup'),
+          title: 'Top File Put-up',
+          subtitle: 'Files created by user',
+          icon: Icons.upload_file_rounded,
+          color: viz.navy,
+          items: putup,
+        ),
+      if (!searching || pending.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('pending'),
+          title: 'Top Pending',
+          subtitle: 'Most files waiting',
+          icon: Icons.hourglass_bottom_rounded,
+          color: viz.amber,
+          items: pending,
+        ),
+      if (!searching || topForwarded.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('forwarded'),
+          title: 'Top Forwarded',
+          subtitle: 'Most files forwarded',
+          icon: Icons.forward_to_inbox_rounded,
+          color: viz.green,
+          items: topForwarded,
+        ),
     ];
+
+    if (searching && chartPanels.isEmpty && lists.isEmpty) {
+      return SecretarySearchEmptyState(
+        query: state.query.trim(),
+        onClear: _clearSearch,
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sideBySide([filesSection, daakSection], twoColumns),
-        const SizedBox(height: 16),
-        _spaced(chartPanels),
-        const SizedBox(height: 16),
-        _sideBySide(lists, threeColumns),
+        if (searching)
+          SecretarySearchSummary(
+            users: filter.userCount,
+            sections: filter.sections.where((e) => (e.total ?? 0) > 0).length,
+          ),
+        if (!searching) ...[
+          _sideBySide([filesSection, daakSection], twoColumns),
+          const SizedBox(height: 16),
+        ],
+        if (chartPanels.isNotEmpty) ...[
+          if (searching) const SizedBox(height: 16),
+          _spaced(chartPanels),
+          const SizedBox(height: 16),
+        ],
+        if (lists.isNotEmpty)
+          _sideBySide(lists, threeColumns && lists.length > 1),
       ],
     );
   }
