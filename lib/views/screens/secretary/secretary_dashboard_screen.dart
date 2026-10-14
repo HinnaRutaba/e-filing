@@ -578,7 +578,7 @@ class _SecretaryDashboardScreenState
         _sideBySide([filesSection, daakSection], twoColumns),
         const SizedBox(height: 16),
         _spaced(chartPanels),
-        const _GroupTitle('Top Performers'),
+        const SizedBox(height: 16),
         _sideBySide(lists, threeColumns),
       ],
     );
