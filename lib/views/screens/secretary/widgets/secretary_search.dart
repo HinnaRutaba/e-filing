@@ -4,8 +4,8 @@ import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class SecretarySearchBar extends StatelessWidget {
-  const SecretarySearchBar({
+class DashboardSearchBar extends StatelessWidget {
+  const DashboardSearchBar({
     super.key,
     required this.controller,
     required this.onChanged,

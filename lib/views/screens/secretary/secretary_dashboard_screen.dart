@@ -461,7 +461,7 @@ class _SecretaryDashboardScreenState
         constraints: const BoxConstraints(maxWidth: _maxContentWidth),
         child: Padding(
           padding: EdgeInsets.fromLTRB(gutter, 4, gutter, 7),
-          child: SecretarySearchBar(
+          child: DashboardSearchBar(
             controller: _searchController,
             onChanged: _onSearchChanged,
             onClear: _clearSearch,

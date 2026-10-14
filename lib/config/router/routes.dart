@@ -34,6 +34,7 @@ class Routes {
   static const String daak = '/daak';
   static const String scanDaak = '/scanDaak';
   static const String daakDesk = '/daakDesk';
+  static const String daakReports = '/daakReports';
   static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
 

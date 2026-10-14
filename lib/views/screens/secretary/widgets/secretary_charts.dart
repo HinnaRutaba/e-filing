@@ -456,10 +456,15 @@ class SecretaryColumnChart extends StatelessWidget {
     super.key,
     required this.data,
     required this.color,
+    this.tintedTrack = false,
   });
 
   final List<SecretaryBarDatum> data;
   final Color color;
+
+  /// Draw the background behind each bar as a faint tint of the bar's own
+  /// color instead of the neutral grey.
+  final bool tintedTrack;
 
   @override
   Widget build(BuildContext context) {
@@ -546,7 +551,9 @@ class SecretaryColumnChart extends StatelessWidget {
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: maxY,
-                      color: colors.border.withValues(alpha: 0.25),
+                      color: tintedTrack
+                          ? (data[i].color ?? color).withValues(alpha: 0.12)
+                          : colors.border.withValues(alpha: 0.25),
                     ),
                   ),
                 ],

@@ -11,6 +11,9 @@ class CustomAppChip extends StatelessWidget {
   final Color? chipColor;
   final Color? borderColor;
   final double minWidth;
+
+  /// Smaller text, tighter padding and a shorter tap target.
+  final bool compact;
   const CustomAppChip({
     super.key,
     required this.label,
@@ -21,22 +24,37 @@ class CustomAppChip extends StatelessWidget {
     this.chipColor,
     this.borderColor,
     this.minWidth = 80,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final labelText = AppText.bodyMedium(
-      label,
-      color: borderColor ?? theme.primaryColorDark,
-      textAlign: TextAlign.center,
-    );
+    final labelText = compact
+        ? AppText.bodySmall(
+            label,
+            fontSize: 11,
+            color: borderColor ?? theme.primaryColorDark,
+            textAlign: TextAlign.center,
+          )
+        : AppText.bodyMedium(
+            label,
+            color: borderColor ?? theme.primaryColorDark,
+            textAlign: TextAlign.center,
+          );
     return IconTheme(
       data: IconThemeData(color: borderColor ?? theme.primaryColorDark),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Chip(
+          visualDensity: compact ? VisualDensity.compact : null,
+          materialTapTargetSize: compact
+              ? MaterialTapTargetSize.shrinkWrap
+              : null,
+          labelPadding: compact
+              ? const EdgeInsets.symmetric(horizontal: 10, vertical: 0)
+              : null,
           label: Container(
             constraints: BoxConstraints(minWidth: minWidth),
             child: leadingIcon != null
@@ -52,14 +70,13 @@ class CustomAppChip extends StatelessWidget {
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
-            side: BorderSide(
-              color: borderColor ?? theme.primaryColorDark,
-            ),
+            side: BorderSide(color: borderColor ?? theme.primaryColorDark),
           ),
           color: WidgetStateColor.resolveWith(
             (states) => chipColor ?? AppColors.white,
           ),
-          deleteIcon: const Icon(Icons.close),
+          deleteIcon: Icon(Icons.close, size: compact ? 14 : null),
+          deleteIconColor: borderColor ?? theme.primaryColorDark,
           onDeleted: onDelete,
           padding: padding,
         ),
