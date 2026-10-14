@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
@@ -629,10 +630,20 @@ class _SecretaryDashboardScreenState
         ),
     ];
 
+    final footer = _DashboardFooter(
+      activeUsers: data.activeUsers,
+      generatedAt: DateTimeHelper.parseDate(data.generatedAt)?.toLocal(),
+    );
+
     if (searching && chartPanels.isEmpty && lists.isEmpty) {
-      return SecretarySearchEmptyState(
-        query: state.query.trim(),
-        onClear: _clearSearch,
+      return Column(
+        children: [
+          SecretarySearchEmptyState(
+            query: state.query.trim(),
+            onClear: _clearSearch,
+          ),
+          footer,
+        ],
       );
     }
 
@@ -655,6 +666,7 @@ class _SecretaryDashboardScreenState
         ],
         if (lists.isNotEmpty)
           _sideBySide(lists, threeColumns && lists.length > 1),
+        footer,
       ],
     );
   }
@@ -696,6 +708,56 @@ class _SecretaryDashboardScreenState
         const SizedBox(height: 16),
         const _SkeletonCard(height: 300),
       ],
+    );
+  }
+}
+
+/// Active user count and when the numbers were generated, under the panels.
+class _DashboardFooter extends StatelessWidget {
+  const _DashboardFooter({this.activeUsers, this.generatedAt});
+
+  final int? activeUsers;
+  final DateTime? generatedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final style = TextStyle(fontSize: 12, color: colors.textSecondary);
+
+    Widget item(IconData icon, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: colors.textSecondary),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, style: style)),
+      ],
+    );
+
+    final users = activeUsers;
+    final generated = generatedAt;
+    if (users == null && generated == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 20,
+          runSpacing: 6,
+          children: [
+            if (users != null)
+              item(
+                Icons.people_alt_outlined,
+                '$users active ${users == 1 ? 'user' : 'users'}',
+              ),
+            if (generated != null)
+              item(
+                Icons.schedule_rounded,
+                'Generated ${DateTimeHelper.dateFormatddMMYYWithTime(generated)}',
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
