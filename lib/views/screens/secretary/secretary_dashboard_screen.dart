@@ -554,6 +554,7 @@ class _SecretaryDashboardScreenState
         SecretaryDonutWithLegend(
           centerLabel: 'Received',
           centerValue: received,
+          blobs: true,
           // Pending keeps the theme's warning color (amber) as everywhere else;
           // the rest come from the theme's blue-to-green family.
           slices: [

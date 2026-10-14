@@ -324,6 +324,7 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
         child: SecretaryDonutWithLegend(
           centerLabel: 'Total',
           centerValue: summary?.total ?? 0,
+          blobs: true,
           slices: [
             for (final c in data.statusCards)
               SecretaryDonutSlice(

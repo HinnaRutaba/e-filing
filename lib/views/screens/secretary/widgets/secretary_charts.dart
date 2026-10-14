@@ -24,6 +24,7 @@ class SecretaryDonutWithLegend extends StatefulWidget {
     required this.slices,
     required this.centerLabel,
     required this.centerValue,
+    this.blobs = false,
   });
 
   final List<SecretaryDonutSlice> slices;
@@ -31,6 +32,10 @@ class SecretaryDonutWithLegend extends StatefulWidget {
   /// Shown in the centre while nothing is touched, e.g. "Created".
   final String centerLabel;
   final int centerValue;
+
+  /// Draw the ring as separate rounded blobs with the share written on each,
+  /// instead of a plain donut.
+  final bool blobs;
 
   @override
   State<SecretaryDonutWithLegend> createState() =>
@@ -85,6 +90,52 @@ class _SecretaryDonutWithLegendState extends State<SecretaryDonutWithLegend> {
     );
   }
 
+  static const double _ringSize = 190;
+
+  /// Rounded-blob ring. A tap picks the slice under the finger (tap it again,
+  /// or the middle, to clear), same as touching the plain donut.
+  Widget _blobRing(List<SecretaryDonutSlice> slices, double t) {
+    final total = slices.fold<int>(0, (a, b) => a + b.value);
+    return GestureDetector(
+      onTapDown: (details) {
+        if (total == 0) return;
+        const center = Offset(_ringSize / 2, _ringSize / 2);
+        final d = details.localPosition - center;
+        final radius = d.distance;
+        const ringRadius = (_ringSize - _BlobRingPainter.thickness) / 2;
+        var next = -1;
+        if ((radius - ringRadius).abs() <= _BlobRingPainter.thickness / 2 + 6) {
+          // Angle from 12 o'clock, clockwise.
+          var angle = math.atan2(d.dy, d.dx) + math.pi / 2;
+          if (angle < 0) angle += 2 * math.pi;
+          final shares = _BlobRingPainter.shares(slices, total);
+          var start = 0.0;
+          for (var i = 0; i < slices.length; i++) {
+            final sweep = shares[i] * 2 * math.pi;
+            if (slices[i].value > 0 &&
+                angle >= start &&
+                angle < start + sweep) {
+              next = i;
+              break;
+            }
+            start += sweep;
+          }
+        }
+        setState(() => _touched = next == _touched ? -1 : next);
+      },
+      child: CustomPaint(
+        size: const Size(_ringSize, _ringSize),
+        painter: _BlobRingPainter(
+          slices: slices,
+          total: total,
+          progress: t,
+          selected: _touched,
+          track: context.appColors.border.withValues(alpha: 0.25),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDonut(BuildContext context, List<SecretaryDonutSlice> slices) {
     final colors = context.appColors;
     final touched = _touched >= 0 && _touched < slices.length
@@ -105,36 +156,39 @@ class _SecretaryDonutWithLegendState extends State<SecretaryDonutWithLegend> {
         return Stack(
           alignment: Alignment.center,
           children: [
-            PieChart(
-              duration: const Duration(milliseconds: 250),
-              PieChartData(
-                startDegreeOffset: -90 + (1 - t) * 90,
-                sectionsSpace: 2,
-                centerSpaceRadius: 58,
-                pieTouchData: PieTouchData(
-                  touchCallback: (event, response) {
-                    final idx = response?.touchedSection?.touchedSectionIndex;
-                    final next =
-                        event.isInterestedForInteractions &&
-                            idx != null &&
-                            idx >= 0 &&
-                            idx < drawn.length
-                        ? drawn[idx]
-                        : -1;
-                    if (next != _touched) setState(() => _touched = next);
-                  },
+            if (widget.blobs)
+              _blobRing(slices, t)
+            else
+              PieChart(
+                duration: const Duration(milliseconds: 250),
+                PieChartData(
+                  startDegreeOffset: -90 + (1 - t) * 90,
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 58,
+                  pieTouchData: PieTouchData(
+                    touchCallback: (event, response) {
+                      final idx = response?.touchedSection?.touchedSectionIndex;
+                      final next =
+                          event.isInterestedForInteractions &&
+                              idx != null &&
+                              idx >= 0 &&
+                              idx < drawn.length
+                          ? drawn[idx]
+                          : -1;
+                      if (next != _touched) setState(() => _touched = next);
+                    },
+                  ),
+                  sections: [
+                    for (final i in drawn)
+                      PieChartSectionData(
+                        value: slices[i].value.toDouble(),
+                        color: slices[i].color,
+                        radius: (i == _touched ? 34.0 : 28.0) * t,
+                        showTitle: false,
+                      ),
+                  ],
                 ),
-                sections: [
-                  for (final i in drawn)
-                    PieChartSectionData(
-                      value: slices[i].value.toDouble(),
-                      color: slices[i].color,
-                      radius: (i == _touched ? 34.0 : 28.0) * t,
-                      showTitle: false,
-                    ),
-                ],
               ),
-            ),
             IgnorePointer(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -176,6 +230,140 @@ class _SecretaryDonutWithLegendState extends State<SecretaryDonutWithLegend> {
       },
     );
   }
+}
+
+/// Ring of separate rounded blobs, one per slice, with the share written on
+/// every blob big enough to hold it (dark or white, whichever reads better). While one is selected the others fade.
+class _BlobRingPainter extends CustomPainter {
+  _BlobRingPainter({
+    required this.slices,
+    required this.total,
+    required this.progress,
+    required this.selected,
+    required this.track,
+  });
+
+  final List<SecretaryDonutSlice> slices;
+  final int total;
+  final double progress;
+  final int selected;
+  final Color track;
+
+  static const double thickness = 32;
+  static const double _corner = 9;
+  static const double _gap = 5;
+
+  /// Smallest share of the ring a non-empty slice gets, so a tiny slice is
+  /// still a visible blob instead of a sliver. The rest scale down to fit.
+  static const double _minShare = 0.045;
+
+  /// Each slice's share of the ring (0 for empty ones), summing to 1.
+  static List<double> shares(List<SecretaryDonutSlice> slices, int total) {
+    if (total <= 0) return List.filled(slices.length, 0);
+    final raw = [
+      for (final s in slices)
+        s.value > 0 ? math.max(s.value / total, _minShare) : 0.0,
+    ];
+    final sum = raw.fold<double>(0, (a, b) => a + b);
+    return [for (final r in raw) r / sum];
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final rc = (size.shortestSide - thickness) / 2;
+
+    if (total == 0) {
+      canvas.drawCircle(
+        center,
+        rc,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = thickness
+          ..color = track,
+      );
+      return;
+    }
+
+    final fractions = shares(slices, total);
+    Offset polar(double r, double a) =>
+        center + Offset(math.cos(a) * r, math.sin(a) * r);
+
+    var start = -math.pi / 2;
+    for (var i = 0; i < slices.length; i++) {
+      final slice = slices[i];
+      if (slice.value <= 0) continue;
+      final sweepFull = fractions[i] * 2 * math.pi * progress;
+      // Visible width of the blob along the ring.
+      final width = sweepFull * rc - _gap;
+      if (width <= 0) {
+        start += sweepFull;
+        continue;
+      }
+      // Each blob is a smaller sector fattened by [corner] with a round-joined
+      // stroke, which is what rounds its corners. The corner shrinks for a
+      // narrow blob so it never grows past the space it was given.
+      final corner = math.min(_corner, width / 2);
+      final ri = rc - thickness / 2 + corner;
+      final ro = rc + thickness / 2 - corner;
+      final color = selected >= 0 && selected != i
+          ? slice.color.withValues(alpha: 0.35)
+          : slice.color;
+
+      final inset = (_gap / 2 + corner) / rc;
+      final a0 = start + inset;
+      final a1 = math.max(a0, start + sweepFull - inset);
+      final sweep = a1 - a0;
+
+      final path = Path()
+        ..moveTo(polar(ro, a0).dx, polar(ro, a0).dy)
+        ..arcTo(Rect.fromCircle(center: center, radius: ro), a0, sweep, false)
+        ..lineTo(polar(ri, a1).dx, polar(ri, a1).dy)
+        ..arcTo(Rect.fromCircle(center: center, radius: ri), a1, -sweep, false)
+        ..close();
+      canvas.drawPath(path, Paint()..color = color);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = corner * 2
+          ..strokeJoin = StrokeJoin.round
+          ..strokeCap = StrokeCap.round,
+      );
+
+      if (progress > 0.95 && width >= 22) {
+        final painter = TextPainter(
+          text: TextSpan(
+            text: '${(slice.value / total * 100).round()}%',
+            style: TextStyle(
+              // Dark on the light tints, white on the rest.
+              color: slice.color.computeLuminance() > 0.5
+                  ? Colors.black87
+                  : Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final at = polar(rc, start + sweepFull / 2);
+        painter.paint(
+          canvas,
+          at - Offset(painter.width / 2, painter.height / 2),
+        );
+      }
+      start += sweepFull;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BlobRingPainter old) =>
+      old.slices != slices ||
+      old.total != total ||
+      old.progress != progress ||
+      old.selected != selected ||
+      old.track != track;
 }
 
 class _LegendRow extends StatelessWidget {
