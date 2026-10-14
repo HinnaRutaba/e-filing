@@ -420,7 +420,9 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
       if (panels.isEmpty) {
         return _NoResults(query: _query.trim(), onClear: _clearSearch);
       }
-      return _sideBySide(panels, twoColumns);
+      return Column(
+        children: [_sideBySide(panels, twoColumns), _buildFooter(data)],
+      );
     }
 
     return Column(
@@ -445,7 +447,31 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
         _sideBySide([receivedPanel, sentPanel], twoColumns),
         const SizedBox(height: 16),
         sourcePanel,
+        _buildFooter(data),
       ],
+    );
+  }
+
+  /// "Generated on 14/10/2026 01:09 PM", in the device's time zone.
+  Widget _buildFooter(DaakReportModel data) {
+    final generated = DateTime.tryParse(data.generatedAt ?? '')?.toLocal();
+    if (generated == null) return const SizedBox.shrink();
+    final color = context.appColors.textSecondary;
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.update_rounded, size: 14, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Generated on ${DateTimeHelper.dateFormatSlashWithTime(generated)}',
+              style: TextStyle(fontSize: 12, color: color),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
