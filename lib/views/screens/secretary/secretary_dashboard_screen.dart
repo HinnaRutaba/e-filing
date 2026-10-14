@@ -351,8 +351,7 @@ class _SecretaryDashboardScreenState
 
     // One soft tint of the app's own blue for every card, so the row reads as
     // a set and sits quietly on the header instead of competing with it.
-    final colors = context.appColors;
-    final cardColor = Color.lerp(colors.secondaryLight, Colors.white, 0.6)!;
+    final cardColor = SecretaryVizColors.of(context).kpiCard;
     // Same card tint for the whole row, but each icon gets its own accent for
     // a splash of color, all drawn from the theme-based chart palette.
     final viz = SecretaryVizColors.of(context);

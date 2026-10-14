@@ -237,7 +237,6 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
     }
 
     final viz = SecretaryVizColors.of(context);
-    final colors = context.appColors;
     final error = Theme.of(context).colorScheme.error;
     final summary = data.summary;
 
@@ -272,7 +271,7 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
 
     // One soft tint for every tile, like the dashboard's KPI row; each icon
     // gets its own accent.
-    final tileColor = Color.lerp(colors.secondaryLight, Colors.white, 0.6)!;
+    final tileColor = viz.kpiCard;
     final summaryTiles = _StatTiles(
       cardColor: tileColor,
       loading: state.loading,

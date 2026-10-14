@@ -20,6 +20,7 @@ class SecretaryVizColors {
     required this.navy,
     required this.sky,
     required this.teal,
+    required this.kpiCard,
   });
 
   final Color blue;
@@ -32,10 +33,20 @@ class SecretaryVizColors {
   final Color sky;
   final Color teal;
 
+  /// Tint for the dashboard KPI tiles. Their text is always dark, so it is
+  /// pale in light mode and only a lighter blue in dark mode, where a pale tile
+  /// would glare.
+  final Color kpiCard;
+
   factory SecretaryVizColors.of(BuildContext context) {
     final colors = context.appColors;
     final dark = Theme.of(context).brightness == Brightness.dark;
     return SecretaryVizColors._(
+      kpiCard: Color.lerp(
+        colors.secondaryLight,
+        Colors.white,
+        dark ? 0.2 : 0.6,
+      )!,
       sky: Color.lerp(colors.secondaryLight, Colors.white, 0.5)!,
       teal: Color.lerp(colors.secondaryLight, colors.success, 0.5)!,
       blue: colors.secondaryLight,
