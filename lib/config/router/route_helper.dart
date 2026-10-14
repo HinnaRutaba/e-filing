@@ -15,10 +15,7 @@ class RouteHelper {
 
   static String get currentLocation => _currentLocation();
 
-  /// The landing dashboard for [role]: CM and secretary have their own, every
-  /// other role uses the standard one.
   static String homeRouteFor(ActiveUserDesgRole? role) => switch (role) {
-    ActiveUserDesgRole.cm => Routes.cmDashboard,
     ActiveUserDesgRole.secretary => Routes.secretaryDashboard,
     _ => Routes.dashboard,
   };

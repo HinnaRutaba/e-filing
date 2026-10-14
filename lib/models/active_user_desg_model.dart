@@ -53,6 +53,15 @@ enum ActiveUserDesgRole {
     );
   }
 
+  /// Resolves the role from the `role_id` / `role` pair returned by `/login`
+  /// and `/me`. The numeric id wins; the label is the fallback when the id is
+  /// missing. Returns null when neither is present.
+  static ActiveUserDesgRole? fromAuth({int? roleId, String? role}) {
+    if (roleId != null) return fromValue(roleId);
+    if (role != null) return fromLabel(role);
+    return null;
+  }
+
   static ActiveUserDesgRole? fromLabel(String label) {
     return ActiveUserDesgRole.values.firstWhere(
       (e) => e.label == label,
