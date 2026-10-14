@@ -252,7 +252,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 icon: Icon(
                   _effectiveExpanded ? Icons.chevron_left : Icons.chevron_right,
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? context.appColors.secondaryLight
+                      ? context.appColors.textPrimary
                       : context.appColors.secondaryDark,
                 ),
               ),
@@ -308,7 +308,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final bool isDark = theme.brightness == Brightness.dark;
     final bool expanded = _isGroupExpanded(menu);
     final Color fgColor = isDark
-        ? appColors.secondaryLight
+        ? appColors.textPrimary
         : appColors.secondaryDark;
 
     void onTap() {
@@ -387,7 +387,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         _resolveRoute(menu.routeName) == RouteHelper.currentLocation;
     final Color fgColor = isSelected
         ? (isDark ? appColors.primaryLight : appColors.primaryDark)
-        : (isDark ? appColors.secondaryLight : appColors.secondaryDark);
+        : (isDark ? appColors.textPrimary : appColors.secondaryDark);
     final Color selectedBg = appColors.secondaryLight.withValues(
       alpha: isDark ? 0.25 : 0.2,
     );
@@ -583,7 +583,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             },
             text: "Sign Out",
             icon: Icons.logout,
-            color: Colors.red[600],
+            color: Theme.of(context).colorScheme.error,
           )
         else
           Padding(
@@ -594,7 +594,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 onPressed: () {
                   ref.read(authController.notifier).logout(context);
                 },
-                icon: Icon(Icons.logout, color: Colors.red[600]),
+                icon: Icon(
+                  Icons.logout,
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           ),

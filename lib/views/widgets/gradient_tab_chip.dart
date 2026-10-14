@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -43,9 +44,9 @@ class GradientTabChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Stack(
             children: [
-              _buildContent(filled: false),
+              _buildContent(context, filled: false),
               if (selected)
-                _buildContent(filled: true).animate().custom(
+                _buildContent(context, filled: true).animate().custom(
                   duration: 200.ms,
                   curve: Curves.easeInOutSine,
                   builder: (context, value, child) => ShaderMask(
@@ -72,12 +73,18 @@ class GradientTabChip extends StatelessWidget {
     );
   }
 
-  Widget _buildContent({required bool filled}) {
+  Widget _buildContent(BuildContext context, {required bool filled}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appColors = context.appColors;
+    final idleBg = isDark ? appColors.cardColorLight : AppColors.cardColorLight;
+    final idleBorder = isDark ? appColors.border : Colors.grey.shade300;
+    final idleText = isDark ? appColors.textPrimary : Colors.black87;
+    final idleIcon = isDark ? appColors.textSecondary : Colors.black54;
     final container = Container(
       width: expand ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: filled ? null : AppColors.cardColorLight,
+        color: filled ? null : idleBg,
         gradient: filled
             ? LinearGradient(
                 begin: Alignment.centerLeft,
@@ -90,7 +97,7 @@ class GradientTabChip extends StatelessWidget {
             : null,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: filled ? Colors.transparent : Colors.grey.shade300,
+          color: filled ? Colors.transparent : idleBorder,
           width: 1.5,
         ),
       ),
@@ -101,13 +108,13 @@ class GradientTabChip extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(icon, color: filled ? Colors.white : Colors.black54, size: 18),
+            Icon(icon, color: filled ? Colors.white : idleIcon, size: 18),
             const SizedBox(width: 8),
           ],
           Flexible(
             child: AppText.bodySmall(
               label,
-              color: filled ? Colors.white : Colors.black87,
+              color: filled ? Colors.white : idleText,
             ),
           ),
           if (count != null) ...[
@@ -116,14 +123,14 @@ class GradientTabChip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: count == 0
-                    ? (filled ? Colors.white24 : Colors.grey.shade300)
+                    ? (filled ? Colors.white24 : idleBorder)
                     : Colors.red,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '$count',
                 style: TextStyle(
-                  color: count == 0 && !filled ? Colors.black54 : Colors.white,
+                  color: count == 0 && !filled ? idleIcon : Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
