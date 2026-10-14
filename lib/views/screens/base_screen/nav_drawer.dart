@@ -4,7 +4,6 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/summaries_controller.dart';
-import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
@@ -66,16 +65,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
 
   bool get _showToggle => !widget.alwaysExpanded;
 
-  /// Secretaries have their own landing dashboard.
-  String get _homeRoute =>
-      ref.read(authController).userDesgRole == ActiveUserDesgRole.secretary
-      ? Routes.secretaryDashboard
-      : Routes.dashboard;
-
   /// The shared menu list points "Dashboard" at the standard route; swap in the
   /// role's own home for that entry.
   String? _resolveRoute(String? route) =>
-      route == Routes.dashboard ? _homeRoute : route;
+      route == Routes.dashboard ? RouteHelper.homeRoute : route;
 
   void _toggle() {
     if (widget.onToggle != null) {
@@ -266,7 +259,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             curve: Curves.easeOut,
             child: InkWell(
               onTap: () {
-                RouteHelper.navigateTo(_homeRoute);
+                RouteHelper.navigateHome();
               },
               child: Image.asset(
                 AssetsConstants.logo,

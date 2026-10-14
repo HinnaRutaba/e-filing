@@ -1,5 +1,4 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
@@ -294,7 +293,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       //await fetchFiles(FileType.pending);
       Toast.success(message: "File forwarded and remarks added successfully.");
       EasyLoading.dismiss();
-      RouteHelper.navigateTo(Routes.dashboard);
+      RouteHelper.navigateHome();
     } catch (e) {
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
@@ -328,7 +327,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       //await fetchFiles(FileType.actionRequired);
       Toast.success(message: "File ${action.label} successfully.");
       EasyLoading.dismiss();
-      RouteHelper.navigateTo(Routes.dashboard);
+      RouteHelper.navigateHome();
     } catch (e) {
       
       Toast.error(message: handleException(e));
@@ -360,7 +359,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       //await fetchFiles(FileType.actionRequired);
       Toast.success(message: "File reopened successfully.");
       EasyLoading.dismiss();
-      RouteHelper.navigateTo(Routes.dashboard);
+      RouteHelper.navigateHome();
     } catch (e) {
       
       Toast.error(message: handleException(e));
@@ -421,7 +420,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
       //await fetchFiles(FileType.actionRequired);
       Toast.success(message: "File created successfully.");
       EasyLoading.dismiss();
-      RouteHelper.navigateTo(Routes.dashboard);
+      RouteHelper.navigateHome();
     } catch (e) {
 
       Toast.error(message: handleException(e));

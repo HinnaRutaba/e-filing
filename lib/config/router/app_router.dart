@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
@@ -138,7 +139,7 @@ class AppRouter {
       ),
       redirect: (context, state) {
         if (state.pathParameters[PathParams.fileId] == null) {
-          return Routes.dashboard;
+          return RouteHelper.homeRoute;
         }
         return null;
       },
@@ -180,7 +181,7 @@ class AppRouter {
       ),
       redirect: (context, state) {
         if (state.pathParameters[PathParams.fileId] == null) {
-          return Routes.dashboard;
+          return RouteHelper.homeRoute;
         }
         return null;
       },
