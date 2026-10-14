@@ -8,7 +8,7 @@ import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
-import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_search.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:efiling_balochistan/views/widgets/chips/custom_app_chip.dart';

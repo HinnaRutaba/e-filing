@@ -28,7 +28,8 @@ class DashboardSearchBar extends StatelessWidget {
         labelText: 'Search',
         hintText: 'Search by user or department',
         showLabel: false,
-        prefix: Icon(Icons.search_rounded, color: colors.textSecondary),
+        filledColor: colors.cardColor,
+        prefix: Icon(Icons.search_rounded, color: colors.secondaryLight),
         suffixIcon: value.text.isEmpty
             ? null
             : IconButton(
@@ -39,7 +40,7 @@ class DashboardSearchBar extends StatelessWidget {
               ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+          borderSide: BorderSide(color: colors.secondaryLight),
         ),
       ),
     );

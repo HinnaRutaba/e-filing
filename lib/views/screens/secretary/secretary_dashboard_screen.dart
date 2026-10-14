@@ -14,7 +14,7 @@ import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
-import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_search.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:flutter/material.dart';
