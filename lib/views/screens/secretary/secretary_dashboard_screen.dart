@@ -328,17 +328,36 @@ class _SecretaryDashboardScreenState
     final kpis = state.data?.myKpis;
     final loading = state.loading;
 
+    final viz = SecretaryVizColors.of(context);
+
+    // Each card gets its own hue so the row is easy to tell apart at a glance.
+    // Most come from the theme; purple is the one extra, since the theme has
+    // no hue between its blues and reds. Colors are softened to pastels; the icon
+    // is a deeper shade of the card's own tint so it reads on the white badge.
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // Softens a full-strength hue into a pastel: less saturated and lifted
+    // toward white (less so in dark mode, where a pale tile would glare).
+    Color soften(Color c) {
+      final hsl = HSLColor.fromColor(c);
+      return Color.lerp(
+        hsl.withSaturation(hsl.saturation * 0.6).toColor(),
+        Colors.white,
+        dark ? 0.2 : 0.45,
+      )!;
+    }
+
     DashboardCard card({
       required String title,
       required int? value,
-      required Color cardColor,
-      required Color iconColor,
+      required Color color,
       required IconData icon,
       String? route,
     }) {
+      final tint = soften(color);
       return DashboardCard(
-        cardColor: cardColor,
-        iconColor: iconColor,
+        cardColor: tint,
+        iconColor: Color.lerp(tint, Colors.black, 0.5)!,
         title: title,
         value: '${value ?? 0}',
         onTap: route == null ? null : () => RouteHelper.push(route),
@@ -349,59 +368,46 @@ class _SecretaryDashboardScreenState
       );
     }
 
-    // One soft tint of the app's own blue for every card, so the row reads as
-    // a set and sits quietly on the header instead of competing with it.
-    final cardColor = SecretaryVizColors.of(context).kpiCard;
-    // Same card tint for the whole row, but each icon gets its own accent for
-    // a splash of color, all drawn from the theme-based chart palette.
-    final viz = SecretaryVizColors.of(context);
-
     final cards = [
       card(
         title: 'Action Required',
         value: kpis?.actionRequired,
-        cardColor: cardColor,
-        iconColor: Theme.of(context).colorScheme.error,
+        color: Theme.of(context).colorScheme.error,
         icon: Icons.info_outline,
         route: Routes.actionRequiredFiles,
       ),
       card(
         title: 'Pending Files',
         value: kpis?.pending,
-        cardColor: cardColor,
-        iconColor: viz.amber,
+        color: viz.amber,
         icon: Icons.timelapse,
         route: Routes.pendingFiles,
       ),
       card(
         title: 'Files Sent',
         value: kpis?.filesSent,
-        cardColor: cardColor,
-        iconColor: viz.blue,
+        color: viz.blue,
         icon: Icons.send_rounded,
         route: Routes.forwarded,
       ),
       card(
         title: 'Processed Files',
         value: kpis?.processed,
-        cardColor: cardColor,
-        iconColor: viz.navy,
+        color: Colors.deepPurple.shade300,
         icon: Icons.task_alt_rounded,
         route: Routes.forwarded,
       ),
       card(
         title: 'Daak Letters',
         value: kpis?.daakInbox,
-        cardColor: cardColor,
-        iconColor: viz.green,
+        color: viz.green,
         icon: Icons.mark_email_unread_rounded,
         route: Routes.daak,
       ),
       card(
         title: 'Returned Daak',
         value: kpis?.daakReturned,
-        cardColor: cardColor,
-        iconColor: Color.lerp(viz.blue, viz.green, 0.5)!,
+        color: viz.teal,
         icon: Icons.undo_rounded,
         route: Routes.daak,
       ),
