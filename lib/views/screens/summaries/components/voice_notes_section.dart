@@ -464,10 +464,7 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
             child: _expanded
-                ? Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: child,
-                  )
+                ? Padding(padding: const EdgeInsets.all(12), child: child)
                 : const SizedBox(width: double.infinity),
           ),
         ],

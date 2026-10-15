@@ -60,6 +60,22 @@ class SecretaryVizColors {
   }
 }
 
+/// Bright tint of [base] for a dashboard KPI tile: nearly full saturation and
+/// only a light lift toward white (less so in dark mode, where a pale tile
+/// would glare). Tile text is always dark, so it can't go any stronger.
+Color kpiTint(BuildContext context, Color base) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  final hsl = HSLColor.fromColor(base);
+  return Color.lerp(
+    hsl.withSaturation((hsl.saturation * 0.9).clamp(0.0, 1.0)).toColor(),
+    Colors.white,
+    dark ? 0.05 : 0.2,
+  )!;
+}
+
+/// Hue for the one KPI tile the theme has no color for.
+final Color kpiPurple = Colors.deepPurple.shade300;
+
 /// Number that counts up from 0 on first build and tweens between values on
 /// refresh.
 class AnimatedCount extends StatelessWidget {

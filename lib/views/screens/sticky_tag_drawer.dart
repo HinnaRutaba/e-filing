@@ -128,10 +128,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
         children: [
           widget.mainContent,
           if (isOpen)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _close,
-            ),
+            GestureDetector(behavior: HitTestBehavior.opaque, onTap: _close),
           AnimatedBuilder(
             animation: _widthAnimation,
             builder: (context, child) {
@@ -157,7 +154,8 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
                   ),
                   child: Material(
                     elevation: 0,
-                    color: theme.bottomSheetTheme.backgroundColor ??
+                    color:
+                        theme.bottomSheetTheme.backgroundColor ??
                         appColors.surfaceMuted,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
@@ -235,10 +233,7 @@ class _StickyTagDrawerState extends State<StickyTagDrawer>
             padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
             child: Text(
               tag.text,
-              style: TextStyle(
-                color: tagFg,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: tagFg, fontWeight: FontWeight.bold),
             ),
           ),
         ),

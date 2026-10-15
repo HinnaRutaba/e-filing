@@ -332,21 +332,8 @@ class _SecretaryDashboardScreenState
 
     // Each card gets its own hue so the row is easy to tell apart at a glance.
     // Most come from the theme; purple is the one extra, since the theme has
-    // no hue between its blues and reds. Colors are softened to pastels; the icon
-    // is a deeper shade of the card's own tint so it reads on the white badge.
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
-    // Softens a full-strength hue into a pastel: less saturated and lifted
-    // toward white (less so in dark mode, where a pale tile would glare).
-    Color soften(Color c) {
-      final hsl = HSLColor.fromColor(c);
-      return Color.lerp(
-        hsl.withSaturation(hsl.saturation * 0.6).toColor(),
-        Colors.white,
-        dark ? 0.2 : 0.45,
-      )!;
-    }
-
+    // no hue between its blues and reds. Colors are softened to pastels; the
+    // icon is a deeper shade of the card's own tint so it reads on the white badge.
     DashboardCard card({
       required String title,
       required int? value,
@@ -354,7 +341,7 @@ class _SecretaryDashboardScreenState
       required IconData icon,
       String? route,
     }) {
-      final tint = soften(color);
+      final tint = kpiTint(context, color);
       return DashboardCard(
         cardColor: tint,
         iconColor: Color.lerp(tint, Colors.black, 0.5)!,
@@ -393,7 +380,7 @@ class _SecretaryDashboardScreenState
       card(
         title: 'Processed Files',
         value: kpis?.processed,
-        color: Colors.deepPurple.shade300,
+        color: kpiPurple,
         icon: Icons.task_alt_rounded,
         route: Routes.forwarded,
       ),

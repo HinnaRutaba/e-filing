@@ -5,15 +5,10 @@ class BarChartSample extends StatelessWidget {
     'Action Required',
     'My Files',
     'Pending Files',
-    'Disposed Off'
+    'Disposed Off',
   ];
 
-  final List<double> values = [
-    12,
-    4,
-    6,
-    4,
-  ];
+  final List<double> values = [12, 4, 6, 4];
 
   @override
   Widget build(BuildContext context) {

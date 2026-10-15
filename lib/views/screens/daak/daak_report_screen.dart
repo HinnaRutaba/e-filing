@@ -17,19 +17,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DaakReportScreen extends ConsumerStatefulWidget {
+/// The standalone report page (drawer entry). The same report also lives in a
+/// tab of the secretary's dashboard as [DaakReportView].
+class DaakReportScreen extends StatelessWidget {
   const DaakReportScreen({super.key});
 
   @override
-  ConsumerState<DaakReportScreen> createState() => _DaakReportScreenState();
+  Widget build(BuildContext context) {
+    return const GradientScaffold(
+      child: BaseScreen(
+        bgColor: Colors.transparent,
+        title: 'Daak Reports',
+        isdash: false,
+        body: DaakReportView(),
+      ),
+    );
+  }
 }
 
-class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
+/// The report itself, without a scaffold.
+class DaakReportView extends ConsumerStatefulWidget {
+  const DaakReportView({super.key});
+
+  @override
+  ConsumerState<DaakReportView> createState() => _DaakReportViewState();
+}
+
+class _DaakReportViewState extends ConsumerState<DaakReportView>
+    with AutomaticKeepAliveClientMixin {
   static const double _maxContentWidth = 1200;
   static const double _twoColumnBreakpoint = 800;
 
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -89,129 +112,113 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final state = ref.watch(daakReportController);
 
     return GestureDetector(
       onTap: () {
         HelperUtils.hideKeyboard(context);
       },
-      child: GradientScaffold(
-        child: BaseScreen(
-          bgColor: Colors.transparent,
-          title: 'Daak Reports',
-          isdash: false,
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final gutter = width >= 600 ? 16.0 : 10.0;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final gutter = width >= 600 ? 16.0 : 10.0;
 
-              return Column(
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _maxContentWidth,
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: DashboardSearchBar(
-                                    controller: _searchController,
-                                    onChanged: (v) =>
-                                        setState(() => _query = v),
-                                    onClear: _clearSearch,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                IconButton(
-                                  key: _calendarKey,
-                                  tooltip: 'Pick date range',
-                                  onPressed: _pickCustomRange,
-                                  isSelected:
-                                      state.period == DaakReportPeriod.custom,
-                                  icon: const Icon(
-                                    Icons.calendar_month_rounded,
-                                  ),
-                                  selectedIcon: const Icon(
-                                    Icons.calendar_month_rounded,
-                                  ),
-                                  style: state.period == DaakReportPeriod.custom
-                                      ? IconButton.styleFrom(
-                                          backgroundColor: context
-                                              .appColors
-                                              .secondaryLight
-                                              .withValues(alpha: 0.3),
-                                        )
-                                      : null,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            _PeriodFilter(
-                              state: state,
-                              onSelect: (period) => ref
-                                  .read(daakReportController.notifier)
-                                  .setPeriod(period),
-                              onCustomTap: _pickCustomRange,
-                              onClear: () => ref
-                                  .read(daakReportController.notifier)
-                                  .clearCustomRange(),
-                            ),
-                            // From the response, so it always describes the data
-                            // on screen, even while a new period is loading.
-                            if (state.data?.period != null)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                                child: Text(
-                                  'Showing results for '
-                                  '${_resultsText(state.data!.period!)}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: context.appColors.textSecondary,
-                                  ),
-                                ),
+                            Expanded(
+                              child: DashboardSearchBar(
+                                controller: _searchController,
+                                onChanged: (v) => setState(() => _query = v),
+                                onClear: _clearSearch,
                               ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              key: _calendarKey,
+                              tooltip: 'Pick date range',
+                              onPressed: _pickCustomRange,
+                              isSelected:
+                                  state.period == DaakReportPeriod.custom,
+                              icon: const Icon(Icons.calendar_month_rounded),
+                              selectedIcon: const Icon(
+                                Icons.calendar_month_rounded,
+                              ),
+                              style: state.period == DaakReportPeriod.custom
+                                  ? IconButton.styleFrom(
+                                      backgroundColor: context
+                                          .appColors
+                                          .secondaryLight
+                                          .withValues(alpha: 0.3),
+                                    )
+                                  : null,
+                            ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                  if (state.loading && state.data != null)
-                    const LinearProgressIndicator(minHeight: 2),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: _maxContentWidth,
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                gutter,
-                                8,
-                                gutter,
-                                32,
+                        const SizedBox(height: 6),
+                        _PeriodFilter(
+                          state: state,
+                          onSelect: (period) => ref
+                              .read(daakReportController.notifier)
+                              .setPeriod(period),
+                          onCustomTap: _pickCustomRange,
+                          onClear: () => ref
+                              .read(daakReportController.notifier)
+                              .clearCustomRange(),
+                        ),
+                        // From the response, so it always describes the data
+                        // on screen, even while a new period is loading.
+                        if (state.data?.period != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                            child: Text(
+                              'Showing results for '
+                              '${_resultsText(state.data!.period!)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: context.appColors.textSecondary,
                               ),
-                              child: _buildBody(state, width),
                             ),
                           ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (state.loading && state.data != null)
+                const LinearProgressIndicator(minHeight: 2),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: _maxContentWidth,
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 32),
+                          child: _buildBody(state, width),
                         ),
                       ),
                     ),
                   ),
-                ],
-              );
-            },
-          ),
-        ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -269,11 +276,8 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
               .where((d) => has(d.sourceDepartment))
               .toList();
 
-    // One soft tint for every tile, like the dashboard's KPI row; each icon
-    // gets its own accent.
-    final tileColor = viz.kpiCard;
+    // Same colors as the dashboard's KPI row: each tile gets its own bright tint.
     final summaryTiles = _StatTiles(
-      cardColor: tileColor,
       loading: state.loading,
       stats: [
         _Stat(
@@ -284,10 +288,10 @@ class _DaakReportScreenState extends ConsumerState<DaakReportScreen> {
         ),
         _Stat('Returned', Icons.undo_rounded, summary?.returned, viz.blue),
         _Stat(
-          'File put-up',
+          'E-file put-up',
           Icons.upload_file_rounded,
           summary?.filePutup,
-          viz.sky,
+          kpiPurple,
         ),
         _Stat('NFA', Icons.block_rounded, summary?.nfa, error),
         _Stat(
@@ -650,14 +654,9 @@ class _Stat {
 }
 
 class _StatTiles extends StatelessWidget {
-  const _StatTiles({
-    required this.stats,
-    required this.cardColor,
-    required this.loading,
-  });
+  const _StatTiles({required this.stats, required this.loading});
 
   final List<_Stat> stats;
-  final Color cardColor;
   final bool loading;
 
   static const double _gap = 8;
@@ -684,9 +683,10 @@ class _StatTiles extends StatelessWidget {
         ),
         itemBuilder: (context, i) {
           final s = stats[i];
+          final tint = kpiTint(context, s.color);
           return DashboardCard(
-            cardColor: cardColor,
-            iconColor: s.color,
+            cardColor: tint,
+            iconColor: Color.lerp(tint, Colors.black, 0.5)!,
             icon: s.icon,
             title: s.label,
             value: '${s.value ?? 0}',

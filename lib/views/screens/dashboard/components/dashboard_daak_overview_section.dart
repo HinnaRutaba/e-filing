@@ -73,7 +73,7 @@ class DashboardDaakOverviewSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.bar_chart_rounded,
       iconBgColor: const Color(0xFF42A5F5),
-      title: 'Daak Overview',
+      title: 'E-Daak Overview',
       badgeLabel: loading ? '...' : 'Total: $total',
       badgeColor: const Color(0xFF42A5F5).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF42A5F5),

@@ -117,12 +117,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 AppSolidButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-                    bool success =
-                        await ref.read(authController.notifier).changePassword(
-                              currentPassword: currentPasswordController.text,
-                              newPassword: newPasswordController.text,
-                              confirmPassword: confirmPasswordController.text,
-                            );
+                    bool success = await ref
+                        .read(authController.notifier)
+                        .changePassword(
+                          currentPassword: currentPasswordController.text,
+                          newPassword: newPasswordController.text,
+                          confirmPassword: confirmPasswordController.text,
+                        );
                     if (success) {
                       RouteHelper.navigateHome();
                     }

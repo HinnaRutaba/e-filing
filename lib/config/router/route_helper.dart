@@ -15,10 +15,8 @@ class RouteHelper {
 
   static String get currentLocation => _currentLocation();
 
-  static String homeRouteFor(ActiveUserDesgRole? role) => switch (role) {
-    ActiveUserDesgRole.secretary => Routes.secretaryDashboard,
-    _ => Routes.dashboard,
-  };
+  /// The secretary shares [Routes.dashboard]; it shows tabs for that role.
+  static String homeRouteFor(ActiveUserDesgRole? role) => Routes.dashboard;
 
   /// [homeRouteFor] the signed-in user's current role. Usable from anywhere
   /// (controllers, redirects) because it reads the role through the app's

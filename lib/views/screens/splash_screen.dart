@@ -92,10 +92,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (user?.userDesgRole == ActiveUserDesgRole.cm) {
       RouteHelper.navigateTo(Routes.cmDashboard);
     } else {
-     RouteHelper.navigateTo(RouteHelper.homeRouteFor(user?.userDesgRole));
+      RouteHelper.navigateTo(RouteHelper.homeRouteFor(user?.userDesgRole));
     }
-    
-    
   }
 
   Widget _poweredBySection(bool isMobile) {

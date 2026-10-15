@@ -12,18 +12,13 @@ class SectionCard extends StatelessWidget {
       color: AppColors.white,
       elevation: 3.5,
       shadowColor: AppColors.secondaryLight.withOpacity(0.5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(13),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: AppColors.primaryDark,
           gradient: const LinearGradient(
-            colors: [
-              AppColors.secondaryDark,
-              AppColors.secondaryLight,
-            ],
+            colors: [AppColors.secondaryDark, AppColors.secondaryLight],
           ),
         ),
         padding: const EdgeInsets.all(1.5),
@@ -50,10 +45,13 @@ class SectionCard extends StatelessWidget {
                     ),
                     Container(
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50),
-                          color: AppColors.secondary),
+                        borderRadius: BorderRadius.circular(50),
+                        color: AppColors.secondary,
+                      ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       child: AppText.labelLarge(
                         "Status",
                         color: AppColors.white,
@@ -117,7 +115,7 @@ class SectionCard extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
-                    )
+                    ),
                   ],
                 ),
               ),

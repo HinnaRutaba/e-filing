@@ -2474,7 +2474,6 @@ class _SummaryDetailsScreenState extends ConsumerState<SummaryDetailsScreen>
         .read(summariesController.notifier)
         .getSummaryPrintPdf(summaryId: summaryId);
 
-
     if (!mounted || url == null) return;
     Navigator.push(
       context,

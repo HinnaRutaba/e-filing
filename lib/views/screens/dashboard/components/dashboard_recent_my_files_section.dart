@@ -41,7 +41,7 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.file_copy_rounded,
       iconBgColor: const Color(0xFF7C5CBF),
-      title: 'My Files Breakdown',
+      title: 'My E-files Breakdown',
       badgeLabel: 'Total: $total',
       badgeColor: const Color(0xFF7C5CBF).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF7C5CBF),
@@ -62,7 +62,10 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
       child: Center(
         child: Text(
           'No data available.',
-          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.appColors.textSecondary,
+          ),
         ),
       ),
     );
@@ -154,10 +157,7 @@ class DashboardRecentMyFilesSection extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      colors: [
-                        color.withValues(alpha: 0.5),
-                        color,
-                      ],
+                      colors: [color.withValues(alpha: 0.5), color],
                     ),
                   ),
                 ],

@@ -12,22 +12,38 @@ class DashboardEfileKpisSection extends StatelessWidget {
   final DashboardEfileKpisModel? kpis;
 
   static const _rows = [
-    (label: 'Pending',        color: Color(0xFFFFB74D), icon: Icons.hourglass_top_rounded),
-    (label: 'Sent',           color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
-    (label: 'Received',       color: Color(0xFF2E9E6B), icon: Icons.move_to_inbox_rounded),
-    (label: 'Action Required',color: Color(0xFFE57373), icon: Icons.info_outline_rounded),
-    (label: 'My Files',       color: Color(0xFF7C5CBF), icon: Icons.folder_special_rounded),
-    (label: 'Archive',        color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
+    (
+      label: 'Pending',
+      color: Color(0xFFFFB74D),
+      icon: Icons.hourglass_top_rounded,
+    ),
+    (label: 'Sent', color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
+    (
+      label: 'Received',
+      color: Color(0xFF2E9E6B),
+      icon: Icons.move_to_inbox_rounded,
+    ),
+    (
+      label: 'Action Required',
+      color: Color(0xFFE57373),
+      icon: Icons.info_outline_rounded,
+    ),
+    (
+      label: 'My Files',
+      color: Color(0xFF7C5CBF),
+      icon: Icons.folder_special_rounded,
+    ),
+    (label: 'Archive', color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
   ];
 
   List<int> _values() => [
-        kpis?.pending ?? 0,
-        kpis?.filesSent ?? 0,
-        kpis?.filesReceived ?? 0,
-        kpis?.filesActionRequired ?? 0,
-        kpis?.myFiles ?? 0,
-        kpis?.archive ?? 0,
-      ];
+    kpis?.pending ?? 0,
+    kpis?.filesSent ?? 0,
+    kpis?.filesReceived ?? 0,
+    kpis?.filesActionRequired ?? 0,
+    kpis?.myFiles ?? 0,
+    kpis?.archive ?? 0,
+  ];
 
   static final _onTaps = <VoidCallback?>[
     () => RouteHelper.push(Routes.pendingFiles),
@@ -46,7 +62,7 @@ class DashboardEfileKpisSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.folder_open_rounded,
       iconBgColor: const Color(0xFF2E9E6B),
-      title: 'Files Overview',
+      title: 'E-files Overview',
       badgeLabel: 'Total: $total',
       badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF2E9E6B),

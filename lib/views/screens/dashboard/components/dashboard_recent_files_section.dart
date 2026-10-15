@@ -16,12 +16,28 @@ class DashboardRecentFilesSection extends StatelessWidget {
   final bool loading;
 
   static const _entries = [
-    (label: 'Pending',        color: Color(0xFFFFB74D), icon: Icons.hourglass_top_rounded),
-    (label: 'Sent',           color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
-    (label: 'Received',       color: Color(0xFF2E9E6B), icon: Icons.move_to_inbox_rounded),
-    (label: 'Action Req.',    color: Color(0xFFE57373), icon: Icons.info_outline_rounded),
-    (label: 'My Files',       color: Color(0xFF7C5CBF), icon: Icons.folder_special_rounded),
-    (label: 'Archive',        color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
+    (
+      label: 'Pending',
+      color: Color(0xFFFFB74D),
+      icon: Icons.hourglass_top_rounded,
+    ),
+    (label: 'Sent', color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
+    (
+      label: 'Received',
+      color: Color(0xFF2E9E6B),
+      icon: Icons.move_to_inbox_rounded,
+    ),
+    (
+      label: 'Action Req.',
+      color: Color(0xFFE57373),
+      icon: Icons.info_outline_rounded,
+    ),
+    (
+      label: 'My Files',
+      color: Color(0xFF7C5CBF),
+      icon: Icons.folder_special_rounded,
+    ),
+    (label: 'Archive', color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
   ];
 
   List<int> _values(DashboardEfileKpisModel? k) => [
@@ -41,7 +57,7 @@ class DashboardRecentFilesSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.pie_chart_outline_rounded,
       iconBgColor: const Color(0xFFE07B20),
-      title: 'File Activity',
+      title: 'E-file Activity',
       badgeLabel: 'Total: $total',
       badgeColor: const Color(0xFFE07B20).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFFE07B20),
@@ -62,7 +78,10 @@ class DashboardRecentFilesSection extends StatelessWidget {
       child: Center(
         child: Text(
           'No data available.',
-          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.appColors.textSecondary,
+          ),
         ),
       ),
     );
@@ -83,7 +102,10 @@ class DashboardRecentFilesSection extends StatelessWidget {
             ),
             radius: 52,
             gradient: LinearGradient(
-              colors: [_entries[i].color.withValues(alpha: 0.6), _entries[i].color],
+              colors: [
+                _entries[i].color.withValues(alpha: 0.6),
+                _entries[i].color,
+              ],
             ),
           ),
     ];
@@ -97,17 +119,20 @@ class DashboardRecentFilesSection extends StatelessWidget {
             child: Stack(
               children: [
                 PieChart(
-                  PieChartData(
-                    sectionsSpace: 2,
-                    centerSpaceRadius: 44,
-                    sections: sections,
-                  ),
-                ).animate().fadeIn(duration: 600.ms).scale(
-                  begin: const Offset(0.6, 0.6),
-                  end: const Offset(1, 1),
-                  duration: 600.ms,
-                  curve: Curves.easeOutBack,
-                ),
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 44,
+                        sections: sections,
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 600.ms)
+                    .scale(
+                      begin: const Offset(0.6, 0.6),
+                      end: const Offset(1, 1),
+                      duration: 600.ms,
+                      curve: Curves.easeOutBack,
+                    ),
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
