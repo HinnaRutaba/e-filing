@@ -4,7 +4,6 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
-import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
@@ -22,8 +21,8 @@ class SecretaryDashboardView extends ConsumerStatefulWidget {
       _SecretaryDashboardViewState();
 }
 
-class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
-    with AutomaticKeepAliveClientMixin {
+class _SecretaryDashboardViewState
+    extends ConsumerState<SecretaryDashboardView> {
   static const double _maxContentWidth = 1200;
   static const double _tabletBreakpoint = 600;
   static const double _twoColumnBreakpoint = 600;
@@ -32,11 +31,9 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
   final TextEditingController _searchController = TextEditingController();
 
   @override
-  bool get wantKeepAlive => true;
-
-  @override
   void initState() {
     super.initState();
+
     // The query outlives the screen (the provider isn't auto-disposed), so
     // show it again in the field.
     _searchController.text = ref.read(secretaryDashboardController).query;
@@ -64,7 +61,6 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final state = ref.watch(secretaryDashboardController);
 
     return GestureDetector(
@@ -140,7 +136,6 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
 
     final viz = SecretaryVizColors.of(context);
     final files = data.departmentFiles;
-    final daak = data.departmentDaak;
     final charts = data.charts;
 
     // Searching: the department-wide cards (overviews) can't be
@@ -149,7 +144,7 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
     final filter = state.filter;
     final searching = filter != null;
 
-    // 2. Files and Daak overview cards.
+    // 2. Files overview card.
     final colors = context.appColors;
 
     final created = files?.totalCreated ?? 0;
@@ -190,52 +185,6 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
               ? 'No files created yet'
               : '$disposedPct% of files disposed',
           color: disposedPct >= 50 ? colors.success : colors.warning,
-        ),
-      ],
-    );
-
-    final received = daak?.totalReceived ?? 0;
-    final daakPending = daak?.totalPending ?? 0;
-    final daakSection = SecretarySummaryCard(
-      icon: Icons.mail_outline_rounded,
-      iconColor: viz.teal,
-      title: 'E-Daak overview',
-      delay: 350.ms,
-      onOpen: () => RouteHelper.push(Routes.daak),
-      children: [
-        SecretaryDonutWithLegend(
-          centerLabel: 'Received',
-          centerValue: received,
-          blobs: true,
-          // Pending keeps the theme's warning color (amber) as everywhere else;
-          // the rest come from the theme's blue-to-green family.
-          slices: [
-            SecretaryDonutSlice('Pending', daakPending, viz.amber),
-            SecretaryDonutSlice(
-              'Forwarded',
-              daak?.totalForwarded ?? 0,
-              viz.green,
-            ),
-            SecretaryDonutSlice(
-              'Converted',
-              daak?.totalConverted ?? 0,
-              viz.navy,
-            ),
-            SecretaryDonutSlice('NFA', daak?.totalNfa ?? 0, viz.sky),
-            SecretaryDonutSlice('Disposed', daak?.totalDisposed ?? 0, viz.teal),
-          ],
-        ),
-        const SizedBox(height: 14),
-        SecretaryStatusLine(
-          icon: daakPending == 0
-              ? Icons.check_circle_outline_rounded
-              : Icons.hourglass_top_rounded,
-          text: received == 0
-              ? 'No daak received yet'
-              : daakPending == 0
-              ? 'No daak pending'
-              : '$daakPending of $received daak pending',
-          color: daakPending == 0 ? colors.success : colors.warning,
         ),
       ],
     );
@@ -308,14 +257,10 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
             sections: filter.sections.where((e) => (e.total ?? 0) > 0).length,
           ),
         if (searching) const SizedBox(height: 16),
-        MasonryLayout(
-          columns: listColumns,
-          children: [
-            if (!searching) ...[filesSection, daakSection],
-            ...chartPanels,
-            ...lists,
-          ],
-        ),
+        // The overview and the sections panel each span the full width.
+        if (!searching) ...[filesSection, const SizedBox(height: 16)],
+        for (final panel in chartPanels) ...[panel, const SizedBox(height: 16)],
+        MasonryLayout(columns: listColumns, children: lists),
         footer,
       ],
     );

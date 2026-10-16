@@ -42,8 +42,7 @@ class DaakReportView extends ConsumerStatefulWidget {
   ConsumerState<DaakReportView> createState() => _DaakReportViewState();
 }
 
-class _DaakReportViewState extends ConsumerState<DaakReportView>
-    with AutomaticKeepAliveClientMixin {
+class _DaakReportViewState extends ConsumerState<DaakReportView> {
   static const double _maxContentWidth = 1200;
   static const double _twoColumnBreakpoint = 600;
 
@@ -51,11 +50,9 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
   String _query = '';
 
   @override
-  bool get wantKeepAlive => true;
-
-  @override
   void initState() {
     super.initState();
+
     Future.microtask(() => ref.read(daakReportController.notifier).load());
   }
 
@@ -111,7 +108,6 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final state = ref.watch(daakReportController);
 
     return GestureDetector(
@@ -275,6 +271,56 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
               .where((d) => has(d.sourceDepartment))
               .toList();
 
+    // Overview card, same pattern as the E-files overview on the department
+    // dashboard: four numbers, a segmented bar and one status line. "Pending"
+    // is the in-progress count (daak still open).
+    final colors = context.appColors;
+    final total = summary?.total ?? 0;
+    final pendingCount = summary?.inProgress ?? 0;
+    final putup = summary?.filePutup ?? 0;
+    final disposed = summary?.disposedOff ?? 0;
+    final nfa = summary?.nfa ?? 0;
+    final disposedPct = total == 0 ? 0 : (disposed / total * 100).round();
+    final overviewCard = SecretarySummaryCard(
+      icon: Icons.mail_outline_rounded,
+      iconColor: viz.teal,
+      title: 'E-Daak overview',
+      delay: 50.ms,
+      children: [
+        SecretaryStatColumns(
+          stats: [
+            SecretarySummaryStat(
+              'Total pending',
+              pendingCount,
+              color: viz.amber,
+            ),
+            SecretarySummaryStat('File put-up', putup, color: viz.navy),
+            SecretarySummaryStat('Disposed off', disposed, color: viz.teal),
+            SecretarySummaryStat('NFA', nfa, color: error),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SecretarySegmentedBar(
+          segments: [
+            SecretaryBarSegment(pendingCount, viz.amber),
+            SecretaryBarSegment(putup, viz.navy),
+            SecretaryBarSegment(disposed, viz.teal),
+            SecretaryBarSegment(nfa, error),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SecretaryStatusLine(
+          icon: disposedPct >= 50
+              ? Icons.check_circle_outline_rounded
+              : Icons.hourglass_top_rounded,
+          text: total == 0
+              ? 'No daak received yet'
+              : '$disposedPct% of daak disposed off',
+          color: disposedPct >= 50 ? colors.success : colors.warning,
+        ),
+      ],
+    );
+
     // Colors are assigned by status, so a status keeps its color whatever the
     // order or the counts.
     final statusColors = <int, Color>{
@@ -412,16 +458,19 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
               style: TextStyle(color: error, fontSize: 12),
             ),
           ),
+        // The overview spans the full width; the rest flow in columns below.
+        overviewCard,
+        const SizedBox(height: 16),
         MasonryLayout(
           columns: twoColumns ? 2 : 1,
           children: [
+            sourcePanel,
             statusPanel,
             ageingPanel,
             trendPanel,
             pendingPanel,
             receivedPanel,
             sentPanel,
-            sourcePanel,
           ],
         ),
         _buildFooter(data),
