@@ -1,5 +1,4 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/utils/validators.dart';
@@ -118,14 +117,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 AppSolidButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-                    bool success =
-                        await ref.read(authController.notifier).changePassword(
-                              currentPassword: currentPasswordController.text,
-                              newPassword: newPasswordController.text,
-                              confirmPassword: confirmPasswordController.text,
-                            );
+                    bool success = await ref
+                        .read(authController.notifier)
+                        .changePassword(
+                          currentPassword: currentPasswordController.text,
+                          newPassword: newPasswordController.text,
+                          confirmPassword: confirmPasswordController.text,
+                        );
                     if (success) {
-                      RouteHelper.navigateTo(Routes.dashboard);
+                      RouteHelper.navigateHome();
                     }
                   },
                   text: "Save Changes",

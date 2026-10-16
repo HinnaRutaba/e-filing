@@ -10,11 +10,15 @@ class DashboardDeptTotalsSection extends StatelessWidget {
   final DashboardDepartmentTotalsModel? totals;
 
   static const _rows = [
-    (label: 'Created',   color: Color(0xFF5C6BC0), icon: Icons.add_circle_outline),
-    (label: 'In Dept',   color: Color(0xFF2E9E6B), icon: Icons.business_rounded),
+    (
+      label: 'Created',
+      color: Color(0xFF5C6BC0),
+      icon: Icons.add_circle_outline,
+    ),
+    (label: 'In Dept', color: Color(0xFF2E9E6B), icon: Icons.business_rounded),
     (label: 'Forwarded', color: Color(0xFFE07B20), icon: Icons.send_rounded),
-    (label: 'Disposed',  color: Color(0xFF9E9E9E), icon: Icons.archive_rounded),
-    (label: 'With CM',   color: Color(0xFF7C5CBF), icon: Icons.person_rounded),
+    (label: 'Disposed', color: Color(0xFF9E9E9E), icon: Icons.archive_rounded),
+    (label: 'With CM', color: Color(0xFF7C5CBF), icon: Icons.person_rounded),
   ];
 
   List<int> _values(DashboardDepartmentTotalsModel? t) => [
@@ -52,7 +56,10 @@ class DashboardDeptTotalsSection extends StatelessWidget {
       child: Center(
         child: Text(
           'No data available.',
-          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.appColors.textSecondary,
+          ),
         ),
       ),
     );

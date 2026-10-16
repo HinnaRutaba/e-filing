@@ -66,10 +66,7 @@ class _UserDesignationsScreenState extends State<DesignationsScreen> {
         leading: CircleAvatar(
           backgroundColor: AppColors.secondaryLight.withOpacity(0.2),
           radius: 18,
-          child: Icon(
-            icon,
-            color: AppColors.secondaryDark,
-          ),
+          child: Icon(icon, color: AppColors.secondaryDark),
         ),
         trailing: const Icon(
           Icons.arrow_right,

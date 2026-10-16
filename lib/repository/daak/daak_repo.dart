@@ -3,6 +3,7 @@ import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_report_model.dart';
 import 'package:efiling_balochistan/repository/daak/daak_interface.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -394,6 +395,29 @@ class DaakRepo extends DaakInterface {
         options: await options(authRequired: true),
         formData: formData,
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DaakReportModel> fetchDaakReport({
+    required int? desId,
+    DaakReportPeriod period = DaakReportPeriod.all,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    try {
+      if (desId == null) {
+        throw Exception("Designation ID is required to fetch daak report");
+      }
+
+      Map<String, dynamic> data = await dioClient.get(
+        url: daakReportUrl(desId: desId, period: period, from: from, to: to),
+        options: await options(authRequired: true),
+      );
+
+      return DaakReportModel.fromJson(Map<String, dynamic>.from(data['data']));
     } catch (e) {
       rethrow;
     }

@@ -168,11 +168,7 @@ class _ChatParticipantsViewState extends ConsumerState<ChatParticipantsView> {
                   chatId: widget.chatId,
                   uid: uid!,
                 ),
-                Divider(
-                  color: appColors.cardColor,
-                  thickness: 1,
-                  height: 0,
-                ),
+                Divider(color: appColors.cardColor, thickness: 1, height: 0),
                 _NotAddedParticipantsWidget(
                   participants: filteredNotInChat,
                   chatService: widget._chatService,

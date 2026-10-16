@@ -304,9 +304,7 @@ class FileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.secondary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.5)),
       ),
       child: AppText.labelSmall(
         label,
@@ -325,9 +323,7 @@ class FileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.secondary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

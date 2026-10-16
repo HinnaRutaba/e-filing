@@ -1,5 +1,4 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/hero_tags.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
@@ -253,7 +252,7 @@ class BaseScreen extends ConsumerWidget {
         ...actions ?? [],
         if (enableBackButton)
           IconButton(
-            onPressed: () => RouteHelper.navigateTo(Routes.dashboard),
+            onPressed: RouteHelper.navigateHome,
             icon: Icon(
               Icons.clear,
               color: Theme.of(context).colorScheme.onSurface,

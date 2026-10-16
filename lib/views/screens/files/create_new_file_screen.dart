@@ -134,13 +134,16 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                             controller: fileTypeSearchController,
                             labelText: "File Type",
                             hintText: "Select file type",
-                            prefix: state.loadingNewFileData ? fieldLoader : null,
+                            prefix: state.loadingNewFileData
+                                ? fieldLoader
+                                : null,
                             suggestionsCallback: (pattern) {
                               final q = pattern.toLowerCase();
                               return fileTypes
                                   .where(
-                                    (e) =>
-                                        (e.title ?? '').toLowerCase().contains(q),
+                                    (e) => (e.title ?? '')
+                                        .toLowerCase()
+                                        .contains(q),
                                   )
                                   .toList();
                             },
@@ -154,7 +157,8 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                             onSelected: (item) {
                               setState(() {
                                 selectedFileType = item;
-                                fileTypeSearchController.text = item.title ?? '';
+                                fileTypeSearchController.text =
+                                    item.title ?? '';
                               });
                             },
                             validator: (_) {
@@ -171,13 +175,16 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                             controller: tagSearchController,
                             labelText: "Tag",
                             hintText: "Select tag",
-                            prefix: state.loadingNewFileData ? fieldLoader : null,
+                            prefix: state.loadingNewFileData
+                                ? fieldLoader
+                                : null,
                             suggestionsCallback: (pattern) {
                               final q = pattern.toLowerCase();
                               return tags
                                   .where(
-                                    (e) =>
-                                        (e.title ?? '').toLowerCase().contains(q),
+                                    (e) => (e.title ?? '')
+                                        .toLowerCase()
+                                        .contains(q),
                                   )
                                   .toList();
                             },
@@ -436,7 +443,8 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                           },
                           suffixIcon:
                               (forwardTo != null &&
-                                  (forwardTo!.designationTitle ?? '').isNotEmpty)
+                                  (forwardTo!.designationTitle ?? '')
+                                      .isNotEmpty)
                               ? Container(
                                   width: 120,
                                   padding: const EdgeInsets.only(
@@ -445,7 +453,8 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -454,11 +463,12 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.yellow[400],
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           border: Border.all(
-                                            color: Colors.yellow[600]!.withValues(
-                                              alpha: 0.3,
-                                            ),
+                                            color: Colors.yellow[600]!
+                                                .withValues(alpha: 0.3),
                                             width: 0.5,
                                           ),
                                         ),
@@ -505,7 +515,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                         );
                       },
                     ),
-      
+
                     if (attachments.isEmpty)
                       Row(
                         children: [
@@ -514,7 +524,9 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.primaryDark),
+                                border: Border.all(
+                                  color: AppColors.primaryDark,
+                                ),
                               ),
                               padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
                               child: Row(
@@ -537,7 +549,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                           ),
                         ],
                       ),
-      
+
                     const SizedBox(height: 40),
                     Row(
                       children: [
@@ -645,7 +657,9 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                               );
                               return;
                             }
-                            final controller = ref.read(filesController.notifier);
+                            final controller = ref.read(
+                              filesController.notifier,
+                            );
                             controller.createFile(
                               subject: subject.text,
                               fileType: selectedFileType?.id,
@@ -657,7 +671,7 @@ class _CreateNewFileScreenState extends ConsumerState<CreateNewFileScreen> {
                               tagId: selectedTag?.id,
                               flags: attachments,
                             );
-      
+
                             //RouteHelper.navigateTo(Routes.dashboard);
                           },
                           text: "Submit",

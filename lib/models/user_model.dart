@@ -13,6 +13,7 @@ class UserSchema {
   static const String signature = 'signature';
   static const String status = 'status';
   static const String roleId = 'role_id';
+  static const String role = 'role';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
   static const String designation = 'designation';
@@ -32,6 +33,7 @@ class UserModel {
   String? sign;
   int? status;
   int? roleId;
+  String? role;
   DateTime? createdAt;
   DateTime? updatedAt;
   List<DesignationModel> designations;
@@ -47,6 +49,7 @@ class UserModel {
     this.sign,
     this.status,
     this.roleId,
+    this.role,
     this.createdAt,
     this.updatedAt,
     this.designation,
@@ -70,6 +73,7 @@ class UserModel {
       sign: (json[UserSchema.sign] ?? json[UserSchema.signature]) as String?,
       status: json[UserSchema.status] as int?,
       roleId: json[UserSchema.roleId] as int?,
+      role: json[UserSchema.role] as String?,
       createdAt: json[UserSchema.createdAt] != null
           ? DateTime.tryParse(json[UserSchema.createdAt] as String)
           : null,
@@ -84,7 +88,10 @@ class UserModel {
               ?.map((e) => DesignationModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      userDesgRole: ActiveUserDesgRole.fromValue(json[UserSchema.roleId]),
+      userDesgRole: ActiveUserDesgRole.fromAuth(
+        roleId: json[UserSchema.roleId] as int?,
+        role: json[UserSchema.role] as String?,
+      ),
     );
   }
 
@@ -98,6 +105,7 @@ class UserModel {
       UserSchema.sign: sign,
       UserSchema.status: status,
       UserSchema.roleId: roleId,
+      UserSchema.role: role,
       UserSchema.createdAt: createdAt.toString(),
       UserSchema.updatedAt: updatedAt.toString(),
     };
@@ -112,6 +120,7 @@ class UserModel {
     String? sign,
     int? status,
     int? roleId,
+    String? role,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? designation,
@@ -129,6 +138,7 @@ class UserModel {
       sign: sign ?? this.sign,
       status: status ?? this.status,
       roleId: roleId ?? this.roleId,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       designation: designation ?? this.designation,
@@ -149,6 +159,7 @@ class UserModel {
       sign: (user ?? this).sign,
       status: (user ?? this).status,
       roleId: (user ?? this).roleId,
+      role: (user ?? this).role,
       createdAt: (user ?? this).createdAt,
       updatedAt: (user ?? this).updatedAt,
       designation: (user ?? this).designation,

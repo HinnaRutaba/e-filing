@@ -3,6 +3,8 @@ import 'package:efiling_balochistan/models/daak/create_daak_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_departments_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_meta_model.dart';
 import 'package:efiling_balochistan/models/daak/daak_model.dart';
+import 'package:efiling_balochistan/models/daak/daak_report_model.dart';
+import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:image_picker/image_picker.dart';
 
 abstract class DaakInterface extends NetworkBase {
@@ -62,6 +64,25 @@ abstract class DaakInterface extends NetworkBase {
 
   String getDepertmentsUrl(int desgId) =>
       "${baseUrl}daak/create-form?userDesgID=$desgId";
+
+  /// [period] of [DaakReportPeriod.all] sends no `period` (all time).
+  /// [from] / [to] are only sent for [DaakReportPeriod.custom].
+  String daakReportUrl({
+    required int desId,
+    DaakReportPeriod period = DaakReportPeriod.all,
+    DateTime? from,
+    DateTime? to,
+  }) {
+    String url = '${baseUrl}secretary/dashboard/daak?userDesgID=$desId';
+    if (period != DaakReportPeriod.all) {
+      url += '&period=${period.value}';
+    }
+    if (period == DaakReportPeriod.custom) {
+      if (from != null) url += '&from=${DateTimeHelper.apiFormat(from)}';
+      if (to != null) url += '&to=${DateTimeHelper.apiFormat(to)}';
+    }
+    return url;
+  }
 
   String get scanDaakUrl => "${baseUrl}daak/store-incoming";
 
@@ -129,4 +150,11 @@ abstract class DaakInterface extends NetworkBase {
   Future<DaakDepartmentsModel> fetchCreateFormMeta(int desId);
 
   Future<void> scanDaak(CreateDaakModel model);
+
+  Future<DaakReportModel> fetchDaakReport({
+    required int? desId,
+    DaakReportPeriod period = DaakReportPeriod.all,
+    DateTime? from,
+    DateTime? to,
+  });
 }

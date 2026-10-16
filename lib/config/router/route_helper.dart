@@ -1,3 +1,8 @@
+import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/controllers/controllers.dart';
+import 'package:efiling_balochistan/models/active_user_desg_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'app_router.dart';
 
 class RouteHelper {
@@ -9,6 +14,24 @@ class RouteHelper {
   }
 
   static String get currentLocation => _currentLocation();
+
+  /// The secretary shares [Routes.dashboard]; it shows tabs for that role.
+  static String homeRouteFor(ActiveUserDesgRole? role) => Routes.dashboard;
+
+  /// [homeRouteFor] the signed-in user's current role. Usable from anywhere
+  /// (controllers, redirects) because it reads the role through the app's
+  /// provider container rather than needing a `ref`.
+  static String get homeRoute {
+    final context = AppRouter.navigatorKey.currentContext;
+    if (context == null) return Routes.dashboard;
+    final role = ProviderScope.containerOf(
+      context,
+    ).read(authController).userDesgRole;
+    return homeRouteFor(role);
+  }
+
+  /// Replace the stack with the current role's dashboard.
+  static void navigateHome() => navigateTo(homeRoute);
 
   static bool isSubRoute() {
     return currentLocation.split('/').length > 2;

@@ -7,7 +7,9 @@ class CMApprovalDesk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ApprovalDesk(role: ActiveUserDesgRole.cm, skipInitialLoad: true);
+    return const ApprovalDesk(
+      role: ActiveUserDesgRole.cm,
+      skipInitialLoad: true,
+    );
   }
 }
-

@@ -1,13 +1,24 @@
+import 'dart:math' as math;
+
+import 'package:efiling_balochistan/config/router/route_helper.dart';
+import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
-import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
-import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
-import 'package:efiling_balochistan/models/secretary_dashboard_model.dart';
+import 'package:efiling_balochistan/utils/helper_utils.dart';
+import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
-import 'package:efiling_balochistan/views/screens/cm_app/widgets/dashboard_section_card.dart';
+import 'package:efiling_balochistan/views/gradient_scaffold.dart';
+import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_header_actions.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,738 +33,869 @@ class SecretaryDashboardScreen extends ConsumerStatefulWidget {
 
 class _SecretaryDashboardScreenState
     extends ConsumerState<SecretaryDashboardScreen> {
+  static const double _maxContentWidth = 1200;
+  static const double _tabletBreakpoint = 600;
+  static const double _twoColumnBreakpoint = 800;
+  static const double _threeColumnBreakpoint = 1000;
+
+  /// Space between the user row and the top of the KPI cards.
+  static const double _headerCardsGap = 18;
+
+  /// True once the user scrolls down: the KPI cards shrink to a one-row strip
+  /// and the header drops its secondary lines. Resets at the top.
+  final ValueNotifier<bool> _compact = ValueNotifier<bool>(false);
+
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+    // The query outlives the screen (the provider isn't auto-disposed), so
+    // show it again in the field.
+    _searchController.text = ref.read(secretaryDashboardController).query;
     Future.microtask(
       () => ref.read(secretaryDashboardController.notifier).initData(),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final bool isMobile = context.isMobile;
-    final double headerHeight = isMobile ? 180.0 : 164.0;
-    final double cardsOverlap = isMobile ? 130.0 : 60.0;
-    final double statsCardTop = isMobile ? 144.0 : 132.0;
-    final SecretaryDashboardState state = ref.watch(
-      secretaryDashboardController,
-    );
+  void dispose() {
+    _compact.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(secretaryDashboardController.notifier).initData(),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: headerHeight + cardsOverlap,
-                child: Stack(
-                  clipBehavior: Clip.none,
+  void _onSearchChanged(String value) =>
+      ref.read(secretaryDashboardController.notifier).setQuery(value);
+
+  void _clearSearch() {
+    _searchController.clear();
+    ref.read(secretaryDashboardController.notifier).clearQuery();
+  }
+
+  Future<void> _refresh() =>
+      ref.read(secretaryDashboardController.notifier).initData();
+
+  bool _handleScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+
+    if (notification.metrics.pixels <= 0 && _compact.value) {
+      _compact.value = false;
+      return false;
+    }
+    if (notification is UserScrollNotification &&
+        notification.direction == ScrollDirection.reverse &&
+        !_compact.value) {
+      _compact.value = true;
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(secretaryDashboardController);
+    // Must be read here: inside BaseScreen's body, MediaQuery's top padding
+    // already includes the app bar, which would count that space twice.
+    final topInset = MediaQuery.of(context).padding.top;
+
+    return GestureDetector(
+      onTap: () {
+        HelperUtils.hideKeyboard(context);
+      },
+      child: GradientScaffold(
+        child: BaseScreen(
+          bgColor: Colors.transparent,
+          showUserDetails: false,
+          isdash: true,
+          enableBackButton: false,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final gutter = width >= _tabletBreakpoint ? 16.0 : 10.0;
+
+              return NotificationListener<ScrollNotification>(
+                onNotification: _handleScroll,
+                child: Column(
                   children: [
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      child: _buildHeader(context, headerHeight, state),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _compact,
+                      builder: (context, compact, _) =>
+                          _buildTop(context, state, gutter, topInset, compact),
                     ),
-                    Positioned(
-                      left: 16,
-                      right: 16,
-                      top: statsCardTop,
-                      child: _buildKpiCards(context, state),
+                    // Outside the scroll view so it stays put while the list moves.
+                    if (state.data != null) _buildSearch(gutter),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _refresh,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: _maxContentWidth,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  gutter,
+                                  4,
+                                  gutter,
+                                  32,
+                                ),
+                                child: _buildBody(state, width),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- header + KPIs ---------------------------------------------------------
+
+  Widget _buildTop(
+    BuildContext context,
+    SecretaryDashboardState state,
+    double gutter,
+    double topInset,
+    bool compact,
+  ) {
+    const duration = Duration(milliseconds: 320);
+    const curve = Curves.easeOutCubic;
+    // How far the KPI cards reach up into the header.
+    // The header's bottom edge cuts through the middle of the first card row,
+    // so this is about half a card's height (~86px expanded, ~68px collapsed).
+    final overlap = compact ? 34.0 : 44.0;
+
+    return AnimatedSize(
+      duration: duration,
+      curve: curve,
+      alignment: Alignment.topCenter,
+      clipBehavior: Clip.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(context, state, gutter, topInset, compact, overlap),
+          _PullUp(
+            amount: overlap,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: gutter),
+                  child: AnimatedSwitcher(
+                    duration: duration,
+                    switchInCurve: curve,
+                    switchOutCurve: curve,
+                    child: KeyedSubtree(
+                      key: ValueKey(compact),
+                      child: _buildKpis(context, state, compact),
+                    ),
+                  ),
+                ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: _buildSections(context, state, isMobile),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(
     BuildContext context,
-    double headerHeight,
     SecretaryDashboardState state,
+    double gutter,
+    double topInset,
+    bool compact,
+    double overlap,
   ) {
-    final ctx = state.data?.context;
-    final subtitle = [
-      ctx?.designation,
-      ctx?.department?.title,
-    ].whereType<String>().join(' • ');
+    final colors = context.appColors;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
-      child: SizedBox(
-        height: headerHeight,
-        width: double.infinity,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            SvgPicture.asset(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: SvgPicture.asset(
               AssetsConstants.dashboardBG,
-              fit: BoxFit.fitWidth,
+              fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
-            Container(
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.secondaryDark.withValues(alpha: 0.8),
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.secondaryDark,
-                    AppColors.secondaryLight.withValues(alpha: 0.7),
-                    AppColors.accent.withValues(alpha: 0.2),
+                    colors.secondaryDark,
+                    colors.secondaryLight.withValues(alpha: 0.75),
+                    colors.accent.withValues(alpha: 0.25),
                   ],
                   begin: Alignment.bottomLeft,
                   end: Alignment.topRight,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            style: const TextStyle(fontSize: 20),
-                            children: [
-                              const TextSpan(
-                                text: 'Welcome, ',
-                                style: TextStyle(fontWeight: FontWeight.normal),
-                              ),
-                              TextSpan(text: ctx?.userTitle ?? 'Secretary'),
-                            ],
-                          ),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(color: Colors.white),
-                        ),
-                        if (subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.85),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    padding: const EdgeInsets.all(8),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () =>
-                        ref.read(authController.notifier).logout(context),
-                    icon: Icon(
-                      Icons.power_settings_new,
-                      color: Colors.amber[400],
-                    ),
-                  ),
-                ],
+          ),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+              child: Padding(
+                // Clears the app bar (menu / logout) that BaseScreen draws over
+                // the top of this screen, same offsets as the main dashboard.
+                // The bottom padding is the strip the KPI cards sit over.
+                padding: EdgeInsets.fromLTRB(
+                  gutter,
+                  topInset + (context.isMobile ? 54 : 28),
+                  gutter,
+                  overlap + _headerCardsGap,
+                ),
+                child: _buildUserRow(context, state, compact),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildKpiCards(BuildContext context, SecretaryDashboardState state) {
-    Widget animated(Widget child, int index) {
-      final delay = (index * 120).ms;
-      return child
-          .animate()
-          .scale(
-            delay: delay,
-            duration: 400.ms,
-            begin: const Offset(0.8, 0.8),
-            end: const Offset(1, 1),
-            curve: Curves.easeOutBack,
-          )
-          .fadeIn(delay: delay, duration: 300.ms);
-    }
-
-    final kpis = state.data?.myKpis;
-
-    final cards = [
-      DashboardCard(
-        cardColor: context.appColors.warning,
-        iconColor: Colors.yellow[900]!,
-        title: 'Action Required',
-        value: '${kpis?.actionRequired ?? 0}',
-        onTap: null,
-        loading: state.loading,
-        icon: Icons.pending_actions,
-        showSmallCard: false,
-      ),
-      DashboardCard(
-        cardColor: Theme.of(context).colorScheme.error,
-        iconColor: Colors.red[900]!,
-        title: 'Pending',
-        value: '${kpis?.pending ?? 0}',
-        onTap: null,
-        loading: state.loading,
-        icon: Icons.autorenew,
-        showSmallCard: false,
-      ),
-      DashboardCard(
-        cardColor: context.appColors.secondaryLight,
-        iconColor: context.appColors.secondaryDark,
-        title: 'My Files',
-        value: '${kpis?.myFiles ?? 0}',
-        onTap: null,
-        loading: state.loading,
-        icon: Icons.folder_copy_outlined,
-        showSmallCard: false,
-      ),
-      DashboardCard(
-        cardColor: Colors.green[200]!,
-        iconColor: Colors.green[800]!,
-        title: 'Archived',
-        value: '${kpis?.archived ?? 0}',
-        onTap: null,
-        loading: state.loading,
-        icon: Icons.inventory_2_outlined,
-        showSmallCard: false,
-      ),
-    ];
-
-    if (context.isMobile) {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(child: animated(cards[0], 0)),
-              const SizedBox(width: 12),
-              Expanded(child: animated(cards[1], 1)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: animated(cards[2], 2)),
-              const SizedBox(width: 12),
-              Expanded(child: animated(cards[3], 3)),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        for (var i = 0; i < cards.length; i++) ...[
-          Expanded(child: animated(cards[i], i)),
-          if (i != cards.length - 1) const SizedBox(width: 12),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSections(
+  Widget _buildUserRow(
     BuildContext context,
     SecretaryDashboardState state,
-    bool isMobile,
+    bool compact,
   ) {
-    if (state.error != null && state.data == null) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: Text(
-            state.error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.appColors.textSecondary),
-          ),
-        ),
-      );
-    }
+    final colors = context.appColors;
+    final ctx = state.data?.context;
+    final designation = ctx?.designation ?? '';
 
-    final data = state.data;
-    final activity = _StatsSection(
-      icon: Icons.swap_horiz_rounded,
-      iconBgColor: const Color(0xFF3949AB),
-      title: 'My Activity',
-      badgeLabel: 'Personal',
-      badgeColor: const Color(0xFFE8EAF6),
-      badgeTextColor: const Color(0xFF3949AB),
-      stats: [
-        _Stat('Files Sent', data?.myKpis?.filesSent),
-        _Stat('Files Received', data?.myKpis?.filesReceived),
-        _Stat('Processed', data?.myKpis?.processed),
-        _Stat('Daak Inbox', data?.myKpis?.daakInbox),
-        _Stat('Daak Returned', data?.myKpis?.daakReturned),
-      ],
-    );
-    final deptFiles = _StatsSection(
-      icon: Icons.folder_open_rounded,
-      iconBgColor: const Color(0xFF00897B),
-      title: 'Department Files',
-      badgeLabel: data?.context?.department?.title ?? 'Department',
-      badgeColor: const Color(0xFFE0F2F1),
-      badgeTextColor: const Color(0xFF00695C),
-      stats: [
-        _Stat('Created', data?.departmentFiles?.totalCreated),
-        _Stat('Pending', data?.departmentFiles?.totalPending),
-        _Stat('Disposed', data?.departmentFiles?.totalDisposed),
-        _Stat('Forwarded', data?.departmentFiles?.totalForwarded),
-      ],
-    );
-    final deptDaak = _StatsSection(
-      icon: Icons.mail_outline_rounded,
-      iconBgColor: const Color(0xFFEF6C00),
-      title: 'Department Daak',
-      badgeLabel: 'Daak',
-      badgeColor: const Color(0xFFFFF3E0),
-      badgeTextColor: const Color(0xFFE65100),
-      stats: [
-        _Stat('Received', data?.departmentDaak?.totalReceived),
-        _Stat('Pending', data?.departmentDaak?.totalPending),
-        _Stat('Forwarded', data?.departmentDaak?.totalForwarded),
-        _Stat('Converted', data?.departmentDaak?.totalConverted),
-        _Stat('NFA', data?.departmentDaak?.totalNfa),
-        _Stat('Disposed', data?.departmentDaak?.totalDisposed),
-      ],
-    );
-    final topPutup = _TopUsersSection(
-      icon: Icons.upload_file_rounded,
-      color: const Color(0xFF5C35B0),
-      title: 'Top File Put-up',
-      items: data?.charts?.topFilePutup ?? [],
-    );
-    final topPending = _TopUsersSection(
-      icon: Icons.hourglass_bottom_rounded,
-      color: const Color(0xFFD84315),
-      title: 'Most Pending',
-      items: data?.charts?.topPending ?? [],
-    );
-    final topForwarded = _TopUsersSection(
-      icon: Icons.forward_to_inbox_rounded,
-      color: const Color(0xFF00897B),
-      title: 'Most Forwarded',
-      items: data?.charts?.topForwarded ?? [],
-    );
-    final sections = _SectionStatsSection(
-      items: data?.sectionStats ?? [],
-      activeUsers: data?.activeUsers,
-    );
-
-    if (isMobile) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          children: [
-            activity,
-            const SizedBox(height: 16),
-            deptFiles,
-            const SizedBox(height: 16),
-            deptDaak,
-            const SizedBox(height: 16),
-            topPutup,
-            const SizedBox(height: 16),
-            topPending,
-            const SizedBox(height: 16),
-            topForwarded,
-            const SizedBox(height: 16),
-            sections,
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                activity,
-                const SizedBox(height: 16),
-                deptFiles,
-                const SizedBox(height: 16),
-                deptDaak,
-                const SizedBox(height: 16),
-                sections,
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              children: [
-                topPutup,
-                const SizedBox(height: 16),
-                topPending,
-                const SizedBox(height: 16),
-                topForwarded,
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Stat {
-  const _Stat(this.label, this.value);
-  final String label;
-  final int? value;
-}
-
-/// A card showing a set of labelled counts in a wrapping grid.
-class _StatsSection extends StatelessWidget {
-  const _StatsSection({
-    required this.icon,
-    required this.iconBgColor,
-    required this.title,
-    required this.badgeLabel,
-    required this.badgeColor,
-    required this.badgeTextColor,
-    required this.stats,
-  });
-
-  final IconData icon;
-  final Color iconBgColor;
-  final String title;
-  final String badgeLabel;
-  final Color badgeColor;
-  final Color badgeTextColor;
-  final List<_Stat> stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return DashboardSectionCard(
-      icon: icon,
-      iconBgColor: iconBgColor,
-      title: title,
-      badgeLabel: badgeLabel,
-      badgeColor: badgeColor,
-      badgeTextColor: badgeTextColor,
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            const spacing = 10.0;
-            final tileWidth = (constraints.maxWidth - spacing * 2) / 3;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                for (final stat in stats)
-                  SizedBox(
-                    width: tileWidth,
-                    child: _StatTile(stat: stat, color: iconBgColor),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({required this.stat, required this.color});
-
-  final _Stat stat;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '${stat.value ?? 0}',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            stat.label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: context.appColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Ranked list of users with their counts.
-class _TopUsersSection extends StatelessWidget {
-  const _TopUsersSection({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.items,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final List<SecretaryTopUserModel> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return DashboardSectionCard(
-      icon: icon,
-      iconBgColor: color,
-      title: title,
-      badgeLabel: 'Top ${items.length}',
-      badgeColor: color.withValues(alpha: 0.12),
-      badgeTextColor: color,
-      body: items.isEmpty
-          ? const _EmptyState()
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: [
-                  for (var i = 0; i < items.length; i++) ...[
-                    _TopUserRow(item: items[i], rank: i + 1, color: color)
-                        .animate(delay: (i * 100).ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideX(
-                          begin: 0.08,
-                          end: 0,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        ),
-                    if (i < items.length - 1)
-                      const Divider(height: 16, thickness: 0.5),
-                  ],
-                ],
-              ),
-            ),
-    );
-  }
-}
-
-class _TopUserRow extends StatelessWidget {
-  const _TopUserRow({
-    required this.item,
-    required this.rank,
-    required this.color,
-  });
-
-  final SecretaryTopUserModel item;
-  final int rank;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final appColors = context.appColors;
     return Row(
       children: [
-        Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '$rank',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
+        CircleAvatar(
+          backgroundColor: colors.accent.withValues(alpha: 0.25),
+          radius: 20,
+          child: Icon(Icons.person, color: colors.accent, size: 20),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                item.userTitle ?? '',
+                ctx?.userTitle ?? '---',
+                maxLines: 2,
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appColors.textPrimary,
+                  fontSize: 16,
+                  height: 1.2,
+                  fontWeight: FontWeight.w700,
+                  color: colors.accent,
                 ),
               ),
-              Text(
-                [item.designation, item.section]
-                    .whereType<String>()
-                    .join(' • '),
-                style: TextStyle(fontSize: 11, color: appColors.textSecondary),
-              ),
+              if (designation.isNotEmpty && !compact)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    designation,
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.25,
+                      color: colors.accent.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: Text(
-            '${item.count ?? 0}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
+        const SizedBox(width: 8),
+        const DashboardHeaderActions(),
       ],
     );
   }
-}
 
-/// Per-section totals with a stacked archived / pending progress bar.
-class _SectionStatsSection extends StatelessWidget {
-  const _SectionStatsSection({required this.items, required this.activeUsers});
+  Widget _buildKpis(
+    BuildContext context,
+    SecretaryDashboardState state,
+    bool compact,
+  ) {
+    final kpis = state.data?.myKpis;
+    final loading = state.loading;
 
-  final List<SecretarySectionStatModel> items;
-  final int? activeUsers;
+    final viz = SecretaryVizColors.of(context);
 
-  @override
-  Widget build(BuildContext context) {
-    // Sections with no files add noise; keep the busiest first.
-    final visible = items.where((e) => (e.total ?? 0) > 0).toList()
-      ..sort((a, b) => (b.total ?? 0).compareTo(a.total ?? 0));
+    // Each card gets its own hue so the row is easy to tell apart at a glance.
+    // Most come from the theme; purple is the one extra, since the theme has
+    // no hue between its blues and reds. Colors are softened to pastels; the
+    // icon is a deeper shade of the card's own tint so it reads on the white badge.
+    DashboardCard card({
+      required String title,
+      required int? value,
+      required Color color,
+      required IconData icon,
+      String? route,
+    }) {
+      final tint = kpiTint(context, color);
+      return DashboardCard(
+        cardColor: tint,
+        iconColor: Color.lerp(tint, Colors.black, 0.5)!,
+        title: title,
+        value: '${value ?? 0}',
+        onTap: route == null ? null : () => RouteHelper.push(route),
+        loading: loading,
+        icon: icon,
+        showSmallCard: compact,
+        stacked: true,
+      );
+    }
 
-    return DashboardSectionCard(
-      icon: Icons.account_tree_outlined,
-      iconBgColor: const Color(0xFF1E88E5),
-      title: 'Section Overview',
-      badgeLabel: '${activeUsers ?? 0} active users',
-      badgeColor: const Color(0xFFE3F2FD),
-      badgeTextColor: const Color(0xFF1565C0),
-      body: visible.isEmpty
-          ? const _EmptyState()
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: [
-                  for (var i = 0; i < visible.length; i++) ...[
-                    _SectionRow(item: visible[i]),
-                    if (i < visible.length - 1)
-                      const Divider(height: 16, thickness: 0.5),
-                  ],
-                ],
-              ),
+    final cards = [
+      card(
+        title: 'Action Required',
+        value: kpis?.actionRequired,
+        color: Theme.of(context).colorScheme.error,
+        icon: Icons.info_outline,
+        route: Routes.actionRequiredFiles,
+      ),
+      card(
+        title: 'Pending Files',
+        value: kpis?.pending,
+        color: viz.amber,
+        icon: Icons.timelapse,
+        route: Routes.pendingFiles,
+      ),
+      card(
+        title: 'Files Sent',
+        value: kpis?.filesSent,
+        color: viz.blue,
+        icon: Icons.send_rounded,
+        route: Routes.forwarded,
+      ),
+      card(
+        title: 'Processed Files',
+        value: kpis?.processed,
+        color: kpiPurple,
+        icon: Icons.task_alt_rounded,
+        route: Routes.forwarded,
+      ),
+      card(
+        title: 'Daak Letters',
+        value: kpis?.daakInbox,
+        color: viz.green,
+        icon: Icons.mark_email_unread_rounded,
+        route: Routes.daak,
+      ),
+      card(
+        title: 'Returned Daak',
+        value: kpis?.daakReturned,
+        color: viz.teal,
+        icon: Icons.undo_rounded,
+        route: Routes.daak,
+      ),
+    ];
+
+    const gap = 10.0;
+
+    // Collapsed: all six as icon + value cards in one row. Falls back to a
+    // sideways scroll if the screen is too narrow to fit them.
+    if (compact) {
+      return LayoutBuilder(
+        builder: (context, c) {
+          const minWidth = 54.0;
+          final fit = (c.maxWidth - gap * (cards.length - 1)) / cards.length;
+          final itemWidth = fit < minWidth ? minWidth : fit;
+          return SizedBox(
+            height: 76,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              physics: fit < minWidth
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              itemCount: cards.length,
+              separatorBuilder: (_, __) => const SizedBox(width: gap),
+              itemBuilder: (_, i) =>
+                  SizedBox(width: itemWidth, child: cards[i]),
             ),
-    );
-  }
-}
+          );
+        },
+      );
+    }
 
-class _SectionRow extends StatelessWidget {
-  const _SectionRow({required this.item});
-
-  final SecretarySectionStatModel item;
-
-  @override
-  Widget build(BuildContext context) {
-    final appColors = context.appColors;
-    final total = item.total ?? 0;
-    final archived = item.archived ?? 0;
-    final pending = item.pending ?? 0;
+    // Expanded: two rows of three.
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                item.section ?? '',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appColors.textPrimary,
-                ),
-              ),
-            ),
-            Text(
-              '$total',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: appColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(100),
-          child: SizedBox(
-            height: 6,
-            child: Row(
-              children: [
-                if (archived > 0)
-                  Expanded(
-                    flex: archived,
-                    child: Container(color: Colors.green[400]),
-                  ),
-                if (pending > 0)
-                  Expanded(
-                    flex: pending,
-                    child: Container(color: Colors.orange[400]),
-                  ),
+        for (var r = 0; r < 2; r++) ...[
+          if (r > 0) const SizedBox(height: gap),
+          Row(
+            children: [
+              for (var c = 0; c < 3; c++) ...[
+                if (c > 0) const SizedBox(width: gap),
+                Expanded(child: cards[r * 3 + c]),
               ],
-            ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Archived $archived  •  Pending $pending',
-          style: TextStyle(fontSize: 11, color: appColors.textSecondary),
-        ),
+        ],
       ],
     );
   }
-}
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Center(
-        child: Text(
-          'No data available.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
+  Widget _buildSearch(double gutter) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(gutter, 4, gutter, 7),
+          child: DashboardSearchBar(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            onClear: _clearSearch,
+          ),
         ),
       ),
     );
+  }
+
+  // --- body ------------------------------------------------------------------
+
+  Widget _buildBody(SecretaryDashboardState state, double width) {
+    final data = state.data;
+    final twoColumns = width >= _twoColumnBreakpoint;
+    final threeColumns = width >= _threeColumnBreakpoint;
+
+    if (data == null) {
+      if (state.error != null) {
+        return _ErrorView(message: state.error!, onRetry: _refresh);
+      }
+      return _buildSkeletons(twoColumns);
+    }
+
+    final viz = SecretaryVizColors.of(context);
+    final files = data.departmentFiles;
+    final daak = data.departmentDaak;
+    final charts = data.charts;
+
+    // Searching: the department-wide cards (overviews) can't be
+    // narrowed to a user or section, so they are hidden; the user and section
+    // cards keep only the matching rows and disappear when nothing matches.
+    final filter = state.filter;
+    final searching = filter != null;
+
+    // 2. Files and Daak overview cards.
+    final colors = context.appColors;
+
+    final created = files?.totalCreated ?? 0;
+    final disposed = files?.totalDisposed ?? 0;
+    final filesPending = files?.totalPending ?? 0;
+    final forwarded = files?.totalForwarded ?? 0;
+    final disposedPct = created == 0 ? 0 : (disposed / created * 100).round();
+    final filesSection = SecretarySummaryCard(
+      icon: Icons.folder_open_rounded,
+      iconColor: viz.blue,
+      title: 'Files overview',
+      delay: 250.ms,
+      onOpen: () => RouteHelper.push(Routes.pendingFiles),
+      children: [
+        SecretaryStatColumns(
+          stats: [
+            SecretarySummaryStat('Created', created),
+            SecretarySummaryStat('Pending', filesPending, color: viz.amber),
+            SecretarySummaryStat('Disposed', disposed, color: viz.blue),
+            SecretarySummaryStat('Forwarded', forwarded, color: viz.green),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Every stat except Created, which is just pending + disposed.
+        SecretarySegmentedBar(
+          segments: [
+            SecretaryBarSegment(filesPending, viz.amber),
+            SecretaryBarSegment(disposed, viz.blue),
+            SecretaryBarSegment(forwarded, viz.green),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SecretaryStatusLine(
+          icon: disposedPct >= 50
+              ? Icons.check_circle_outline_rounded
+              : Icons.hourglass_top_rounded,
+          text: created == 0
+              ? 'No files created yet'
+              : '$disposedPct% of files disposed',
+          color: disposedPct >= 50 ? colors.success : colors.warning,
+        ),
+      ],
+    );
+
+    final received = daak?.totalReceived ?? 0;
+    final daakPending = daak?.totalPending ?? 0;
+    final daakSection = SecretarySummaryCard(
+      icon: Icons.mail_outline_rounded,
+      iconColor: viz.teal,
+      title: 'Daak overview',
+      delay: 350.ms,
+      onOpen: () => RouteHelper.push(Routes.daak),
+      children: [
+        SecretaryDonutWithLegend(
+          centerLabel: 'Received',
+          centerValue: received,
+          blobs: true,
+          // Pending keeps the theme's warning color (amber) as everywhere else;
+          // the rest come from the theme's blue-to-green family.
+          slices: [
+            SecretaryDonutSlice('Pending', daakPending, viz.amber),
+            SecretaryDonutSlice(
+              'Forwarded',
+              daak?.totalForwarded ?? 0,
+              viz.green,
+            ),
+            SecretaryDonutSlice(
+              'Converted',
+              daak?.totalConverted ?? 0,
+              viz.navy,
+            ),
+            SecretaryDonutSlice('NFA', daak?.totalNfa ?? 0, viz.sky),
+            SecretaryDonutSlice('Disposed', daak?.totalDisposed ?? 0, viz.teal),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SecretaryStatusLine(
+          icon: daakPending == 0
+              ? Icons.check_circle_outline_rounded
+              : Icons.hourglass_top_rounded,
+          text: received == 0
+              ? 'No daak received yet'
+              : daakPending == 0
+              ? 'No daak pending'
+              : '$daakPending of $received daak pending',
+          color: daakPending == 0 ? colors.success : colors.warning,
+        ),
+      ],
+    );
+
+    // 3. Charts, one after the other.
+    final sections = filter?.sections ?? data.sectionStats;
+    final chartPanels = [
+      if (!searching || filter.sections.any((e) => (e.total ?? 0) > 0))
+        SecretarySectionsPanel(sections: sections, delay: 150.ms),
+    ];
+
+    // 4. Top lists.
+    final putup = filter?.topFilePutup ?? charts?.topFilePutup ?? const [];
+    final pending = filter?.topPending ?? charts?.topPending ?? const [];
+    final topForwarded =
+        filter?.topForwarded ?? charts?.topForwarded ?? const [];
+    final lists = [
+      if (!searching || putup.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('putup'),
+          title: 'Top File Put-up',
+          subtitle: 'Files created by user',
+          icon: Icons.upload_file_rounded,
+          color: viz.navy,
+          items: putup,
+        ),
+      if (!searching || pending.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('pending'),
+          title: 'Top Pending',
+          subtitle: 'Most files waiting',
+          icon: Icons.hourglass_bottom_rounded,
+          color: viz.amber,
+          items: pending,
+        ),
+      if (!searching || topForwarded.isNotEmpty)
+        SecretaryTopUsersPanel(
+          key: const ValueKey('forwarded'),
+          title: 'Top Forwarded',
+          subtitle: 'Most files forwarded',
+          icon: Icons.forward_to_inbox_rounded,
+          color: viz.green,
+          items: topForwarded,
+        ),
+    ];
+
+    final footer = _DashboardFooter(
+      activeUsers: data.activeUsers,
+      generatedAt: DateTimeHelper.parseDate(data.generatedAt)?.toLocal(),
+    );
+
+    if (searching && chartPanels.isEmpty && lists.isEmpty) {
+      return Column(
+        children: [
+          SecretarySearchEmptyState(
+            query: state.query.trim(),
+            onClear: _clearSearch,
+          ),
+          footer,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (searching)
+          SecretarySearchSummary(
+            users: filter.userCount,
+            sections: filter.sections.where((e) => (e.total ?? 0) > 0).length,
+          ),
+        if (!searching) ...[
+          _sideBySide([filesSection, daakSection], twoColumns),
+          const SizedBox(height: 16),
+        ],
+        if (chartPanels.isNotEmpty) ...[
+          if (searching) const SizedBox(height: 16),
+          _spaced(chartPanels),
+          const SizedBox(height: 16),
+        ],
+        if (lists.isNotEmpty)
+          _sideBySide(lists, threeColumns && lists.length > 1),
+        footer,
+      ],
+    );
+  }
+
+  /// Equal-width columns when [sideBySide], otherwise stacked.
+  Widget _sideBySide(List<Widget> children, bool sideBySide) {
+    if (!sideBySide) return _spaced(children);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          Expanded(child: children[i]),
+          if (i != children.length - 1) const SizedBox(width: 16),
+        ],
+      ],
+    );
+  }
+
+  Widget _spaced(List<Widget> children) => Column(
+    children: [
+      for (var i = 0; i < children.length; i++) ...[
+        children[i],
+        if (i != children.length - 1) const SizedBox(height: 16),
+      ],
+    ],
+  );
+
+  Widget _buildSkeletons(bool twoColumns) {
+    return Column(
+      children: [
+        const _SkeletonCard(height: 190),
+        const SizedBox(height: 16),
+        _sideBySide(const [
+          _SkeletonCard(height: 200),
+          _SkeletonCard(height: 200),
+        ], twoColumns),
+        const SizedBox(height: 16),
+        const _SkeletonCard(height: 300),
+        const SizedBox(height: 16),
+        const _SkeletonCard(height: 300),
+      ],
+    );
+  }
+}
+
+/// Active user count and when the numbers were generated, under the panels.
+class _DashboardFooter extends StatelessWidget {
+  const _DashboardFooter({this.activeUsers, this.generatedAt});
+
+  final int? activeUsers;
+  final DateTime? generatedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final style = TextStyle(fontSize: 12, color: colors.textSecondary);
+
+    Widget item(IconData icon, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: colors.textSecondary),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, style: style)),
+      ],
+    );
+
+    final users = activeUsers;
+    final generated = generatedAt;
+    if (users == null && generated == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 20,
+          runSpacing: 6,
+          children: [
+            if (users != null)
+              item(
+                Icons.people_alt_outlined,
+                '$users active ${users == 1 ? 'user' : 'users'}',
+              ),
+            if (generated != null)
+              item(
+                Icons.schedule_rounded,
+                'Generated ${DateTimeHelper.dateFormatddMMYYWithTime(generated)}',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupTitle extends StatelessWidget {
+  const _GroupTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 24, 4, 12),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: context.appColors.textPrimary,
+        ),
+      ).animate().fadeIn(duration: 400.ms),
+    );
+  }
+}
+
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: colors.border.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(20),
+          ),
+        )
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 1400.ms,
+          color: colors.cardColor.withValues(alpha: 0.7),
+        );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 48,
+              color: colors.textSecondary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
+          ],
+        ).animate().fadeIn(duration: 400.ms),
+      ),
+    );
+  }
+}
+
+/// Lays [child] out normally but reports a height [amount] smaller and shifts
+/// it up by that much, so the child paints over whatever sits above it. Used
+/// to let the KPI cards straddle the header's bottom edge without having to
+/// know the header's or the cards' height up front.
+class _PullUp extends SingleChildRenderObjectWidget {
+  const _PullUp({required this.amount, required super.child});
+
+  final double amount;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderPullUp(amount);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderPullUp renderObject) {
+    renderObject.amount = amount;
+  }
+}
+
+class _RenderPullUp extends RenderShiftedBox {
+  _RenderPullUp(this._amount) : super(null);
+
+  double _amount;
+
+  set amount(double value) {
+    if (_amount == value) return;
+    _amount = value;
+    markNeedsLayout();
+  }
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (child == null) {
+      size = constraints.smallest;
+      return;
+    }
+    child.layout(constraints, parentUsesSize: true);
+    size = constraints.constrain(
+      Size(child.size.width, math.max(0, child.size.height - _amount)),
+    );
+    (child.parentData! as BoxParentData).offset = Offset(
+      0,
+      size.height - child.size.height,
+    );
+  }
+
+  // The child extends above our bounds, so hit-test it directly instead of
+  // bailing out when the touch is outside `size`.
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final child = this.child;
+    if (child == null) return false;
+    final offset = (child.parentData! as BoxParentData).offset;
+    final hit = result.addWithPaintOffset(
+      offset: offset,
+      position: position,
+      hitTest: (result, transformed) =>
+          child.hitTest(result, position: transformed),
+    );
+    if (hit) result.add(BoxHitTestEntry(this, position));
+    return hit;
   }
 }

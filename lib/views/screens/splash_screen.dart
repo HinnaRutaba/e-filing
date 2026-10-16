@@ -91,11 +91,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     ref.read(daakController.notifier).fetchDaakMeta();
     if (user?.userDesgRole == ActiveUserDesgRole.cm) {
       RouteHelper.navigateTo(Routes.cmDashboard);
-    } else if (user?.userDesgRole == ActiveUserDesgRole.secretary) {
-      RouteHelper.navigateTo(Routes.secretaryDashboard);
     } else {
-      RouteHelper.navigateTo(Routes.secretaryDashboard);
-      //RouteHelper.navigateTo(Routes.dashboard);
+      RouteHelper.navigateTo(RouteHelper.homeRouteFor(user?.userDesgRole));
     }
   }
 

@@ -7,7 +7,6 @@ class Routes {
   static const String selectDesignation = '/selectDesignation';
   static const String dashboard = '/dashboard';
   static const String cmDashboard = '/cmDashboard';
-  static const String secretaryDashboard = '/secretaryDashboard';
   static const String cmApprovalDesk = '/cmApprovalDesk';
   static const String secretaryApprovalDesk = '/secretaryApprovalDesk';
   static const String cmSummaries = '/cmSummaries';
@@ -34,6 +33,7 @@ class Routes {
   static const String daak = '/daak';
   static const String scanDaak = '/scanDaak';
   static const String daakDesk = '/daakDesk';
+  static const String daakReports = '/daakReports';
   static String daakDetails([daakId]) =>
       '/daakDetails/${daakId ?? ':${PathParams.daakId}'}';
 

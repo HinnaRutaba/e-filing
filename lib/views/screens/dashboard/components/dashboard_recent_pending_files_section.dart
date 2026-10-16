@@ -24,7 +24,7 @@ class DashboardRecentPendingFilesSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.timelapse_rounded,
       iconBgColor: _accentColor,
-      title: 'Pending Files',
+      title: 'Pending E-files',
       badgeLabel: loading ? '...' : '${files.length} files',
       badgeColor: _accentColor.withValues(alpha: 0.15),
       badgeTextColor: _accentColor,
@@ -45,7 +45,10 @@ class DashboardRecentPendingFilesSection extends StatelessWidget {
       child: Center(
         child: Text(
           'No pending files.',
-          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.appColors.textSecondary,
+          ),
         ),
       ),
     );
@@ -127,7 +130,8 @@ class DashboardRecentPendingFilesSection extends StatelessWidget {
                                         ),
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: context.appColors.textSecondary,
+                                          color:
+                                              context.appColors.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -160,8 +164,9 @@ class DashboardRecentPendingFilesSection extends StatelessWidget {
                         Icon(
                           Icons.chevron_right_rounded,
                           size: 18,
-                          color: context.appColors.textSecondary
-                              .withValues(alpha: 0.5),
+                          color: context.appColors.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ],
                     ),

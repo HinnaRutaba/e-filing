@@ -27,8 +27,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     if (widget.video is String) {
       if ((widget.video as String).startsWith('http')) {
-        _videoPlayerController =
-            VideoPlayerController.networkUrl(Uri.parse(widget.video));
+        _videoPlayerController = VideoPlayerController.networkUrl(
+          Uri.parse(widget.video),
+        );
       } else {
         _videoPlayerController = VideoPlayerController.asset(widget.video);
       }
@@ -57,7 +58,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return widget.showControls
         ? Center(
-            child: _chewieController != null &&
+            child:
+                _chewieController != null &&
                     _chewieController!.videoPlayerController.value.isInitialized
                 ? Chewie(controller: _chewieController!)
                 : const CircularProgressIndicator(),
