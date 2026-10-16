@@ -367,6 +367,15 @@ class _SectionRow extends StatelessWidget {
                 color: colors.textPrimary,
               ),
             ),
+            const SizedBox(width: 4),
+            Text(
+              'total files',
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.2,
+                color: colors.textSecondary,
+              ),
+            ),
           ],
         ),
         TweenAnimationBuilder<double>(
@@ -401,7 +410,7 @@ class _SectionRow extends StatelessWidget {
               color: colors.textSecondary,
             ),
             children: [
-              const TextSpan(text: 'Archived '),
+              const TextSpan(text: 'Of these:   Archived '),
               TextSpan(
                 text: formatCount(archived),
                 style: TextStyle(

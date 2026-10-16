@@ -2,14 +2,13 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/daak_report_controller.dart';
 import 'package:efiling_balochistan/models/daak/daak_report_model.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
-import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/masonry_layout.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:efiling_balochistan/views/widgets/chips/custom_app_chip.dart';
 import 'package:efiling_balochistan/views/widgets/chips/selection_chips.dart';
@@ -46,7 +45,7 @@ class DaakReportView extends ConsumerStatefulWidget {
 class _DaakReportViewState extends ConsumerState<DaakReportView>
     with AutomaticKeepAliveClientMixin {
   static const double _maxContentWidth = 1200;
-  static const double _twoColumnBreakpoint = 800;
+  static const double _twoColumnBreakpoint = 600;
 
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
@@ -276,34 +275,6 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
               .where((d) => has(d.sourceDepartment))
               .toList();
 
-    // Same colors as the dashboard's KPI row: each tile gets its own bright tint.
-    final summaryTiles = _StatTiles(
-      loading: state.loading,
-      stats: [
-        _Stat(
-          'In progress',
-          Icons.timelapse_rounded,
-          summary?.inProgress,
-          viz.amber,
-        ),
-        _Stat('Returned', Icons.undo_rounded, summary?.returned, viz.blue),
-        _Stat(
-          'E-file put-up',
-          Icons.upload_file_rounded,
-          summary?.filePutup,
-          kpiPurple,
-        ),
-        _Stat('NFA', Icons.block_rounded, summary?.nfa, error),
-        _Stat(
-          'Disposed off',
-          Icons.task_alt_rounded,
-          summary?.disposedOff,
-          viz.teal,
-        ),
-        _Stat('Closed', Icons.lock_outline_rounded, summary?.closed, viz.green),
-      ],
-    );
-
     // Colors are assigned by status, so a status keeps its color whatever the
     // order or the counts.
     final statusColors = <int, Color>{
@@ -441,16 +412,18 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
               style: TextStyle(color: error, fontSize: 12),
             ),
           ),
-        summaryTiles,
-
-        const SizedBox(height: 8),
-        _sideBySide([statusPanel, ageingPanel], twoColumns),
-        const SizedBox(height: 16),
-        _sideBySide([trendPanel, pendingPanel], twoColumns),
-        const SizedBox(height: 16),
-        _sideBySide([receivedPanel, sentPanel], twoColumns),
-        const SizedBox(height: 16),
-        sourcePanel,
+        MasonryLayout(
+          columns: twoColumns ? 2 : 1,
+          children: [
+            statusPanel,
+            ageingPanel,
+            trendPanel,
+            pendingPanel,
+            receivedPanel,
+            sentPanel,
+            sourcePanel,
+          ],
+        ),
         _buildFooter(data),
       ],
     );
@@ -509,38 +482,10 @@ class _DaakReportViewState extends ConsumerState<DaakReportView>
   }
 
   /// Equal-width columns when [sideBySide], otherwise stacked.
-  Widget _sideBySide(List<Widget> children, bool sideBySide) {
-    if (!sideBySide) {
-      return Column(
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            children[i],
-            if (i != children.length - 1) const SizedBox(height: 16),
-          ],
-        ],
-      );
-    }
-    // Rows of two; a lone last panel keeps half the width.
-    return Column(
-      children: [
-        for (var r = 0; r < children.length; r += 2) ...[
-          if (r > 0) const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: children[r]),
-              const SizedBox(width: 16),
-              Expanded(
-                child: r + 1 < children.length
-                    ? children[r + 1]
-                    : const SizedBox.shrink(),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
+  Widget _sideBySide(List<Widget> children, bool sideBySide) => MasonryLayout(
+    columns: sideBySide ? children.length : 1,
+    children: children,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -639,63 +584,6 @@ class _NoResults extends StatelessWidget {
             TextButton(onPressed: onClear, child: const Text('Clear search')),
           ],
         ).animate().fadeIn(duration: 400.ms),
-      ),
-    );
-  }
-}
-
-class _Stat {
-  const _Stat(this.label, this.icon, this.value, this.color);
-
-  final String label;
-  final IconData icon;
-  final int? value;
-  final Color color;
-}
-
-class _StatTiles extends StatelessWidget {
-  const _StatTiles({required this.stats, required this.loading});
-
-  final List<_Stat> stats;
-  final bool loading;
-
-  static const double _gap = 8;
-
-  static const double _tileHeight = 91;
-
-  @override
-  Widget build(BuildContext context) {
-    // 3 per row on phones, one row of all of them otherwise.
-    final columns = context.isMobile ? 3 : stats.length;
-    // Capped so wide screens keep small tiles, left-aligned.
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: GridView.builder(
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: stats.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: _gap,
-          mainAxisSpacing: _gap,
-          mainAxisExtent: _tileHeight,
-        ),
-        itemBuilder: (context, i) {
-          final s = stats[i];
-          final tint = kpiTint(context, s.color);
-          return DashboardCard(
-            cardColor: tint,
-            iconColor: Color.lerp(tint, Colors.black, 0.5)!,
-            icon: s.icon,
-            title: s.label,
-            value: '${s.value ?? 0}',
-            loading: loading,
-            showSmallCard: false,
-            stacked: true,
-            onTap: null,
-          );
-        },
       ),
     );
   }

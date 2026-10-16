@@ -478,12 +478,11 @@ class _SecretaryDashboardScreenState
     }
 
     final viz = SecretaryVizColors.of(context);
-    final kpis = data.myKpis;
     final files = data.departmentFiles;
     final daak = data.departmentDaak;
     final charts = data.charts;
 
-    // Searching: the department-wide cards (overviews, workload) can't be
+    // Searching: the department-wide cards (overviews) can't be
     // narrowed to a user or section, so they are hidden; the user and section
     // cards keep only the matching rows and disappear when nothing matches.
     final filter = state.filter;
@@ -583,7 +582,6 @@ class _SecretaryDashboardScreenState
     // 3. Charts, one after the other.
     final sections = filter?.sections ?? data.sectionStats;
     final chartPanels = [
-      if (!searching) SecretaryWorkloadPanel(kpis: kpis, delay: 150.ms),
       if (!searching || filter.sections.any((e) => (e.total ?? 0) > 0))
         SecretarySectionsPanel(sections: sections, delay: 150.ms),
     ];

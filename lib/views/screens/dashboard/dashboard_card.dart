@@ -19,6 +19,10 @@ class DashboardCard extends StatefulWidget {
   /// Icon + value on one row with the title underneath. Fits narrow tiles
   /// (e.g. three per row) where the default side-by-side layout is too tight.
   final bool stacked;
+
+  /// Stretch the card to the width it is given instead of shrinking to its
+  /// content, so the corner arrow stays on the card's own corner.
+  final bool fill;
   final IconData icon;
   const DashboardCard({
     super.key,
@@ -31,6 +35,7 @@ class DashboardCard extends StatefulWidget {
     this.loading = false,
     this.showSmallCard = true,
     this.stacked = false,
+    this.fill = false,
   });
 
   @override
@@ -92,6 +97,7 @@ class _DashboardCardState extends State<DashboardCard> {
     final appColors = context.appColors;
     final content = RepaintBoundary(
       child: Stack(
+        fit: widget.fill ? StackFit.passthrough : StackFit.loose,
         clipBehavior: Clip.none,
         children: [
           _buildCard(context),

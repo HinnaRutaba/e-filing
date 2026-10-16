@@ -4,18 +4,16 @@ import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
-import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_charts.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/masonry_layout.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The secretary's department dashboard, without a scaffold: the KPI tiles,
-/// search bar and panels. Lives in a tab of the main dashboard.
 class SecretaryDashboardView extends ConsumerStatefulWidget {
   const SecretaryDashboardView({super.key});
 
@@ -28,7 +26,7 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
     with AutomaticKeepAliveClientMixin {
   static const double _maxContentWidth = 1200;
   static const double _tabletBreakpoint = 600;
-  static const double _twoColumnBreakpoint = 800;
+  static const double _twoColumnBreakpoint = 600;
   static const double _threeColumnBreakpoint = 1000;
 
   final TextEditingController _searchController = TextEditingController();
@@ -94,14 +92,7 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
                         ),
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(gutter, 4, gutter, 32),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildKpis(context, state),
-                              const SizedBox(height: 16),
-                              _buildBody(state, width),
-                            ],
-                          ),
+                          child: _buildBody(state, width),
                         ),
                       ),
                     ),
@@ -112,105 +103,6 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
           );
         },
       ),
-    );
-  }
-
-  // --- KPIs ------------------------------------------------------------------
-
-  Widget _buildKpis(BuildContext context, SecretaryDashboardState state) {
-    final kpis = state.data?.myKpis;
-    final loading = state.loading;
-
-    final viz = SecretaryVizColors.of(context);
-
-    // Each card gets its own hue so the row is easy to tell apart at a glance.
-    // Most come from the theme; purple is the one extra, since the theme has
-    // no hue between its blues and reds. Colors are bright tints; the
-    // icon is a deeper shade of the card's own tint so it reads on the white badge.
-    DashboardCard card({
-      required String title,
-      required int? value,
-      required Color color,
-      required IconData icon,
-      String? route,
-    }) {
-      final tint = kpiTint(context, color);
-      return DashboardCard(
-        cardColor: tint,
-        iconColor: Color.lerp(tint, Colors.black, 0.5)!,
-        title: title,
-        value: '${value ?? 0}',
-        onTap: route == null ? null : () => RouteHelper.push(route),
-        loading: loading,
-        icon: icon,
-        showSmallCard: false,
-        stacked: true,
-      );
-    }
-
-    final cards = [
-      card(
-        title: 'Action Required',
-        value: kpis?.actionRequired,
-        color: Theme.of(context).colorScheme.error,
-        icon: Icons.info_outline,
-        route: Routes.actionRequiredFiles,
-      ),
-      card(
-        title: 'Pending E-files',
-        value: kpis?.pending,
-        color: viz.amber,
-        icon: Icons.timelapse,
-        route: Routes.pendingFiles,
-      ),
-      card(
-        title: 'E-files Sent',
-        value: kpis?.filesSent,
-        color: viz.blue,
-        icon: Icons.send_rounded,
-        route: Routes.forwarded,
-      ),
-      card(
-        title: 'Processed E-files',
-        value: kpis?.processed,
-        color: kpiPurple,
-        icon: Icons.task_alt_rounded,
-        route: Routes.forwarded,
-      ),
-      card(
-        title: 'E-Daak Letters',
-        value: kpis?.daakInbox,
-        color: viz.green,
-        icon: Icons.mark_email_unread_rounded,
-        route: Routes.daak,
-      ),
-      card(
-        title: 'Returned E-Daak',
-        value: kpis?.daakReturned,
-        color: viz.teal,
-        icon: Icons.undo_rounded,
-        route: Routes.daak,
-      ),
-    ];
-
-    const gap = 10.0;
-
-    // Two rows of three.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var r = 0; r < 2; r++) ...[
-          if (r > 0) const SizedBox(height: gap),
-          Row(
-            children: [
-              for (var c = 0; c < 3; c++) ...[
-                if (c > 0) const SizedBox(width: gap),
-                Expanded(child: cards[r * 3 + c]),
-              ],
-            ],
-          ),
-        ],
-      ],
     );
   }
 
@@ -235,7 +127,9 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
   Widget _buildBody(SecretaryDashboardState state, double width) {
     final data = state.data;
     final twoColumns = width >= _twoColumnBreakpoint;
-    final threeColumns = width >= _threeColumnBreakpoint;
+    final listColumns = width >= _threeColumnBreakpoint
+        ? 3
+        : (twoColumns ? 2 : 1);
 
     if (data == null) {
       if (state.error != null) {
@@ -245,12 +139,11 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
     }
 
     final viz = SecretaryVizColors.of(context);
-    final kpis = data.myKpis;
     final files = data.departmentFiles;
     final daak = data.departmentDaak;
     final charts = data.charts;
 
-    // Searching: the department-wide cards (overviews, workload) can't be
+    // Searching: the department-wide cards (overviews) can't be
     // narrowed to a user or section, so they are hidden; the user and section
     // cards keep only the matching rows and disappear when nothing matches.
     final filter = state.filter;
@@ -350,7 +243,6 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
     // 3. Charts, one after the other.
     final sections = filter?.sections ?? data.sectionStats;
     final chartPanels = [
-      if (!searching) SecretaryWorkloadPanel(kpis: kpis, delay: 150.ms),
       if (!searching || filter.sections.any((e) => (e.total ?? 0) > 0))
         SecretarySectionsPanel(sections: sections, delay: 150.ms),
     ];
@@ -415,17 +307,15 @@ class _SecretaryDashboardViewState extends ConsumerState<SecretaryDashboardView>
             users: filter.userCount,
             sections: filter.sections.where((e) => (e.total ?? 0) > 0).length,
           ),
-        if (!searching) ...[
-          _sideBySide([filesSection, daakSection], twoColumns),
-          const SizedBox(height: 16),
-        ],
-        if (chartPanels.isNotEmpty) ...[
-          if (searching) const SizedBox(height: 16),
-          _spaced(chartPanels),
-          const SizedBox(height: 16),
-        ],
-        if (lists.isNotEmpty)
-          _sideBySide(lists, threeColumns && lists.length > 1),
+        if (searching) const SizedBox(height: 16),
+        MasonryLayout(
+          columns: listColumns,
+          children: [
+            if (!searching) ...[filesSection, daakSection],
+            ...chartPanels,
+            ...lists,
+          ],
+        ),
         footer,
       ],
     );

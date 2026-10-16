@@ -7,9 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class DashboardEfileKpisSection extends StatelessWidget {
-  const DashboardEfileKpisSection({super.key, required this.kpis});
+  const DashboardEfileKpisSection({
+    super.key,
+    required this.kpis,
+    this.fill = false,
+  });
 
   final DashboardEfileKpisModel? kpis;
+
+  /// Stretch to the height given and spread the rows over it.
+  final bool fill;
 
   static const _rows = [
     (
@@ -66,9 +73,13 @@ class DashboardEfileKpisSection extends StatelessWidget {
       badgeLabel: 'Total: $total',
       badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF2E9E6B),
+      fill: fill,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
+          mainAxisAlignment: fill
+              ? MainAxisAlignment.spaceEvenly
+              : MainAxisAlignment.start,
           children: [
             for (var i = 0; i < _rows.length; i++)
               _StatTile(

@@ -312,24 +312,49 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         : appColors.secondaryDark;
 
     void onTap() {
-      if (!_effectiveExpanded) _toggle();
       setState(() => _groupExpansionOverride[menu.title] = !expanded);
     }
 
     if (!_effectiveExpanded) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: Tooltip(
-          message: menu.title,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: Icon(menu.icon, color: fgColor, size: 22)),
+      // Rail mode: the group icon folds/unfolds its children, which are shown
+      // as icon-only tiles directly beneath it.
+      return Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: appColors.secondaryLight.withValues(
+                alpha: isDark ? 0.15 : 0.12,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Tooltip(
+              message: menu.title,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: Icon(menu.icon, color: fgColor, size: 22),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          AnimatedSize(
+            duration: _animDuration,
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Column(
+                    children: menu.children!
+                        .map((c) => _buildMenuItem(c, chatService, currentUser))
+                        .toList(),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
       );
     }
 

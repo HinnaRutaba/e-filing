@@ -17,9 +17,10 @@ import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_daak_section.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/components/dashboard_recent_files_section.dart';
 import 'package:efiling_balochistan/views/screens/secretary/secretary_dashboard_view.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/equal_height_row.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_stats_header.dart';
 import 'package:efiling_balochistan/views/widgets/achievement_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -27,8 +28,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_card.dart';
-part 'bar_chart.dart';
-part 'pie_chart.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -42,7 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   final RefreshController _refreshController = RefreshController();
   final ValueNotifier<bool> _compactNotifier = ValueNotifier<bool>(false);
 
-  /// Only shown to the secretary: Department, My Stats and Daak Overview.
+  /// Only shown to the secretary: Department E-Files, Department E-Daak and My Stats.
   late final TabController _tabController = TabController(
     length: 3,
     vsync: this,
@@ -240,9 +239,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  /// The secretary's dashboard: the usual header (without the stats card),
-  /// then three tabs. My Stats is the standard dashboard; Department and
-  /// Daak Overview are the secretary's own screens.
+  /// The secretary's dashboard: the usual header with the six KPI cards
+  /// overlapping its bottom edge, then the tab bar, then the tabs. The KPIs
+  /// sit above the tabs so they are the same on every tab.
   Widget _buildSecretaryDashboard(
     BuildContext context,
     DashboardModel dashboardState,
@@ -250,6 +249,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   ) {
     final topPadding = MediaQuery.of(context).padding.top;
     final double userHeaderTop = topPadding + (context.isMobile ? 54 : 28);
+    const duration = Duration(milliseconds: 320);
+    const curve = Curves.easeOutCubic;
+    const maxContentWidth = 1200.0;
+    const gutter = 16.0;
 
     return GradientScaffold(
       child: BaseScreen(
@@ -257,38 +260,106 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         showUserDetails: false,
         isdash: true,
         enableBackButton: false,
-        body: Column(
-          children: [
-            Stack(
-              children: [
-                Positioned.fill(child: _buildHeaderBackdrop(dashboardState)),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(20, userHeaderTop, 20, 14),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildUserHeader(currentUser),
-                      const SizedBox(height: 14),
-                      _buildSecretaryTabBar(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  const SecretaryDashboardView(),
-                  _buildMyStatsTab(context, dashboardState),
-                  const DaakReportView(),
-                ],
+        body: NotificationListener<ScrollNotification>(
+          onNotification: _handleSecretaryScroll,
+          child: Column(
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: _compactNotifier,
+                builder: (context, compact, _) {
+                  // How far the KPI cards reach up into the header: about half
+                  // a card's height (~86px expanded, ~68px collapsed).
+                  final overlap = compact ? 34.0 : 44.0;
+                  return AnimatedSize(
+                    duration: duration,
+                    curve: curve,
+                    alignment: Alignment.topCenter,
+                    clipBehavior: Clip.none,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          children: [
+                            Positioned.fill(
+                              child: _buildHeaderBackdrop(dashboardState),
+                            ),
+                            Padding(
+                              // The bottom padding is the strip the KPI cards
+                              // sit over.
+                              padding: EdgeInsets.fromLTRB(
+                                20,
+                                userHeaderTop,
+                                20,
+                                overlap + 18,
+                              ),
+                              child: _buildUserHeader(currentUser),
+                            ),
+                          ],
+                        ),
+                        PullUp(
+                          amount: overlap,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: maxContentWidth,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: gutter,
+                                ),
+                                child: AnimatedSwitcher(
+                                  duration: duration,
+                                  switchInCurve: curve,
+                                  switchOutCurve: curve,
+                                  child: KeyedSubtree(
+                                    key: ValueKey(compact),
+                                    child: SecretaryKpiCards(compact: compact),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 8),
+                child: _buildSecretaryTabBar(),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    const SecretaryDashboardView(),
+                    const DaakReportView(),
+                    _buildMyStatsTab(context, dashboardState),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  /// Collapses the KPI cards into one row once a tab is scrolled down, and
+  /// brings them back at the top. Ignores the tab bodies' horizontal swipes.
+  bool _handleSecretaryScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    if (notification.metrics.pixels <= 0 && _compactNotifier.value) {
+      _compactNotifier.value = false;
+      return false;
+    }
+    if (notification is UserScrollNotification &&
+        notification.direction == ScrollDirection.reverse &&
+        !_compactNotifier.value) {
+      _compactNotifier.value = true;
+    }
+    return false;
   }
 
   Widget _buildSecretaryTabBar() {
@@ -296,7 +367,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: colors.secondaryDark.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(22),
       ),
       child: TabBar(
@@ -304,28 +375,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: colors.accent,
+          color: colors.secondaryDark,
           borderRadius: BorderRadius.circular(19),
         ),
         splashBorderRadius: BorderRadius.circular(19),
         labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-        labelColor: colors.secondaryDark,
-        unselectedLabelColor: colors.accent,
+        labelColor: Colors.white,
+        unselectedLabelColor: colors.textSecondary,
         labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         tabs: const [
-          Tab(height: 34, text: 'Department'),
+          Tab(height: 34, text: 'Department E-Files'),
+          Tab(height: 34, text: 'Department E-Daak'),
           Tab(height: 34, text: 'My Stats'),
-          Tab(height: 34, text: 'E-Daak Overview'),
         ],
       ),
     );
   }
 
-  /// The standard dashboard (the user's own stats) as a tab: stats cards, then the sections.
+  /// The standard dashboard (the user's own stats) as a tab: just the sections,
+  /// since the stats cards are shared above the tabs.
   Widget _buildMyStatsTab(BuildContext context, DashboardModel dashboardState) {
     return SmartRefresher(
       controller: _refreshController,
@@ -333,14 +405,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       child: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 12),
         child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildStatsCard(context, dashboardState, false),
-            ),
-            const SizedBox(height: 24),
-            _buildSections(context, dashboardState, context.isMobile),
-          ],
+          children: [_buildSections(context, dashboardState, context.isMobile)],
         ),
       ),
     );
@@ -592,7 +657,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
     final efileKpisSection = DashboardEfileKpisSection(kpis: stats?.efileKpis);
     const gap = SizedBox(height: 16);
-    const hGap = SizedBox(width: 16);
     const sectionGap = SizedBox(height: 28);
     const bottomPadding = SizedBox(height: 100);
 
@@ -624,22 +688,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionHeading('E-files'),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          EqualHeightRow(
             children: [
-              Expanded(child: Column(children: [efileKpisSection])),
-              hGap,
-              Expanded(child: Column(children: [recentPendingFilesSection])),
+              DashboardEfileKpisSection(kpis: stats?.efileKpis, fill: true),
+              recentPendingFilesSection,
             ],
           ),
           sectionGap,
           _buildSectionHeading('E-Daak'),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          EqualHeightRow(
             children: [
-              Expanded(child: daakOverviewSection),
-              hGap,
-              Expanded(child: recentDaakSection),
+              DashboardDaakOverviewSection(
+                items: dashboardState.daakLetters,
+                loading: dashboardState.loadingDaakLetters,
+                fill: true,
+              ),
+              recentDaakSection,
             ],
           ),
         ],
