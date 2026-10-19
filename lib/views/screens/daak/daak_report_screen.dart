@@ -334,7 +334,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     };
 
     final statusPanel = SecretaryPanel(
-      delay: 100.ms,
+      delay: 300.ms,
       icon: Icons.donut_large_rounded,
       color: viz.blue,
       title: 'By status',
@@ -358,7 +358,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     );
 
     final ageingPanel = SecretaryPanel(
-      delay: 150.ms,
+      delay: 250.ms,
       icon: Icons.hourglass_bottom_rounded,
       color: viz.amber,
       title: 'Ageing',
@@ -394,7 +394,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     );
 
     final pendingPanel = SecretaryPanel(
-      delay: 250.ms,
+      delay: 150.ms,
       icon: Icons.person_search_rounded,
       color: viz.amber,
       title: 'Pending with',
@@ -403,7 +403,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     );
 
     final receivedPanel = SecretaryPanel(
-      delay: 300.ms,
+      delay: 350.ms,
       icon: Icons.move_to_inbox_rounded,
       color: viz.blue,
       title: 'Received from departments',
@@ -411,7 +411,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     );
 
     final sentPanel = SecretaryPanel(
-      delay: 350.ms,
+      delay: 400.ms,
       icon: Icons.outbox_rounded,
       color: viz.green,
       title: 'Sent to departments',
@@ -419,7 +419,7 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
     );
 
     final sourcePanel = SecretaryPanel(
-      delay: 400.ms,
+      delay: 100.ms,
       icon: Icons.apartment_rounded,
       color: viz.teal,
       title: 'Source departments',
@@ -433,10 +433,10 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
 
     if (searching) {
       final panels = [
+        if (sourceItems.isNotEmpty) sourcePanel,
         if (pendingItems.isNotEmpty) pendingPanel,
         if (receivedItems.isNotEmpty) receivedPanel,
         if (sentItems.isNotEmpty) sentPanel,
-        if (sourceItems.isNotEmpty) sourcePanel,
       ];
       if (panels.isEmpty) {
         return _NoResults(query: _query.trim(), onClear: _clearSearch);
@@ -465,10 +465,10 @@ class _DaakReportViewState extends ConsumerState<DaakReportView> {
           columns: twoColumns ? 2 : 1,
           children: [
             sourcePanel,
-            statusPanel,
-            ageingPanel,
-            trendPanel,
             pendingPanel,
+            trendPanel,
+            ageingPanel,
+            statusPanel,
             receivedPanel,
             sentPanel,
           ],

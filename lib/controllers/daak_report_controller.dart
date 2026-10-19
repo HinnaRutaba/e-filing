@@ -18,7 +18,7 @@ class DaakReportState {
     this.data,
     this.loading = false,
     this.error,
-    this.period = DaakReportPeriod.last30Days,
+    this.period = DaakReportPeriod.all,
     this.from,
     this.to,
   });

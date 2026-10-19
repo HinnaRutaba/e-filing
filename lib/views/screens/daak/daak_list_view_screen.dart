@@ -332,7 +332,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                                                 crossAxisCount: 2,
                                                 crossAxisSpacing: 8,
                                                 mainAxisSpacing: 0,
-                                                mainAxisExtent: 206,
+                                                mainAxisExtent: 230,
                                               ),
                                           itemBuilder: (context, index) =>
                                               buildAnimated(index),
