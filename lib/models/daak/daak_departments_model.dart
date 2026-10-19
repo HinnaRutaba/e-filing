@@ -18,8 +18,7 @@ class DaakDepartmentsModel {
   factory DaakDepartmentsModel.fromJson(Map<String, dynamic>? json) {
     if (json == null) return DaakDepartmentsModel();
     return DaakDepartmentsModel(
-      otherDepartmentId:
-          json[DaakDepartmentsSchema.otherDepartmentId]?.toInt(),
+      otherDepartmentId: json[DaakDepartmentsSchema.otherDepartmentId]?.toInt(),
       departments: json[DaakDepartmentsSchema.departments] != null
           ? (json[DaakDepartmentsSchema.departments] as List)
                 .map((i) => DepartmentModel.fromJson(i))

@@ -3,17 +3,9 @@ class DepartmentModel {
   final String? title;
   final bool? isOther;
 
-  DepartmentModel({
-    this.id,
-    this.title,
-    this.isOther,
-  });
+  DepartmentModel({this.id, this.title, this.isOther});
 
-  DepartmentModel copyWith({
-    int? id,
-    String? title,
-    bool? isOther,
-  }) {
+  DepartmentModel copyWith({int? id, String? title, bool? isOther}) {
     return DepartmentModel(
       id: id ?? this.id,
       title: title ?? this.title,

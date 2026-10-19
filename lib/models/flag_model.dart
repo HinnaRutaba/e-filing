@@ -7,10 +7,7 @@ class FlagModel {
   final int? id;
   final String? title;
 
-  FlagModel({
-    this.id,
-    this.title,
-  });
+  FlagModel({this.id, this.title});
 
   factory FlagModel.fromJson(Map<String, dynamic> json) {
     return FlagModel(
@@ -20,20 +17,11 @@ class FlagModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      FlagSchema.id: id,
-      FlagSchema.title: title,
-    };
+    return {FlagSchema.id: id, FlagSchema.title: title};
   }
 
-  FlagModel copyWith({
-    int? id,
-    String? title,
-  }) {
-    return FlagModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-    );
+  FlagModel copyWith({int? id, String? title}) {
+    return FlagModel(id: id ?? this.id, title: title ?? this.title);
   }
 
   @override

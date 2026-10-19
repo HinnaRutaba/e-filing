@@ -22,14 +22,14 @@ class VersionSyncModel {
       return VersionSyncModel(
         platform: json[VersionSyncSchema.platform],
         latestVersion: json[VersionSyncSchema.latestVersion]?.toString(),
-        minSupportedVersion: json[VersionSyncSchema.minSupportedVersion]?.toString(),
+        minSupportedVersion: json[VersionSyncSchema.minSupportedVersion]
+            ?.toString(),
         forceUpdate: json[VersionSyncSchema.forceUpdate],
         playStoreUrl: json[VersionSyncSchema.playStoreUrl],
         title: json[VersionSyncSchema.title],
         message: json[VersionSyncSchema.message],
       );
     } catch (e) {
-    
       rethrow;
     }
   }

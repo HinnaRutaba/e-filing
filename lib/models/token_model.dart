@@ -13,16 +13,12 @@ class TokenModel {
         token: json[TokenSchema.token],
       );
     } catch (e) {
-    
       return TokenModel(user: UserModel(), token: '');
     }
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      TokenSchema.user: user?.toJson(),
-      TokenSchema.token: token,
-    };
+    return {TokenSchema.user: user?.toJson(), TokenSchema.token: token};
   }
 }
 

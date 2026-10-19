@@ -9,10 +9,7 @@ class SectionModel {
   final int? id;
   final String? title;
 
-  SectionModel({
-    this.id,
-    this.title,
-  });
+  SectionModel({this.id, this.title});
 
   factory SectionModel.fromJson(Map<String, dynamic> json) {
     return SectionModel(
@@ -22,19 +19,10 @@ class SectionModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      SectionSchema.id: id,
-      SectionSchema.title: title,
-    };
+    return {SectionSchema.id: id, SectionSchema.title: title};
   }
 
-  SectionModel copyWith({
-    int? id,
-    String? title,
-  }) {
-    return SectionModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-    );
+  SectionModel copyWith({int? id, String? title}) {
+    return SectionModel(id: id ?? this.id, title: title ?? this.title);
   }
 }

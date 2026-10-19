@@ -34,10 +34,7 @@ class FileTypeModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      FileTypeSchema.id: id,
-      FileTypeSchema.title: title,
-    };
+    return {FileTypeSchema.id: id, FileTypeSchema.title: title};
   }
 }
 
@@ -69,10 +66,7 @@ class NewFileDataModel {
   final List<FileTypeModel>? fileTypes;
   final List<TagModel>? tags;
 
-  NewFileDataModel({
-    this.fileTypes,
-    this.tags,
-  });
+  NewFileDataModel({this.fileTypes, this.tags});
 
   factory NewFileDataModel.fromJson(Map<String, dynamic> json) {
     final data = json[NewFileDataSchema.data] as Map<String, dynamic>?;

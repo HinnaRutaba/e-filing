@@ -2,11 +2,13 @@ import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/controllers/secretary_dashboard_controller.dart';
+import 'package:efiling_balochistan/controllers/secretary_users_controller.dart';
 import 'package:efiling_balochistan/utils/helper_utils.dart';
 import 'package:efiling_balochistan/utils/date_time_helper.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_lists.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/dashboard_search.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_summary_card.dart';
+import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_users_panel.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/masonry_layout.dart';
 import 'package:efiling_balochistan/views/screens/secretary/widgets/secretary_viz.dart';
 import 'package:flutter/material.dart';
@@ -37,9 +39,10 @@ class _SecretaryDashboardViewState
     // The query outlives the screen (the provider isn't auto-disposed), so
     // show it again in the field.
     _searchController.text = ref.read(secretaryDashboardController).query;
-    Future.microtask(
-      () => ref.read(secretaryDashboardController.notifier).initData(),
-    );
+    Future.microtask(() {
+      ref.read(secretaryDashboardController.notifier).initData();
+      ref.read(secretaryUsersController.notifier).initData();
+    });
   }
 
   @override
@@ -48,20 +51,44 @@ class _SecretaryDashboardViewState
     super.dispose();
   }
 
-  void _onSearchChanged(String value) =>
-      ref.read(secretaryDashboardController.notifier).setQuery(value);
+  void _onSearchChanged(String value) {
+    ref.read(secretaryDashboardController.notifier).setQuery(value);
+    // Searched on the server, unlike the rest of the dashboard.
+    ref.read(secretaryUsersController.notifier).setQuery(value);
+  }
 
   void _clearSearch() {
     _searchController.clear();
     ref.read(secretaryDashboardController.notifier).clearQuery();
+    ref.read(secretaryUsersController.notifier).clearQuery();
   }
 
-  Future<void> _refresh() =>
-      ref.read(secretaryDashboardController.notifier).initData();
+  Future<void> _refresh() => Future.wait([
+    ref.read(secretaryDashboardController.notifier).initData(),
+    ref.read(secretaryUsersController.notifier).initData(),
+  ]);
+
+  void _loadMoreUsers() =>
+      ref.read(secretaryUsersController.notifier).loadMore();
+
+  void _retryUsers() => ref.read(secretaryUsersController.notifier).initData();
+
+  void _setUsersSection(int? sectionId) =>
+      ref.read(secretaryUsersController.notifier).setSection(sectionId);
+
+  void _setUsersSort(String sort) =>
+      ref.read(secretaryUsersController.notifier).setSort(sort);
+
+  void _toggleUsersDirection() =>
+      ref.read(secretaryUsersController.notifier).toggleDirection();
+
+  void _resetUsersFilters() =>
+      ref.read(secretaryUsersController.notifier).resetFilters();
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(secretaryDashboardController);
+    final users = ref.watch(secretaryUsersController);
 
     return GestureDetector(
       onTap: () {
@@ -88,7 +115,7 @@ class _SecretaryDashboardViewState
                         ),
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(gutter, 4, gutter, 32),
-                          child: _buildBody(state, width),
+                          child: _buildBody(state, users, width),
                         ),
                       ),
                     ),
@@ -120,7 +147,11 @@ class _SecretaryDashboardViewState
 
   // --- body ------------------------------------------------------------------
 
-  Widget _buildBody(SecretaryDashboardState state, double width) {
+  Widget _buildBody(
+    SecretaryDashboardState state,
+    SecretaryUsersState users,
+    double width,
+  ) {
     final data = state.data;
     final twoColumns = width >= _twoColumnBreakpoint;
     final listColumns = width >= _threeColumnBreakpoint
@@ -189,14 +220,31 @@ class _SecretaryDashboardViewState
       ],
     );
 
-    // 3. Charts, one after the other.
+    // 3. Department users, paged from their own endpoint. While searching it
+    // shows the server's matches, so it hides only once nothing came back,
+    // unless filters are set and the user needs it to reset them.
+    final usersPanel =
+        !searching || users.items.isNotEmpty || users.loading || users.filtered
+        ? SecretaryUsersPanel(
+            state: users,
+            onLoadMore: _loadMoreUsers,
+            onRetry: _retryUsers,
+            onSectionChanged: _setUsersSection,
+            onSortChanged: _setUsersSort,
+            onDirectionToggled: _toggleUsersDirection,
+            onResetFilters: _resetUsersFilters,
+            delay: 100.ms,
+          )
+        : null;
+
+    // 4. Charts, one after the other.
     final sections = filter?.sections ?? data.sectionStats;
     final chartPanels = [
       if (!searching || filter.sections.any((e) => (e.total ?? 0) > 0))
         SecretarySectionsPanel(sections: sections, delay: 150.ms),
     ];
 
-    // 4. Top lists.
+    // 5. Top lists.
     final putup = filter?.topFilePutup ?? charts?.topFilePutup ?? const [];
     final pending = filter?.topPending ?? charts?.topPending ?? const [];
     final topForwarded =
@@ -236,7 +284,10 @@ class _SecretaryDashboardViewState
       generatedAt: DateTimeHelper.parseDate(data.generatedAt)?.toLocal(),
     );
 
-    if (searching && chartPanels.isEmpty && lists.isEmpty) {
+    if (searching &&
+        usersPanel == null &&
+        chartPanels.isEmpty &&
+        lists.isEmpty) {
       return Column(
         children: [
           SecretarySearchEmptyState(
@@ -259,6 +310,7 @@ class _SecretaryDashboardViewState
         if (searching) const SizedBox(height: 16),
         // The overview and the sections panel each span the full width.
         if (!searching) ...[filesSection, const SizedBox(height: 16)],
+        if (usersPanel != null) ...[usersPanel, const SizedBox(height: 16)],
         for (final panel in chartPanels) ...[panel, const SizedBox(height: 16)],
         MasonryLayout(columns: listColumns, children: lists),
         footer,
