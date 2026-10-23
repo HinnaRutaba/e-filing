@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 
 class DashboardCard extends StatefulWidget {
   final Color cardColor;
@@ -42,56 +39,7 @@ class DashboardCard extends StatefulWidget {
   State<DashboardCard> createState() => _DashboardCardState();
 }
 
-/// Drives a small parallax shift + sheen sweep from the accelerometer
-/// instead of a timer-based loop: the effect only redraws a tiny, cheap
-/// subtree (an icon offset and a plain gradient) when the phone actually
-/// tilts, rather than repainting shadows/blurs on every frame forever.
 class _DashboardCardState extends State<DashboardCard> {
-  // Low so a gentle, everyday tilt already reaches the full effect range
-  // (a real hard tilt can hit 8-9 m/s^2, but nobody holds their phone that
-  // aggressively just looking at a dashboard).
-  static const double _maxTiltAccel = 2.2;
-  static const double _smoothing = 0.35; // quick to respond, still not jittery
-  static const double _notifyEpsilon = 0.005;
-  static const double _cardShiftPx = 6.0;
-  static const double _iconShiftPx =
-      3.0; // subtle — icon sits close to the badge edge
-
-  final ValueNotifier<Offset> _tilt = ValueNotifier<Offset>(Offset.zero);
-  StreamSubscription<AccelerometerEvent>? _accelSubscription;
-  double _smoothX = 0;
-  double _smoothY = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _accelSubscription = accelerometerEventStream(
-      samplingPeriod: SensorInterval.uiInterval,
-    ).listen(_onAccelerometerEvent, onError: (_) {});
-  }
-
-  void _onAccelerometerEvent(AccelerometerEvent event) {
-    if (!mounted) return;
-
-    _smoothX += (event.x - _smoothX) * _smoothing;
-    _smoothY += (event.y - _smoothY) * _smoothing;
-
-    final dx = (_smoothX / _maxTiltAccel).clamp(-1.0, 1.0);
-    final dy = (-_smoothY / _maxTiltAccel).clamp(-1.0, 1.0);
-    final next = Offset(dx, dy);
-
-    if ((next - _tilt.value).distance > _notifyEpsilon) {
-      _tilt.value = next;
-    }
-  }
-
-  @override
-  void dispose() {
-    _accelSubscription?.cancel();
-    _tilt.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
@@ -180,20 +128,7 @@ class _DashboardCardState extends State<DashboardCard> {
       ),
     );
 
-    // Whole card shifts a few px with device tilt. `content` is passed as
-    // the `child` of ValueListenableBuilder so it's built once and reused —
-    // a tilt update only ever repositions the already-cached RepaintBoundary
-    // layer above, it never rebuilds/repaints the shadows or gradient.
-    return ValueListenableBuilder<Offset>(
-          valueListenable: _tilt,
-          builder: (context, tilt, child) {
-            return Transform.translate(
-              offset: Offset(tilt.dx * _cardShiftPx, tilt.dy * _cardShiftPx),
-              child: child,
-            );
-          },
-          child: content,
-        )
+    return content
         .animate()
         .fadeIn(duration: 420.ms, curve: Curves.easeOut)
         .slideY(
@@ -289,10 +224,6 @@ class _DashboardCardState extends State<DashboardCard> {
                         ? cardStacked(context)
                         : cardBody(context),
                   ),
-                  // Sheen that slides across the card as the phone tilts.
-                  // Cheap plain gradient, isolated in its own RepaintBoundary
-                  // so tilt updates never touch the shadows/gradient above.
-                  _buildTiltSheen(),
                 ],
               ),
             ),
@@ -302,41 +233,8 @@ class _DashboardCardState extends State<DashboardCard> {
     );
   }
 
-  Widget _buildTiltSheen() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: RepaintBoundary(
-          child: ValueListenableBuilder<Offset>(
-            valueListenable: _tilt,
-            builder: (context, tilt, _) {
-              // AnimatedContainer smooths the gradient between sensor
-              // samples (~15/s) so the sheen glides at 60fps instead of
-              // stepping in visible jumps each time a new reading arrives.
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment(-1 + tilt.dx * 2.2, -1 + tilt.dy * 2.2),
-                    end: Alignment(1 + tilt.dx * 2.2, 1 + tilt.dy * 2.2),
-                    colors: [
-                      Colors.white.withValues(alpha: 0.0),
-                      Colors.white.withValues(alpha: 0.3),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.35, 0.5, 0.65],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildIconBadge() {
-    final badge = Container(
+    return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
@@ -354,19 +252,6 @@ class _DashboardCardState extends State<DashboardCard> {
         ],
       ),
       child: Icon(widget.icon, size: 16, color: widget.iconColor),
-    );
-
-    // Icon shifts a couple of pixels with device tilt for a subtle
-    // parallax feel, instead of a "breathing" loop that never stops.
-    return ValueListenableBuilder<Offset>(
-      valueListenable: _tilt,
-      builder: (context, tilt, child) {
-        return Transform.translate(
-          offset: Offset(tilt.dx * _iconShiftPx, tilt.dy * _iconShiftPx),
-          child: child,
-        );
-      },
-      child: badge,
     );
   }
 
