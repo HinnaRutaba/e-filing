@@ -12,10 +12,14 @@ class DashboardDaakOverviewSection extends StatelessWidget {
     super.key,
     required this.items,
     required this.loading,
+    this.fill = false,
   });
 
   final List<DaakModel> items;
   final bool loading;
+
+  /// Stretch to the height given and spread the rows over it.
+  final bool fill;
 
   static const _rows = [
     (
@@ -73,10 +77,11 @@ class DashboardDaakOverviewSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.bar_chart_rounded,
       iconBgColor: const Color(0xFF42A5F5),
-      title: 'Daak Overview',
+      title: 'E-Daak Overview',
       badgeLabel: loading ? '...' : 'Total: $total',
       badgeColor: const Color(0xFF42A5F5).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF42A5F5),
+      fill: fill,
       body: loading
           ? const Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
@@ -85,6 +90,9 @@ class DashboardDaakOverviewSection extends StatelessWidget {
           : Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
+                mainAxisAlignment: fill
+                    ? MainAxisAlignment.spaceEvenly
+                    : MainAxisAlignment.start,
                 children: [
                   for (var i = 0; i < _rows.length; i++)
                     _StatTile(

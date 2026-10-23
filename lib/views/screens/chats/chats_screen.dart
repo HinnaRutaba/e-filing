@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
+import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
@@ -216,40 +219,20 @@ class ChatsListView extends StatelessWidget {
           ValueListenableBuilder<String>(
             valueListenable: _filter,
             builder: (context, filter, _) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: _buildFilterTile(
-                        title: "All Chats",
-                        countStream: _chatService.getAllChatsCountStream(
-                          userId: userId,
-                          userDesignationId: userDesignationId,
-                        ),
-                        isSelected: filter == "All",
-                        onTap: () => _filter.value = "All",
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildFilterTile(
-                        title: "Unread",
-                        countStream: _chatService.getUnreadChatsCountStream(
-                          userId: userId,
-                          userDesignationId: userDesignationId,
-                        ),
-                        isSelected: filter == "Unread",
-                        onTap: () => _filter.value = "Unread",
-                      ),
-                    ),
-                  ],
+              return _ChatFilterBar(
+                allCountStream: _chatService.getAllChatsCountStream(
+                  userId: userId,
+                  userDesignationId: userDesignationId,
                 ),
+                unreadCountStream: _chatService.getUnreadChatsCountStream(
+                  userId: userId,
+                  userDesignationId: userDesignationId,
+                ),
+                selected: filter,
+                onChanged: (value) => _filter.value = value,
               );
             },
           ),
-          const SizedBox(height: 8),
           Expanded(
             child: ValueListenableBuilder<String>(
               valueListenable: _filter,
@@ -264,11 +247,7 @@ class ChatsListView extends StatelessWidget {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text("No chats found"));
-                    }
-
-                    final chats = snapshot.data!;
+                    final chats = snapshot.data ?? const <ChatModel>[];
                     final filteredChats = filter == "Unread"
                         ? chats
                               .where(
@@ -277,152 +256,33 @@ class ChatsListView extends StatelessWidget {
                               .toList()
                         : chats;
 
+                    if (filteredChats.isEmpty) {
+                      return _EmptyChats(unreadOnly: filter == "Unread");
+                    }
+
                     return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       itemCount: filteredChats.length,
-                      separatorBuilder: (ctx, i) {
-                        if (i == filteredChats.length - 1) {
-                          return const SizedBox.shrink();
-                        }
-                        return const Divider(
-                          indent: 16,
-                          endIndent: 16,
-                          color: AppColors.cardColor,
-                        );
-                      },
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final chat = filteredChats[index];
-                        String lastMsg;
-
-                        if (_chatService.isParticipantInChat(
+                        return _ChatTile(
                               chat: chat,
-                              userId: userId,
-                            ) !=
-                            true) {
-                          lastMsg = "You are no longer in this discussion";
-                        } else if (chat.lastMessage != null) {
-                          // Check if user joined after the last message was sent
-                          final userParticipant = chat.participants
-                              .where(
-                                (p) =>
-                                    p.userId == userId &&
-                                    p.userDesignationId == userDesignationId,
-                              )
-                              .firstOrNull;
-
-                          if (userParticipant != null &&
-                              userParticipant.joinedAt != null &&
-                              userParticipant.joinedAt?.isAfter(
-                                    chat.lastMessage!.sentAt,
-                                  ) ==
-                                  true) {
-                            // User joined after this message was sent, don't show message content
-                            lastMsg = "No messages yet";
-                          } else {
-                            // Check if the message was sent by current user
-                            final isCurrentUser =
-                                chat.lastMessage!.userId == userId;
-                            final senderName = isCurrentUser
-                                ? "You"
-                                : chat.lastMessage!.userName;
-
-                            // Check for attachments
-                            if (chat.lastMessage!.attachments.isNotEmpty) {
-                              final hasAudio = chat.lastMessage!.attachments
-                                  .any(
-                                    (attachment) =>
-                                        attachment != null &&
-                                        AudioRecordService.audioExtensions.any(
-                                          (ext) => attachment.endsWith(ext),
-                                        ),
-                                  );
-
-                              if (hasAudio) {
-                                lastMsg = "$senderName sent an audio";
-                              } else {
-                                lastMsg = "$senderName sent an attachment";
-                              }
-                            } else if (chat.lastMessage!.text.isNotEmpty) {
-                              lastMsg =
-                                  "$senderName: ${chat.lastMessage!.text}";
-                            } else {
-                              lastMsg = "No messages yet";
-                            }
-                          }
-                        } else {
-                          lastMsg = "No messages yet";
-                        }
-
-                        return Animate(
-                          effects: [
-                            FadeEffect(duration: 300.ms),
-                            SlideEffect(
-                              begin: const Offset(0, 0.2),
-                              end: Offset.zero,
-                              duration: 300.ms,
-                            ),
-                          ],
-                          delay: (index * 100)
-                              .ms, // Staggered delay based on index
-                          child: Stack(
-                            children: [
-                              Badge(
-                                backgroundColor: AppColors.secondary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                label: const Text('New'),
-                                offset: const Offset(-40, 2),
-                                isLabelVisible: chat.hasUnread(
-                                  userDesignationId,
-                                ),
-                                child: ListTile(
-                                  titleAlignment: ListTileTitleAlignment.center,
-                                  horizontalTitleGap: 8,
-                                  leading: const CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: AppColors.secondaryDark,
-                                    child: Icon(Icons.groups, size: 20),
-                                  ),
-                                  title: AppText.titleMedium(
-                                    ChatService.getChatTitle(chat, userId),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 15,
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      AppText.bodyMedium(
-                                        lastMsg,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      AppText.labelMedium(
-                                        chat.lastMessage?.sentAt != null
-                                            ? _formatTime(
-                                                chat.lastMessage!.sentAt,
-                                              )
-                                            : "",
-                                      ),
-                                    ],
-                                  ),
-                                  onTap: () {
-                                    RouteHelper.push(
-                                      Routes.fileChat(chat.fileId, chat.id),
-                                    );
-                                  },
-                                ),
+                              title: ChatService.getChatTitle(chat, userId),
+                              lastMessage: _lastMessageText(chat),
+                              hasUnread: chat.hasUnread(userDesignationId),
+                              onTap: () => RouteHelper.push(
+                                Routes.fileChat(chat.fileId, chat.id),
                               ),
-                            ],
-                          ),
-                        );
+                            )
+                            .animate(delay: (math.min(index, 8) * 50).ms)
+                            .fadeIn(duration: 300.ms)
+                            .slideY(
+                              begin: 0.15,
+                              end: 0,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            );
                       },
                     );
                   },
@@ -435,50 +295,360 @@ class ChatsListView extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterTile({
-    required String title,
-    required Stream<int> countStream,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
+  String _lastMessageText(ChatModel chat) {
+    if (!_chatService.isParticipantInChat(chat: chat, userId: userId)) {
+      return "You are no longer in this discussion";
+    }
+
+    final lastMessage = chat.lastMessage;
+    if (lastMessage == null) return "No messages yet";
+
+    // Don't show messages sent before the user joined.
+    final userParticipant = chat.participants
+        .where(
+          (p) => p.userId == userId && p.userDesignationId == userDesignationId,
+        )
+        .firstOrNull;
+    if (userParticipant?.joinedAt?.isAfter(lastMessage.sentAt) == true) {
+      return "No messages yet";
+    }
+
+    final senderName = lastMessage.userId == userId
+        ? "You"
+        : lastMessage.userName;
+
+    if (lastMessage.attachments.isNotEmpty) {
+      final hasAudio = lastMessage.attachments.any(
+        (attachment) =>
+            attachment != null &&
+            AudioRecordService.audioExtensions.any(
+              (ext) => attachment.endsWith(ext),
+            ),
+      );
+      return hasAudio
+          ? "$senderName sent an audio"
+          : "$senderName sent an attachment";
+    }
+    if (lastMessage.text.isNotEmpty) return "$senderName: ${lastMessage.text}";
+    return "No messages yet";
+  }
+}
+
+/// Compact filter chips for "All" / "Unread", each with a live count.
+class _ChatFilterBar extends StatelessWidget {
+  const _ChatFilterBar({
+    required this.allCountStream,
+    required this.unreadCountStream,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final Stream<int> allCountStream;
+  final Stream<int> unreadCountStream;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          _FilterChip(
+            label: "All",
+            value: "All",
+            countStream: allCountStream,
+            selected: selected == "All",
+            onTap: onChanged,
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: "Unread",
+            value: "Unread",
+            countStream: unreadCountStream,
+            selected: selected == "Unread",
+            onTap: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.value,
+    required this.countStream,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final Stream<int> countStream;
+  final bool selected;
+  final ValueChanged<String> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final fg = selected ? Colors.white : colors.textSecondary;
     return GestureDetector(
-      onTap: onTap,
-      child: StreamBuilder<int>(
-        stream: countStream,
-        builder: (context, snapshot) {
-          final count = snapshot.data ?? 0;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primaryDark : null,
-              borderRadius: BorderRadius.circular(6),
-              border: isSelected
-                  ? null
-                  : Border.all(color: Colors.black26, width: 1),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  "$title ($count)",
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onTap(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? colors.primaryDark : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? colors.primaryDark
+                : colors.border.withValues(alpha: 0.8),
+          ),
+        ),
+        child: StreamBuilder<int>(
+          stream: countStream,
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+            return Text(
+              count > 0 ? "$label  $count" : label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatTile extends StatelessWidget {
+  const _ChatTile({
+    required this.chat,
+    required this.title,
+    required this.lastMessage,
+    required this.hasUnread,
+    required this.onTap,
+  });
+
+  final ChatModel chat;
+  final String title;
+  final String lastMessage;
+  final bool hasUnread;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final sentAt = chat.lastMessage?.sentAt;
+    final barcode = chat.fileBarCode;
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              _ChatAvatar(chat: chat, title: title),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: hasUnread
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (sentAt != null) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTime(sentAt),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: hasUnread
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                              color: hasUnread
+                                  ? colors.primaryDark
+                                  : colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            barcode != null && barcode.isNotEmpty
+                                ? "$barcode · $lastMessage"
+                                : lastMessage,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: hasUnread
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: hasUnread
+                                  ? colors.textPrimary
+                                  : colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        if (hasUnread) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: colors.primaryDark,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  String _formatTime(DateTime dt) {
+  static String _formatTime(DateTime dt) {
     final now = DateTime.now();
-    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) {
       return "${dt.hour}:${dt.minute.toString().padLeft(2, '0')}";
     }
+    if (diff == 1) return "Yesterday";
     return "${dt.day}/${dt.month}/${dt.year}";
+  }
+}
+
+/// Soft tinted circle with initials (direct) or a group icon.
+class _ChatAvatar extends StatelessWidget {
+  const _ChatAvatar({required this.chat, required this.title});
+
+  final ChatModel chat;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final isDirect = chat.type == ChatType.direct;
+
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.secondaryDark.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: isDirect
+          ? Text(
+              _initials(title),
+              style: TextStyle(
+                color: colors.secondaryDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          : Icon(Icons.groups_rounded, color: colors.secondaryDark, size: 20),
+    );
+  }
+
+  static String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return "?";
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+}
+
+class _EmptyChats extends StatelessWidget {
+  const _EmptyChats({required this.unreadOnly});
+
+  final bool unreadOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.primaryDark.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                unreadOnly
+                    ? Icons.mark_chat_read_outlined
+                    : Icons.chat_bubble_outline_rounded,
+                size: 32,
+                color: colors.primaryDark,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              unreadOnly ? "You're all caught up" : "No chats yet",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              unreadOnly
+                  ? "No unread conversations."
+                  : "Start a new chat or group to get going.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

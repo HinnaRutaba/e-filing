@@ -309,8 +309,7 @@ class AppTheme {
       backgroundColor: _darkBackground,
       foregroundColor: _darkTextPrimary,
       iconTheme: const IconThemeData(color: _darkTextPrimary, size: 24),
-      actionsIconTheme:
-          const IconThemeData(color: _darkTextPrimary, size: 24),
+      actionsIconTheme: const IconThemeData(color: _darkTextPrimary, size: 24),
       titleTextStyle: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
@@ -339,9 +338,7 @@ class AppTheme {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
     ),
-    drawerTheme: const DrawerThemeData(
-      backgroundColor: _darkSurface,
-    ),
+    drawerTheme: const DrawerThemeData(backgroundColor: _darkSurface),
     listTileTheme: const ListTileThemeData(
       iconColor: _darkTextSecondary,
       textColor: _darkTextPrimary,

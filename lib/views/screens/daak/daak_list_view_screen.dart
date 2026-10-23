@@ -13,7 +13,7 @@ import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_card.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/outline_button.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
+import 'package:efiling_balochistan/views/widgets/empty_state.dart';
 import 'package:efiling_balochistan/views/widgets/gradient_tab_chip.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
@@ -71,6 +71,8 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
   @override
   Widget build(BuildContext context) {
     final controller = ref.watch(daakController);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appColors = context.appColors;
     final menuStatuses = DaakStatus.values.where((status) {
       final sameLabelStatuses = DaakStatus.values.where(
         (s) => s.label == status.label,
@@ -95,7 +97,9 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
               RouteHelper.push(Routes.daakDesk);
             },
             text: "Daak Desk",
-            color: context.appColors.secondaryDark,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? context.appColors.textPrimary
+                : context.appColors.secondaryDark,
           ),
         ],
         body: Column(
@@ -186,8 +190,10 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(50),
-                        borderSide: const BorderSide(
-                          color: AppColors.cardColor,
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? appColors.border
+                              : AppColors.cardColor,
                         ),
                       ),
                     ),
@@ -208,10 +214,12 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                         value: DaakStatus.inProgress3,
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.circle,
                               size: 8,
-                              color: AppColors.black,
+                              color: isDark
+                                  ? appColors.textPrimary
+                                  : AppColors.black,
                             ),
                             const SizedBox(width: 8),
                             AppText.titleSmall('All Statuses'),
@@ -237,11 +245,11 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: controller.selectedStatus == null
-                              ? Colors.grey[300]!
+                              ? (isDark ? appColors.border : Colors.grey[300]!)
                               : controller.selectedStatus!.color,
                         ),
                         color: controller.selectedStatus == null
-                            ? Colors.white
+                            ? (isDark ? appColors.surfaceMuted : Colors.white)
                             : controller.selectedStatus!.color.withValues(
                                 alpha: 0.12,
                               ),
@@ -249,7 +257,8 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                       child: Icon(
                         Icons.filter_list_rounded,
                         color:
-                            controller.selectedStatus?.color ?? Colors.black54,
+                            controller.selectedStatus?.color ??
+                            (isDark ? appColors.textSecondary : Colors.black54),
                       ),
                     ),
                   ),
@@ -267,24 +276,19 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                               ref.read(daakController.notifier).loadData();
                             },
                             child: filteredDaak.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text('No daak found.'),
-                                        AppTextLinkButton(
-                                          onPressed: () {
-                                            ref
-                                                .read(daakController.notifier)
-                                                .loadData();
-                                          },
-                                          text: 'Retry',
-                                          icon: Icons.refresh,
-                                        ),
-                                      ],
-                                    ),
+                                ? EmptyState(
+                                    icon: Icons.mark_email_read_outlined,
+                                    title: 'No daak found',
+                                    message:
+                                        'There is nothing here right now. '
+                                        'New daak will show up as soon as it '
+                                        'arrives, or you can refresh to check '
+                                        'again.',
+                                    onRefresh: () {
+                                      ref
+                                          .read(daakController.notifier)
+                                          .loadData();
+                                    },
                                   )
                                 : Builder(
                                     builder: (context) {
@@ -328,7 +332,7 @@ class _DaakListViewScreenState extends ConsumerState<DaakListViewScreen>
                                                 crossAxisCount: 2,
                                                 crossAxisSpacing: 8,
                                                 mainAxisSpacing: 0,
-                                                mainAxisExtent: 206,
+                                                mainAxisExtent: 230,
                                               ),
                                           itemBuilder: (context, index) =>
                                               buildAnimated(index),

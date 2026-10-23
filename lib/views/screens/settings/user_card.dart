@@ -12,18 +12,13 @@ class UserCard extends StatelessWidget {
       color: AppColors.white,
       elevation: 3.5,
       shadowColor: AppColors.secondaryLight.withValues(alpha: .5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(13),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: AppColors.primaryDark,
           gradient: const LinearGradient(
-            colors: [
-              AppColors.secondaryDark,
-              AppColors.secondaryLight,
-            ],
+            colors: [AppColors.secondaryDark, AppColors.secondaryLight],
           ),
         ),
         padding: const EdgeInsets.all(1.5),
@@ -62,10 +57,13 @@ class UserCard extends StatelessWidget {
                         ),
                         Container(
                           decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50),
-                              color: AppColors.secondary),
+                            borderRadius: BorderRadius.circular(50),
+                            color: AppColors.secondary,
+                          ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: AppText.labelLarge(
                             "Status",
                             color: AppColors.white,
@@ -102,7 +100,7 @@ class UserCard extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -113,35 +111,26 @@ class UserCard extends StatelessWidget {
     );
   }
 
-  Widget infoTile(
-      {required String title,
-      required String value,
-      IconData icon = Icons.person}) {
+  Widget infoTile({
+    required String title,
+    required String value,
+    IconData icon = Icons.person,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 10,
           backgroundColor: AppColors.secondary,
-          child: Icon(
-            icon,
-            color: AppColors.white,
-            size: 12,
-          ),
+          child: Icon(icon, color: AppColors.white, size: 12),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppText.labelSmall(
-                title,
-                color: AppColors.secondaryDark,
-              ),
-              AppText.bodySmall(
-                value,
-                color: AppColors.textPrimary,
-              ),
+              AppText.labelSmall(title, color: AppColors.secondaryDark),
+              AppText.bodySmall(value, color: AppColors.textPrimary),
             ],
           ),
         ),

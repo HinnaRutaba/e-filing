@@ -129,8 +129,8 @@ class SummaryActionsModel {
       isCmHolder: map[SummaryActionsSchema.isCmHolder],
       isPstocmHolder: map[SummaryActionsSchema.isPstocmHolder],
       isDisposed: map[SummaryActionsSchema.isDisposed],
-      myInternalForwardId:
-          map[SummaryActionsSchema.myInternalForwardId]?.toInt(),
+      myInternalForwardId: map[SummaryActionsSchema.myInternalForwardId]
+          ?.toInt(),
       returnRemarks: map[SummaryActionsSchema.returnRemarks],
     );
   }

@@ -30,6 +30,12 @@ class SelectionChips<T> extends StatefulWidget {
   final bool singleLineScroll;
   final Color? chipColor;
 
+  /// Smaller chips, see [CustomAppChip.compact].
+  final bool compact;
+
+  /// Shown before the first chip (inside the scroll when [singleLineScroll]).
+  final Widget? leading;
+
   const SelectionChips({
     // Made const
     super.key,
@@ -43,6 +49,8 @@ class SelectionChips<T> extends StatefulWidget {
     this.minMenuItemWidth = 80,
     this.singleLineScroll = false,
     this.chipColor,
+    this.compact = false,
+    this.leading,
   });
 
   @override
@@ -68,8 +76,9 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
         ? [widget.initialSelected]
         : [widget.initialSelected];
 
-    // Call callbacks after build
+    // Call callbacks after build. A negative index means nothing is selected.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (selectedIndex < 0 || selectedIndex >= widget.menu.length) return;
       if (widget.enableMultiSelect) {
         widget.onMultiSelect?.call(
           selectedIndexes,
@@ -82,7 +91,9 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
   }
 
   void _scrollToInitial() {
-    if (widget.singleLineScroll && widget.menu[selectedIndex].key != null) {
+    if (widget.singleLineScroll &&
+        selectedIndex >= 0 &&
+        widget.menu[selectedIndex].key != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final key = widget.menu[selectedIndex].key;
         if (key?.currentContext != null) {
@@ -209,13 +220,20 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: List.generate(widget.menu.length, (index) {
-          return Container(
-            key: widget.menu[index].key,
-            margin: const EdgeInsets.only(right: 8),
-            child: _buildChip(index),
-          );
-        }),
+        children: [
+          if (widget.leading != null)
+            Padding(
+              padding: EdgeInsets.only(right: widget.compact ? 6 : 8),
+              child: widget.leading,
+            ),
+          ...List.generate(widget.menu.length, (index) {
+            return Container(
+              key: widget.menu[index].key,
+              margin: EdgeInsets.only(right: widget.compact ? 6 : 8),
+              child: _buildChip(index),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -226,10 +244,7 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
       spacing: 8,
       alignment: WrapAlignment.start,
       children: List.generate(widget.menu.length, (index) {
-        return Container(
-          key: widget.menu[index].key,
-          child: _buildChip(index),
-        );
+        return Container(key: widget.menu[index].key, child: _buildChip(index));
       }),
     );
   }
@@ -240,12 +255,14 @@ class _SelectionChipsState<T> extends State<SelectionChips<T>> {
 
     return CustomAppChip(
       minWidth: widget.minMenuItemWidth,
+      compact: widget.compact,
       label: widget.menu[index].label,
       leadingIcon: widget.menu[index].icon != null
-          ? Icon(widget.menu[index].icon, size: 16)
+          ? Icon(widget.menu[index].icon, size: widget.compact ? 13 : 16)
           : null,
-      chipColor:
-          isSelected ? widget.chipColor ?? theme.primaryColor : AppColors.white,
+      chipColor: isSelected
+          ? widget.chipColor ?? theme.primaryColor
+          : AppColors.white,
       borderColor: isSelected
           ? AppColors.white
           : widget.chipColor ?? theme.primaryColorDark,

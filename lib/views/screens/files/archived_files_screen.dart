@@ -4,13 +4,12 @@ import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/gradient_scaffold.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/base_screen.dart';
 import 'package:efiling_balochistan/views/screens/files/file_card.dart';
-import 'package:efiling_balochistan/views/widgets/buttons/solid_button.dart';
 import 'package:efiling_balochistan/views/widgets/text_fields/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../widgets/not_found.dart';
+import 'package:efiling_balochistan/views/widgets/empty_state.dart';
 
 class ArchivedFilesScreen extends ConsumerStatefulWidget {
   const ArchivedFilesScreen({super.key});
@@ -68,18 +67,12 @@ class _ArchivedFilesScreenState extends ConsumerState<ArchivedFilesScreen> {
                   const SizedBox(height: 16),
                   Expanded(
                     child: files.isEmpty
-                        ? Center(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const NotFound(),
-                                AppSolidButton(
-                                  onPressed: fetchData,
-                                  text: "Reload",
-                                ),
-                              ],
-                            ),
+                        ? EmptyState(
+                            icon: Icons.archive_outlined,
+                            title: 'No archived files',
+                            message:
+                                'Files you archive will appear here. Try a different search, or refresh to check again.',
+                            onRefresh: fetchData,
                           )
                         : Builder(
                             builder: (context) {

@@ -17,11 +17,19 @@ class DashboardRecentSummariesSection extends StatelessWidget {
   final bool loading;
 
   static const _rows = [
-    (label: 'Inbox',    color: Color(0xFF7C5CBF), icon: Icons.inbox_rounded),
-    (label: 'Sent',     color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
-    (label: 'Drafts',   color: Color(0xFFFFB74D), icon: Icons.drafts_rounded),
-    (label: 'Internal', color: Color(0xFF2E9E6B), icon: Icons.swap_horiz_rounded),
-    (label: 'Pending',  color: Color(0xFFE07B20), icon: Icons.hourglass_top_rounded),
+    (label: 'Inbox', color: Color(0xFF7C5CBF), icon: Icons.inbox_rounded),
+    (label: 'Sent', color: Color(0xFF5C6BC0), icon: Icons.send_rounded),
+    (label: 'Drafts', color: Color(0xFFFFB74D), icon: Icons.drafts_rounded),
+    (
+      label: 'Internal',
+      color: Color(0xFF2E9E6B),
+      icon: Icons.swap_horiz_rounded,
+    ),
+    (
+      label: 'Pending',
+      color: Color(0xFFE07B20),
+      icon: Icons.hourglass_top_rounded,
+    ),
     (label: 'Disposed', color: Color(0xFF90A4AE), icon: Icons.archive_rounded),
   ];
 

@@ -50,8 +50,9 @@ class SecretaryDashboardModel {
       SecretaryDashboardSchema.departmentFiles: departmentFiles?.toJson(),
       SecretaryDashboardSchema.departmentDaak: departmentDaak?.toJson(),
       SecretaryDashboardSchema.charts: charts?.toJson(),
-      SecretaryDashboardSchema.sectionStats:
-          sectionStats.map((e) => e.toJson()).toList(),
+      SecretaryDashboardSchema.sectionStats: sectionStats
+          .map((e) => e.toJson())
+          .toList(),
       SecretaryDashboardSchema.activeUsers: activeUsers,
       SecretaryDashboardSchema.generatedAt: generatedAt,
     };
@@ -384,8 +385,8 @@ class SecretaryDepartmentFilesModel {
       totalCreated: map[SecretaryDepartmentFilesSchema.totalCreated]?.toInt(),
       totalPending: map[SecretaryDepartmentFilesSchema.totalPending]?.toInt(),
       totalDisposed: map[SecretaryDepartmentFilesSchema.totalDisposed]?.toInt(),
-      totalForwarded:
-          map[SecretaryDepartmentFilesSchema.totalForwarded]?.toInt(),
+      totalForwarded: map[SecretaryDepartmentFilesSchema.totalForwarded]
+          ?.toInt(),
     );
   }
 
@@ -466,10 +467,10 @@ class SecretaryDepartmentDaakModel {
     return SecretaryDepartmentDaakModel(
       totalReceived: map[SecretaryDepartmentDaakSchema.totalReceived]?.toInt(),
       totalPending: map[SecretaryDepartmentDaakSchema.totalPending]?.toInt(),
-      totalForwarded:
-          map[SecretaryDepartmentDaakSchema.totalForwarded]?.toInt(),
-      totalConverted:
-          map[SecretaryDepartmentDaakSchema.totalConverted]?.toInt(),
+      totalForwarded: map[SecretaryDepartmentDaakSchema.totalForwarded]
+          ?.toInt(),
+      totalConverted: map[SecretaryDepartmentDaakSchema.totalConverted]
+          ?.toInt(),
       totalNfa: map[SecretaryDepartmentDaakSchema.totalNfa]?.toInt(),
       totalDisposed: map[SecretaryDepartmentDaakSchema.totalDisposed]?.toInt(),
     );
@@ -533,12 +534,15 @@ class SecretaryChartsModel {
 
   Map<String, dynamic> toJson() {
     return {
-      SecretaryChartsSchema.topFilePutup:
-          topFilePutup.map((e) => e.toJson()).toList(),
-      SecretaryChartsSchema.topPending:
-          topPending.map((e) => e.toJson()).toList(),
-      SecretaryChartsSchema.topForwarded:
-          topForwarded.map((e) => e.toJson()).toList(),
+      SecretaryChartsSchema.topFilePutup: topFilePutup
+          .map((e) => e.toJson())
+          .toList(),
+      SecretaryChartsSchema.topPending: topPending
+          .map((e) => e.toJson())
+          .toList(),
+      SecretaryChartsSchema.topForwarded: topForwarded
+          .map((e) => e.toJson())
+          .toList(),
     };
   }
 

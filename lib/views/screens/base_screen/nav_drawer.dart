@@ -65,6 +65,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
 
   bool get _showToggle => !widget.alwaysExpanded;
 
+  /// The shared menu list points "Dashboard" at the standard route; swap in the
+  /// role's own home for that entry.
+  String? _resolveRoute(String? route) =>
+      route == Routes.dashboard ? RouteHelper.homeRoute : route;
+
   void _toggle() {
     if (widget.onToggle != null) {
       widget.onToggle!();
@@ -93,6 +98,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
           title: "Scan Daak",
           icon: Icons.document_scanner_outlined,
           routeName: Routes.scanDaak,
+        ),
+        DrawerMenu(
+          title: "Daak Reports",
+          icon: Icons.analytics_outlined,
+          routeName: Routes.daakReports,
         ),
       ],
     ),
@@ -242,7 +252,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 icon: Icon(
                   _effectiveExpanded ? Icons.chevron_left : Icons.chevron_right,
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? context.appColors.secondaryLight
+                      ? context.appColors.textPrimary
                       : context.appColors.secondaryDark,
                 ),
               ),
@@ -254,7 +264,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             curve: Curves.easeOut,
             child: InkWell(
               onTap: () {
-                RouteHelper.navigateTo(Routes.dashboard);
+                RouteHelper.navigateHome();
               },
               child: Image.asset(
                 AssetsConstants.logo,
@@ -298,28 +308,53 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final bool isDark = theme.brightness == Brightness.dark;
     final bool expanded = _isGroupExpanded(menu);
     final Color fgColor = isDark
-        ? appColors.secondaryLight
+        ? appColors.textPrimary
         : appColors.secondaryDark;
 
     void onTap() {
-      if (!_effectiveExpanded) _toggle();
       setState(() => _groupExpansionOverride[menu.title] = !expanded);
     }
 
     if (!_effectiveExpanded) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: Tooltip(
-          message: menu.title,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: Icon(menu.icon, color: fgColor, size: 22)),
+      // Rail mode: the group icon folds/unfolds its children, which are shown
+      // as icon-only tiles directly beneath it.
+      return Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: appColors.secondaryLight.withValues(
+                alpha: isDark ? 0.15 : 0.12,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Tooltip(
+              message: menu.title,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: Icon(menu.icon, color: fgColor, size: 22),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          AnimatedSize(
+            duration: _animDuration,
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Column(
+                    children: menu.children!
+                        .map((c) => _buildMenuItem(c, chatService, currentUser))
+                        .toList(),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
       );
     }
 
@@ -373,10 +408,11 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final theme = Theme.of(context);
     final appColors = context.appColors;
     final bool isDark = theme.brightness == Brightness.dark;
-    final bool isSelected = menu.routeName == RouteHelper.currentLocation;
+    final bool isSelected =
+        _resolveRoute(menu.routeName) == RouteHelper.currentLocation;
     final Color fgColor = isSelected
         ? (isDark ? appColors.primaryLight : appColors.primaryDark)
-        : (isDark ? appColors.secondaryLight : appColors.secondaryDark);
+        : (isDark ? appColors.textPrimary : appColors.secondaryDark);
     final Color selectedBg = appColors.secondaryLight.withValues(
       alpha: isDark ? 0.25 : 0.2,
     );
@@ -384,8 +420,9 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final bool isSummaries = menu.routeName == Routes.summaries;
 
     void onTap() {
-      if (menu.routeName != null) {
-        RouteHelper.navigateTo(menu.routeName!);
+      final route = _resolveRoute(menu.routeName);
+      if (route != null) {
+        RouteHelper.navigateTo(route);
       }
     }
 
@@ -571,7 +608,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             },
             text: "Sign Out",
             icon: Icons.logout,
-            color: Colors.red[600],
+            color: Theme.of(context).colorScheme.error,
           )
         else
           Padding(
@@ -582,7 +619,10 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 onPressed: () {
                   ref.read(authController.notifier).logout(context);
                 },
-                icon: Icon(Icons.logout, color: Colors.red[600]),
+                icon: Icon(
+                  Icons.logout,
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           ),

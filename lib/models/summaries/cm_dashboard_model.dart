@@ -36,16 +36,21 @@ class CMDashboardModel {
   Map<String, dynamic> toJson() {
     return {
       CMDashboardSchema.kpis: kpis?.toJson(),
-      CMDashboardSchema.departmentStats:
-          departmentStats.map((e) => e.toJson()).toList(),
-      CMDashboardSchema.topOriginating:
-          topOriginating.map((e) => e.toJson()).toList(),
-      CMDashboardSchema.pendingForCm:
-          pendingForCm.map((e) => e.toJson()).toList(),
-      CMDashboardSchema.recentlyApproved:
-          recentlyApproved.map((e) => e.toJson()).toList(),
-      CMDashboardSchema.statusDistribution:
-          statusDistribution.map((e) => e.toJson()).toList(),
+      CMDashboardSchema.departmentStats: departmentStats
+          .map((e) => e.toJson())
+          .toList(),
+      CMDashboardSchema.topOriginating: topOriginating
+          .map((e) => e.toJson())
+          .toList(),
+      CMDashboardSchema.pendingForCm: pendingForCm
+          .map((e) => e.toJson())
+          .toList(),
+      CMDashboardSchema.recentlyApproved: recentlyApproved
+          .map((e) => e.toJson())
+          .toList(),
+      CMDashboardSchema.statusDistribution: statusDistribution
+          .map((e) => e.toJson())
+          .toList(),
     };
   }
 
@@ -77,9 +82,8 @@ class CMDashboardModel {
       pendingForCm: map[CMDashboardSchema.pendingForCm] != null
           ? List<CMPendingForCmModel>.from(
               (map[CMDashboardSchema.pendingForCm] as List).map(
-                (e) => CMPendingForCmModel.fromJson(
-                  Map<String, dynamic>.from(e),
-                ),
+                (e) =>
+                    CMPendingForCmModel.fromJson(Map<String, dynamic>.from(e)),
               ),
             )
           : [],
@@ -408,8 +412,8 @@ class CMPendingForCmModel {
       summaryNo: map[CMPendingForCmSchema.summaryNo],
       subject: map[CMPendingForCmSchema.subject],
       summaryDate: map[CMPendingForCmSchema.summaryDate],
-      currentHolderUserDesgId:
-          map[CMPendingForCmSchema.currentHolderUserDesgId]?.toInt(),
+      currentHolderUserDesgId: map[CMPendingForCmSchema.currentHolderUserDesgId]
+          ?.toInt(),
       originDept: map[CMPendingForCmSchema.originDept],
     );
   }

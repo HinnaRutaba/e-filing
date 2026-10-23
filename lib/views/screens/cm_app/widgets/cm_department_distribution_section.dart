@@ -35,7 +35,10 @@ class CMDepartmentDistributionSection extends StatelessWidget {
   }
 
   Widget _buildList(List<CMDepartmentStatModel> depts) {
-    final maxTotal = depts.fold<int>(0, (m, d) => (d.total ?? 0) > m ? (d.total ?? 0) : m);
+    final maxTotal = depts.fold<int>(
+      0,
+      (m, d) => (d.total ?? 0) > m ? (d.total ?? 0) : m,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

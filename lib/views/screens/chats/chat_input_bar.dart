@@ -126,9 +126,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.send_outlined, color: AppColors.secondary),
               onPressed: _stoppingRecording ? null : _stopRecording,
@@ -152,7 +150,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Attachment button 📎
-
                 InkWell(
                   onTap: () async {
                     final f = await _filePickerService.pickMedia();
@@ -161,8 +158,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     });
                   },
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                      vertical: 0,
+                    ),
                     child: const Icon(Icons.add, color: AppColors.secondary),
                   ),
                 ),
@@ -189,8 +188,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     ? InkWell(
                         child: const Padding(
                           padding: EdgeInsets.only(left: 12),
-                          child:
-                              Icon(Icons.send, color: AppColors.secondaryDark),
+                          child: Icon(
+                            Icons.send,
+                            color: AppColors.secondaryDark,
+                          ),
                         ),
                         onTap: () async {
                           // Start file sending without awaiting
@@ -226,22 +227,28 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 if (showingAudioCameraButtons)
                   InkWell(
                     onTap: () async {
-                      final f = await _filePickerService
-                          .imagePick(ImageSource.camera, isMultiImage: false);
+                      final f = await _filePickerService.imagePick(
+                        ImageSource.camera,
+                        isMultiImage: false,
+                      );
                       setState(() {
                         files.addAll(f);
                       });
                     },
-                    child: const Icon(Icons.camera_alt_outlined,
-                        color: AppColors.secondary),
+                    child: const Icon(
+                      Icons.camera_alt_outlined,
+                      color: AppColors.secondary,
+                    ),
                   ),
                 if (files.isEmpty && showingAudioCameraButtons)
                   InkWell(
                     onTap: _startRecording,
                     child: const Padding(
                       padding: EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.mic_none_outlined,
-                          color: AppColors.secondary),
+                      child: Icon(
+                        Icons.mic_none_outlined,
+                        color: AppColors.secondary,
+                      ),
                     ),
                   ),
               ],

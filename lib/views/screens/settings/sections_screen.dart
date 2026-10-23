@@ -22,22 +22,23 @@ class _SectionsScreenState extends State<SectionsScreen> {
           child: Column(
             children: [
               SearchDropDownField(
-                  suggestionsCallback: (String pattern) {
-                    // Simulate a search operation
-                    return Future.value([]);
-                  },
-                  onSelected: (void value) {
-                    // Handle the selected value
-                  },
-                  showLabel: false,
-                  labelText: "Search",
-                  hintText: "Search by name or username",
-                  itemBuilder: (BuildContext context, void item) {
-                    // Build the item widget
-                    return const ListTile(
-                      title: Text("Item"), // Customize as needed
-                    );
-                  }),
+                suggestionsCallback: (String pattern) {
+                  // Simulate a search operation
+                  return Future.value([]);
+                },
+                onSelected: (void value) {
+                  // Handle the selected value
+                },
+                showLabel: false,
+                labelText: "Search",
+                hintText: "Search by name or username",
+                itemBuilder: (BuildContext context, void item) {
+                  // Build the item widget
+                  return const ListTile(
+                    title: Text("Item"), // Customize as needed
+                  );
+                },
+              ),
               const SizedBox(height: 16),
               Expanded(
                 child: ListView.builder(

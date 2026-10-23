@@ -1,11 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:efiling_balochistan/models/chat/chat_model.dart';
 
-enum MessageType {
-  message,
-  info,
-  voice,
-}
+enum MessageType { message, info, voice }
 
 class MessageModel {
   final String id;

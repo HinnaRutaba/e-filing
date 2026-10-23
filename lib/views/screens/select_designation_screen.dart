@@ -1,5 +1,4 @@
 import 'package:efiling_balochistan/config/router/route_helper.dart';
-import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/app_colors.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -73,10 +72,14 @@ class DesignationCard extends ConsumerWidget {
       ),
       child: InkWell(
         onTap: () async {
-          await ref.read(authController.notifier).setDesignation(designation);
+          final auth = ref.read(authController.notifier);
+          await auth.setDesignation(designation);
+          // The role belongs to the chosen designation, so reload the user
+          // for it before deciding which dashboard to open.
+          await auth.fetchLoggedInUser();
           //ref.read(summariesController.notifier).fetchSummariesMeta();
           ref.read(daakController.notifier).fetchDaakMeta();
-          RouteHelper.navigateTo(Routes.dashboard);
+          RouteHelper.navigateHome();
         },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

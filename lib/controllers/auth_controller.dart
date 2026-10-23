@@ -3,7 +3,6 @@ import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/constants/keys.dart';
 import 'package:efiling_balochistan/controllers/base_controller.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
-import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
@@ -34,16 +33,9 @@ class AuthController extends BaseControllerState<UserModel> {
           await setDesignation(model.user!.designations.first);
           await fetchLoggedInUser();
 
-         // await ref.read(summariesController.notifier).fetchSummariesMeta();
+          // await ref.read(summariesController.notifier).fetchSummariesMeta();
           await ref.read(daakController.notifier).fetchDaakMeta();
-          if (model.user?.userDesgRole == ActiveUserDesgRole.cm) {
-            RouteHelper.navigateTo(Routes.cmDashboard);
-          } else if (model.user?.userDesgRole ==
-              ActiveUserDesgRole.secretary) {
-            RouteHelper.navigateTo(Routes.secretaryDashboard);
-          } else {
-            RouteHelper.navigateTo(Routes.dashboard);
-          }
+          RouteHelper.navigateHome();
         } else {
           RouteHelper.navigateTo(
             Routes.selectDesignation,

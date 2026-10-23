@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/file_details_model.dart';
@@ -8,6 +9,7 @@ import 'package:efiling_balochistan/views/screens/chats/file_chat_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_approval_desk.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_detals_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/daak_list_view_screen.dart';
+import 'package:efiling_balochistan/views/screens/daak/daak_report_screen.dart';
 import 'package:efiling_balochistan/views/screens/daak/scan_daak_screen.dart';
 import 'package:efiling_balochistan/views/screens/cm_app/cm_shell.dart';
 import 'package:efiling_balochistan/views/screens/dashboard/dashboard_screen.dart';
@@ -29,7 +31,6 @@ import 'package:efiling_balochistan/views/screens/settings/users_screen.dart';
 import 'package:efiling_balochistan/views/screens/splash_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_draft_remarks_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/create_summary_screen.dart';
-import 'package:efiling_balochistan/views/screens/secretary/secretary_dashboard_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/secretary_approval_desk.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summaries_list_screen.dart';
 import 'package:efiling_balochistan/views/screens/summaries/summary_details_screen.dart';
@@ -76,13 +77,6 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toRight.withFade.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const CMShell(),
-      ),
-    ),
-    GoRoute(
-      path: Routes.secretaryDashboard,
-      pageBuilder: GoTransitions.slide.toRight.withFade.build(
-        settings: GoTransitionSettings(duration: 300.ms),
-        builder: (context, state) => const SecretaryDashboardScreen(),
       ),
     ),
     GoRoute(
@@ -138,7 +132,7 @@ class AppRouter {
       ),
       redirect: (context, state) {
         if (state.pathParameters[PathParams.fileId] == null) {
-          return Routes.dashboard;
+          return RouteHelper.homeRoute;
         }
         return null;
       },
@@ -180,7 +174,7 @@ class AppRouter {
       ),
       redirect: (context, state) {
         if (state.pathParameters[PathParams.fileId] == null) {
-          return Routes.dashboard;
+          return RouteHelper.homeRoute;
         }
         return null;
       },
@@ -281,6 +275,13 @@ class AppRouter {
       pageBuilder: GoTransitions.slide.toLeft.build(
         settings: GoTransitionSettings(duration: 300.ms),
         builder: (context, state) => const DaakApprovalDesk(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.daakReports,
+      pageBuilder: GoTransitions.slide.toRight.withFade.build(
+        settings: GoTransitionSettings(duration: 300.ms),
+        builder: (context, state) => const DaakReportScreen(),
       ),
     ),
     GoRoute(

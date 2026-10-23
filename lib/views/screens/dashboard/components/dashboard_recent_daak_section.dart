@@ -24,7 +24,7 @@ class DashboardRecentDaakSection extends StatelessWidget {
     return DashboardSectionCard(
       icon: Icons.mark_email_unread_rounded,
       iconBgColor: const Color(0xFF2E9E6B),
-      title: 'Recent Daak',
+      title: 'Recent E-Daak',
       badgeLabel: loading ? '...' : '${items.length} letters',
       badgeColor: const Color(0xFF2E9E6B).withValues(alpha: 0.15),
       badgeTextColor: const Color(0xFF2E9E6B),
@@ -45,7 +45,10 @@ class DashboardRecentDaakSection extends StatelessWidget {
       child: Center(
         child: Text(
           'No daak letters available.',
-          style: TextStyle(fontSize: 13, color: context.appColors.textSecondary),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.appColors.textSecondary,
+          ),
         ),
       ),
     );
@@ -69,20 +72,21 @@ class DashboardRecentDaakSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final daak = displayItems[index];
             final statusColor = daak.status?.color ?? const Color(0xFF5C6BC0);
-            final bool noDetails = daak.status == DaakStatus.disposedOff ||
+            final bool noDetails =
+                daak.status == DaakStatus.disposedOff ||
                 daak.status == DaakStatus.nfa;
 
             return InkWell(
                   onTap: noDetails
                       ? null
                       : () => RouteHelper.push(
-                            Routes.daakDetails(daak.id),
-                            extra: DaakDetailsInfo(
-                              daak: daak,
-                              openPDF: false,
-                              status: daak.status ?? DaakStatus.inProgress1,
-                            ),
+                          Routes.daakDetails(daak.id),
+                          extra: DaakDetailsInfo(
+                            daak: daak,
+                            openPDF: false,
+                            status: daak.status ?? DaakStatus.inProgress1,
                           ),
+                        ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Row(
@@ -107,21 +111,29 @@ class DashboardRecentDaakSection extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      daak.diaryNo ?? '—',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: statusColor,
+                                  // Long diary numbers shrink and ellipsize
+                                  // so the date stays on the row.
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        daak.diaryNo ?? '—',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: statusColor,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -166,8 +178,9 @@ class DashboardRecentDaakSection extends StatelessWidget {
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 18,
-                            color: context.appColors.textSecondary
-                                .withValues(alpha: 0.5),
+                            color: context.appColors.textSecondary.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                       ],
                     ),
@@ -194,10 +207,7 @@ class DashboardRecentDaakSection extends StatelessWidget {
                 label: Text('View all ${items.length} letters'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF2E9E6B),
-                  side: const BorderSide(
-                    color: Color(0xFF2E9E6B),
-                    width: 1,
-                  ),
+                  side: const BorderSide(color: Color(0xFF2E9E6B), width: 1),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -217,10 +227,7 @@ class DashboardRecentDaakSection extends StatelessWidget {
                 label: const Text('View All Daak'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF2E9E6B),
-                  side: const BorderSide(
-                    color: Color(0xFF2E9E6B),
-                    width: 1,
-                  ),
+                  side: const BorderSide(color: Color(0xFF2E9E6B), width: 1),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

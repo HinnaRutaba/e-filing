@@ -56,14 +56,15 @@ class _MovementTimelineSectionState extends State<MovementTimelineSection> {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...widget.movements]..sort((a, b) {
-      final ad = a.actedAt;
-      final bd = b.actedAt;
-      if (ad == null && bd == null) return 0;
-      if (ad == null) return -1;
-      if (bd == null) return 1;
-      return ad.compareTo(bd);
-    });
+    final sorted = [...widget.movements]
+      ..sort((a, b) {
+        final ad = a.actedAt;
+        final bd = b.actedAt;
+        if (ad == null && bd == null) return 0;
+        if (ad == null) return -1;
+        if (bd == null) return 1;
+        return ad.compareTo(bd);
+      });
 
     int currentIndex = -1;
     if (sorted.isNotEmpty) {

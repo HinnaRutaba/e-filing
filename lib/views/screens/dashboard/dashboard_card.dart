@@ -15,6 +15,14 @@ class DashboardCard extends StatefulWidget {
   final VoidCallback? onTap;
   final bool loading;
   final bool showSmallCard;
+
+  /// Icon + value on one row with the title underneath. Fits narrow tiles
+  /// (e.g. three per row) where the default side-by-side layout is too tight.
+  final bool stacked;
+
+  /// Stretch the card to the width it is given instead of shrinking to its
+  /// content, so the corner arrow stays on the card's own corner.
+  final bool fill;
   final IconData icon;
   const DashboardCard({
     super.key,
@@ -26,6 +34,8 @@ class DashboardCard extends StatefulWidget {
     required this.icon,
     this.loading = false,
     this.showSmallCard = true,
+    this.stacked = false,
+    this.fill = false,
   });
 
   @override
@@ -87,24 +97,34 @@ class _DashboardCardState extends State<DashboardCard> {
     final appColors = context.appColors;
     final content = RepaintBoundary(
       child: Stack(
+        fit: widget.fill ? StackFit.passthrough : StackFit.loose,
         clipBehavior: Clip.none,
         children: [
           _buildCard(context),
           if (widget.onTap != null)
             Positioned(
-              top: widget.showSmallCard ? -8 : 6,
-              right: widget.showSmallCard
-                  ? widget.value == null
-                        ? -8
-                        : 12
-                  : 6,
+              // Stacked cards keep the small ↗ in the top-right corner in both
+              // states; when collapsed it sits half over the card's corner so
+              // it never covers the icon badge.
+              top: widget.stacked
+                  ? (widget.showSmallCard ? -6 : 6)
+                  : (widget.showSmallCard ? -8 : 6),
+              right: widget.stacked
+                  ? (widget.showSmallCard ? -4 : 6)
+                  : (widget.showSmallCard
+                        ? widget.value == null
+                              ? -8
+                              : 12
+                        : 6),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child:
                     InkWell(
                       onTap: widget.onTap,
                       child: Container(
-                        padding: widget.showSmallCard
+                        padding: widget.stacked
+                            ? const EdgeInsets.all(3)
+                            : widget.showSmallCard
                             ? const EdgeInsets.all(4)
                             : const EdgeInsets.symmetric(
                                 horizontal: 6,
@@ -126,7 +146,13 @@ class _DashboardCardState extends State<DashboardCard> {
                             ),
                           ],
                         ),
-                        child: widget.showSmallCard
+                        child: widget.stacked
+                            ? Icon(
+                                Icons.north_east_rounded,
+                                size: 12,
+                                color: appColors.secondaryDark,
+                              )
+                            : widget.showSmallCard
                             ? Icon(
                                 Icons.chevron_right,
                                 size: 20,
@@ -259,6 +285,8 @@ class _DashboardCardState extends State<DashboardCard> {
                     ),
                     child: widget.showSmallCard
                         ? cardSmall(context)
+                        : widget.stacked
+                        ? cardStacked(context)
                         : cardBody(context),
                   ),
                   // Sheen that slides across the card as the phone tilts.
@@ -384,6 +412,63 @@ class _DashboardCardState extends State<DashboardCard> {
                     ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget cardStacked(BuildContext context) {
+    final appColors = context.appColors;
+    final onCardText = Colors.grey[900];
+    final showSpinner =
+        widget.loading &&
+        (widget.value == null || widget.value!.isEmpty || widget.value == '0');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // The top 10px leave room for the corner arrow button so it never
+        // touches the value.
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildIconBadge(),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: showSpinner
+                      ? SpinKitThreeBounce(color: appColors.accent, size: 14)
+                      : FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: AppText.headlineMedium(
+                            widget.value ?? '',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: onCardText,
+                          ),
+                        ).animate().scale(
+                          begin: const Offset(0.6, 0.6),
+                          end: const Offset(1, 1),
+                          duration: 500.ms,
+                          delay: 180.ms,
+                          curve: Curves.elasticOut,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        AppText.bodyLarge(
+          widget.title,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: onCardText,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

@@ -196,10 +196,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                     ),
                     IconButton(
                       onPressed: () => RouteHelper.pop(),
-                      icon: Icon(
-                        Icons.close,
-                        color: appColors.textSecondary,
-                      ),
+                      icon: Icon(Icons.close, color: appColors.textSecondary),
                     ),
                   ],
                 ),
@@ -218,10 +215,7 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
               prefix: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: appColors.secondaryLight,
-                      ),
+                      icon: Icon(Icons.clear, color: appColors.secondaryLight),
                       onPressed: () {
                         _searchController.clear();
                         _filterParticipants('');
@@ -322,14 +316,15 @@ class _NewChatBottomSheetState extends ConsumerState<NewChatBottomSheet> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? appColors.primaryDark
-                                                .withValues(alpha:0.1)
+                                            ? appColors.primaryDark.withValues(
+                                                alpha: 0.1,
+                                              )
                                             : appColors.cardColor,
                                         borderRadius: BorderRadius.circular(10),
                                         border: isSelected
                                             ? Border.all(
                                                 color: appColors.primaryDark
-                                                    .withValues(alpha:0.3),
+                                                    .withValues(alpha: 0.3),
                                               )
                                             : null,
                                       ),
