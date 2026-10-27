@@ -6,6 +6,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
+import 'package:efiling_balochistan/services/notification_service.dart';
 import 'package:efiling_balochistan/views/widgets/confirmation_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -122,7 +123,14 @@ class AuthController extends BaseControllerState<UserModel> {
 
     if (confirmed != true) return;
 
+    await forceLogout();
+  }
+
+  /// Logs out without asking for confirmation — used when the API rejects
+  /// the session (401/403).
+  Future<void> forceLogout() async {
     try {
+      await NotificationService().clearFcmToken();
       await repo.logout();
       RouteHelper.navigateTo(Routes.login);
     } catch (e) {

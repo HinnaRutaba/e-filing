@@ -182,6 +182,11 @@ class NotificationService {
   }
 
   Future<void> clearFcmToken() async {
+    try {
+      await _firebaseMessaging.deleteToken();
+    } catch (e, s) {
+      AppLogger.error(e, s, 'DELETE FCM ERR');
+    }
     _fcmToken = null;
   }
 }
