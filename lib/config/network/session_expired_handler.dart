@@ -28,41 +28,54 @@ class SessionExpiredHandler {
           RouteHelper.currentLocation == Routes.splash) {
         return;
       }
-      final BuildContext context = AppRouter.navigatorKey.currentContext!;
+      // Set before the delay so concurrent 401/403s don't stack dialogs.
+      showingSessionExpiredDialog = true;
       Future.delayed(Duration.zero, () {
-        showingSessionExpiredDialog = true;
+        final BuildContext? context = AppRouter.navigatorKey.currentContext;
+        if (context == null || !context.mounted) {
+          showingSessionExpiredDialog = false;
+          return;
+        }
         showDialog(
           context: context,
+          useRootNavigator: true,
           barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              backgroundColor: AppColors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AppText.headlineMedium("Session Expired"),
-                    const SizedBox(height: 8),
-                    AppText.bodyMedium(
-                      "Your session has been expired. Please login in again to continue on this device.",
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    AppSolidButton(
-                      onPressed: () {
-                        ProviderScope.containerOf(
-                          context,
-                        ).read(authController.notifier).logout(context);
-                        showingSessionExpiredDialog = false;
-                      },
-                      text: "OK",
-                      width: double.infinity,
-                    ),
-                  ],
+          builder: (BuildContext dialogContext) {
+            return PopScope(
+              canPop: false,
+              child: Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                backgroundColor: AppColors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppText.headlineMedium("Session Expired"),
+                      const SizedBox(height: 8),
+                      AppText.bodyMedium(
+                        "Your session has been expired. Please login in again to continue on this device.",
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      AppSolidButton(
+                        onPressed: () async {
+                          final container = ProviderScope.containerOf(
+                            dialogContext,
+                          );
+                          Navigator.of(dialogContext).pop();
+                          await container
+                              .read(authController.notifier)
+                              .forceLogout();
+                          showingSessionExpiredDialog = false;
+                        },
+                        text: "OK",
+                        width: double.infinity,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -70,6 +83,7 @@ class SessionExpiredHandler {
         );
       });
     } catch (e, s) {
+      showingSessionExpiredDialog = false;
       AppLogger.error(e, s, 'SESSION HANDLE CATCH');
     }
   }

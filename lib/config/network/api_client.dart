@@ -41,7 +41,7 @@ class DioClient {
           handler.next(requestOption);
         },
         onResponse: (response, handler) {
-          if (response.statusCode == 401) {
+          if (_isSessionRejected(response.statusCode)) {
             SessionExpiredHandler.handleExpiration();
           }
           if (response.data is Map && response.data.containsKey("success")) {
@@ -84,7 +84,7 @@ class DioClient {
             'response: ${error.response?.data ?? "No response data"}\n'
             'message: ${error.message ?? "Unknown error"}',
           );
-          if (error.response?.statusCode == 401) {
+          if (_isSessionRejected(error.response?.statusCode)) {
             SessionExpiredHandler.handleExpiration();
           }
           handler.reject(
@@ -119,6 +119,9 @@ class DioClient {
       },
     );
   }
+
+  bool _isSessionRejected(int? statusCode) =>
+      statusCode == 401 || statusCode == 403;
 
   void _logRequest(
     String method,
