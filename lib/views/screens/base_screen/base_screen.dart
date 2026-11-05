@@ -5,6 +5,7 @@ import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/utils/responsive_wrapper.dart';
 import 'package:efiling_balochistan/views/screens/base_screen/nav_drawer.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/switch_designation_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -238,6 +239,39 @@ class BaseScreen extends ConsumerWidget {
             )
           : null,
       actions: [
+        if (isdash &&
+            context.isMobile &&
+            ref.watch(authController.select((u) => u.designations.length)) > 1)
+          Material(
+            color: context.appColors.accent.withValues(alpha: 0.18),
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => showSwitchDesignationSheet(context, ref),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.badge_outlined,
+                      size: 16,
+                      color: context.appColors.accent,
+                    ),
+                    const SizedBox(width: 6),
+                    AppText.labelMedium(
+                      'Switch Designation',
+                      fontWeight: FontWeight.w600,
+                      color: context.appColors.accent,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         if (isdash && context.isMobile)
           IconButton(
             onPressed: () {

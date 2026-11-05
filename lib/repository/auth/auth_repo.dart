@@ -1,3 +1,4 @@
+import 'package:efiling_balochistan/config/network/api_client.dart';
 import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
@@ -100,7 +101,11 @@ class AuthRepo extends AuthInterface {
     try {
       Map<String, dynamic> data = await dioClient.get(
         url: openAIKey,
-        options: await options(authRequired: true),
+        // Optional, and not every user has access to it: a 403 here must not
+        // log the user out.
+        options: (await options(
+          authRequired: true,
+        )).copyWith(extra: {DioClient.skipSessionExpiry: true}),
       );
       return data['openai_key'] ?? '';
     } catch (e) {

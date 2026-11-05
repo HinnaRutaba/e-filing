@@ -62,6 +62,21 @@ class SecretaryDashboardController
       state = state.copyWith(loading: false, error: handleException(e));
     }
   }
+
+  /// Reloads in the background, keeping the current data if it fails.
+  Future<void> refresh() async {
+    if (state.loading) return;
+    try {
+      final userDesgId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
+      final result = await ref
+          .read(dashboardRepo)
+          .getSecretaryDashboard(userDesgId: userDesgId);
+      state = state.copyWith(data: result);
+    } catch (_) {}
+  }
 }
 
 final secretaryDashboardController =

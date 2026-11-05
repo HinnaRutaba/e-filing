@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:efiling_balochistan/controllers/local_storage_controller.dart';
 import 'package:efiling_balochistan/firebase_options.dart';
 import 'package:efiling_balochistan/repository/notifications/notification_repo.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
@@ -45,6 +46,8 @@ class NotificationService {
   final _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  final LocalStorageController _localStorage = LocalStorageController();
 
   String? _fcmToken;
 
@@ -129,7 +132,14 @@ class NotificationService {
     }
   }
 
+  /// Fetches the device's FCM token, first finishing any delete left over
+  /// from a sign-out. If that delete still fails no token is used, so the
+  /// previous user's token is never registered for the next user.
   Future<void> getToken() async {
+    if (!await _deletePendingToken()) {
+      _fcmToken = null;
+      return;
+    }
     _fcmToken = await _firebaseMessaging.getToken();
   }
 
@@ -181,12 +191,40 @@ class NotificationService {
     }
   }
 
+  /// Invalidates the device's FCM token at sign-out so it stops receiving
+  /// this user's notifications. Only waits for the pending flag to be saved;
+  /// the delete itself runs in the background and, if it fails (e.g.
+  /// offline), is retried on the next [getToken].
   Future<void> clearFcmToken() async {
+    _fcmToken = null;
     try {
-      await _firebaseMessaging.deleteToken();
+      await _localStorage.setFcmTokenDeletePending(true);
+    } catch (e, s) {
+      AppLogger.error(e, s, 'DELETE FCM FLAG ERR');
+    }
+    _deletePendingToken();
+  }
+
+  Future<bool>? _deleting;
+
+  /// Whether no token delete is left pending.
+  Future<bool> _deletePendingToken() {
+    return _deleting ??= _deleteTokenIfPending().whenComplete(
+      () => _deleting = null,
+    );
+  }
+
+  Future<bool> _deleteTokenIfPending() async {
+    try {
+      if (!await _localStorage.isFcmTokenDeletePending()) return true;
+      await _firebaseMessaging.deleteToken().timeout(
+        const Duration(seconds: 15),
+      );
+      await _localStorage.setFcmTokenDeletePending(false);
+      return true;
     } catch (e, s) {
       AppLogger.error(e, s, 'DELETE FCM ERR');
+      return false;
     }
-    _fcmToken = null;
   }
 }

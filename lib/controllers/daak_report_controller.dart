@@ -97,6 +97,37 @@ class DaakReportController extends BaseControllerState<DaakReportState> {
       state = state.copyWith(loading: false, error: handleException(e));
     }
   }
+
+  /// Reloads the current period in the background, keeping the current data
+  /// if it fails.
+  Future<void> refresh() async {
+    if (state.loading) return;
+    final period = state.period;
+    final from = state.from;
+    final to = state.to;
+    try {
+      final userDesgId = ref
+          .read(authController)
+          .currentDesignation
+          ?.userDesgId;
+      final result = await ref
+          .read(daakRepo)
+          .fetchDaakReport(
+            desId: userDesgId,
+            period: period,
+            from: from,
+            to: to,
+          );
+      // The period changed (and a load started) while this was in flight.
+      if (state.loading ||
+          state.period != period ||
+          state.from != from ||
+          state.to != to) {
+        return;
+      }
+      state = state.copyWith(data: result);
+    } catch (_) {}
+  }
 }
 
 final daakReportController =
