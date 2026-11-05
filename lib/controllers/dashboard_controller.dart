@@ -161,7 +161,12 @@ class DashboardController extends BaseControllerState<DashboardModel> {
     final wasSecretary =
         ref.read(authController).userDesgRole == ActiveUserDesgRole.secretary;
 
-    EasyLoading.show();
+    final name = designation.designation;
+    EasyLoading.show(
+      status: name == null || name.trim().isEmpty
+          ? 'Switching designation...'
+          : 'Switching to $name...',
+    );
     try {
       // Don't let a background refresh for the old designation land on top of
       // the new one.
