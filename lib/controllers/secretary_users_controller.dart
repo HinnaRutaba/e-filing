@@ -134,6 +134,47 @@ class SecretaryUsersController
     }
   }
 
+  /// Reloads every page loaded so far in the background, keeping the current
+  /// list if it fails.
+  Future<void> refresh() async {
+    if (state.loading || state.loadingMore) return;
+    final requestId = _requestId;
+    final before = state;
+    final pages = before.pagination?.currentPage ?? 1;
+    try {
+      final results = await Future.wait([
+        for (var page = 1; page <= pages; page++)
+          ref
+              .read(dashboardRepo)
+              .getSecretaryDepartmentUsers(
+                userDesgId: _userDesgId,
+                query: before.query.trim(),
+                sectionId: before.sectionId,
+                sort: before.sort,
+                direction: before.direction,
+                perPage: perPage,
+                page: page,
+              ),
+      ]);
+      // The search, filters or loaded pages changed meanwhile.
+      if (requestId != _requestId ||
+          state.loading ||
+          state.loadingMore ||
+          state.query.trim() != before.query.trim() ||
+          state.sectionId != before.sectionId ||
+          state.sort != before.sort ||
+          state.direction != before.direction ||
+          state.pagination?.currentPage != before.pagination?.currentPage) {
+        return;
+      }
+      state = state.copyWith(
+        items: [for (final result in results) ...result.items],
+        pagination: results.last.pagination,
+        filters: results.last.filters,
+      );
+    } catch (_) {}
+  }
+
   Future<void> loadMore() async {
     if (state.loading || state.loadingMore || !state.hasMore) return;
     final requestId = _requestId;

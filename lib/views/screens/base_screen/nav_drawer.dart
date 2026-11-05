@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/controllers/summaries_controller.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/chat/chat_service.dart';
 import 'package:efiling_balochistan/services/version_sync_service.dart';
+import 'package:efiling_balochistan/views/screens/dashboard/components/switch_designation_sheet.dart';
 import 'package:efiling_balochistan/views/widgets/app_text.dart';
 import 'package:efiling_balochistan/views/widgets/buttons/text_link_button.dart';
 import 'package:flutter/material.dart';
@@ -581,6 +582,8 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   }
 
   Widget _buildFooter() {
+    final canSwitchDesignation =
+        ref.watch(authController.select((u) => u.designations.length)) > 1;
     return Column(
       children: [
         if (_effectiveExpanded)
@@ -600,6 +603,24 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                 );
               }
             },
+          ),
+        if (canSwitchDesignation && _effectiveExpanded)
+          AppTextLinkButton(
+            onPressed: () => showSwitchDesignationSheet(context, ref),
+            text: "Switch Designation",
+            icon: Icons.swap_horiz_rounded,
+            color: context.appColors.secondaryDark,
+          )
+        else if (canSwitchDesignation)
+          Tooltip(
+            message: 'Switch Designation',
+            child: IconButton(
+              onPressed: () => showSwitchDesignationSheet(context, ref),
+              icon: Icon(
+                Icons.swap_horiz_rounded,
+                color: context.appColors.secondaryDark,
+              ),
+            ),
           ),
         if (_effectiveExpanded)
           AppTextLinkButton(

@@ -7,6 +7,7 @@ import 'package:efiling_balochistan/models/token_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/repository/auth/auth_repo.dart';
 import 'package:efiling_balochistan/services/notification_service.dart';
+import 'package:efiling_balochistan/utils/app_logger.dart';
 import 'package:efiling_balochistan/views/widgets/confirmation_dialog.dart';
 import 'package:efiling_balochistan/views/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -186,8 +187,9 @@ class AuthController extends BaseControllerState<UserModel> {
   Future getOpenAIToken() async {
     try {
       Keys.openAIKey = await repo.getOpenAIKey();
-    } catch (e) {
-      Toast.error(message: handleException(e));
+    } catch (e, s) {
+      // Optional and fetched in the background, so don't interrupt the user.
+      AppLogger.error(e, s, 'OPENAI KEY ERR');
       return null;
     }
   }

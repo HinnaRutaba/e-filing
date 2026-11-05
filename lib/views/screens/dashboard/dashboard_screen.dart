@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:efiling_balochistan/config/router/route_helper.dart';
 import 'package:efiling_balochistan/config/router/routes.dart';
 import 'package:efiling_balochistan/config/theme/theme.dart';
 import 'package:efiling_balochistan/constants/assets_constants.dart';
 import 'package:efiling_balochistan/controllers/controllers.dart';
 import 'package:efiling_balochistan/controllers/dashboard_controller.dart';
+import 'package:efiling_balochistan/main.dart';
 import 'package:efiling_balochistan/models/active_user_desg_model.dart';
 import 'package:efiling_balochistan/models/user_model.dart';
 import 'package:efiling_balochistan/services/notification_service.dart';
@@ -37,8 +40,11 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
+  static const Duration _autoRefreshInterval = Duration(seconds: 30);
+
   final RefreshController _refreshController = RefreshController();
+  Timer? _autoRefreshTimer;
   final ValueNotifier<bool> _compactNotifier = ValueNotifier<bool>(false);
 
   /// Only shown to the secretary: Department E-Files, Department E-Daak and My Stats.
@@ -56,10 +62,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
     NotificationService().clearBadge();
     _loadInitialData();
+    _startAutoRefresh();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
   }
 
   @override
   void dispose() {
+    _stopAutoRefresh();
+    routeObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     _refreshController.dispose();
     _compactNotifier.dispose();
@@ -125,10 +143,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
+  /// Refreshes all dashboard data every [_autoRefreshInterval] while the
+  /// dashboard is on screen. Paused while another screen is on top or the app
+  /// is in the background, and catches up straight away on return.
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(
+      _autoRefreshInterval,
+      (_) => _autoRefresh(),
+    );
+  }
+
+  void _stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
+  }
+
+  void _autoRefresh() {
+    if (!mounted) return;
+    ref.read(dashboardController.notifier).refresh();
+  }
+
+  void _resumeAutoRefresh() {
+    if (_autoRefreshTimer != null) return;
+    _autoRefresh();
+    _startAutoRefresh();
+  }
+
+  @override
+  void didPushNext() => _stopAutoRefresh();
+
+  @override
+  void didPopNext() => _resumeAutoRefresh();
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       NotificationService().clearBadge();
+      // Only if nothing is covering the dashboard.
+      if (ModalRoute.of(context)?.isCurrent ?? true) _resumeAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _stopAutoRefresh();
     }
   }
 
@@ -161,8 +216,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final Widget userHeaderPositioned = Positioned(
       top: userHeaderTop,
-      left: 20,
-      right: 20,
+      left: 16,
+      right: 16,
       child: _buildUserHeader(currentUser),
     );
 
@@ -491,7 +546,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           tag: 'profile_avatar',
           child: CircleAvatar(
             backgroundColor: context.appColors.accent.withValues(alpha: 0.25),
-            radius: 20,
+            radius: 18,
             child: Icon(
               Icons.person,
               color: context.appColors.accent,

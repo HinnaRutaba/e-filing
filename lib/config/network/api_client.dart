@@ -7,6 +7,11 @@ import 'package:efiling_balochistan/config/network/session_expired_handler.dart'
 import 'package:efiling_balochistan/utils/app_logger.dart';
 
 class DioClient {
+  /// Set to true in a request's `Options.extra` when a 401/403 from it should
+  /// not end the session, e.g. optional background calls the user may not
+  /// have access to.
+  static const String skipSessionExpiry = 'skipSessionExpiry';
+
   final Dio _dio;
 
   DioClient(this._dio) {
@@ -41,7 +46,7 @@ class DioClient {
           handler.next(requestOption);
         },
         onResponse: (response, handler) {
-          if (_isSessionRejected(response.statusCode)) {
+          if (_isSessionRejected(response)) {
             SessionExpiredHandler.handleExpiration();
           }
           if (response.data is Map && response.data.containsKey("success")) {
@@ -84,7 +89,7 @@ class DioClient {
             'response: ${error.response?.data ?? "No response data"}\n'
             'message: ${error.message ?? "Unknown error"}',
           );
-          if (_isSessionRejected(error.response?.statusCode)) {
+          if (_isSessionRejected(error.response)) {
             SessionExpiredHandler.handleExpiration();
           }
           handler.reject(
@@ -120,8 +125,13 @@ class DioClient {
     );
   }
 
-  bool _isSessionRejected(int? statusCode) =>
-      statusCode == 401 || statusCode == 403;
+  bool _isSessionRejected(Response? response) {
+    if (response?.requestOptions.extra[skipSessionExpiry] == true) {
+      return false;
+    }
+    final statusCode = response?.statusCode;
+    return statusCode == 401 || statusCode == 403;
+  }
 
   void _logRequest(
     String method,

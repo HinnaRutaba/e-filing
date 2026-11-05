@@ -109,7 +109,11 @@ class FilesController extends BaseControllerState<FileViewModel> {
     return files;
   }
 
-  Future<List<FileModel>> getFilesForDashboard(FileType fileType) async {
+  /// Returns an empty list on failure unless [rethrowErrors] is set.
+  Future<List<FileModel>> getFilesForDashboard(
+    FileType fileType, {
+    bool rethrowErrors = false,
+  }) async {
     try {
       int? designationId = ref
           .read(authController)
@@ -130,6 +134,7 @@ class FilesController extends BaseControllerState<FileViewModel> {
 
       return [];
     } catch (e) {
+      if (rethrowErrors) rethrow;
       return [];
     }
   }
@@ -329,7 +334,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
       EasyLoading.dismiss();
       RouteHelper.navigateHome();
     } catch (e) {
-      
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }
@@ -361,7 +365,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
       EasyLoading.dismiss();
       RouteHelper.navigateHome();
     } catch (e) {
-      
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }
@@ -379,7 +382,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
       data = await repo.fetchCreateFileData(designationId);
       state = state.copyWith(newFileData: data, loadingNewFileData: false);
     } catch (e) {
-
       //Toast.error(message: handleException(e));
       state = state.copyWith(loadingNewFileData: false);
     } finally {
@@ -422,7 +424,6 @@ class FilesController extends BaseControllerState<FileViewModel> {
       EasyLoading.dismiss();
       RouteHelper.navigateHome();
     } catch (e) {
-
       Toast.error(message: handleException(e));
       EasyLoading.dismiss();
     }

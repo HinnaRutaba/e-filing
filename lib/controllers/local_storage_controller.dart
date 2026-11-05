@@ -63,6 +63,18 @@ class LocalStorageController {
         false;
   }
 
+  /// Set at sign-out until the device's FCM token has actually been deleted,
+  /// so a failed delete is retried rather than the token being reused.
+  Future<void> setFcmTokenDeletePending(bool pending) async {
+    await LocalStorage.save(LocalStorageKeys.fcmTokenDeletePending, pending);
+  }
+
+  Future<bool> isFcmTokenDeletePending() async {
+    return await LocalStorage.get(LocalStorageKeys.fcmTokenDeletePending)
+            as bool? ??
+        false;
+  }
+
   Future<void> removeAll() async {
     return await LocalStorage.clear();
   }
@@ -85,4 +97,5 @@ class LocalStorageKeys {
   //=====================PERSISTED=====================
   static const String rememberLogin = 'rememberLogin';
   static const String daakDialogShown = 'daak_dialog_shown';
+  static const String fcmTokenDeletePending = 'fcm_token_delete_pending';
 }
